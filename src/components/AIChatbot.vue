@@ -117,7 +117,8 @@ const handleDeleteSession = (sessionId: string) => {
 }
 
 // Handle ball click (listens to SuspendedBall's click event)
-const handleBallClick = () => {
+const handleBallClick = (event: MouseEvent) => {
+  console.log('Ball clicked!', event)
   togglePanel()
 }
 
