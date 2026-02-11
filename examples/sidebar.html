@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>边栏模式 - AI Chatbot</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .demo-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    .demo-container h1 {
+      color: #333;
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+
+    .demo-container .subtitle {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 24px;
+    }
+
+    .demo-container .description {
+      color: #666;
+      font-size: 14px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #f5f7fa;
+      border-radius: 8px;
+    }
+
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #409eff;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .feature {
+      padding: 16px;
+      background: #f5f7fa;
+      border-radius: 8px;
+    }
+
+    .feature h3 {
+      font-size: 14px;
+      color: #409eff;
+      margin-bottom: 8px;
+    }
+
+    .feature p {
+      font-size: 13px;
+      color: #666;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <a href="/" class="back-link">← 返回首页</a>
+    <h1>边栏模式</h1>
+    <p class="subtitle">Sidebar Mode</p>
+    <p class="description">
+      此模式在页面右侧固定显示聊天面板。
+      适用于需要常驻聊天功能、方便用户随时咨询的场景。
+    </p>
+
+    <div class="features">
+      <div class="feature">
+        <h3>固定侧边栏</h3>
+        <p>页面右侧固定显示聊天面板</p>
+      </div>
+      <div class="feature">
+        <h3>会话管理</h3>
+        <p>支持多会话管理和切换</p>
+      </div>
+      <div class="feature">
+        <h3>不遮挡内容</h3>
+        <p>侧边栏不影响主内容浏览</p>
+      </div>
+      <div class="feature">
+        <h3>快速访问</h3>
+        <p>无需点击，直接开始对话</p>
+      </div>
+    </div>
+  </div>
+  <div id="app"></div>
+  <script type="module" src="/src/entries/sidebar.ts"></script>
+</body>
+</html>

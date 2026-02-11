@@ -19,13 +19,20 @@ export default defineConfig({
     },
   },
   build: {
-    lib: {
-      entry: resolve(__dirname, 'src/index.ts'),
-      name: 'AIChatbot',
-      fileName: 'ai-chatbot',
-      formats: ['es', 'umd'],
-    },
     rollupOptions: {
+      // Multi-entry for development/examples
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        extended: resolve(__dirname, 'examples/extended.html'),
+        compact: resolve(__dirname, 'examples/compact.html'),
+        'floating-compact': resolve(__dirname, 'examples/floating-compact.html'),
+        'floating-extended': resolve(__dirname, 'examples/floating-extended.html'),
+        // Keep old entries for compatibility
+        fullscreen: resolve(__dirname, 'examples/fullscreen.html'),
+        floating: resolve(__dirname, 'examples/floating.html'),
+        sidebar: resolve(__dirname, 'examples/sidebar.html'),
+      },
+      // Library build options
       external: ['vue', 'element-plus'],
       output: {
         globals: {
@@ -34,6 +41,13 @@ export default defineConfig({
         },
         assetFileNames: 'ai-chatbot.[ext]',
       },
+    },
+    // Library build configuration
+    lib: {
+      entry: resolve(__dirname, 'src/index.ts'),
+      name: 'AIChatbot',
+      fileName: 'ai-chatbot',
+      formats: ['es', 'umd'],
     },
     cssCodeSplit: false,
     sourcemap: true,

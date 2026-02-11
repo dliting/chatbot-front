@@ -2,6 +2,23 @@
 
 A Vue 3 + TypeScript + Element Plus chatbot component that can be embedded in any website.
 
+## Modes
+
+The component supports three display modes:
+
+| Mode | Description | Use Case |
+|-------|-------------|-----------|
+| **扩展模式 (Extended)** | Full desktop chat with session sidebar + chat area | Desktop-first chat application |
+| **紧凑模式 (Compact)** | Desktop sidebar or mobile full screen | Sidebar panel or mobile chat interface |
+| **悬浮模式 (Floating)** | Floating ball that opens either extended or compact panel | Space-saving, on-demand access |
+
+## Examples
+
+- **扩展模式**: [extended.html](examples/extended.html) - Full desktop chat interface
+- **紧凑模式**: [compact.html](examples/compact.html) - Desktop sidebar or mobile interface
+- **悬浮模式 (→紧凑)**: [floating-compact.html](examples/floating-compact.html) - Floating ball, default compact panel
+- **悬浮模式 (→扩展)**: [floating-extended.html](examples/floating-extended.html) - Floating ball, opens full chat
+
 ## Features
 
 - **Multi-modal Interaction**: Text and image input support
@@ -21,7 +38,7 @@ A Vue 3 + TypeScript + Element Plus chatbot component that can be embedded in an
 # Install dependencies
 npm install
 
-# Start dev server
+# Start dev server (access examples at http://localhost:5173)
 npm run dev
 
 # Build library
@@ -64,7 +81,7 @@ import 'ai-chatbot-frontend/style.css'
 ></iframe>
 ```
 
-See `demo-iframe.html` for a complete example.
+See `examples/demo-iframe.html` for a complete example.
 
 ## Configuration
 
@@ -104,8 +121,12 @@ src/
 ├── types/           # TypeScript types
 ├── utils/           # Utility functions
 ├── styles/          # SCSS styles
+├── entries/         # Example entry points
+│   ├── extended.ts         # Extended mode entry
+│   ├── compact.ts          # Compact mode entry
+│   ├── floating-compact.ts  # Floating → Compact entry
+│   └── floating-extended.ts # Floating → Extended entry
 ├── index.ts         # Library entry
-├── main.ts          # Demo entry
 └── iframe-entry.ts  # Iframe entry
 ```
 
