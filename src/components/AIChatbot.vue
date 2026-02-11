@@ -8,7 +8,6 @@
       :icon-color="config.theme === 'dark' ? '#ffffff' : '#ffffff'"
       :background-color="config.primaryColor"
       :badge="unreadCount"
-      @click="handleBallClick"
     />
 
     <!-- Chat Panel -->
@@ -114,12 +113,6 @@ const handleSwitchSession = (sessionId: string) => {
 const handleDeleteSession = (sessionId: string) => {
   deleteSession(sessionId)
   emit('sessionDelete', sessionId)
-}
-
-// Handle ball click (listens to SuspendedBall's click event)
-const handleBallClick = (event: MouseEvent) => {
-  console.log('Ball clicked!', event)
-  togglePanel()
 }
 
 // Emits
