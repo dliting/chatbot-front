@@ -41,7 +41,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   // UI State
   const ui = reactive<UIState>({
     isPanelOpen: config.defaultExpanded,
-    panelMode: 'dialog',
+    panelMode: config.panelMode === 'auto' || !config.panelMode ? 'dialog' : config.panelMode,
     theme: config.theme,
     locale: config.locale,
     screenWidth: window.innerWidth,
@@ -95,13 +95,15 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     ui.screenWidth = window.innerWidth
     ui.isMobile = ui.screenWidth < 768
 
-    // Update panel mode based on screen size
-    if (ui.isMobile) {
-      ui.panelMode = 'fullscreen'
-    } else if (ui.screenWidth < 1024) {
-      ui.panelMode = 'dialog'
-    } else {
-      ui.panelMode = 'sidebar'
+    // Update panel mode based on screen size (only if panelMode is 'auto')
+    if (config.panelMode === 'auto' || !config.panelMode) {
+      if (ui.isMobile) {
+        ui.panelMode = 'fullscreen'
+      } else if (ui.screenWidth < 1024) {
+        ui.panelMode = 'dialog'
+      } else {
+        ui.panelMode = 'sidebar'
+      }
     }
   }
 

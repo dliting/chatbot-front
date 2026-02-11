@@ -16,7 +16,7 @@ const app = createApp(AIChatbot, {
     position: 'bottom-right',
     panelWidth: 400,
     defaultExpanded: false,
-    openMode: 'compact', // Opens compact panel (default)
+    panelMode: 'dialog', // Always use dialog mode for floating
     enableImageUpload: true,
     enableSessionManager: false,
     maxImageCount: 3,

@@ -3,6 +3,8 @@
  */
 import type { Position, Theme, Locale } from './index'
 
+import type { PanelMode } from './index'
+
 export interface ChatbotConfig {
   // Layout configuration
   position?: Position
@@ -10,6 +12,7 @@ export interface ChatbotConfig {
   panelMinWidth?: number
   panelMaxWidth?: number
   defaultExpanded?: boolean
+  panelMode?: PanelMode // Force specific panel mode ('auto' = based on screen size)
 
   // Feature toggles
   enableImageUpload?: boolean
@@ -91,6 +94,7 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   panelMinWidth: 320,
   panelMaxWidth: 600,
   defaultExpanded: false,
+  panelMode: 'auto', // Auto-detect based on screen size
 
   // Features
   enableImageUpload: true,
