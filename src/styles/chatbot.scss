@@ -1,0 +1,113 @@
+/**
+ * AI Chatbot Global Styles
+ */
+
+// CSS Variables
+:root {
+  // Primary colors
+  --chatbot-primary-color: #409eff;
+  --chatbot-primary-color-light: #ecf5ff;
+  --chatbot-primary-color-dark: #337ecc;
+
+  // Status colors
+  --chatbot-success-color: #67c23a;
+  --chatbot-warning-color: #e6a23c;
+  --chatbot-danger-color: #f56c6c;
+  --chatbot-info-color: #909399;
+
+  // Light theme
+  --chatbot-bg-color: #ffffff;
+  --chatbot-text-color: #303133;
+  --chatbot-border-color: #dcdfe6;
+  --chatbot-subtext-color: #909399;
+
+  // Bubble colors - light
+  --chatbot-user-bubble-bg: #409eff;
+  --chatbot-user-bubble-text: #ffffff;
+  --chatbot-assistant-bubble-bg: #f5f7fa;
+  --chatbot-assistant-bubble-text: #303133;
+
+  // Panel colors - light
+  --chatbot-panel-bg: #ffffff;
+  --chatbot-panel-border: #e4e7ed;
+  --chatbot-panel-text: #303133;
+  --chatbot-panel-subtext: #909399;
+
+  // Sizes
+  --chatbot-border-radius: 12px;
+  --chatbot-ball-size: 56px;
+}
+
+[data-theme='dark'] {
+  // Dark theme
+  --chatbot-bg-color: #1a1a1a;
+  --chatbot-text-color: #e5e5e5;
+  --chatbot-border-color: #4c4d4f;
+  --chatbot-subtext-color: #a3a3a3;
+
+  // Bubble colors - dark
+  --chatbot-assistant-bubble-bg: #2c2c2c;
+  --chatbot-assistant-bubble-text: #e5e5e5;
+
+  // Panel colors - dark
+  --chatbot-panel-bg: #1a1a1a;
+  --chatbot-panel-border: #4c4d4f;
+  --chatbot-panel-text: #e5e5e5;
+  --chatbot-panel-subtext: #a3a3a3;
+}
+
+// Reset
+.ai-chatbot {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+
+  * {
+    box-sizing: border-box;
+  }
+
+  button {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+// Scrollbar styling
+.ai-chatbot ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.ai-chatbot ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-chatbot ::-webkit-scrollbar-thumb {
+  background: var(--chatbot-border-color);
+  border-radius: 3px;
+}
+
+.ai-chatbot ::-webkit-scrollbar-thumb:hover {
+  background: var(--chatbot-subtext-color);
+}
+
+// Base styles
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+#app {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+h1 {
+  color: var(--chatbot-text-color);
+}

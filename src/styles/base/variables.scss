@@ -1,0 +1,59 @@
+/**
+ * SCSS Variables
+ */
+
+// Colors
+$chatbot-primary: #409eff;
+$chatbot-success: #67c23a;
+$chatbot-warning: #e6a23c;
+$chatbot-danger: #f56c6c;
+$chatbot-info: #909399;
+
+// Light theme
+$chatbot-bg-light: #ffffff;
+$chatbot-text-light: #303133;
+$chatbot-border-light: #dcdfe6;
+$chatbot-subtext-light: #909399;
+
+// Dark theme
+$chatbot-bg-dark: #1a1a1a;
+$chatbot-text-dark: #e5e5e5;
+$chatbot-border-dark: #4c4d4f;
+$chatbot-subtext-dark: #a3a3a3;
+
+// Bubble colors
+$chatbot-user-bubble-bg: $chatbot-primary;
+$chatbot-user-bubble-text: #ffffff;
+$chatbot-assistant-bubble-bg-light: #f5f7fa;
+$chatbot-assistant-bubble-text-light: $chatbot-text-light;
+$chatbot-assistant-bubble-bg-dark: #2c2c2c;
+$chatbot-assistant-bubble-text-dark: $chatbot-text-dark;
+
+// Sizes
+$chatbot-border-radius: 12px;
+$chatbot-ball-size: 56px;
+$chatbot-panel-width: 400px;
+$chatbot-panel-max-width: 600px;
+$chatbot-panel-min-width: 320px;
+
+// Spacing
+$chatbot-spacing-xs: 4px;
+$chatbot-spacing-sm: 8px;
+$chatbot-spacing-md: 12px;
+$chatbot-spacing-lg: 16px;
+$chatbot-spacing-xl: 24px;
+
+// Transitions
+$chatbot-transition-fast: 0.15s;
+$chatbot-transition-normal: 0.3s;
+$chatbot-transition-slow: 0.5s;
+
+// Z-index
+$chatbot-z-ball: 9999;
+$chatbot-z-panel: 9998;
+$chatbot-z-modal: 10000;
+
+// Breakpoints
+$chatbot-breakpoint-mobile: 768px;
+$chatbot-breakpoint-tablet: 1024px;
+$chatbot-breakpoint-desktop: 1440px;
