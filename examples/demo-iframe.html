@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Chatbot - Iframe Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .demo-container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 24px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: #f5f7fa;
+      border-radius: 8px;
+    }
+
+    button {
+      padding: 10px 16px;
+      border: 1px solid #dcdfe6;
+      background: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      border-color: #409eff;
+      color: #409eff;
+    }
+
+    button.primary {
+      background: #409eff;
+      color: white;
+      border-color: #409eff;
+    }
+
+    button.primary:hover {
+      background: #337ecc;
+    }
+
+    .iframe-container {
+      border: 2px dashed #dcdfe6;
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+      min-height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fafafa;
+    }
+
+    iframe {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .log {
+      margin-top: 24px;
+      padding: 16px;
+      background: #f5f7fa;
+      border-radius: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #e4e7ed;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .feature {
+      padding: 16px;
+      background: #f5f7fa;
+      border-radius: 8px;
+    }
+
+    .feature h3 {
+      font-size: 14px;
+      color: #409eff;
+      margin-bottom: 8px;
+    }
+
+    .feature p {
+      font-size: 13px;
+      color: #666;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-container">
+    <h1>AI Chatbot - Iframe Embed Demo</h1>
+    <p class="subtitle">Embed the chatbot in any website using iframe</p>
+
+    <div class="controls">
+      <button id="btnToggle" class="primary">Toggle Chatbot</button>
+      <button id="btnTheme">Toggle Theme</button>
+      <button id="btnPosition">Change Position</button>
+      <button id="btnClear">Clear Log</button>
+    </div>
+
+    <div class="iframe-container">
+      <p id="placeholder">Chatbot iframe will be loaded here...</p>
+    </div>
+
+    <div class="log" id="log">
+      <div class="log-entry">Initializing chatbot...</div>
+    </div>
+
+    <div class="features">
+      <div class="feature">
+        <h3>Easy Embed</h3>
+        <p>Just add an iframe tag to your website</p>
+      </div>
+      <div class="feature">
+        <h3>Cross-Domain</h3>
+        <p>Supports postMessage communication</p>
+      </div>
+      <div class="feature">
+        <h3>Fully Customizable</h3>
+        <p>Configure position, theme, and features</p>
+      </div>
+      <div class="feature">
+        <h3>Isolated</h3>
+        <p>No CSS/JS conflicts with host page</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration
+    const config = {
+      position: 'bottom-right',
+      panelWidth: 400,
+      theme: 'light',
+      enableImageUpload: true,
+      enableSessionManager: true,
+      maxImageCount: 3,
+      iframeMode: true,
+    };
+
+    // Encode config for URL
+    const encodedConfig = btoa(JSON.stringify(config));
+    const iframeSrc = `/dist-iframe/index.html?config=${encodedConfig}`;
+
+    // Create iframe
+    const iframe = document.createElement('iframe');
+    iframe.src = iframeSrc;
+    iframe.style.width = '100%';
+    iframe.style.height = '600px';
+    iframe.style.display = 'none';
+
+    const container = document.querySelector('.iframe-container');
+    const placeholder = document.getElementById('placeholder');
+
+    // Logging
+    const logEl = document.getElementById('log');
+    function addLog(message) {
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    // PostMessage listener
+    window.addEventListener('message', (event) => {
+      const data = event.data;
+      if (data.source !== 'ai-chatbot') return;
+
+      addLog(`Received: ${data.type} ${JSON.stringify(data.data || '')}`);
+
+      if (data.type === 'chatbot:ready') {
+        placeholder.style.display = 'none';
+        iframe.style.display = 'block';
+        addLog('Chatbot ready!');
+      }
+    });
+
+    // Button handlers
+    let currentConfig = { ...config };
+
+    document.getElementById('btnToggle').addEventListener('click', () => {
+      iframe.contentWindow.postMessage({
+        source: 'host-page',
+        type: 'host:toggle',
+        data: {},
+      }, '*');
+      addLog('Sent: toggle');
+    });
+
+    document.getElementById('btnTheme').addEventListener('click', () => {
+      currentConfig.theme = currentConfig.theme === 'light' ? 'dark' : 'light';
+      iframe.contentWindow.postMessage({
+        source: 'host-page',
+        type: 'host:setConfig',
+        data: { theme: currentConfig.theme },
+      }, '*');
+      addLog(`Sent: setConfig theme=${currentConfig.theme}`);
+    });
+
+    document.getElementById('btnPosition').addEventListener('click', () => {
+      const positions = ['bottom-right', 'bottom-left', 'top-right', 'top-left'];
+      const currentIndex = positions.indexOf(currentConfig.position);
+      currentConfig.position = positions[(currentIndex + 1) % positions.length];
+      iframe.contentWindow.postMessage({
+        source: 'host-page',
+        type: 'host:setConfig',
+        data: { position: currentConfig.position },
+      }, '*');
+      addLog(`Sent: setConfig position=${currentConfig.position}`);
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      logEl.innerHTML = '<div class="log-entry">Log cleared</div>';
+    });
+
+    // Load iframe
+    container.appendChild(iframe);
+    addLog('Loading chatbot iframe...');
+  </script>
+</body>
+</html>

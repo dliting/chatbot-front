@@ -1,0 +1,45 @@
+# Dependencies
+node_modules
+dist
+dist-iframe
+
+# Build outputs
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# IDE
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage
+
+# Documentation
+doc
+docs
+*.md
+
+# Public
+public

@@ -1,7 +1,7 @@
 <template>
-  <div class="doubao-chat">
+  <div class="doubao-chat" :class="{ 'doubao-chat--internal': mode === 'internal' }">
     <!-- Header -->
-    <header class="doubao-header">
+    <header v-if="!hideHeader" class="doubao-header">
       <h1 class="doubao-title">{{ config.labels?.title || '智能助手' }}</h1>
       <button class="doubao-header-btn" @click="toggleSettings">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -14,7 +14,7 @@
     <!-- Chat Container -->
     <main class="doubao-container" ref="containerRef">
       <!-- Welcome Section -->
-      <div class="doubao-welcome" v-if="currentMessages.length === 0">
+      <div v-if="!hideWelcome && currentMessages.length === 0" class="doubao-welcome">
         <div class="doubao-avatar">
           <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
@@ -26,7 +26,7 @@
         <p class="doubao-welcome-subtitle">有什么可以帮助您的吗？</p>
 
         <!-- Quick Actions -->
-        <div class="doubao-quick-actions">
+        <div v-if="!hideQuickActions" class="doubao-quick-actions">
           <div
             v-for="action in quickActions"
             :key="action.id"
@@ -85,7 +85,7 @@
     </main>
 
     <!-- Input Area -->
-    <div class="doubao-input-area">
+    <div v-if="!hideInputArea" class="doubao-input-area">
       <!-- File Previews -->
       <div v-if="selectedImages.length > 0" class="doubao-file-previews">
         <div v-for="(img, idx) in selectedImages" :key="idx" class="doubao-file-preview">
@@ -208,10 +208,21 @@ import { createMockUploadEndpoint } from '@/utils/upload'
 // Props
 interface Props {
   config?: ChatbotConfig
+  // 内嵌模式支持
+  mode?: 'standalone' | 'internal'
+  hideHeader?: boolean
+  hideWelcome?: boolean
+  hideQuickActions?: boolean
+  hideInputArea?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   config: () => ({}),
+  mode: 'standalone',
+  hideHeader: false,
+  hideWelcome: false,
+  hideQuickActions: false,
+  hideInputArea: false,
 })
 
 // Merge config
@@ -550,6 +561,29 @@ defineExpose({
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  // 内嵌模式样式
+  &--internal {
+    height: 100%;
+    background: transparent;
+
+    .doubao-container {
+      padding: 16px;
+    }
+
+    .doubao-input-area {
+      position: relative;
+      border-top: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .doubao-menu-panel {
+      position: absolute;
+      bottom: 70px;
+      left: 0;
+      right: 0;
+      margin: 0;
+    }
+  }
 }
 
 // Header

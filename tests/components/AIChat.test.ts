@@ -1,10 +1,10 @@
 /**
- * Unit tests for DoubaoChat component
+ * Unit tests for AIChat component
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
-import DoubaoChat from '@/components/DoubaoChat.vue'
+import AIChat from '@/components/AIChat.vue'
 import type { ChatbotConfig } from '@/types'
 
 // Mock stream utility
@@ -32,7 +32,7 @@ vi.mock('@/utils/upload', () => ({
   })),
 }))
 
-describe('DoubaoChat', () => {
+describe('AIChat', () => {
   let mockConfig: ChatbotConfig
 
   beforeEach(() => {
@@ -68,7 +68,7 @@ describe('DoubaoChat', () => {
 
   describe('Component Rendering', () => {
     it('should render component correctly', () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -79,7 +79,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should render header with correct title', () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -90,7 +90,7 @@ describe('DoubaoChat', () => {
 
     it('should render custom title from config', () => {
       const customConfig = { ...mockConfig, labels: { title: '豆包助手' } }
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: customConfig },
       })
 
@@ -98,7 +98,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should render header button', () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -107,7 +107,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should render input area with all controls', () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -117,7 +117,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should render send button when there is text input', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -133,7 +133,7 @@ describe('DoubaoChat', () => {
 
   describe('Welcome Section', () => {
     it('should show welcome section when no messages', () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -144,7 +144,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should render quick action cards', () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -160,7 +160,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should hide welcome section after sending message', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -179,7 +179,7 @@ describe('DoubaoChat', () => {
 
   describe('Quick Actions', () => {
     it('should send quick message when clicking quick action', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -193,7 +193,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should have correct quick action icons', () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -209,7 +209,7 @@ describe('DoubaoChat', () => {
 
   describe('Input Handling', () => {
     it('should update input text when typing', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -220,7 +220,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should send message on Enter key press', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -236,7 +236,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should not send message on Enter + Shift', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -254,7 +254,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should clear input after sending', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -269,7 +269,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should auto-resize textarea height', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -290,7 +290,7 @@ describe('DoubaoChat', () => {
 
   describe('Message Sending', () => {
     it('should create user message when sending text', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -307,7 +307,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should create assistant message after user message', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -326,7 +326,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should show typing indicator during streaming', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -344,7 +344,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should show user avatar in user message', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -360,7 +360,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should show assistant avatar in assistant message', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -380,7 +380,7 @@ describe('DoubaoChat', () => {
 
   describe('File Upload', () => {
     it('should show menu panel when clicking menu button', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -392,7 +392,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should hide menu panel when clicking outside', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
         attachTo: document.body,
       })
@@ -412,7 +412,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should render menu items correctly', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -431,7 +431,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should trigger file input when clicking menu item', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -449,7 +449,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should show file preview after selecting image', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -475,7 +475,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should show send button when image is selected', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -488,7 +488,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should remove image preview when clicking remove button', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -508,7 +508,7 @@ describe('DoubaoChat', () => {
 
   describe('Voice Interaction', () => {
     it('should show voice overlay when starting recording', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -520,7 +520,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should add recording class to voice button', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -532,7 +532,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should send voice message when stopping recording', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -550,7 +550,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should cancel recording when clicking cancel button', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -569,7 +569,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should cancel recording when clicking overlay', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -587,7 +587,7 @@ describe('DoubaoChat', () => {
 
   describe('Message Display', () => {
     it('should display user message on the right side', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -604,7 +604,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should display assistant message on the left side', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -622,7 +622,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should display message with images', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -645,7 +645,7 @@ describe('DoubaoChat', () => {
 
   describe('Image Preview', () => {
     it('should show image preview modal when clicking message image', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -669,7 +669,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should close image preview when clicking overlay', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -693,7 +693,7 @@ describe('DoubaoChat', () => {
         ...mockConfig,
         labels: { placeholder: '请输入您的问题...' },
       }
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: customConfig },
       })
 
@@ -703,7 +703,7 @@ describe('DoubaoChat', () => {
 
     it('should respect maxImageCount config', async () => {
       const configWithLimit = { ...mockConfig, maxImageCount: 2 }
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: configWithLimit },
       })
 
@@ -715,7 +715,7 @@ describe('DoubaoChat', () => {
 
   describe('Send Button State', () => {
     it('should show voice button while sending (input cleared)', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -735,7 +735,7 @@ describe('DoubaoChat', () => {
 
   describe('Header Actions', () => {
     it('should call toggleSettings when header button is clicked', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -753,7 +753,7 @@ describe('DoubaoChat', () => {
 
   describe('Streaming Response', () => {
     it('should stream AI response character by character', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -778,7 +778,7 @@ describe('DoubaoChat', () => {
 
   describe('Transitions', () => {
     it('should apply menu transition classes', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -791,7 +791,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should apply voice overlay transition', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -806,7 +806,7 @@ describe('DoubaoChat', () => {
 
   describe('Edge Cases', () => {
     it('should handle empty message send', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -819,7 +819,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should handle whitespace-only message', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
@@ -835,7 +835,7 @@ describe('DoubaoChat', () => {
     })
 
     it('should handle multiple rapid sends', async () => {
-      const wrapper = mount(DoubaoChat, {
+      const wrapper = mount(AIChat, {
         props: { config: mockConfig },
       })
 
