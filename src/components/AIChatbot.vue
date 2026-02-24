@@ -19,7 +19,13 @@
       :theme="state.ui.theme"
       :title="config.labels?.title"
       :width="config.panelWidth"
+      :height="config.panelHeight || 600"
       :show-theme-toggle="true"
+      :draggable="config.draggable !== false"
+      :resizable="config.resizable !== false"
+      :min-width="config.minWidth || 300"
+      :min-height="config.minHeight || 400"
+      :remember-position="config.rememberPosition !== false"
       @close="togglePanel"
       @toggle-theme="toggleTheme"
     >

@@ -4,9 +4,14 @@
       v-if="isOpen"
       :class="classes"
       :style="panelStyle"
+      ref="panelRef"
     >
-      <!-- Header -->
-      <div class="chatbot-panel__header">
+      <!-- Header (Draggable) -->
+      <div
+        class="chatbot-panel__header"
+        :class="{ 'chatbot-panel__header--draggable': isDraggable && isFloating }"
+        @mousedown="startDrag"
+      >
         <div class="chatbot-panel__title">
           <slot name="title">{{ title }}</slot>
         </div>
@@ -32,7 +37,7 @@
           <!-- Close button -->
           <button
             class="chatbot-panel__action-btn chatbot-panel__close-btn"
-            @click="$emit('close')"
+            @click="handleClose"
             title="Close"
           >
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -41,6 +46,13 @@
           </button>
         </div>
       </div>
+
+      <!-- Resize handles (only for floating mode) -->
+      <template v-if="isFloating && isResizable">
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--e" @mousedown="startResize($event, 'e')"></div>
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--s" @mousedown="startResize($event, 's')"></div>
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--se" @mousedown="startResize($event, 'se')"></div>
+      </template>
 
       <!-- Body -->
       <div class="chatbot-panel__body">
@@ -51,7 +63,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
 import type { PanelMode, Position, Theme } from '@/types'
 
 interface Props {
@@ -61,7 +73,13 @@ interface Props {
   theme?: Theme
   title?: string
   width?: number
+  height?: number
   showThemeToggle?: boolean
+  draggable?: boolean
+  resizable?: boolean
+  minWidth?: number
+  minHeight?: number
+  rememberPosition?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -69,7 +87,13 @@ const props = withDefaults(defineProps<Props>(), {
   theme: 'light',
   title: 'AI Assistant',
   width: 400,
+  height: 600,
   showThemeToggle: true,
+  draggable: true,
+  resizable: true,
+  minWidth: 300,
+  minHeight: 400,
+  rememberPosition: true,
 })
 
 interface Emits {
@@ -77,23 +101,61 @@ interface Emits {
   (e: 'toggle-theme'): void
 }
 
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
 
-// Classes
+// Refs
+const panelRef = ref<HTMLElement>()
+
+// State for floating panel
+const STORAGE_KEY = 'chatbot-floating-position'
+const isFloating = computed(() => props.mode === 'floating')
+
+// Position and size state
+const panelState = ref({
+  x: 0,
+  y: 0,
+  width: props.width,
+  height: props.height,
+})
+
+const isDragging = ref(false)
+const isResizing = ref(false)
+const dragOffset = ref({ x: 0, y: 0 })
+const resizeDirection = ref('')
+const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0 })
+
+// Computed
+const isDraggable = computed(() => props.draggable && isFloating.value)
+const isResizable = computed(() => props.resizable && isFloating.value)
+
 const classes = computed(() => [
   'chatbot-panel',
   `chatbot-panel--${props.mode}`,
   `chatbot-panel--${props.position}`,
   `chatbot-panel--${props.theme}`,
+  isDragging.value && 'chatbot-panel--dragging',
+  isResizing.value && 'chatbot-panel--resizing',
 ])
 
-// Panel style
 const panelStyle = computed(() => {
-  const baseStyle: Record<string, string> = {}
+  const baseStyle: Record<string, string> = {
+    overflow: 'visible', // Allow resize handles to be visible
+  }
 
   if (props.mode === 'sidebar') {
     baseStyle.width = `${props.width}px`
-  } else if (props.mode === 'dialog') {
+  } else if (props.mode === 'fullscreen') {
+    baseStyle.width = '100%'
+    baseStyle.height = '100%'
+  } else if (isFloating.value) {
+    // Use stored position for floating mode
+    baseStyle.width = `${panelState.value.width}px`
+    baseStyle.height = `${panelState.value.height}px`
+    baseStyle.left = `${panelState.value.x}px`
+    baseStyle.top = `${panelState.value.y}px`
+    baseStyle.right = 'auto'
+    baseStyle.bottom = 'auto'
+  } else {
     baseStyle.width = `${props.width}px`
   }
 
@@ -102,6 +164,9 @@ const panelStyle = computed(() => {
 
 // Transition name
 const transitionName = computed(() => {
+  if (isFloating.value) {
+    return 'chatbot-panel-float'
+  }
   switch (props.mode) {
     case 'fullscreen':
       return 'chatbot-panel-fullscreen'
@@ -115,6 +180,200 @@ const transitionName = computed(() => {
         : 'chatbot-panel-dialog-top'
   }
 })
+
+// Methods
+const getDefaultPosition = () => {
+  const windowWidth = window.innerWidth
+  const windowHeight = window.innerHeight
+  const panelWidth = props.width
+  const panelHeight = props.height
+
+  // Default to right side of the screen, vertically centered
+  return {
+    x: windowWidth - panelWidth - 20,
+    y: Math.max(20, (windowHeight - panelHeight) / 2),
+  }
+}
+
+const loadPosition = () => {
+  if (!props.rememberPosition || !isFloating.value) return
+
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      // Validate and clamp position to viewport
+      const windowWidth = window.innerWidth
+      const windowHeight = window.innerHeight
+
+      panelState.value = {
+        width: Math.max(props.minWidth, Math.min(parsed.width || props.width, windowWidth - 40)),
+        height: Math.max(props.minHeight, Math.min(parsed.height || props.height, windowHeight - 40)),
+        x: Math.max(0, Math.min(parsed.x || 0, windowWidth - (parsed.width || props.width))),
+        y: Math.max(0, Math.min(parsed.y || 0, windowHeight - (parsed.height || props.height))),
+      }
+      return
+    }
+  } catch (e) {
+    console.warn('Failed to load panel position:', e)
+  }
+
+  // Use default position
+  const defaultPos = getDefaultPosition()
+  panelState.value = {
+    x: defaultPos.x,
+    y: defaultPos.y,
+    width: props.width,
+    height: props.height,
+  }
+}
+
+const savePosition = () => {
+  if (!props.rememberPosition || !isFloating.value) return
+
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      x: panelState.value.x,
+      y: panelState.value.y,
+      width: panelState.value.width,
+      height: panelState.value.height,
+    }))
+  } catch (e) {
+    console.warn('Failed to save panel position:', e)
+  }
+}
+
+const startDrag = (e: MouseEvent) => {
+  if (!isDraggable.value) return
+  if (!(e.target as HTMLElement).closest('.chatbot-panel__header')) return
+
+  isDragging.value = true
+  dragOffset.value = {
+    x: e.clientX - panelState.value.x,
+    y: e.clientY - panelState.value.y,
+  }
+
+  document.addEventListener('mousemove', onDrag)
+  document.addEventListener('mouseup', stopDrag)
+  e.preventDefault()
+}
+
+const onDrag = (e: MouseEvent) => {
+  if (!isDragging.value) return
+
+  let newX = e.clientX - dragOffset.value.x
+  let newY = e.clientY - dragOffset.value.y
+
+  // Constrain to viewport
+  const maxX = window.innerWidth - panelRef.value!.offsetWidth
+  const maxY = window.innerHeight - panelRef.value!.offsetHeight
+
+  panelState.value.x = Math.max(0, Math.min(newX, maxX))
+  panelState.value.y = Math.max(0, Math.min(newY, maxY))
+}
+
+const stopDrag = () => {
+  if (isDragging.value) {
+    isDragging.value = false
+    savePosition()
+  }
+  document.removeEventListener('mousemove', onDrag)
+  document.removeEventListener('mouseup', stopDrag)
+}
+
+const startResize = (e: MouseEvent, direction: string) => {
+  if (!isResizable.value) return
+
+  isResizing.value = true
+  resizeDirection.value = direction
+  resizeStart.value = {
+    x: e.clientX,
+    y: e.clientY,
+    width: panelState.value.width,
+    height: panelState.value.height,
+  }
+
+  document.addEventListener('mousemove', onResize)
+  document.addEventListener('mouseup', stopResize)
+  e.preventDefault()
+  e.stopPropagation()
+}
+
+const onResize = (e: MouseEvent) => {
+  if (!isResizing.value) return
+
+  const deltaX = e.clientX - resizeStart.value.x
+  const deltaY = e.clientY - resizeStart.value.y
+
+  let newWidth = resizeStart.value.width
+  let newHeight = resizeStart.value.height
+
+  if (resizeDirection.value.includes('e')) {
+    newWidth = Math.max(props.minWidth, resizeStart.value.width + deltaX)
+  }
+  if (resizeDirection.value.includes('s')) {
+    newHeight = Math.max(props.minHeight, resizeStart.value.height + deltaY)
+  }
+
+  // Constrain to viewport
+  const maxWidth = window.innerWidth - panelState.value.x
+  const maxHeight = window.innerHeight - panelState.value.y
+
+  panelState.value.width = Math.min(newWidth, maxWidth)
+  panelState.value.height = Math.min(newHeight, maxHeight)
+}
+
+const stopResize = () => {
+  if (isResizing.value) {
+    isResizing.value = false
+    savePosition()
+  }
+  document.removeEventListener('mousemove', onResize)
+  document.removeEventListener('mouseup', stopResize)
+}
+
+const handleClose = () => {
+  savePosition()
+  emit('close')
+}
+
+// Lifecycle
+onMounted(() => {
+  if (isFloating.value) {
+    loadPosition()
+  }
+})
+
+// Watch for panel open/close
+watch(() => props.isOpen, (isOpen) => {
+  if (isOpen && isFloating.value) {
+    loadPosition()
+  }
+})
+
+// Handle window resize
+const handleWindowResize = () => {
+  if (isFloating.value) {
+    // Ensure panel stays within viewport
+    const maxX = window.innerWidth - panelState.value.width
+    const maxY = window.innerHeight - panelState.value.height
+    panelState.value.x = Math.min(panelState.value.x, Math.max(0, maxX))
+    panelState.value.y = Math.min(panelState.value.y, Math.max(0, maxY))
+    savePosition()
+  }
+}
+
+onMounted(() => {
+  window.addEventListener('resize', handleWindowResize)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleWindowResize)
+  document.removeEventListener('mousemove', onDrag)
+  document.removeEventListener('mouseup', stopDrag)
+  document.removeEventListener('mousemove', onResize)
+  document.removeEventListener('mouseup', stopResize)
+})
 </script>
 
 <style scoped lang="scss">
@@ -127,6 +386,13 @@ const transitionName = computed(() => {
   flex-direction: column;
   z-index: 9998;
   overflow: hidden;
+
+  // Dragging state
+  &--dragging,
+  &--resizing {
+    user-select: none;
+    transition: none !important;
+  }
 
   // Fullscreen mode
   &--fullscreen {
@@ -155,7 +421,7 @@ const transitionName = computed(() => {
     }
   }
 
-  // Dialog mode
+  // Dialog mode (non-floating, legacy)
   &--dialog {
     max-height: 80vh;
 
@@ -180,6 +446,12 @@ const transitionName = computed(() => {
     }
   }
 
+  // Floating mode (draggable & resizable)
+  &--floating {
+    max-height: none;
+    resize: none; // We use custom resize handles
+  }
+
   // Theme
   &--light {
     --chatbot-panel-bg: #ffffff;
@@ -202,17 +474,24 @@ const transitionName = computed(() => {
     padding: 16px;
     border-bottom: 1px solid var(--chatbot-panel-border);
     background-color: var(--chatbot-panel-bg);
+    flex-shrink: 0;
+
+    &--draggable {
+      cursor: move;
+    }
   }
 
   &__title {
     font-size: 18px;
     font-weight: 600;
     color: var(--chatbot-panel-text);
+    pointer-events: none; // Prevent text selection during drag
   }
 
   &__actions {
     display: flex;
     gap: 8px;
+    flex-shrink: 0;
   }
 
   &__action-btn {
@@ -227,6 +506,7 @@ const transitionName = computed(() => {
     cursor: pointer;
     color: var(--chatbot-panel-subtext);
     transition: background-color 0.2s, color 0.2s;
+    flex-shrink: 0;
 
     &:hover {
       background-color: var(--chatbot-panel-border);
@@ -246,15 +526,72 @@ const transitionName = computed(() => {
     }
   }
 
+  // Resize handles
+  &__resize-handle {
+    position: absolute;
+    z-index: 1;
+    background: transparent;
+
+    &--e {
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 8px;
+      cursor: ew-resize;
+    }
+
+    &--s {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 8px;
+      cursor: ns-resize;
+    }
+
+    &--se {
+      right: 0;
+      bottom: 0;
+      width: 16px;
+      height: 16px;
+      cursor: nwse-resize;
+
+      // Visual indicator for corner resize
+      &::after {
+        content: '';
+        position: absolute;
+        right: 2px;
+        bottom: 2px;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 0 0 12px 12px;
+        border-color: transparent transparent var(--chatbot-panel-border) transparent;
+        opacity: 0.5;
+      }
+    }
+  }
+
   &__body {
     flex: 1;
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    min-height: 0;
   }
 }
 
 // Transitions
+.chatbot-panel-float-enter-active,
+.chatbot-panel-float-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.chatbot-panel-float-enter-from,
+.chatbot-panel-float-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
 .chatbot-panel-dialog-bottom-enter-active,
 .chatbot-panel-dialog-bottom-leave-active {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);

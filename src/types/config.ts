@@ -9,10 +9,18 @@ export interface ChatbotConfig {
   // Layout configuration
   position?: Position
   panelWidth?: number
+  panelHeight?: number
   panelMinWidth?: number
   panelMaxWidth?: number
   defaultExpanded?: boolean
   panelMode?: PanelMode // Force specific panel mode ('auto' = based on screen size)
+
+  // Floating panel options
+  draggable?: boolean // Enable drag for floating panel (default: true)
+  resizable?: boolean // Enable resize for floating panel (default: true)
+  minWidth?: number // Minimum width for floating panel (default: 300)
+  minHeight?: number // Minimum height for floating panel (default: 400)
+  rememberPosition?: boolean // Remember position and size (default: true)
 
   // Feature toggles
   enableImageUpload?: boolean
@@ -91,10 +99,18 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   // Layout
   position: 'bottom-right',
   panelWidth: 400,
+  panelHeight: 600,
   panelMinWidth: 320,
   panelMaxWidth: 600,
   defaultExpanded: false,
   panelMode: 'auto', // Auto-detect based on screen size
+
+  // Floating panel options
+  draggable: true,
+  resizable: true,
+  minWidth: 300,
+  minHeight: 400,
+  rememberPosition: true,
 
   // Features
   enableImageUpload: true,
