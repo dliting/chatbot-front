@@ -10,14 +10,13 @@ The component supports three display modes:
 |-------|-------------|-----------|
 | **扩展模式 (Extended)** | Full desktop chat with session sidebar + chat area | Desktop-first chat application |
 | **紧凑模式 (Compact)** | Desktop sidebar or mobile full screen | Sidebar panel or mobile chat interface |
-| **悬浮模式 (Floating)** | Floating ball that opens either extended or compact panel | Space-saving, on-demand access |
+| **悬浮模式 (Floating)** | Floating ball that opens chat dialog | Space-saving, on-demand access |
 
 ## Examples
 
 - **扩展模式**: [extended.html](examples/extended.html) - Full desktop chat interface
 - **紧凑模式**: [compact.html](examples/compact.html) - Desktop sidebar or mobile interface
-- **悬浮模式 (→紧凑)**: [floating-compact.html](examples/floating-compact.html) - Floating ball, default compact panel
-- **悬浮模式 (→扩展)**: [floating-extended.html](examples/floating-extended.html) - Floating ball, opens full chat
+- **悬浮模式**: [floating.html](examples/floating.html) - Floating ball with chat dialog
 
 ## Features
 
@@ -87,6 +86,9 @@ See `examples/demo-iframe.html` for a complete example.
 
 ```typescript
 interface ChatbotConfig {
+  // Display mode
+  panelMode?: 'floating' | 'sidebar' | 'fullscreen'
+
   // Layout
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
   panelWidth?: number
@@ -106,6 +108,13 @@ interface ChatbotConfig {
   theme?: 'light' | 'dark'
   primaryColor?: string
 
+  // Labels
+  labels?: {
+    title?: string
+    placeholder?: string
+    newChat?: string
+  }
+
   // API
   apiBaseUrl?: string
   streamEnabled?: boolean
@@ -124,8 +133,8 @@ src/
 ├── entries/         # Example entry points
 │   ├── extended.ts         # Extended mode entry
 │   ├── compact.ts          # Compact mode entry
-│   ├── floating-compact.ts  # Floating → Compact entry
-│   └── floating-extended.ts # Floating → Extended entry
+│   ├── compact-sidebar.ts  # Compact sidebar mode entry
+│   └── floating.ts         # Floating mode entry
 ├── index.ts         # Library entry
 └── iframe-entry.ts  # Iframe entry
 ```

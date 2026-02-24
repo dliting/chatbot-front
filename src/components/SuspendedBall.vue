@@ -63,6 +63,7 @@ const ballRef = ref<HTMLElement>()
 const currentPosition = ref({ x: 0, y: 0 })
 const isDragging = ref(false)
 const hasMoved = ref(false)
+const dragStartPos = ref({ x: 0, y: 0 })
 
 // Classes
 const classes = computed(() => [
@@ -106,6 +107,7 @@ const handleMouseDown = (event: MouseEvent) => {
 
   hasMoved.value = false
   isDragging.value = false
+  dragStartPos.value = { x: event.clientX, y: event.clientY }
 }
 
 // Handle mouse click
@@ -128,11 +130,16 @@ const setupDrag = () => {
     throttleMs: 16,
     onDragStart: (pos) => {
       isDragging.value = true
-      hasMoved.value = true
       currentPosition.value = pos
       emit('dragStart', pos)
     },
     onDragMove: (pos) => {
+      // Check if moved more than 5px to consider it a drag
+      const dx = pos.x - dragStartPos.value.x
+      const dy = pos.y - dragStartPos.value.y
+      if (Math.sqrt(dx * dx + dy * dy) > 5) {
+        hasMoved.value = true
+      }
       currentPosition.value = pos
       emit('dragMove', pos)
     },

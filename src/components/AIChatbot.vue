@@ -8,6 +8,7 @@
       :icon-color="config.theme === 'dark' ? '#ffffff' : '#ffffff'"
       :background-color="config.primaryColor"
       :badge="unreadCount"
+      @click="togglePanel"
     />
 
     <!-- Chat Panel -->
@@ -68,8 +69,8 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 // Merge config with defaults
-const config = computed(() => {
-  return { ...defaultChatbotConfig, ...props.config }
+const config = computed((): Required<ChatbotConfig> => {
+  return { ...defaultChatbotConfig, ...props.config } as Required<ChatbotConfig>
 })
 
 // AIChat config (internal mode)

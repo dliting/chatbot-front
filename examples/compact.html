@@ -12,147 +12,104 @@
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 40px 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      height: 100vh;
     }
 
-    .demo-container {
-      max-width: 800px;
-      margin: 0 auto;
-      background: white;
-      border-radius: 16px;
+    /* 主内容区域 */
+    .main-content {
+      flex: 1;
       padding: 40px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      overflow-y: auto;
     }
 
-    .demo-container h1 {
-      color: #333;
-      margin-bottom: 8px;
-      font-size: 28px;
-    }
-
-    .demo-container .subtitle {
-      color: #666;
-      font-size: 16px;
-      margin-bottom: 24px;
-    }
-
-    .demo-container .description {
-      color: #666;
-      font-size: 14px;
-      line-height: 1.6;
-      margin-bottom: 24px;
-      padding: 16px;
-      background: #f5f7fa;
-      border-radius: 8px;
-    }
-
-    .back-link {
-      display: inline-block;
+    .main-content h1 {
+      font-size: 48px;
       margin-bottom: 20px;
-      color: #409eff;
-      text-decoration: none;
-      font-size: 14px;
     }
 
-    .back-link:hover {
-      text-decoration: underline;
+    .main-content p {
+      font-size: 18px;
+      line-height: 1.6;
+      opacity: 0.9;
     }
 
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-top: 32px;
+    .main-content .card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 30px;
     }
 
-    .feature {
-      padding: 16px;
-      background: #f5f7fa;
-      border-radius: 8px;
+    .main-content .card h2 {
+      margin-bottom: 16px;
     }
 
-    .feature h3 {
-      font-size: 14px;
-      color: #409eff;
+    .main-content .card ul {
+      padding-left: 20px;
+    }
+
+    .main-content .card li {
       margin-bottom: 8px;
     }
 
-    .feature p {
-      font-size: 13px;
-      color: #666;
-      margin: 0;
-    }
-
-    /* Phone mock frame */
-    .phone-mock {
-      width: 375px;
-      height: 667px;
-      margin: 40px auto;
-      background: #000;
-      border-radius: 40px;
-      padding: 12px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-
-    .phone-screen {
-      width: 100%;
-      height: 100%;
+    /* AI 聊天侧边栏容器 */
+    #ai-chat-sidebar {
+      width: 400px;
+      height: 100vh;
       background: white;
-      border-radius: 32px;
-      overflow: hidden;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
     }
 
     @media (max-width: 768px) {
-      .demo-container {
-        padding: 20px;
+      body {
+        flex-direction: column;
       }
 
-      .phone-mock {
-        width: 100%;
-        height: 500px;
-        border-radius: 20px;
-        padding: 8px;
+      .main-content {
+        display: none;
       }
 
-      .phone-screen {
-        border-radius: 16px;
+      #ai-chat-sidebar {
+        width: 100vw;
       }
     }
   </style>
 </head>
 <body>
-  <div class="demo-container">
-    <a href="/" class="back-link">← 返回首页</a>
-    <h1>紧凑模式</h1>
-    <p class="subtitle">Compact Mode</p>
-    <p class="description">
-      此模式提供紧凑的聊天界面，适用于桌面端边栏或移动端全屏场景。<br>
-      在桌面端可作为边栏显示，在移动端则自动适配为全屏界面。
-    </p>
+  <!-- 主内容区域 -->
+  <main class="main-content">
+    <h1>欢迎使用 AI 智能助手</h1>
+    <p>这是一个演示页面，展示 AI 聊天组件作为侧边栏的用法。</p>
 
-    <div class="features">
-      <div class="feature">
-        <h3>桌面边栏</h3>
-        <p>固定侧边栏，不遮挡主内容</p>
-      </div>
-      <div class="feature">
-        <h3>移动全屏</h3>
-        <p>移动端自动适配全屏显示</p>
-      </div>
-      <div class="feature">
-        <h3>会话管理</h3>
-        <p>支持多会话切换和管理</p>
-      </div>
-      <div class="feature">
-        <h3>图片上传</h3>
-        <p>支持发送图片消息</p>
-      </div>
+    <div class="card">
+      <h2>功能特点</h2>
+      <ul>
+        <li>侧边栏固定显示，不影响主内容浏览</li>
+        <li>支持会话管理，可创建多个对话</li>
+        <li>实时流式响应，体验流畅</li>
+        <li>支持图片上传、语音输入</li>
+      </ul>
     </div>
-  </div>
-  <div id="app"></div>
-  <script type="module" src="/src/entries/compact.ts"></script>
+
+    <div class="card">
+      <h2>紧凑模式说明</h2>
+      <p>在桌面端，聊天组件显示为右侧边栏，与主内容并列展示。在移动端，组件自动切换为全屏模式，提供完整的聊天体验。</p>
+    </div>
+
+    <div class="card">
+      <h2>响应式设计</h2>
+      <p>当屏幕宽度小于 768px 时，主内容自动隐藏，聊天组件占满整个屏幕，为移动用户提供优化的体验。</p>
+    </div>
+  </main>
+
+  <!-- AI 聊天侧边栏 -->
+  <aside id="ai-chat-sidebar"></aside>
+
+  <script type="module" src="/src/entries/compact-sidebar.ts"></script>
 </body>
 </html>

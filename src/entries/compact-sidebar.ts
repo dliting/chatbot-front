@@ -1,6 +1,6 @@
 /**
- * Floating to Extended mode entry
- * 悬浮模式（→扩展）- 悬浮球，点击打开扩展模式（完整桌面聊天）
+ * Compact Sidebar mode entry
+ * 紧凑侧边栏模式 - 桌面边栏或手机全屏界面
  */
 import { createApp } from 'vue'
 import AIChatbot from '../components/AIChatbot.vue'
@@ -13,19 +13,21 @@ document.head.appendChild(fontLink)
 
 const app = createApp(AIChatbot, {
   config: {
-    position: 'bottom-right',
+    position: 'right',
+    theme: 'light',
+    primaryColor: '#667eea',
+    panelMode: 'sidebar',
     panelWidth: 400,
-    defaultExpanded: false,
-    panelMode: 'dialog', // Always use dialog mode for floating
-    enableImageUpload: true,
+    defaultExpanded: true,
     enableSessionManager: true,
-    maxImageCount: 3,
     labels: {
       title: '智能助手',
-      placeholder: '输入消息...',
       newChat: '新建对话',
+      placeholder: '输入消息...',
     },
+    enableImageUpload: true,
+    maxImageCount: 3,
   },
 })
 
-app.mount('#app')
+app.mount('#ai-chat-sidebar')

@@ -354,28 +354,16 @@
     <div class="mode-section">
       <h2 class="mode-section-title">悬浮模式</h2>
       <div class="mode-cards">
-        <a href="/examples/floating-compact.html" class="mode-card primary">
+        <a href="/examples/floating.html" class="mode-card primary">
           <div class="mode-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/>
               <circle cx="12" cy="12" r="3"/>
             </svg>
           </div>
-          <h2>悬浮 → 紧凑</h2>
-          <p class="subtitle">Floating to Compact (Default)</p>
-          <p class="description">悬浮球，点击打开紧凑面板（默认）</p>
-        </a>
-
-        <a href="/examples/floating-extended.html" class="mode-card">
-          <div class="mode-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="10"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </div>
-          <h2>悬浮 → 扩展</h2>
-          <p class="subtitle">Floating to Extended</p>
-          <p class="description">悬浮球，点击打开完整聊天界面</p>
+          <h2>悬浮模式</h2>
+          <p class="subtitle">Floating Mode</p>
+          <p class="description">页面右下角悬浮球，点击打开聊天对话框</p>
         </a>
       </div>
     </div>
@@ -450,6 +438,12 @@ app.mount('#app')</pre>
         </thead>
         <tbody>
           <tr>
+            <td><code>panelMode</code></td>
+            <td>string</td>
+            <td>'floating'</td>
+            <td>显示模式：floating/sidebar/fullscreen</td>
+          </tr>
+          <tr>
             <td><code>position</code></td>
             <td>string</td>
             <td>'bottom-right'</td>
@@ -492,9 +486,9 @@ app.mount('#app')</pre>
     <!-- Architecture Section -->
     <div class="section">
       <h2>模式说明</h2>
-      <p><strong>扩展模式</strong>：使用 AIChat 组件，桌面端全屏显示，包含左侧会话列表和右侧聊天区域</p>
-      <p><strong>紧凑模式</strong>：使用 AIChat 组件，桌面端可作为边栏，移动端自动适配全屏</p>
-      <p><strong>悬浮模式</strong>：使用 AIChatbot 组件，显示悬浮球，点击后打开扩展或紧凑模式</p>
+      <p><strong>扩展模式</strong>：桌面端全屏显示，包含左侧会话列表和右侧聊天区域</p>
+      <p><strong>紧凑模式</strong>：桌面端作为边栏显示，移动端自动适配全屏</p>
+      <p><strong>悬浮模式</strong>：页面右下角显示悬浮球，点击后打开聊天对话框</p>
     </div>
 
     <!-- Footer -->

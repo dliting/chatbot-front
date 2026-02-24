@@ -15,13 +15,15 @@ const app = createApp(AIChatbot, {
   config: {
     position: 'bottom-right',
     panelWidth: 400,
+    panelMode: 'floating',
     defaultExpanded: false,
     enableImageUpload: true,
-    enableSessionManager: false,
+    enableSessionManager: true,
     maxImageCount: 3,
     labels: {
       title: '智能助手',
       placeholder: '输入消息...',
+      newChat: '新建对话',
     },
   },
 })

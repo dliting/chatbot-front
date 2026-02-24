@@ -3,7 +3,7 @@
  * 使用通用 AI 聊天组件（独立模式）
  */
 import { createApp } from 'vue'
-import AIChat from './components/AIChat.vue'
+import AIChat from '../components/AIChat.vue'
 
 // Google Fonts - Noto Sans SC
 const fontLink = document.createElement('link')
