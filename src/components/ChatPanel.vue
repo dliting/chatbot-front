@@ -6,6 +6,18 @@
       :style="panelStyle"
       ref="panelRef"
     >
+      <!-- Resize handles (only for floating mode - all 8 directions) -->
+      <template v-if="isFloating && isResizable">
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--n" @mousedown="startResize($event, 'n')"></div>
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--s" @mousedown="startResize($event, 's')"></div>
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--e" @mousedown="startResize($event, 'e')"></div>
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--w" @mousedown="startResize($event, 'w')"></div>
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--ne" @mousedown="startResize($event, 'ne')"></div>
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--nw" @mousedown="startResize($event, 'nw')"></div>
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--se" @mousedown="startResize($event, 'se')"></div>
+        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--sw" @mousedown="startResize($event, 'sw')"></div>
+      </template>
+
       <!-- Header (Draggable) -->
       <div
         class="chatbot-panel__header"
@@ -46,13 +58,6 @@
           </button>
         </div>
       </div>
-
-      <!-- Resize handles (only for floating mode) -->
-      <template v-if="isFloating && isResizable">
-        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--e" @mousedown="startResize($event, 'e')"></div>
-        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--s" @mousedown="startResize($event, 's')"></div>
-        <div class="chatbot-panel__resize-handle chatbot-panel__resize-handle--se" @mousedown="startResize($event, 'se')"></div>
-      </template>
 
       <!-- Body -->
       <div class="chatbot-panel__body">
@@ -122,7 +127,7 @@ const isDragging = ref(false)
 const isResizing = ref(false)
 const dragOffset = ref({ x: 0, y: 0 })
 const resizeDirection = ref('')
-const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0 })
+const resizeStart = ref({ x: 0, y: 0, width: 0, height: 0, panelX: 0, panelY: 0 })
 
 // Computed
 const isDraggable = computed(() => props.draggable && isFloating.value)
@@ -245,6 +250,8 @@ const savePosition = () => {
 
 const startDrag = (e: MouseEvent) => {
   if (!isDraggable.value) return
+  // Don't drag if clicking on action buttons
+  if ((e.target as HTMLElement).closest('.chatbot-panel__actions')) return
   if (!(e.target as HTMLElement).closest('.chatbot-panel__header')) return
 
   isDragging.value = true
@@ -291,6 +298,8 @@ const startResize = (e: MouseEvent, direction: string) => {
     y: e.clientY,
     width: panelState.value.width,
     height: panelState.value.height,
+    panelX: panelState.value.x,
+    panelY: panelState.value.y,
   }
 
   document.addEventListener('mousemove', onResize)
@@ -307,20 +316,39 @@ const onResize = (e: MouseEvent) => {
 
   let newWidth = resizeStart.value.width
   let newHeight = resizeStart.value.height
+  let newX = resizeStart.value.panelX
+  let newY = resizeStart.value.panelY
 
+  // Handle horizontal resize (e, w directions)
   if (resizeDirection.value.includes('e')) {
     newWidth = Math.max(props.minWidth, resizeStart.value.width + deltaX)
   }
+  if (resizeDirection.value.includes('w')) {
+    const maxDelta = resizeStart.value.width - props.minWidth
+    const actualDelta = Math.min(deltaX, maxDelta)
+    newWidth = resizeStart.value.width - actualDelta
+    newX = resizeStart.value.panelX + actualDelta
+  }
+
+  // Handle vertical resize (s, n directions)
   if (resizeDirection.value.includes('s')) {
     newHeight = Math.max(props.minHeight, resizeStart.value.height + deltaY)
   }
+  if (resizeDirection.value.includes('n')) {
+    const maxDelta = resizeStart.value.height - props.minHeight
+    const actualDelta = Math.min(deltaY, maxDelta)
+    newHeight = resizeStart.value.height - actualDelta
+    newY = resizeStart.value.panelY + actualDelta
+  }
 
   // Constrain to viewport
-  const maxWidth = window.innerWidth - panelState.value.x
-  const maxHeight = window.innerHeight - panelState.value.y
+  const maxWidth = window.innerWidth - newX
+  const maxHeight = window.innerHeight - newY
 
   panelState.value.width = Math.min(newWidth, maxWidth)
   panelState.value.height = Math.min(newHeight, maxHeight)
+  panelState.value.x = Math.max(0, newX)
+  panelState.value.y = Math.max(0, newY)
 }
 
 const stopResize = () => {
@@ -446,10 +474,11 @@ onUnmounted(() => {
     }
   }
 
-  // Floating mode (draggable & resizable)
+  // Floating mode (draggable & resizable) - ROUNDED CORNERS
   &--floating {
     max-height: none;
     resize: none; // We use custom resize handles
+    border-radius: var(--chatbot-border-radius, 12px) !important;
   }
 
   // Theme
@@ -475,6 +504,7 @@ onUnmounted(() => {
     border-bottom: 1px solid var(--chatbot-panel-border);
     background-color: var(--chatbot-panel-bg);
     flex-shrink: 0;
+    border-radius: var(--chatbot-border-radius, 12px) var(--chatbot-border-radius, 12px) 0 0;
 
     &--draggable {
       cursor: move;
@@ -526,26 +556,60 @@ onUnmounted(() => {
     }
   }
 
-  // Resize handles
+  // Resize handles - all 8 directions
   &__resize-handle {
     position: absolute;
-    z-index: 1;
+    z-index: 10;
     background: transparent;
 
-    &--e {
+    // Edges
+    &--n {
       top: 0;
-      right: 0;
+      left: 8px;
+      right: 8px;
+      height: 8px;
+      cursor: ns-resize;
+    }
+
+    &--s {
       bottom: 0;
+      left: 8px;
+      right: 8px;
+      height: 8px;
+      cursor: ns-resize;
+    }
+
+    &--e {
+      top: 8px;
+      right: 0;
+      bottom: 8px;
       width: 8px;
       cursor: ew-resize;
     }
 
-    &--s {
+    &--w {
+      top: 8px;
       left: 0;
+      bottom: 8px;
+      width: 8px;
+      cursor: ew-resize;
+    }
+
+    // Corners
+    &--ne {
+      top: 0;
       right: 0;
-      bottom: 0;
-      height: 8px;
-      cursor: ns-resize;
+      width: 16px;
+      height: 16px;
+      cursor: nesw-resize;
+    }
+
+    &--nw {
+      top: 0;
+      left: 0;
+      width: 16px;
+      height: 16px;
+      cursor: nwse-resize;
     }
 
     &--se {
@@ -569,6 +633,14 @@ onUnmounted(() => {
         opacity: 0.5;
       }
     }
+
+    &--sw {
+      left: 0;
+      bottom: 0;
+      width: 16px;
+      height: 16px;
+      cursor: nesw-resize;
+    }
   }
 
   &__body {
@@ -577,6 +649,7 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     min-height: 0;
+    border-radius: 0 0 var(--chatbot-border-radius, 12px) var(--chatbot-border-radius, 12px);
   }
 }
 
