@@ -559,7 +559,7 @@ onUnmounted(() => {
   // Resize handles - all 8 directions
   &__resize-handle {
     position: absolute;
-    z-index: 10;
+    z-index: 100;
     background: transparent;
 
     // Edges
