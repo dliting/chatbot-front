@@ -12,6 +12,7 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
+        api: 'modern-compiler',
         additionalData: `
           @use "@/styles/base/variables.scss" as *;
         `,
@@ -25,9 +26,6 @@ export default defineConfig({
         main: resolve(__dirname, 'index.html'),
         extended: resolve(__dirname, 'examples/extended.html'),
         compact: resolve(__dirname, 'examples/compact.html'),
-        'floating-compact': resolve(__dirname, 'examples/floating-compact.html'),
-        'floating-extended': resolve(__dirname, 'examples/floating-extended.html'),
-        // Keep old entries for compatibility
         fullscreen: resolve(__dirname, 'examples/fullscreen.html'),
         floating: resolve(__dirname, 'examples/floating.html'),
         sidebar: resolve(__dirname, 'examples/sidebar.html'),

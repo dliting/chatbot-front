@@ -47,10 +47,13 @@
       <!-- Text input -->
       <textarea
         ref="textareaRef"
+        id="chatbot-input-field"
         v-model="inputText"
         :placeholder="placeholder"
         rows="1"
+        name="chatbot-input"
         class="chatbot-input__field"
+        aria-label="Chat message input"
         @keydown="handleKeydown"
         @input="handleInput"
       ></textarea>
