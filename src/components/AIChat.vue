@@ -764,7 +764,7 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 12px;
+  margin: 0 auto 12px auto;
 
   svg {
     width: 20px;
