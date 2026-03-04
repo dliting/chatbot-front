@@ -1,5 +1,8 @@
 <template>
-  <div class="doubao-chat" :class="{ 'doubao-chat--internal': mode === 'internal' }">
+  <div class="doubao-chat" :class="{
+  'doubao-chat--internal': mode === 'internal',
+  'doubao-chat--floating': mode === 'floating'
+  }">
     <!-- Header -->
     <header v-if="!hideHeader" class="doubao-header">
       <h1 class="doubao-title">{{ config.labels?.title || '智能助手' }}</h1>
@@ -208,8 +211,8 @@ import { createMockUploadEndpoint } from '@/utils/upload'
 // Props
 interface Props {
   config?: ChatbotConfig
-  // 内嵌模式支持
-  mode?: 'standalone' | 'internal'
+  // 模式支持：standalone（独立窗口）, internal（内嵌）, floating（悬浮）
+  mode?: 'standalone' | 'internal' | 'floating'
   hideHeader?: boolean
   hideWelcome?: boolean
   hideQuickActions?: boolean
@@ -568,11 +571,45 @@ defineExpose({
     background: transparent;
 
     .doubao-container {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
       padding: 16px;
     }
 
     .doubao-input-area {
       position: relative;
+      margin-top: auto;
+      border-top: 1px solid rgba(102, 126, 234, 0.1);
+    }
+
+    .doubao-menu-panel {
+      position: absolute;
+      bottom: 70px;
+      left: 0;
+      right: 0;
+      margin: 0;
+    }
+  }
+
+  // 悬浮模式样式
+  &--floating {
+    height: 100%;
+    background: transparent;
+    overflow: hidden;
+
+    .doubao-container {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+
+    .doubao-input-area {
+      position: relative !important;
+      bottom: auto !important;
+      margin-top: auto;
       border-top: 1px solid rgba(102, 126, 234, 0.1);
     }
 
@@ -685,9 +722,12 @@ defineExpose({
 
 .doubao-quick-actions {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 12px;
   margin-top: 24px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .doubao-quick-action {
