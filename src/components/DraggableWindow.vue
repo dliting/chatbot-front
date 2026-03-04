@@ -4,18 +4,6 @@
     :style="windowStyle"
     ref="windowRef"
   >
-    <!-- Resize handles (all 8 directions) -->
-    <template v-if="resizable">
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--n" @mousedown="startResize($event, 'n')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--s" @mousedown="startResize($event, 's')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--e" @mousedown="startResize($event, 'e')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--w" @mousedown="startResize($event, 'w')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--ne" @mousedown="startResize($event, 'ne')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--nw" @mousedown="startResize($event, 'nw')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--se" @mousedown="startResize($event, 'se')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--sw" @mousedown="startResize($event, 'sw')"></div>
-    </template>
-
     <!-- Header (Draggable area) -->
     <div
       v-if="$slots.header"
@@ -31,6 +19,23 @@
       <slot></slot>
     </div>
   </div>
+
+  <!-- Resize handles - Teleported to body for independent stacking context -->
+  <Teleport to="body" v-if="resizable && modelValue">
+    <div
+      class="draggable-window__resize-overlay"
+      :style="overlayStyle"
+    >
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--n" @mousedown="startResize($event, 'n')"></div>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--s" @mousedown="startResize($event, 's')"></div>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--e" @mousedown="startResize($event, 'e')"></div>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--w" @mousedown="startResize($event, 'w')"></div>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--ne" @mousedown="startResize($event, 'ne')"></div>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--nw" @mousedown="startResize($event, 'nw')"></div>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--se" @mousedown="startResize($event, 'se')"></div>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--sw" @mousedown="startResize($event, 'sw')"></div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -116,6 +121,17 @@ const windowStyle = computed(() => ({
   width: `${windowState.value.width}px`,
   height: `${windowState.value.height}px`,
   zIndex: props.zIndex,
+}))
+
+// Overlay style for resize handles (teleported to body)
+const overlayStyle = computed(() => ({
+  position: 'fixed',
+  left: `${windowState.value.x}px`,
+  top: `${windowState.value.y}px`,
+  width: `${windowState.value.width}px`,
+  height: `${windowState.value.height}px`,
+  zIndex: (parseInt(String(props.zIndex)) + 1).toString(),
+  pointerEvents: 'none',
 }))
 
 // Methods
@@ -326,7 +342,7 @@ defineExpose({
   overflow: visible;
 
   &--rounded {
-    border-radius: 12px;
+    border-radius: 20px;
   }
 
   &--light {
@@ -354,6 +370,12 @@ defineExpose({
     border-bottom: 1px solid var(--dw-border);
     background-color: var(--dw-bg);
     flex-shrink: 0;
+    width: 100%;
+    box-sizing: border-box;
+
+    .draggable-window--rounded & {
+      border-radius: 20px 20px 0 0;
+    }
 
     &--draggable {
       cursor: move;
@@ -364,17 +386,28 @@ defineExpose({
     flex: 1;
     overflow: auto;
     min-height: 0;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
 
     .draggable-window--rounded & {
-      border-radius: 0 0 12px 12px;
+      border-radius: 0 0 20px 20px;
     }
+  }
+
+  // Resize overlay (teleported to body for independent stacking context)
+  &__resize-overlay {
+    position: fixed;
+    pointer-events: none;
   }
 
   // Resize handles
   &__resize-handle {
     position: absolute;
-    z-index: 10;
+    z-index: 1;
     background: transparent;
+    pointer-events: auto;
 
     &--n {
       top: 0;
