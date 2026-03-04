@@ -365,13 +365,12 @@ defineExpose({
   &__header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 16px;
     border-bottom: 1px solid var(--dw-border);
     background-color: var(--dw-bg);
     flex-shrink: 0;
     width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
 
     .draggable-window--rounded & {
       border-radius: 20px 20px 0 0;
@@ -379,6 +378,14 @@ defineExpose({
 
     &--draggable {
       cursor: move;
+    }
+
+    // Reset child header styles when used as slot content
+    :deep(.chat-header) {
+      padding: 16px;
+      border-bottom: none;
+      background: transparent;
+      border-radius: 20px 20px 0 0;
     }
   }
 
