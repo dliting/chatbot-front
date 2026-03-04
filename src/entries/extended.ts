@@ -1,14 +1,15 @@
 /**
  * Extended mode entry
- * 扩展模式 - 桌面端全屏聊天界面（左侧会话列表 + 右侧聊天区）
+ * 扩展模式 - 桌面端聊天界面（左侧会话列表 + 右侧聊天区）
  */
 import { createApp } from 'vue'
 import AIChat from '../components/AIChat.vue'
+import '@/styles/chatbot.scss'
 
-// Google Fonts - Noto Sans SC
+// Local Fonts - Noto Sans SC (for offline deployment)
 const fontLink = document.createElement('link')
 fontLink.rel = 'stylesheet'
-fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap'
+fontLink.href = '/fonts/noto-sans-sc.css'
 document.head.appendChild(fontLink)
 
 const app = createApp(AIChat, {
