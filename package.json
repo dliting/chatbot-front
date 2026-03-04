@@ -13,9 +13,9 @@
   ],
   "exports": {
     ".": {
+      "types": "./dist/types/index.d.ts",
       "import": "./dist/ai-chatbot.es.js",
-      "require": "./dist/ai-chatbot.umd.js",
-      "types": "./dist/types/index.d.ts"
+      "require": "./dist/ai-chatbot.umd.js"
     },
     "./style.css": "./dist/style.css"
   },

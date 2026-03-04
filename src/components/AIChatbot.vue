@@ -42,7 +42,7 @@
 
       <!-- AIChat Component (Internal Mode) -->
       <AIChat
-        :mode="'internal'"
+        :mode="chatMode"
         :hide-header="true"
         :hide-welcome="state.ui.panelMode === 'dialog'"
         :hide-quick-actions="state.ui.panelMode === 'dialog'"
@@ -100,6 +100,10 @@ const {
 // Computed
 const ballSize = computed(() => (state.ui.isMobile ? 48 : 56))
 const unreadCount = computed(() => 1) // Simplified badge
+// Determine the chat mode based on panel mode - only floating uses floating style, others use internal
+const chatMode = computed(() => {
+  return state.ui.panelMode === 'floating' ? 'floating' : 'internal'
+})
 
 // Methods
 const toggleTheme = () => {

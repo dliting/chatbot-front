@@ -5,10 +5,10 @@
 import { createApp } from 'vue'
 import AIChat from './components/AIChat.vue'
 
-// Google Fonts - Noto Sans SC
+// Local Fonts - Noto Sans SC (for offline deployment)
 const fontLink = document.createElement('link')
 fontLink.rel = 'stylesheet'
-fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap'
+fontLink.href = '/fonts/noto-sans-sc.css'
 document.head.appendChild(fontLink)
 
 const app = createApp(AIChat, {

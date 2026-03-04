@@ -6,6 +6,9 @@ import type { Position, Theme, Locale } from './index'
 import type { PanelMode } from './index'
 
 export interface ChatbotConfig {
+  // Chat mode (determines layout and behavior)
+  chatMode?: 'extended' | 'compact' | 'floating' | 'fullscreen'
+
   // Layout configuration
   position?: Position
   panelWidth?: number
@@ -66,6 +69,7 @@ export interface ChatbotLabels {
   placeholder: string
   send: string
   newChat: string
+  history: string
   clearAll: string
   delete: string
   copy: string
@@ -83,6 +87,7 @@ export const defaultChatbotLabels: ChatbotLabels = {
   placeholder: 'Type your message...',
   send: 'Send',
   newChat: 'New Chat',
+  history: 'History',
   clearAll: 'Clear All',
   delete: 'Delete',
   copy: 'Copy',
@@ -96,6 +101,9 @@ export const defaultChatbotLabels: ChatbotLabels = {
 }
 
 export const defaultChatbotConfig: Required<ChatbotConfig> = {
+  // Chat mode
+  chatMode: 'floating',
+
   // Layout
   position: 'bottom-right',
   panelWidth: 400,

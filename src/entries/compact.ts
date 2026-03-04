@@ -4,22 +4,25 @@
  */
 import { createApp } from 'vue'
 import AIChat from '../components/AIChat.vue'
+import '@/styles/chatbot.scss'
 
-// Google Fonts - Noto Sans SC
+// Local Fonts - Noto Sans SC (for offline deployment)
 const fontLink = document.createElement('link')
 fontLink.rel = 'stylesheet'
-fontLink.href = 'https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap'
+fontLink.href = '/fonts/noto-sans-sc.css'
 document.head.appendChild(fontLink)
 
 const app = createApp(AIChat, {
   config: {
+    chatMode: 'compact',
+    enableImageUpload: true,
+    maxImageCount: 3,
     labels: {
       title: '智能助手',
       placeholder: '输入消息...',
       newChat: '新建对话',
+      history: '历史对话',
     },
-    enableImageUpload: true,
-    maxImageCount: 3,
   },
 })
 
