@@ -736,7 +736,7 @@ defineExpose({
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 16px;
   padding: 16px;
-  text-align: left;
+  text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   animation: fadeInUp 0.6s ease backwards;
