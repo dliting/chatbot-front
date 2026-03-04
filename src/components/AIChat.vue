@@ -158,6 +158,7 @@ import { defaultChatbotConfig } from '@/types/config'
 import type { ChatMode } from '@/types'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useChatView } from '@/composables/useChatView'
+import { useApiClient } from '@/composables/useApiClient'
 import { createMockStream } from '@/utils/stream'
 import { createMockUploadEndpoint } from '@/utils/upload'
 
@@ -207,6 +208,7 @@ interface Props {
   hideWelcome?: boolean
   hideQuickActions?: boolean
   hideInputArea?: boolean
+  apiClient?: ReturnType<typeof useApiClient>
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -309,18 +311,33 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
   addMessage(aiMessage)
   setStreamingMessage(aiMessage.id)
 
-  // Simulate streaming response
-  const mockContent = generateMockResponse(content)
-  const stream = createMockStream(mockContent, 30)
-
   try {
-    for await (const event of stream) {
-      if (event.type === 'token' && event.content) {
-        aiMessage.content += event.content
-        updateMessage(aiMessage.id, { content: aiMessage.content })
-      } else if (event.type === 'end') {
-        aiMessage.status = 'sent'
-        updateMessage(aiMessage.id, { status: 'sent' })
+    // Use API client if provided, otherwise use mock
+    if (props.apiClient) {
+      // Use real API with streaming
+      const stream = props.apiClient.streamChat(sessionId, content, images)
+      for await (const event of stream) {
+        if (event.type === 'token' && event.content) {
+          aiMessage.content += event.content
+          updateMessage(aiMessage.id, { content: aiMessage.content })
+        } else if (event.type === 'end') {
+          aiMessage.status = 'sent'
+          updateMessage(aiMessage.id, { status: 'sent' })
+        }
+      }
+    } else {
+      // Simulate streaming response (mock)
+      const mockContent = generateMockResponse(content)
+      const stream = createMockStream(mockContent, 30)
+
+      for await (const event of stream) {
+        if (event.type === 'token' && event.content) {
+          aiMessage.content += event.content
+          updateMessage(aiMessage.id, { content: aiMessage.content })
+        } else if (event.type === 'end') {
+          aiMessage.status = 'sent'
+          updateMessage(aiMessage.id, { status: 'sent' })
+        }
       }
     }
   } catch (error) {

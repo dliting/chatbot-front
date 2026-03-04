@@ -37,6 +37,7 @@ describe('AIChat', () => {
 
   beforeEach(() => {
     mockConfig = {
+      chatMode: 'extended',
       labels: {
         title: '智能助手',
         placeholder: '输入消息...',
@@ -72,10 +73,10 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      expect(wrapper.find('.doubao-chat').exists()).toBe(true)
-      expect(wrapper.find('.doubao-header').exists()).toBe(true)
-      expect(wrapper.find('.doubao-container').exists()).toBe(true)
-      expect(wrapper.find('.doubao-input-area').exists()).toBe(true)
+      expect(wrapper.find('.chat-content').exists()).toBe(true)
+      expect(wrapper.find('.chat-header').exists()).toBe(true)
+      expect(wrapper.find('.chat-content').exists()).toBe(true)
+      expect(wrapper.find('.chat-content__input-area').exists()).toBe(true)
     })
 
     it('should render header with correct title', () => {
@@ -83,7 +84,7 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const title = wrapper.find('.doubao-title')
+      const title = wrapper.find('.chat-header__title')
       expect(title.exists()).toBe(true)
       expect(title.text()).toBe('智能助手')
     })
@@ -94,7 +95,7 @@ describe('AIChat', () => {
         props: { config: customConfig },
       })
 
-      expect(wrapper.find('.doubao-title').text()).toBe('豆包助手')
+      expect(wrapper.find('.chat-header__title').text()).toBe('豆包助手')
     })
 
     it('should render header button', () => {
@@ -102,7 +103,7 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const headerBtn = wrapper.find('.doubao-header-btn')
+      const headerBtn = wrapper.find('.chat-header-btn')
       expect(headerBtn.exists()).toBe(true)
     })
 
@@ -111,9 +112,9 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      expect(wrapper.find('.doubao-menu-btn').exists()).toBe(true)
-      expect(wrapper.find('.doubao-input').exists()).toBe(true)
-      expect(wrapper.find('.doubao-voice-btn').exists()).toBe(true)
+      expect(wrapper.find('.chat-input__menu-btn').exists()).toBe(true)
+      expect(wrapper.find('.chat-input__field').exists()).toBe(true)
+      expect(wrapper.find('.chat-input__voice-btn').exists()).toBe(true)
     })
 
     it('should render send button when there is text input', async () => {
@@ -121,13 +122,13 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Hello')
 
       await nextTick()
 
-      expect(wrapper.find('.doubao-send-btn').exists()).toBe(true)
-      expect(wrapper.find('.doubao-voice-btn').exists()).toBe(false)
+      expect(wrapper.find('.chat-input__send-btn').exists()).toBe(true)
+      expect(wrapper.find('.chat-input__voice-btn').exists()).toBe(false)
     })
   })
 
@@ -137,10 +138,10 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      expect(wrapper.find('.doubao-welcome').exists()).toBe(true)
-      expect(wrapper.find('.doubao-avatar').exists()).toBe(true)
-      expect(wrapper.find('.doubao-welcome-title').exists()).toBe(true)
-      expect(wrapper.find('.doubao-welcome-subtitle').exists()).toBe(true)
+      expect(wrapper.find('.chat-content__welcome').exists()).toBe(true)
+      expect(wrapper.find('.chat-content__avatar').exists()).toBe(true)
+      expect(wrapper.find('.chat-content__welcome-title').exists()).toBe(true)
+      expect(wrapper.find('.chat-content__welcome-subtitle').exists()).toBe(true)
     })
 
     it('should render quick action cards', () => {
@@ -148,11 +149,11 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const quickActions = wrapper.findAll('.doubao-quick-action')
+      const quickActions = wrapper.findAll('.chat-content__quick-action')
       expect(quickActions.length).toBe(4)
 
       // Check titles
-      const titles = quickActions.map(a => a.find('.doubao-quick-action-title').text())
+      const titles = quickActions.map(a => a.find('.chat-content__quick-action-title').text())
       expect(titles).toContain('写邮件')
       expect(titles).toContain('总结文章')
       expect(titles).toContain('翻译')
@@ -165,15 +166,15 @@ describe('AIChat', () => {
       })
 
       // Send a message
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Hello')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
       await nextTick()
 
       // Welcome should be hidden
-      expect(wrapper.find('.doubao-welcome').exists()).toBe(false)
+      expect(wrapper.find('.chat-content__welcome').exists()).toBe(false)
     })
   })
 
@@ -183,12 +184,12 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const quickActions = wrapper.findAll('.doubao-quick-action')
+      const quickActions = wrapper.findAll('.chat-content__quick-action')
       await quickActions[0].trigger('click')
       await nextTick()
 
       // Check that a message was sent
-      const messages = wrapper.findAll('.doubao-message')
+      const messages = wrapper.findAll('.chat-content__message')
       expect(messages.length).toBeGreaterThan(0)
     })
 
@@ -197,7 +198,7 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const icons = wrapper.findAll('.doubao-quick-action-icon')
+      const icons = wrapper.findAll('.chat-content__quick-action-icon')
       expect(icons.length).toBe(4)
 
       // Each icon should have an SVG inside
@@ -213,7 +214,7 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Test message')
 
       expect(input.element.value).toBe('Test message')
@@ -224,14 +225,14 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input')
+      const input = wrapper.find('.chat-input__field')
       await input.setValue('Test message')
 
       await input.trigger('keydown', { key: 'Enter' })
       await nextTick()
 
       // Message should be in the list
-      const messages = wrapper.findAll('.doubao-message')
+      const messages = wrapper.findAll('.chat-content__message')
       expect(messages.length).toBeGreaterThan(0)
     })
 
@@ -240,16 +241,16 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const initialMessageCount = wrapper.findAll('.doubao-message').length
+      const initialMessageCount = wrapper.findAll('.chat-content__message').length
 
-      const input = wrapper.find('.doubao-input')
+      const input = wrapper.find('.chat-input__field')
       await input.setValue('Test message')
 
       await input.trigger('keydown', { key: 'Enter', shiftKey: true })
       await nextTick()
 
       // Message count should not change
-      const finalMessageCount = wrapper.findAll('.doubao-message').length
+      const finalMessageCount = wrapper.findAll('.chat-content__message').length
       expect(finalMessageCount).toBe(initialMessageCount)
     })
 
@@ -258,10 +259,10 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Test message')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
       await nextTick()
 
@@ -273,7 +274,7 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       const initialHeight = input.element.style.height
 
       // Type a long message
@@ -294,14 +295,14 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Hello, AI!')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
       await nextTick()
 
-      const userMessages = wrapper.findAll('.doubao-message.user')
+      const userMessages = wrapper.findAll('.chat-content__message.user')
       expect(userMessages.length).toBeGreaterThan(0)
       expect(userMessages[0].text()).toContain('Hello, AI!')
     })
@@ -311,17 +312,17 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Hello')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
 
       // Wait for streaming response
       await new Promise(resolve => setTimeout(resolve, 500))
       await nextTick()
 
-      const aiMessages = wrapper.findAll('.doubao-message.assistant')
+      const aiMessages = wrapper.findAll('.chat-content__message.assistant')
       expect(aiMessages.length).toBeGreaterThan(0)
     })
 
@@ -330,16 +331,16 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Hello')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
 
       await nextTick()
 
       // Should show typing indicator initially
-      const typingIndicator = wrapper.find('.doubao-typing')
+      const typingIndicator = wrapper.find('.chat-content__typing')
       expect(typingIndicator.exists()).toBe(true)
     })
 
@@ -348,15 +349,15 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Test')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
       await nextTick()
 
-      const userMessage = wrapper.find('.doubao-message.user')
-      expect(userMessage.find('.doubao-message-avatar').exists()).toBe(true)
+      const userMessage = wrapper.find('.chat-content__message.user')
+      expect(userMessage.find('.chat-content__message-avatar').exists()).toBe(true)
     })
 
     it('should show assistant avatar in assistant message', async () => {
@@ -364,17 +365,17 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Test')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
 
       await new Promise(resolve => setTimeout(resolve, 100))
       await nextTick()
 
-      const aiMessage = wrapper.find('.doubao-message.assistant')
-      expect(aiMessage.find('.doubao-message-avatar').exists()).toBe(true)
+      const aiMessage = wrapper.find('.chat-content__message.assistant')
+      expect(aiMessage.find('.chat-content__message-avatar').exists()).toBe(true)
     })
   })
 
@@ -384,11 +385,11 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const menuBtn = wrapper.find('.doubao-menu-btn')
+      const menuBtn = wrapper.find('.chat-input__menu-btn')
       await menuBtn.trigger('click')
       await nextTick()
 
-      expect(wrapper.find('.doubao-menu-panel').exists()).toBe(true)
+      expect(wrapper.find('.chat-input__menu').exists()).toBe(true)
     })
 
     it('should hide menu panel when clicking outside', async () => {
@@ -398,17 +399,17 @@ describe('AIChat', () => {
       })
 
       // Open menu
-      const menuBtn = wrapper.find('.doubao-menu-btn')
+      const menuBtn = wrapper.find('.chat-input__menu-btn')
       await menuBtn.trigger('click')
       await nextTick()
 
-      expect(wrapper.find('.doubao-menu-panel').exists()).toBe(true)
+      expect(wrapper.find('.chat-input__menu').exists()).toBe(true)
 
       // Click outside
       document.body.click()
       await nextTick()
 
-      expect(wrapper.find('.doubao-menu-panel').exists()).toBe(false)
+      expect(wrapper.find('.chat-input__menu').exists()).toBe(false)
     })
 
     it('should render menu items correctly', async () => {
@@ -416,14 +417,14 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const menuBtn = wrapper.find('.doubao-menu-btn')
+      const menuBtn = wrapper.find('.chat-input__menu-btn')
       await menuBtn.trigger('click')
       await nextTick()
 
-      const menuItems = wrapper.findAll('.doubao-menu-item')
+      const menuItems = wrapper.findAll('.chat-input__menu-item')
       expect(menuItems.length).toBe(4)
 
-      const labels = menuItems.map(i => i.find('.doubao-menu-item-label').text())
+      const labels = menuItems.map(i => i.find('.chat-input__menu-item-label').text())
       expect(labels).toContain('图片')
       expect(labels).toContain('文档')
       expect(labels).toContain('文件')
@@ -437,11 +438,11 @@ describe('AIChat', () => {
 
       const fileInputSpy = vi.spyOn(wrapper.vm as any, 'handleMenuAction')
 
-      const menuBtn = wrapper.find('.doubao-menu-btn')
+      const menuBtn = wrapper.find('.chat-input__menu-btn')
       await menuBtn.trigger('click')
       await nextTick()
 
-      const imageMenuItem = wrapper.findAll('.doubao-menu-item')[0]
+      const imageMenuItem = wrapper.findAll('.chat-input__menu-item')[0]
       await imageMenuItem.trigger('click')
       await nextTick()
 
@@ -471,7 +472,7 @@ describe('AIChat', () => {
       await nextTick()
 
       // Should show file preview
-      expect(wrapper.find('.doubao-file-preview').exists()).toBe(true)
+      expect(wrapper.find('.chat-input__preview').exists()).toBe(true)
     })
 
     it('should show send button when image is selected', async () => {
@@ -483,8 +484,8 @@ describe('AIChat', () => {
       ;(wrapper.vm as any).selectedImages = ['https://example.com/test.jpg']
       await nextTick()
 
-      expect(wrapper.find('.doubao-send-btn').exists()).toBe(true)
-      expect(wrapper.find('.doubao-voice-btn').exists()).toBe(false)
+      expect(wrapper.find('.chat-input__send-btn').exists()).toBe(true)
+      expect(wrapper.find('.chat-input__voice-btn').exists()).toBe(false)
     })
 
     it('should remove image preview when clicking remove button', async () => {
@@ -496,13 +497,13 @@ describe('AIChat', () => {
       ;(wrapper.vm as any).selectedImages = ['https://example.com/test.jpg']
       await nextTick()
 
-      expect(wrapper.find('.doubao-file-preview').exists()).toBe(true)
+      expect(wrapper.find('.chat-input__preview').exists()).toBe(true)
 
-      const removeBtn = wrapper.find('.doubao-file-preview-remove')
+      const removeBtn = wrapper.find('.chat-input__preview-remove')
       await removeBtn.trigger('click')
       await nextTick()
 
-      expect(wrapper.find('.doubao-file-preview').exists()).toBe(false)
+      expect(wrapper.find('.chat-input__preview').exists()).toBe(false)
     })
   })
 
@@ -512,11 +513,11 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const voiceBtn = wrapper.find('.doubao-voice-btn')
+      const voiceBtn = wrapper.find('.chat-input__voice-btn')
       await voiceBtn.trigger('click')
       await nextTick()
 
-      expect(wrapper.find('.doubao-voice-overlay').exists()).toBe(true)
+      expect(wrapper.find('.chat-input__voice-overlay').exists()).toBe(true)
     })
 
     it('should add recording class to voice button', async () => {
@@ -524,7 +525,7 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const voiceBtn = wrapper.find('.doubao-voice-btn') as any
+      const voiceBtn = wrapper.find('.chat-input__voice-btn') as any
       await voiceBtn.trigger('click')
       await nextTick()
 
@@ -536,7 +537,7 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const voiceBtn = wrapper.find('.doubao-voice-btn')
+      const voiceBtn = wrapper.find('.chat-input__voice-btn')
       await voiceBtn.trigger('click')
       await nextTick()
 
@@ -545,7 +546,7 @@ describe('AIChat', () => {
       await nextTick()
 
       // Should have a voice message
-      const messages = wrapper.findAll('.doubao-message')
+      const messages = wrapper.findAll('.chat-content__message')
       expect(messages.length).toBeGreaterThan(0)
     })
 
@@ -554,17 +555,17 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const voiceBtn = wrapper.find('.doubao-voice-btn')
+      const voiceBtn = wrapper.find('.chat-input__voice-btn')
       await voiceBtn.trigger('click')
       await nextTick()
 
-      const cancelBtn = wrapper.find('.doubao-voice-cancel')
+      const cancelBtn = wrapper.find('.chat-input__voice-cancel')
       await cancelBtn.trigger('click')
       await nextTick()
 
-      expect(wrapper.find('.doubao-voice-overlay').exists()).toBe(false)
+      expect(wrapper.find('.chat-input__voice-overlay').exists()).toBe(false)
 
-      const voiceBtnAfter = wrapper.find('.doubao-voice-btn') as any
+      const voiceBtnAfter = wrapper.find('.chat-input__voice-btn') as any
       expect(voiceBtnAfter.classes()).not.toContain('recording')
     })
 
@@ -573,15 +574,15 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const voiceBtn = wrapper.find('.doubao-voice-btn')
+      const voiceBtn = wrapper.find('.chat-input__voice-btn')
       await voiceBtn.trigger('click')
       await nextTick()
 
-      const overlay = wrapper.find('.doubao-voice-overlay')
+      const overlay = wrapper.find('.chat-input__voice-overlay')
       await overlay.trigger('click')
       await nextTick()
 
-      expect(wrapper.find('.doubao-voice-overlay').exists()).toBe(false)
+      expect(wrapper.find('.chat-input__voice-overlay').exists()).toBe(false)
     })
   })
 
@@ -591,14 +592,14 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('User message')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
       await nextTick()
 
-      const userMessage = wrapper.find('.doubao-message.user')
+      const userMessage = wrapper.find('.chat-content__message.user')
       expect(userMessage.exists()).toBe(true)
       expect(userMessage.text()).toContain('User message')
     })
@@ -608,16 +609,16 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Test')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
 
       await new Promise(resolve => setTimeout(resolve, 100))
       await nextTick()
 
-      const aiMessage = wrapper.find('.doubao-message.assistant')
+      const aiMessage = wrapper.find('.chat-content__message.assistant')
       expect(aiMessage.exists()).toBe(true)
     })
 
@@ -630,16 +631,16 @@ describe('AIChat', () => {
       ;(wrapper.vm as any).selectedImages = ['https://example.com/test.jpg']
       await nextTick()
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Look at this image')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
       await nextTick()
 
-      const userMessage = wrapper.find('.doubao-message.user')
-      expect(userMessage.find('.doubao-message-files').exists()).toBe(true)
-      expect(userMessage.find('.doubao-message-image').exists()).toBe(true)
+      const userMessage = wrapper.find('.chat-content__message.user')
+      expect(userMessage.find('.chat-content__message-files').exists()).toBe(true)
+      expect(userMessage.find('.chat-content__message-image').exists()).toBe(true)
     })
   })
 
@@ -653,19 +654,19 @@ describe('AIChat', () => {
       ;(wrapper.vm as any).selectedImages = ['https://example.com/test.jpg']
       await nextTick()
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Test')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
       await nextTick()
 
-      const messageImage = wrapper.find('.doubao-message-image')
+      const messageImage = wrapper.find('.chat-content__message-image')
       await messageImage.trigger('click')
       await nextTick()
 
-      expect(wrapper.find('.doubao-preview-overlay').exists()).toBe(true)
-      expect(wrapper.find('.doubao-preview-image').exists()).toBe(true)
+      expect(wrapper.find('.image-preview-modal').exists()).toBe(true)
+      expect(wrapper.find('.image-preview-modal__image').exists()).toBe(true)
     })
 
     it('should close image preview when clicking overlay', async () => {
@@ -677,13 +678,13 @@ describe('AIChat', () => {
       ;(wrapper.vm as any).previewImage = 'https://example.com/test.jpg'
       await nextTick()
 
-      expect(wrapper.find('.doubao-preview-overlay').exists()).toBe(true)
+      expect(wrapper.find('.image-preview-modal').exists()).toBe(true)
 
-      const overlay = wrapper.find('.doubao-preview-overlay')
+      const overlay = wrapper.find('.image-preview-modal')
       await overlay.trigger('click')
       await nextTick()
 
-      expect(wrapper.find('.doubao-preview-overlay').exists()).toBe(false)
+      expect(wrapper.find('.image-preview-modal').exists()).toBe(false)
     })
   })
 
@@ -697,7 +698,7 @@ describe('AIChat', () => {
         props: { config: customConfig },
       })
 
-      const input = wrapper.find('.doubao-input')
+      const input = wrapper.find('.chat-input__field')
       expect(input.attributes('placeholder')).toBe('请输入您的问题...')
     })
 
@@ -719,16 +720,16 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Test')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
 
       await nextTick()
 
       // After sending, input is cleared so voice button should be shown
-      const voiceBtn = wrapper.find('.doubao-voice-btn')
+      const voiceBtn = wrapper.find('.chat-input__voice-btn')
       expect(voiceBtn.exists()).toBe(true)
     })
   })
@@ -742,7 +743,7 @@ describe('AIChat', () => {
       // Spy on console.log since toggleSettings just logs
       const consoleSpy = vi.spyOn(console, 'log')
 
-      const headerBtn = wrapper.find('.doubao-header-btn')
+      const headerBtn = wrapper.find('.chat-header-btn')
       await headerBtn.trigger('click')
       await nextTick()
 
@@ -757,21 +758,21 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('Hello')
 
-      const sendBtn = wrapper.find('.doubao-send-btn')
+      const sendBtn = wrapper.find('.chat-input__send-btn')
       await sendBtn.trigger('click')
 
       // Wait for streaming to complete
       await new Promise(resolve => setTimeout(resolve, 800))
       await nextTick()
 
-      const aiMessages = wrapper.findAll('.doubao-message.assistant')
+      const aiMessages = wrapper.findAll('.chat-content__message.assistant')
       expect(aiMessages.length).toBeGreaterThan(0)
 
       // Message may have text content
-      const messageBubble = aiMessages[0].find('.doubao-message-bubble')
+      const messageBubble = aiMessages[0].find('.chat-content__message-bubble')
       expect(messageBubble.exists()).toBe(true)
     })
   })
@@ -782,11 +783,11 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const menuBtn = wrapper.find('.doubao-menu-btn')
+      const menuBtn = wrapper.find('.chat-input__menu-btn')
       await menuBtn.trigger('click')
       await nextTick()
 
-      const menuPanel = wrapper.find('.doubao-menu-panel')
+      const menuPanel = wrapper.find('.chat-input__menu')
       expect(menuPanel.exists()).toBe(true)
     })
 
@@ -795,11 +796,11 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const voiceBtn = wrapper.find('.doubao-voice-btn')
+      const voiceBtn = wrapper.find('.chat-input__voice-btn')
       await voiceBtn.trigger('click')
       await nextTick()
 
-      const overlay = wrapper.find('.doubao-voice-overlay')
+      const overlay = wrapper.find('.chat-input__voice-overlay')
       expect(overlay.exists()).toBe(true)
     })
   })
@@ -810,11 +811,11 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const initialMessageCount = wrapper.findAll('.doubao-message').length
+      const initialMessageCount = wrapper.findAll('.chat-content__message').length
 
       // When there's no input, send button doesn't exist (voice button is shown)
       // So just verify no message was added
-      const finalMessageCount = wrapper.findAll('.doubao-message').length
+      const finalMessageCount = wrapper.findAll('.chat-content__message').length
       expect(finalMessageCount).toBe(initialMessageCount)
     })
 
@@ -823,14 +824,14 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const initialMessageCount = wrapper.findAll('.doubao-message').length
+      const initialMessageCount = wrapper.findAll('.chat-content__message').length
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
       await input.setValue('   ')
       await input.trigger('input')
 
       // Whitespace-only input won't show send button
-      const finalMessageCount = wrapper.findAll('.doubao-message').length
+      const finalMessageCount = wrapper.findAll('.chat-content__message').length
       expect(finalMessageCount).toBe(initialMessageCount)
     })
 
@@ -839,11 +840,11 @@ describe('AIChat', () => {
         props: { config: mockConfig },
       })
 
-      const input = wrapper.find('.doubao-input') as any
+      const input = wrapper.find('.chat-input__field') as any
 
       // First message
       await input.setValue('First message')
-      await wrapper.find('.doubao-send-btn').trigger('click')
+      await wrapper.find('.chat-input__send-btn').trigger('click')
       await nextTick()
 
       // Wait a bit
@@ -851,10 +852,10 @@ describe('AIChat', () => {
 
       // The second send should be blocked while streaming
       await input.setValue('Second message')
-      await wrapper.find('.doubao-send-btn').trigger('click')
+      await wrapper.find('.chat-input__send-btn').trigger('click')
       await nextTick()
 
-      const messages = wrapper.findAll('.doubao-message')
+      const messages = wrapper.findAll('.chat-content__message')
       // Should have user + assistant messages (not duplicate user messages)
       expect(messages.length).toBeLessThanOrEqual(2)
     })

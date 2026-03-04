@@ -17,6 +17,8 @@ const app = createApp(AIChat, {
     chatMode: 'fullscreen',
     enableImageUpload: true,
     maxImageCount: 3,
+    // Set apiBaseUrl to connect to real backend (e.g., http://localhost:3000 for ChatApp backend)
+    // apiBaseUrl: 'http://localhost:3000',
     labels: {
       title: '智能助手',
       placeholder: '输入消息...',

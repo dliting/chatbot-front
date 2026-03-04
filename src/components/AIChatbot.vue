@@ -48,6 +48,7 @@
         :hide-quick-actions="state.ui.panelMode === 'dialog'"
         :hide-input-area="false"
         :config="aiChatConfig"
+        :api-client="apiClient"
       />
     </ChatPanel>
   </div>
@@ -58,6 +59,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
 import { useChatbotState } from '@/composables/useChatbotState'
+import { useApiClient } from '@/composables/useApiClient'
 
 // Components
 import SuspendedBall from './SuspendedBall.vue'
@@ -86,6 +88,17 @@ const aiChatConfig = computed(() => ({
   maxImageCount: config.value.maxImageCount,
   maxImageSize: config.value.maxImageSize,
 }))
+
+// API client (only create if apiBaseUrl is configured)
+const apiClient = computed(() => {
+  if (config.value.apiBaseUrl) {
+    return useApiClient({
+      baseUrl: config.value.apiBaseUrl,
+      streamEnabled: config.value.streamEnabled !== false,
+    })
+  }
+  return undefined
+})
 
 // State
 const {
