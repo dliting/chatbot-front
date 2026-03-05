@@ -10,6 +10,49 @@
 - 每个操作通常不应该超过3分钟，否则应认为响应超时而强制中断
 - 测试覆盖共用功能、扩展模式、紧凑模式、悬浮模式
 
+## 强制验证检查（每次测试后必查）
+
+> ⚠️ **重要**：每次页面加载或操作后，**必须**执行以下验证检查。这是确保测试有效性的关键步骤。
+
+| 检查项 | 操作命令 | 通过标准 |
+|--------|----------|----------|
+| **控制台错误** | `list_console_messages()` | 无 error 级别消息 |
+| **Vue 挂载警告** | 检查 Vue warn | 无 "Failed to mount app" 警告 |
+| **资源加载** | `list_network_requests()` | 无 404/500 状态码（除 favicon.ico） |
+| **关键元素存在** | `take_snapshot()` + 目视检查 | 预期的 UI 元素都存在 |
+| **元素非空验证** | 检查容器元素内容 | 应该包含内容的容器不为空 |
+
+**验证检查示例流程**：
+
+```javascript
+// 1. 导航到页面
+navigate_page("http://localhost:5173/examples/compact.html")
+
+// 2. 获取快照
+take_snapshot()
+
+// 3. 检查控制台错误（关键！）
+list_console_messages()
+// 查找：[Vue warn], [error], 404 等问题
+
+// 4. 验证关键元素内容
+evaluate_script(() => {
+  const app = document.querySelector('#app');
+  return {
+    hasApp: !!app,
+    hasChildren: app ? app.children.length > 0 : false,
+    consoleErrors: []
+  };
+})
+```
+
+**常见错误信号**：
+- `[Vue warn]: Failed to mount app: mount target selector "#xxx" returned null` → Vue 挂载失败，页面 HTML 和入口文件不匹配
+- `Failed to load resource: 404` → 资源文件缺失或路径错误
+- 容器元素存在但内容为空 → 可能是组件未正确渲染或数据未加载
+
+---
+
 ## 功能测试分类
 
 | 类别 | 描述 | 测试章节 |
@@ -431,8 +474,27 @@
 | 步骤 | 操作 | 预期结果 |
 |------|------|----------|
 | 1 | 导航到紧凑模式页面 | 页面正常加载 |
-| 2 | 检查返回链接 | 显示 "← 返回首页" 链接 |
-| 3 | 检查布局结构 | 左侧主内容，右侧侧边栏 |
+| 2 | **检查控制台错误** | 无 error 或 Vue warn 消息 |
+| 3 | **验证 Vue 挂载** | `#app` 元素存在且包含子元素 |
+| 4 | **验证侧边栏内容** | complementary/banner 元素包含聊天界面 |
+| 5 | 检查返回链接 | 显示 "← 返回首页" 链接 |
+| 6 | 检查布局结构 | 左侧主内容，右侧侧边栏 |
+
+**验证检查脚本**：
+```javascript
+// 验证 Vue 应用成功挂载
+evaluate_script(() => {
+  const app = document.querySelector('#app');
+  const chatPanel = document.querySelector('[role="complementary"], .banner, [class*="chat"]');
+  return {
+    appExists: !!app,
+    appHasChildren: app ? app.children.length > 0 : false,
+    chatPanelExists: !!chatPanel,
+    chatPanelHasContent: chatPanel ? chatPanel.children.length > 0 : false
+  };
+})
+// 预期结果：所有值都为 true
+```
 
 ### 4.2 侧边栏布局测试 (F-009)
 
