@@ -31,11 +31,60 @@ interface InteractionState {
 }
 
 export function useChatbotState(config: Required<ChatbotConfig>) {
+  // System theme detection
+  let mediaQueryList: MediaQueryList | null = null
+  let handleThemeChange: ((e: MediaQueryListEvent) => void) | null = null
+
+  // Get system theme
+  const getSystemTheme = (): Theme => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return 'light'
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+
+  // Determine initial theme based on config
+  const getInitialTheme = (): Theme => {
+    if (config.theme === 'system') {
+      return getSystemTheme()
+    }
+    return config.theme
+  }
+
+  // Initialize theme change listener
+  const initThemeListener = () => {
+    if (config.theme !== 'system') {
+      return
+    }
+
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return
+    }
+
+    mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)')
+    handleThemeChange = (e: MediaQueryListEvent) => {
+      const newTheme = e.matches ? 'dark' : 'light'
+      ui.theme = newTheme
+      document.documentElement.setAttribute('data-theme', newTheme)
+    }
+
+    mediaQueryList.addEventListener('change', handleThemeChange)
+  }
+
+  // Clean up theme listener
+  const cleanupThemeListener = () => {
+    if (mediaQueryList && handleThemeChange) {
+      mediaQueryList.removeEventListener('change', handleThemeChange)
+      mediaQueryList = null
+      handleThemeChange = null
+    }
+  }
+
   // UI State
   const ui = reactive<UIState>({
     isPanelOpen: config.defaultExpanded,
     panelMode: config.panelMode === 'auto' || !config.panelMode ? 'dialog' : config.panelMode,
-    theme: config.theme,
+    theme: getInitialTheme(),
     locale: config.locale,
     screenWidth: window.innerWidth,
     isMobile: window.innerWidth < 768,
@@ -79,9 +128,11 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   }
 
   const setTheme = (theme: Theme) => {
-    ui.theme = theme
+    // If theme is 'system', resolve to actual system theme
+    const resolvedTheme = theme === 'system' ? getSystemTheme() : theme
+    ui.theme = resolvedTheme
     // Apply theme to document
-    document.documentElement.setAttribute('data-theme', theme)
+    document.documentElement.setAttribute('data-theme', resolvedTheme)
   }
 
   const updateScreenSize = () => {
@@ -137,6 +188,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
         createdAt: Date.now(),
         updatedAt: Date.now(),
         messageCount: sessionMessages.length,
+        unreadCount: 0,
       }
       sessions.list.unshift(newSession)
     } else {
@@ -215,8 +267,11 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     interaction.selectedImages = []
   }
 
-  // Initialize theme
-  setTheme(config.theme)
+  // Initialize theme (use resolved theme if config is 'system')
+  setTheme(ui.theme)
+
+  // Initialize system theme listener
+  initThemeListener()
 
   // Handle resize
   window.addEventListener('resize', updateScreenSize)
@@ -225,6 +280,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   // Cleanup
   const cleanup = () => {
     window.removeEventListener('resize', updateScreenSize)
+    cleanupThemeListener()
   }
 
   return {

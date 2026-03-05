@@ -162,6 +162,65 @@ describe('useChatbotState', () => {
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
     })
 
+    it('should detect system theme when config theme is system', () => {
+      // Mock matchMedia to return dark theme
+      const mockAddEventListener = vi.fn()
+      const mockRemoveEventListener = vi.fn()
+      vi.stubGlobal('matchMedia', vi.fn(() => ({
+        matches: true,
+        addEventListener: mockAddEventListener,
+        removeEventListener: mockRemoveEventListener,
+      })))
+
+      mockConfig.theme = 'system'
+      const { state, cleanup } = useChatbotState(mockConfig)
+
+      expect(state.ui.theme).toBe('dark')
+      expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark')
+
+      cleanup()
+      vi.unstubAllGlobals()
+    })
+
+    it('should detect light system theme when config theme is system', () => {
+      const mockAddEventListener = vi.fn()
+      const mockRemoveEventListener = vi.fn()
+      vi.stubGlobal('matchMedia', vi.fn(() => ({
+        matches: false,
+        addEventListener: mockAddEventListener,
+        removeEventListener: mockRemoveEventListener,
+      })))
+
+      mockConfig.theme = 'system'
+      const { state, cleanup } = useChatbotState(mockConfig)
+
+      expect(state.ui.theme).toBe('light')
+      expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
+
+      cleanup()
+      vi.unstubAllGlobals()
+    })
+
+    it('should set theme to system theme when setTheme is called with system', () => {
+      const mockAddEventListener = vi.fn()
+      const mockRemoveEventListener = vi.fn()
+      vi.stubGlobal('matchMedia', vi.fn(() => ({
+        matches: false,
+        addEventListener: mockAddEventListener,
+        removeEventListener: mockRemoveEventListener,
+      })))
+
+      mockConfig.theme = 'light'
+      const { setTheme, cleanup } = useChatbotState(mockConfig)
+
+      // When setTheme is called with 'system', it should resolve to current system theme
+      setTheme('system')
+      expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
+
+      cleanup()
+      vi.unstubAllGlobals()
+    })
+
     it('should update screen size on resize', () => {
       const { state, updateScreenSize } = useChatbotState(mockConfig)
 
