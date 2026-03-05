@@ -15,9 +15,9 @@
         </svg>
       </slot>
 
-      <!-- Badge (optional) -->
-      <span v-if="badge !== null" :class="badgeClasses">
-        {{ typeof badge === 'number' && badge > 99 ? '99+' : badge }}
+      <!-- Badge (optional) - supports both badge and unreadCount props -->
+      <span v-if="shouldShowBadge" :class="badgeClasses">
+        {{ typeof displayBadge === 'number' && displayBadge > 99 ? '99+' : displayBadge }}
       </span>
     </div>
   </Transition>
@@ -34,6 +34,7 @@ interface Props {
   iconColor?: string
   backgroundColor?: string
   badge?: number | null
+  unreadCount?: number
   visible?: boolean
   draggable?: boolean
   clickToOpen?: boolean
@@ -74,10 +75,32 @@ const classes = computed(() => [
   },
 ])
 
+// Combined badge value - supports both badge and unreadCount props
+// unreadCount takes priority over badge when provided
+const displayBadge = computed(() => {
+  // Check unreadCount first (if explicitly provided - will be undefined if not passed)
+  if (props.unreadCount !== undefined) {
+    return props.unreadCount
+  }
+  // Fall back to badge prop
+  return props.badge
+})
+
+// Determine if badge should be shown
+// - unreadCount: only show when > 0
+// - badge: show when not null (for backward compatibility)
+const shouldShowBadge = computed(() => {
+  if (props.unreadCount !== undefined) {
+    return props.unreadCount > 0
+  }
+  return props.badge !== null
+})
+
 const badgeClasses = computed(() => [
+  'suspended-ball__badge',
   'chatbot-ball__badge',
   {
-    'chatbot-ball__badge--dot': typeof props.badge === 'number' && props.badge > 99,
+    'chatbot-ball__badge--dot': typeof displayBadge.value === 'number' && displayBadge.value > 99,
   },
 ])
 
