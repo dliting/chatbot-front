@@ -15,7 +15,7 @@ declare global {
   interface Window {
     AIChatbot?: {
       toggle: (open?: boolean) => void
-      setTheme: (theme: 'light' | 'dark') => void
+      setTheme: (theme: 'light' | 'dark' | 'system') => void
     }
   }
 }

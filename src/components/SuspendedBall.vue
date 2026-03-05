@@ -239,10 +239,6 @@ onUnmounted(() => {
     line-height: 18px;
     text-align: center;
     font-weight: 500;
-
-    &--dot::after {
-      content: '+';
-    }
   }
 }
 

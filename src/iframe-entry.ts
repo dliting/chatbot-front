@@ -107,7 +107,7 @@ app.mount('#app')
   toggle: (_open?: boolean) => {
     // This will be called by parent page
   },
-  setTheme: (_theme: 'light' | 'dark') => {
+  setTheme: (_theme: 'light' | 'dark' | 'system') => {
     // This will be called by parent page
   },
 }

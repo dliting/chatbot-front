@@ -186,6 +186,7 @@ export function useApiClient(options: ApiClientOptions) {
         createdAt: result.data.createdAt,
         updatedAt: result.data.createdAt,
         messageCount: 0,
+        unreadCount: 0,
       }
     } finally {
       isLoading.value = false

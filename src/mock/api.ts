@@ -115,6 +115,7 @@ export const mockAPI = {
         createdAt: Date.now() - 3600000,
         updatedAt: Date.now() - 3600000,
         messageCount: 4,
+        unreadCount: 0,
       },
       {
         id: generateId('session'),
@@ -122,6 +123,7 @@ export const mockAPI = {
         createdAt: Date.now() - 86400000,
         updatedAt: Date.now() - 86400000,
         messageCount: 8,
+        unreadCount: 0,
       },
     ]
 
@@ -181,6 +183,7 @@ export const mockAPI = {
         createdAt: Date.now(),
         updatedAt: Date.now(),
         messageCount: 0,
+        unreadCount: 0,
       },
     }
   },

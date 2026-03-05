@@ -260,11 +260,9 @@ const windowState = ref({
   height: config.value.panelHeight,
 })
 
-// Local state - reserved for future use
-const _inputText = ref('')
-const _selectedImages = ref<string[]>([])
-const _previewImage = ref<string | null>(null)
-const _isRecording = ref(false)
+// Local state
+const previewImage = ref<string | null>(null)
+const isRecording = ref(false)
 const _isMenuOpen = ref(false)
 
 // Mock API - reserved for future use
@@ -382,15 +380,15 @@ const handleMessageEdit = (message: import('@/types').Message) => {
 }
 
 const _startRecording = () => {
-  _isRecording.value = true
+  isRecording.value = true
 }
 
 const _stopRecording = () => {
-  _isRecording.value = false
+  isRecording.value = false
 }
 
 const cancelVoice = () => {
-  _isRecording.value = false
+  isRecording.value = false
 }
 
 const generateMockResponse = (_userInput: string): string => {

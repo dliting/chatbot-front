@@ -75,6 +75,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
       createdAt: Date.now(),
       updatedAt: Date.now(),
       messageCount: 0,
+      unreadCount: 0,
     }
 
     // Add to beginning of list
