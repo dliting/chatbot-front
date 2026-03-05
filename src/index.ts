@@ -1,7 +1,6 @@
 /**
  * AI Chatbot - Library Entry Point
  */
-import { install } from '@element-plus/icons-vue'
 import AIChatbot from './components/AIChatbot.vue'
 import type { ChatbotConfig } from './types/config'
 
@@ -38,7 +37,7 @@ export default AIChatbot
 
 // Vue plugin
 export const ChatbotPlugin = {
-  install: (app: any, options?: ChatbotConfig) => {
+  install: (app: any, _options?: ChatbotConfig) => {
     app.component('AIChatbot', AIChatbot)
   },
 }

@@ -10,8 +10,8 @@
         <img :src="image" alt="Preview" />
         <button
           class="chatbot-input__image-remove"
-          @click="removeImage(index)"
           title="Remove"
+          @click="removeImage(index)"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -26,8 +26,8 @@
       <button
         v-if="enableImageUpload"
         class="chatbot-input__action-btn"
-        @click="triggerFileInput"
         title="Upload image"
+        @click="triggerFileInput"
       >
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
@@ -40,14 +40,14 @@
         type="file"
         accept="image/*"
         :multiple="maxImageCount > 1"
-        @change="handleFileChange"
         class="chatbot-input__file-input"
+        @change="handleFileChange"
       />
 
       <!-- Text input -->
       <textarea
-        ref="textareaRef"
         id="chatbot-input-field"
+        ref="textareaRef"
         v-model="inputText"
         :placeholder="placeholder"
         rows="1"
@@ -56,7 +56,7 @@
         aria-label="Chat message input"
         @keydown="handleKeydown"
         @input="handleInput"
-      ></textarea>
+      />
 
       <!-- Send button -->
       <button
@@ -73,15 +73,14 @@
     <!-- Upload progress -->
     <div v-if="isUploading" class="chatbot-input__upload-progress">
       <div class="chatbot-input__progress-bar">
-        <div class="chatbot-input__progress-fill" :style="{ width: uploadProgress + '%' }"></div>
+        <div class="chatbot-input__progress-fill" :style="{ width: uploadProgress + '%' }"/>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
-import type { ImageFile } from '@/types'
+import { ref, computed, watch } from 'vue'
 
 interface Props {
   placeholder?: string

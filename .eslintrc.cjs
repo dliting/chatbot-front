@@ -5,6 +5,7 @@ module.exports = {
     es2021: true,
     node: true,
   },
+  ignorePatterns: ['tests/', 'dist/', 'node_modules/', 'examples/'],
   extends: [
     'eslint:recommended',
     'plugin:vue/vue3-recommended',
@@ -21,6 +22,8 @@ module.exports = {
   plugins: ['vue', '@typescript-eslint'],
   rules: {
     // Vue specific rules
+    'vue/no-v-model-argument': 'off', // Vue 3 supports v-model with argument
+    'vue/no-multiple-template-root': 'off', // Vue 3 supports fragments
     'vue/multi-word-component-names': 'off',
     'vue/no-v-html': 'warn',
     'vue/require-default-prop': 'off',
@@ -30,9 +33,6 @@ module.exports = {
       {
         html: {
           void: 'always',
-          normal: 'never',
-          svg: 'always',
-          math: 'always',
         },
       },
     ],

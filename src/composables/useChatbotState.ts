@@ -1,8 +1,8 @@
 /**
  * Core composable for managing chatbot state
  */
-import { reactive, computed, watch } from 'vue'
-import type { ChatbotConfig, defaultChatbotConfig } from '@/types/config'
+import { reactive, computed } from 'vue'
+import type { ChatbotConfig } from '@/types/config'
 import type { Theme, PanelMode, Locale } from '@/types'
 
 interface UIState {
@@ -28,13 +28,6 @@ interface SessionsState {
 interface InteractionState {
   isSending: boolean
   selectedImages: string[]
-}
-
-interface ChatbotState {
-  ui: UIState
-  messages: MessagesState
-  sessions: SessionsState
-  interaction: InteractionState
 }
 
 export function useChatbotState(config: Required<ChatbotConfig>) {

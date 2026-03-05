@@ -4,29 +4,29 @@ import { corsMiddleware } from './middleware/cors'
 import chatRoutes from './routes/chat'
 import { initDatabase } from './services/database'
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3001
 const app = express()
 
 // Middleware
 app.use(corsMiddleware)
-app.use(express.json({ limit: '10mb' }))
+app.use(express.json())
 
 // Routes
 app.use('/', chatRoutes)
 
 // Health check
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok' })
+  res.json({ status: 'ok', mode: 'mock' })
 })
 
 // Initialize database and start server
 async function start() {
   try {
     await initDatabase()
-    console.log('Database initialized')
+    console.log('Database initialized (mock mode)')
 
     app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`)
+      console.log(`Mock server running on http://localhost:${PORT}`)
     })
   } catch (error) {
     console.error('Failed to start server:', error)

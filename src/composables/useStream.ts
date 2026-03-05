@@ -1,7 +1,7 @@
 /**
  * Composable for handling streaming responses
  */
-import { ref, shallowRef } from 'vue'
+import { ref } from 'vue'
 import type { StreamEvent } from '@/types'
 import { StreamClient, fetchStream, StreamAccumulator } from '@/utils/stream'
 

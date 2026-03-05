@@ -31,8 +31,8 @@
               <button
                 v-if="showThemeToggle"
                 class="chatbot-panel__action-btn"
-                @click="$emit('toggle-theme')"
                 :title="theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'"
+                @click="$emit('toggle-theme')"
               >
                 <svg v-if="theme === 'light'" viewBox="0 0 24 24" fill="currentColor">
                   <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
@@ -46,8 +46,8 @@
             <!-- Close button -->
             <button
               class="chatbot-panel__action-btn chatbot-panel__close-btn"
-              @click="handleClose"
               title="Close"
+              @click="handleClose"
             >
               <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -57,16 +57,16 @@
         </div>
       </template>
       <div class="chatbot-panel__body">
-        <slot></slot>
+        <slot/>
       </div>
     </DraggableWindow>
 
     <!-- Non-floating modes: use original implementation -->
     <div
       v-else-if="isOpen"
+      ref="panelRef"
       :class="classes"
       :style="panelStyle"
-      ref="panelRef"
     >
       <!-- Header -->
       <div class="chatbot-panel__header">
@@ -80,8 +80,8 @@
             <button
               v-if="showThemeToggle"
               class="chatbot-panel__action-btn"
-              @click="$emit('toggle-theme')"
               :title="theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'"
+              @click="$emit('toggle-theme')"
             >
               <svg v-if="theme === 'light'" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
@@ -95,8 +95,8 @@
           <!-- Close button -->
           <button
             class="chatbot-panel__action-btn chatbot-panel__close-btn"
-            @click="handleClose"
             title="Close"
+            @click="handleClose"
           >
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -107,14 +107,14 @@
 
       <!-- Body -->
       <div class="chatbot-panel__body">
-        <slot></slot>
+        <slot/>
       </div>
     </div>
   </Transition>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import DraggableWindow from './DraggableWindow.vue'
 import type { PanelMode, Position, Theme } from '@/types'
 

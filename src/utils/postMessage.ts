@@ -18,7 +18,7 @@ export class IframeMessenger {
     targetWindow?: Window | null
     targetOrigin?: string
   } = {}) {
-    const { allowedOrigins = [], targetWindow = null, targetOrigin = '*' } = options
+    const { targetWindow = null, targetOrigin = '*' } = options
 
     this.targetWindow = targetWindow
     this.targetOrigin = targetOrigin

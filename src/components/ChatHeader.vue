@@ -20,8 +20,8 @@
       <button
         v-if="showSessionsButton"
         class="chat-header__btn"
-        @click="$emit('sessions')"
         title="历史对话"
+        @click="$emit('sessions')"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -32,8 +32,8 @@
       <button
         v-if="showThemeToggle"
         class="chat-header__btn"
-        @click="$emit('toggle-theme')"
         :title="theme === 'light' ? '切换到深色模式' : '切换到浅色模式'"
+        @click="$emit('toggle-theme')"
       >
         <svg v-if="theme === 'light'" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
@@ -47,8 +47,8 @@
       <button
         v-if="showCloseButton"
         class="chat-header__btn chat-header__close"
-        @click="$emit('close')"
         title="关闭"
+        @click="$emit('close')"
       >
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -71,7 +71,7 @@ interface Props {
   unreadCount?: number
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   title: 'AI Assistant',
   theme: 'light',
   showBackButton: false,

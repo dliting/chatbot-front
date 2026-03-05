@@ -87,11 +87,12 @@ See `examples/demo-iframe.html` for a complete example.
 ```typescript
 interface ChatbotConfig {
   // Display mode
-  panelMode?: 'floating' | 'sidebar' | 'fullscreen'
+  chatMode?: 'extended' | 'compact' | 'floating'
 
   // Layout
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
   panelWidth?: number
+  panelHeight?: number
   defaultExpanded?: boolean
 
   // Features
@@ -133,7 +134,6 @@ src/
 ├── entries/         # Example entry points
 │   ├── extended.ts         # Extended mode entry
 │   ├── compact.ts          # Compact mode entry
-│   ├── compact-sidebar.ts  # Compact sidebar mode entry
 │   └── floating.ts         # Floating mode entry
 ├── index.ts         # Library entry
 └── iframe-entry.ts  # Iframe entry

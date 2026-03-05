@@ -37,7 +37,7 @@ export async function* streamChat(
   const reader = response.body.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
-  let messageId = ''
+  const messageId = ''
 
   yield { type: 'start', messageId }
 

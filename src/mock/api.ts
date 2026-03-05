@@ -188,7 +188,7 @@ export const mockAPI = {
   /**
    * Delete session (mock)
    */
-  async deleteSession(sessionId: string): Promise<ApiResponse<void>> {
+  async deleteSession(_sessionId: string): Promise<ApiResponse<void>> {
     await sleep(100)
     return { code: 0, message: 'success' }
   },

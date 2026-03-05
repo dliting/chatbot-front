@@ -111,7 +111,7 @@ const handleMouseDown = (event: MouseEvent) => {
 }
 
 // Handle mouse click
-const handleClick = (event: MouseEvent) => {
+const handleClick = (_event: MouseEvent) => {
   // Don't emit click if dragging occurred
   if (hasMoved.value) return
 

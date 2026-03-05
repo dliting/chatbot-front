@@ -28,10 +28,10 @@
         class="chat-input__field"
         placeholder="输入消息..."
         rows="1"
+        :disabled="disabled"
         @input="autoResize"
         @keydown="handleKeydown"
-        :disabled="disabled"
-      ></textarea>
+      />
 
       <button
         v-if="canSend"
@@ -88,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, computed } from 'vue'
 import { createMockUploadEndpoint } from '@/utils/upload'
 
 interface Props {

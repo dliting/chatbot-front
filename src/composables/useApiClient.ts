@@ -2,16 +2,14 @@
  * API client composable for connecting to backend
  */
 import { ref } from 'vue'
-import type { Message, Session, SendMessageData } from '@/types'
-import { generateId } from '@/utils/helpers'
+import type { Message, Session } from '@/types'
 
 export interface ApiClientOptions {
   baseUrl: string
-  streamEnabled?: boolean
 }
 
 export function useApiClient(options: ApiClientOptions) {
-  const { baseUrl, streamEnabled = true } = options
+  const { baseUrl } = options
   const isLoading = ref(false)
   const error = ref<Error | null>(null)
 

@@ -22,7 +22,7 @@
       <!-- Bubble -->
       <div :class="bubbleClasses">
         <!-- Text content -->
-        <div v-if="hasText" class="chatbot-message__text" v-html="formattedContent"></div>
+        <div v-if="hasText" class="chatbot-message__text" v-html="formattedContent"/>
 
         <!-- Image content -->
         <div v-if="hasImages" class="chatbot-message__images">
@@ -37,7 +37,7 @@
         </div>
 
         <!-- Streaming indicator -->
-        <span v-if="isStreaming" class="chatbot-message__cursor"></span>
+        <span v-if="isStreaming" class="chatbot-message__cursor"/>
 
         <!-- Error indicator -->
         <div v-if="isError" class="chatbot-message__error">
@@ -59,8 +59,8 @@
         <button
           v-if="enableCopy && canCopy"
           class="chatbot-message__action-btn"
-          @click="$emit('copy')"
           title="Copy"
+          @click="$emit('copy')"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
@@ -71,8 +71,8 @@
         <button
           v-if="isError && enableResend"
           class="chatbot-message__action-btn chatbot-message__action-btn--danger"
-          @click="$emit('resend')"
           title="Resend"
+          @click="$emit('resend')"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -83,8 +83,8 @@
         <button
           v-if="enableDelete"
           class="chatbot-message__action-btn chatbot-message__action-btn--danger"
-          @click="$emit('delete')"
           title="Delete"
+          @click="$emit('delete')"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>

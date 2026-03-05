@@ -7,7 +7,7 @@ import type { PanelMode } from './index'
 
 export interface ChatbotConfig {
   // Chat mode (determines layout and behavior)
-  chatMode?: 'extended' | 'compact' | 'floating' | 'fullscreen'
+  chatMode?: 'extended' | 'compact' | 'floating'
 
   // Layout configuration
   position?: Position
@@ -130,7 +130,7 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   enableClearAll: true,
 
   // Upload limits
-  maxImageCount: 4,
+  maxImageCount: 8,
   maxImageSize: 10 * 1024 * 1024, // 10MB
   allowedImageTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
 

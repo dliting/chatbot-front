@@ -1,7 +1,7 @@
 <template>
   <div class="chat-content">
     <!-- Chat Container -->
-    <div class="chat-content__messages" ref="messagesRef">
+    <div ref="messagesRef" class="chat-content__messages">
       <!-- Welcome Section -->
       <div v-if="welcomeVisible" class="chat-content__welcome">
         <div class="chat-content__avatar">
@@ -65,7 +65,7 @@
             </div>
             <!-- Typing indicator -->
             <div v-if="message.status === 'loading' && !message.content" class="chat-content__typing">
-              <span></span><span></span><span></span>
+              <span/><span/><span/>
             </div>
           </div>
         </div>
@@ -74,7 +74,7 @@
 
     <!-- Input Area -->
     <div class="chat-content__input-area">
-      <ChatInput @send="$emit('send-message', $event)" :disabled="isStreaming" />
+      <ChatInput :disabled="isStreaming" @send="$emit('send-message', $event)" />
     </div>
   </div>
 </template>

@@ -1,8 +1,8 @@
 <template>
   <div
+    ref="windowRef"
     :class="classes"
     :style="windowStyle"
-    ref="windowRef"
   >
     <!-- Header (Draggable area) -->
     <div
@@ -11,29 +11,29 @@
       :class="{ 'draggable-window__header--draggable': draggable }"
       @mousedown="startDrag"
     >
-      <slot name="header"></slot>
+      <slot name="header"/>
     </div>
 
     <!-- Body content -->
     <div class="draggable-window__body">
-      <slot></slot>
+      <slot/>
     </div>
   </div>
 
   <!-- Resize handles - Teleported to body for independent stacking context -->
-  <Teleport to="body" v-if="resizable && modelValue">
+  <Teleport v-if="resizable && modelValue" to="body">
     <div
       class="draggable-window__resize-overlay"
       :style="overlayStyle"
     >
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--n" @mousedown="startResize($event, 'n')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--s" @mousedown="startResize($event, 's')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--e" @mousedown="startResize($event, 'e')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--w" @mousedown="startResize($event, 'w')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--ne" @mousedown="startResize($event, 'ne')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--nw" @mousedown="startResize($event, 'nw')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--se" @mousedown="startResize($event, 'se')"></div>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--sw" @mousedown="startResize($event, 'sw')"></div>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--n" @mousedown="startResize($event, 'n')"/>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--s" @mousedown="startResize($event, 's')"/>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--e" @mousedown="startResize($event, 'e')"/>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--w" @mousedown="startResize($event, 'w')"/>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--ne" @mousedown="startResize($event, 'ne')"/>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--nw" @mousedown="startResize($event, 'nw')"/>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--se" @mousedown="startResize($event, 'se')"/>
+      <div class="draggable-window__resize-handle draggable-window__resize-handle--sw" @mousedown="startResize($event, 'sw')"/>
     </div>
   </Teleport>
 </template>
@@ -200,8 +200,8 @@ const startDrag = (e: MouseEvent) => {
 const onDrag = (e: MouseEvent) => {
   if (!isDragging.value) return
 
-  let newX = e.clientX - dragOffset.value.x
-  let newY = e.clientY - dragOffset.value.y
+  const newX = e.clientX - dragOffset.value.x
+  const newY = e.clientY - dragOffset.value.y
 
   // Constrain to viewport
   const maxX = window.innerWidth - windowRef.value!.offsetWidth

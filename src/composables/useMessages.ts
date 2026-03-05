@@ -2,9 +2,9 @@
  * Composable for message management
  */
 import { ref, computed } from 'vue'
-import type { Message, SendMessageData } from '@/types'
-import { createMessage, updateMessageStatus, extractSessionTitle } from '@/utils/message'
-import { generateId } from '@/utils/helpers'
+import type { Message } from '@/types'
+import type { SendMessageData } from '@/types'
+import { createMessage, extractSessionTitle } from '@/utils/message'
 
 export interface UseMessagesOptions {
   onSendMessage?: (data: SendMessageData) => Promise<void>
@@ -99,7 +99,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
   const getAIResponse = async (
     userContent: string,
     sessionId: string,
-    images: string[]
+    _images: string[]
   ) => {
     // Create AI message
     const aiMessage = createMessage('assistant', '', sessionId)
@@ -160,7 +160,6 @@ export function useMessages(options: UseMessagesOptions = {}) {
     const index = messages.value.findIndex(m => m.id === message.id)
     if (index === -1) return
 
-    const messagesAfter = messages.value.slice(index)
     const hasImages = message.images && message.images.length > 0
 
     // Remove messages

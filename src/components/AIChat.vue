@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, h } from 'vue'
+import { ref, computed, onMounted, h } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
 import type { ChatMode } from '@/types'
@@ -193,8 +193,8 @@ const CubeIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'c
   h('line', { x1: 12, y1: 22.08, x2: 12, y2: 12 })
 ])
 
-// Quick actions
-const quickActions = [
+// Quick actions - reserved for future use
+const _quickActions = [
   { id: 1, title: '写邮件', desc: '帮我撰写邮件', text: '帮我写一封邮件', icon: WriteIcon },
   { id: 2, title: '总结文章', desc: '提取关键信息', text: '帮我总结这篇文章', icon: DocIcon },
   { id: 3, title: '翻译', desc: '多语言翻译', text: '帮我翻译这段文字', icon: GlobeIcon },
@@ -249,15 +249,15 @@ const windowState = ref({
   height: config.value.panelHeight,
 })
 
-// Local state
-const inputText = ref('')
-const selectedImages = ref<string[]>([])
-const previewImage = ref<string | null>(null)
-const isRecording = ref(false)
-const isMenuOpen = ref(false)
+// Local state - reserved for future use
+const _inputText = ref('')
+const _selectedImages = ref<string[]>([])
+const _previewImage = ref<string | null>(null)
+const _isRecording = ref(false)
+const _isMenuOpen = ref(false)
 
-// Mock API
-const uploadEndpoint = createMockUploadEndpoint(1000)
+// Mock API - reserved for future use
+const _uploadEndpoint = createMockUploadEndpoint(1000)
 
 // Computed
 const containerClasses = computed(() => [
@@ -274,7 +274,7 @@ const openPanel = () => { isPanelOpen.value = true }
 const closePanel = () => { isPanelOpen.value = false }
 
 const toggleTheme = () => {
-  const newTheme = config.value.theme === 'light' ? 'dark' : 'light'
+  const _newTheme = config.value.theme === 'light' ? 'dark' : 'light'
   // Update theme logic here
 }
 
@@ -365,19 +365,19 @@ const handleDeleteSession = (sessionId: string) => {
   deleteSession(sessionId)
 }
 
-const startRecording = () => {
-  isRecording.value = true
+const _startRecording = () => {
+  _isRecording.value = true
 }
 
-const stopRecording = () => {
-  isRecording.value = false
+const _stopRecording = () => {
+  _isRecording.value = false
 }
 
 const cancelVoice = () => {
-  isRecording.value = false
+  _isRecording.value = false
 }
 
-const generateMockResponse = (userInput: string): string => {
+const generateMockResponse = (_userInput: string): string => {
   const responses = [
     `我理解您的意思，让我来帮您分析一下。`,
     `这是一个很好的问题！`,

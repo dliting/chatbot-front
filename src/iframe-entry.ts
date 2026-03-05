@@ -28,16 +28,6 @@ const app = createApp({
   components: {
     AIChatbot,
   },
-  template: `
-    <AIChatbot
-      ref="chatbotRef"
-      :config="mergedConfig"
-      @panel-toggle="handleToggle"
-      @send-message="handleSendMessage"
-      @message-success="handleMessageSuccess"
-      @session-change="handleSessionChange"
-    />
-  `,
   setup() {
     const chatbotRef = ref<InstanceType<typeof AIChatbot>>()
 
@@ -97,6 +87,16 @@ const app = createApp({
       handleSessionChange,
     }
   },
+  template: `
+    <AIChatbot
+      ref="chatbotRef"
+      :config="mergedConfig"
+      @panel-toggle="handleToggle"
+      @send-message="handleSendMessage"
+      @message-success="handleMessageSuccess"
+      @session-change="handleSessionChange"
+    />
+  `,
 })
 
 app.use(ElementPlus)
@@ -104,10 +104,10 @@ app.mount('#app')
 
 // Make chatbot methods available globally for parent page
 ;(window as any).AIChatbot = {
-  toggle: (open?: boolean) => {
+  toggle: (_open?: boolean) => {
     // This will be called by parent page
   },
-  setTheme: (theme: 'light' | 'dark') => {
+  setTheme: (_theme: 'light' | 'dark') => {
     // This will be called by parent page
   },
 }

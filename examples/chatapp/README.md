@@ -2,6 +2,53 @@
 
 ChatApp 是一个完整的前后端分离聊天应用示例，用于验证和改进 AIChat 前端组件。
 
+## 两种模式
+
+### Mock 模式（本地模拟）- 不需要 LLM
+- 不需要连接实际的 LLM 服务
+- 返回预设的模拟响应
+- 适合开发和测试
+
+启动命令：
+```bash
+cd backend-mock
+npm install
+npm run dev
+```
+后端运行在 http://localhost:3001
+
+### Real 模式（连接 Ollama）- 需要本地 LLM
+- 连接本地 Ollama 服务
+- 使用 qwen3.5:9b 模型
+- 需要本地安装并运行 Ollama
+
+启动命令：
+```bash
+# 先启动 Ollama
+ollama serve
+ollama run qwen3.5:9b
+
+# 然后启动后端
+cd backend
+npm install
+npm run dev
+```
+后端运行在 http://localhost:3000
+
+## 前端配置
+
+前端通过环境变量 `VITE_API_BASE_URL` 配置 API 地址：
+
+```bash
+# Mock 模式（默认）
+VITE_API_BASE_URL=http://localhost:3001
+
+# Real 模式
+VITE_API_BASE_URL=http://localhost:3000
+```
+
+修改 `frontend/.env` 文件后需要重启前端。
+
 ## 项目架构
 
 ```
@@ -11,15 +58,27 @@ chatapp/
 │   │   ├── main.ts    # Vue 入口
 │   │   └── App.vue    # 根组件
 │   ├── index.html
+│   ├── .env           # 环境配置
 │   ├── package.json
 │   └── vite.config.ts
-└── backend/           # 后端 (Express + TypeScript + SQLite)
+├── backend/           # Real 后端 (Express + TypeScript + SQLite)
+│   ├── src/
+│   │   ├── index.ts           # 服务入口
+│   │   ├── routes/chat.ts     # API 路由
+│   │   ├── services/
+│   │   │   ├── database.ts    # SQLite 服务
+│   │   │   └── ollama.ts      # Ollama 服务
+│   │   └── types/index.ts     # 类型定义
+│   ├── data/                  # SQLite 数据库
+│   ├── package.json
+│   └── tsconfig.json
+└── backend-mock/      # Mock 后端 (模拟响应)
     ├── src/
     │   ├── index.ts           # 服务入口
     │   ├── routes/chat.ts     # API 路由
     │   ├── services/
     │   │   ├── database.ts    # SQLite 服务
-    │   │   └── ollama.ts      # Ollama 服务
+    │   │   └── mockChat.ts   # 模拟 AI 响应
     │   └── types/index.ts     # 类型定义
     ├── data/                  # SQLite 数据库
     ├── package.json
@@ -28,37 +87,45 @@ chatapp/
 
 ## 快速开始
 
-### 1. 启动 Ollama
-
-确保本地已安装 [Ollama](https://github.com/ollama/ollama) 并启动了 qwen3.5:9b 模型：
+### 启动 Mock 模式（推荐用于开发测试）
 
 ```bash
-ollama run qwen3.5:9b
-```
-
-### 2. 启动后端
-
-```bash
-cd backend
+# 1. 启动 Mock 后端
+cd backend-mock
 npm install
 npm run dev
-```
 
-后端将在 http://localhost:3000 运行。
-
-### 3. 启动前端
-
-```bash
+# 2. 启动前端（新终端）
 cd frontend
 npm install
 npm run dev
 ```
 
-前端将在 http://localhost:5173 运行。
+前端将在 http://localhost:5180 运行。
 
-### 4. 访问应用
+### 启动 Real 模式（需要 Ollama）
 
-打开浏览器访问 http://localhost:5173
+```bash
+# 1. 启动 Ollama
+ollama serve
+ollama run qwen3.5:9b
+
+# 2. 启动 Real 后端
+cd backend
+npm install
+npm run dev
+
+# 3. 修改前端配置
+# 编辑 frontend/.env，设置 VITE_API_BASE_URL=http://localhost:3000
+
+# 4. 启动前端
+cd frontend
+npm run dev
+```
+
+### 访问应用
+
+打开浏览器访问 http://localhost:5180
 
 ## API 接口
 
