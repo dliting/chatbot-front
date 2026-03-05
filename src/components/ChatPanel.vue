@@ -67,6 +67,8 @@
       ref="panelRef"
       :class="classes"
       :style="panelStyle"
+      @touchstart="handleTouchStart"
+      @touchend="handleTouchEnd"
     >
       <!-- Header -->
       <div class="chatbot-panel__header">
@@ -118,6 +120,10 @@ import { computed, ref, onMounted } from 'vue'
 import DraggableWindow from './DraggableWindow.vue'
 import type { PanelMode, Position, Theme } from '@/types'
 
+// Swipe gesture configuration
+const SWIPE_THRESHOLD = 100 // pixels
+const VERTICAL_THRESHOLD = 50 // max vertical movement to be considered horizontal swipe
+
 interface Props {
   isOpen: boolean
   mode: PanelMode
@@ -161,6 +167,10 @@ const emit = defineEmits<Emits>()
 
 // Refs
 const panelRef = ref<HTMLElement>()
+
+// Touch gesture state
+const touchStartX = ref(0)
+const touchStartY = ref(0)
 
 // Storage key for floating panel position
 const STORAGE_KEY = 'chatbot-floating-position'
@@ -227,6 +237,29 @@ const transitionName = computed(() => {
 
 const handleClose = () => {
   emit('close')
+}
+
+// Touch gesture handlers for swipe to close
+const handleTouchStart = (e: TouchEvent) => {
+  const touch = e.touches[0]
+  if (touch) {
+    touchStartX.value = touch.clientX
+    touchStartY.value = touch.clientY
+  }
+}
+
+const handleTouchEnd = (e: TouchEvent) => {
+  const touch = e.changedTouches[0]
+  if (!touch) return
+
+  const deltaX = touch.clientX - touchStartX.value
+  const deltaY = Math.abs(touch.clientY - touchStartY.value)
+
+  // Check if horizontal swipe distance exceeds threshold
+  // and vertical movement is within tolerance (to distinguish from scroll)
+  if (deltaX > SWIPE_THRESHOLD && deltaY < VERTICAL_THRESHOLD) {
+    emit('close')
+  }
 }
 
 // Initialize default position for floating mode on mount
