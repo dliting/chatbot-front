@@ -16,8 +16,20 @@
         :class="sessionClasses(session)"
         @click="$emit('switch-session', session.id)"
       >
-        <div class="chatbot-sessions__item-content">
-          <div class="chatbot-sessions__item-title">
+        <div class="chatbot-sessions__item-content" @dblclick.stop="startEditTitle(session)">
+          <!-- Editing mode -->
+          <input
+            v-if="editingSessionId === session.id"
+            ref="editInputRef"
+            v-model="editingTitle"
+            class="chatbot-sessions__item-title-input"
+            @blur="saveTitle(session.id)"
+            @keyup.enter="saveTitle(session.id)"
+            @keyup.escape="cancelEdit"
+            @click.stop
+          />
+          <!-- Display mode -->
+          <div v-else class="chatbot-sessions__item-title">
             {{ session.title }}
           </div>
           <div class="chatbot-sessions__item-meta">
@@ -46,6 +58,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, nextTick } from 'vue'
 import type { Session } from '@/types'
 import { formatTime } from '@/utils/helpers'
 
@@ -63,9 +76,47 @@ interface Emits {
   (e: 'create-session'): void
   (e: 'switch-session', sessionId: string): void
   (e: 'delete-session', sessionId: string): void
+  (e: 'update-session-title', sessionId: string, title: string): void
 }
 
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
+
+// Editing state
+const editingSessionId = ref<string | null>(null)
+const editingTitle = ref('')
+const editInputRef = ref<HTMLInputElement | null>(null)
+
+// Start editing title
+const startEditTitle = async (session: Session) => {
+  editingSessionId.value = session.id
+  editingTitle.value = session.title
+  await nextTick()
+  // Handle focus in both browser and test environments
+  if (editInputRef.value) {
+    if (typeof editInputRef.value.focus === 'function') {
+      editInputRef.value.focus()
+    }
+    if (typeof editInputRef.value.select === 'function') {
+      editInputRef.value.select()
+    }
+  }
+}
+
+// Save title
+const saveTitle = (sessionId: string) => {
+  const trimmedTitle = editingTitle.value.trim()
+  const originalSession = props.sessions.find(s => s.id === sessionId)
+  if (trimmedTitle && originalSession && trimmedTitle !== originalSession.title) {
+    emit('update-session-title', sessionId, trimmedTitle)
+  }
+  cancelEdit()
+}
+
+// Cancel editing
+const cancelEdit = () => {
+  editingSessionId.value = null
+  editingTitle.value = ''
+}
 
 // Session classes
 const sessionClasses = (session: Session) => [
@@ -164,6 +215,23 @@ const formatSessionMeta = (session: Session): string => {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    cursor: text;
+  }
+
+  &__item-title-input {
+    width: 100%;
+    padding: 2px 4px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--chatbot-primary-color, #409eff);
+    border-radius: 4px;
+    background-color: var(--chatbot-panel-bg, #ffffff);
+    color: var(--chatbot-panel-text, #303133);
+    outline: none;
+
+    &:focus {
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.2);
+    }
   }
 
   &__item-meta {
