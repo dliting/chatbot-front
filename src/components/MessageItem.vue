@@ -20,7 +20,7 @@
       </div>
 
       <!-- Bubble -->
-      <div :class="bubbleClasses">
+      <div :class="bubbleClasses" @dblclick="handleDoubleClick">
         <!-- Text content -->
         <div v-if="hasText" class="chatbot-message__text" v-html="formattedContent"/>
 
@@ -102,7 +102,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onUnmounted } from 'vue'
 import type { Message } from '@/types'
 import { formatTime, copyToClipboard } from '@/utils/helpers'
 import { formatMessageContent } from '@/utils/message'
@@ -137,6 +137,7 @@ interface Emits {
   (e: 'delete'): void
   (e: 'resend'): void
   (e: 'image-click', url: string): void
+  (e: 'edit', message: Message): void
 }
 
 const emit = defineEmits<Emits>()
@@ -176,6 +177,14 @@ const bubbleClasses = computed(() => [
 const showCopyFeedback = ref(false)
 let copyFeedbackTimer: ReturnType<typeof setTimeout> | null = null
 
+// Cleanup timer on component unmount
+onUnmounted(() => {
+  if (copyFeedbackTimer) {
+    clearTimeout(copyFeedbackTimer)
+    copyFeedbackTimer = null
+  }
+})
+
 const handleCopy = async () => {
   if (!props.message.content || props.isStreaming) return
 
@@ -196,6 +205,13 @@ const handleCopy = async () => {
 
     // Emit copy event for parent components
     emit('copy')
+  }
+}
+
+const handleDoubleClick = () => {
+  // Only emit edit for user messages that are not streaming
+  if (props.message.role === 'user' && !props.isStreaming) {
+    emit('edit', props.message)
   }
 }
 </script>
