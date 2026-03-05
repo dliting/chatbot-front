@@ -26,6 +26,7 @@ export interface Session {
   createdAt: number
   updatedAt: number
   messageCount: number
+  unreadCount: number
 }
 
 // Position Types
