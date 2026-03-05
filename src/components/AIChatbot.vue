@@ -14,7 +14,7 @@
     <!-- Chat Panel -->
     <ChatPanel
       :is-open="state.ui.isPanelOpen"
-      :mode="state.ui.panelMode"
+      :mode="effectivePanelMode"
       :position="config.position"
       :theme="state.ui.theme"
       :title="config.labels?.title"
@@ -31,7 +31,7 @@
     >
       <!-- Session Sidebar -->
       <SessionManager
-        v-if="config.enableSessionManager && state.ui.panelMode === 'sidebar'"
+        v-if="config.enableSessionManager && effectivePanelMode === 'sidebar'"
         :sessions="state.sessions.list"
         :current-session-id="state.sessions.currentId"
         :new-chat-label="config.labels?.newChat"
@@ -113,9 +113,16 @@ const {
 // Computed
 const ballSize = computed(() => (state.ui.isMobile ? 48 : 56))
 const unreadCount = computed(() => 1) // Simplified badge
-// Determine the chat mode based on panel mode - only floating uses floating style, others use internal
-const chatMode = computed(() => {
-  return state.ui.panelMode === 'floating' ? 'floating' : 'internal'
+
+// Use the chatMode from config, default to 'floating' if not specified
+const chatMode = computed(() => config.value.chatMode || 'floating')
+
+// Map chatMode to effective panelMode for ChatPanel
+// extended -> sidebar, compact -> sidebar, floating -> floating
+const effectivePanelMode = computed(() => {
+  const mode = config.value.chatMode || 'floating'
+  if (mode === 'extended' || mode === 'compact') return 'sidebar'
+  return mode // floating or other values pass through
 })
 
 // Methods
