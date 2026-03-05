@@ -37,6 +37,14 @@
           </div>
         </div>
 
+        <!-- Unread badge -->
+        <span
+          v-if="session.unreadCount > 0"
+          class="chatbot-sessions__item-badge"
+        >
+          {{ session.unreadCount > 99 ? '99+' : session.unreadCount }}
+        </span>
+
         <!-- Delete button -->
         <button
           class="chatbot-sessions__item-delete"
@@ -264,6 +272,21 @@ const formatSessionMeta = (session: Session): string => {
       background-color: var(--chatbot-danger-color, #f56c6c);
       color: #fff;
     }
+  }
+
+  &__item-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #fff;
+    background-color: var(--chatbot-danger-color, #f56c6c);
+    border-radius: 9px;
+    flex-shrink: 0;
   }
 
   &__empty {
