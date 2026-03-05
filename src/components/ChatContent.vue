@@ -37,6 +37,7 @@
           v-for="message in messages"
           :key="message.id"
           :class="['chat-content__message', message.role]"
+          @dblclick="handleMessageDblClick(message)"
         >
           <div class="chat-content__avatar">
             <svg v-if="message.role === 'assistant'" viewBox="0 0 24 24" fill="none" stroke-width="2">
@@ -129,9 +130,19 @@ const props = withDefaults(defineProps<Props>(), {
 interface Emits {
   (e: 'send-message', data: { content: string; images?: string[] }): void
   (e: 'quick-action', text: string): void
+  (e: 'edit', message: Message): void
+  (e: 'copy', message: Message): void
 }
 
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
+
+// Handle message double-click for editing (only for user messages)
+const handleMessageDblClick = (message: Message) => {
+  // Only allow editing user messages that are not streaming
+  if (message.role === 'user' && message.status !== 'loading') {
+    emit('edit', message)
+  }
+}
 
 // Auto-scroll to bottom when messages change
 const messagesRef = ref<HTMLElement>()

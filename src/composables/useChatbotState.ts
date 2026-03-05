@@ -208,6 +208,14 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     sessions.currentId = sessionId
   }
 
+  const updateSessionTitle = (sessionId: string, title: string) => {
+    const session = sessions.list.find(s => s.id === sessionId)
+    if (session) {
+      session.title = title
+      session.updatedAt = Date.now()
+    }
+  }
+
   const createSession = () => {
     const newSessionId = `session_${Date.now()}`
     messages.currentSessionId = newSessionId
@@ -312,6 +320,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     switchSession,
     createSession,
     deleteSession,
+    updateSessionTitle,
 
     // Interaction Actions
     setSelectedImages,

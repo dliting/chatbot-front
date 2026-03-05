@@ -38,6 +38,7 @@
         :is-streaming="isStreaming"
         @send-message="handleSend"
         @quick-action="sendQuickMessage"
+        @edit="handleMessageEdit"
       />
       <SessionListView
         v-else
@@ -100,6 +101,7 @@
             :is-streaming="isStreaming"
             @send-message="handleSend"
             @quick-action="sendQuickMessage"
+            @edit="handleMessageEdit"
           />
         </main>
       </template>
@@ -123,6 +125,7 @@
           :is-streaming="isStreaming"
           @send-message="handleSend"
           @quick-action="sendQuickMessage"
+          @edit="handleMessageEdit"
         />
         <SessionListView
           v-else
@@ -152,7 +155,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, h } from 'vue'
+import { ref, computed, onMounted, onUnmounted, h } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
 import type { ChatMode } from '@/types'
@@ -220,6 +223,13 @@ const props = withDefaults(defineProps<Props>(), {
   hideInputArea: false,
 })
 
+// Emits
+interface Emits {
+  (e: 'edit-message', message: import('@/types').Message): void
+}
+
+const emit = defineEmits<Emits>()
+
 // Merge config
 const config = computed(() => ({ ...defaultChatbotConfig, ...props.config }))
 const chatMode = computed(() => config.value.chatMode || props.mode)
@@ -235,6 +245,7 @@ const {
   switchSession,
   createSession,
   deleteSession,
+  cleanup,
 } = useChatbotState(config.value)
 
 // View state
@@ -365,6 +376,11 @@ const handleDeleteSession = (sessionId: string) => {
   deleteSession(sessionId)
 }
 
+// Handle message edit (double-click on user message)
+const handleMessageEdit = (message: import('@/types').Message) => {
+  emit('edit-message', message)
+}
+
 const _startRecording = () => {
   _isRecording.value = true
 }
@@ -400,6 +416,11 @@ onMounted(() => {
       height: config.value.panelHeight,
     }
   }
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  cleanup()
 })
 
 // Expose methods

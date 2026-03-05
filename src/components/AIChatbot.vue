@@ -1,11 +1,11 @@
 <template>
-  <div class="ai-chatbot" :data-theme="config.theme">
+  <div class="ai-chatbot" :data-theme="resolvedTheme">
     <!-- Suspended Ball -->
     <SuspendedBall
       v-if="!state.ui.isPanelOpen"
       :position="config.position"
       :size="ballSize"
-      :icon-color="config.theme === 'dark' ? '#ffffff' : '#ffffff'"
+      :icon-color="state.ui.theme === 'dark' ? '#ffffff' : '#ffffff'"
       :background-color="config.primaryColor"
       :badge="unreadCount"
       @click="togglePanel"
@@ -38,6 +38,7 @@
         @create-session="handleCreateSession"
         @switch-session="handleSwitchSession"
         @delete-session="handleDeleteSession"
+        @update-session-title="handleUpdateSessionTitle"
       />
 
       <!-- AIChat Component (Internal Mode) -->
@@ -49,13 +50,14 @@
         :hide-input-area="false"
         :config="aiChatConfig"
         :api-client="apiClient"
+        @edit-message="handleEditMessage"
       />
     </ChatPanel>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted } from 'vue'
+import { computed, watch, onMounted, onUnmounted } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
 import { useChatbotState } from '@/composables/useChatbotState'
@@ -108,19 +110,36 @@ const {
   switchSession,
   createSession,
   deleteSession,
+  updateSessionTitle,
+  cleanup,
 } = useChatbotState(config.value)
 
 // Computed
 const ballSize = computed(() => (state.ui.isMobile ? 48 : 56))
-const unreadCount = computed(() => 1) // Simplified badge
+// Get unread count from current session
+const unreadCount = computed(() => {
+  const currentSession = state.sessions.list.find(
+    s => s.id === state.sessions.currentId
+  )
+  return currentSession?.unreadCount ?? 0
+})
 // Determine the chat mode based on panel mode - only floating uses floating style, others use internal
 const chatMode = computed(() => {
   return state.ui.panelMode === 'floating' ? 'floating' : 'internal'
 })
+// Resolve theme for data-theme attribute (supports 'system' theme)
+const resolvedTheme = computed(() => {
+  if (config.value.theme === 'system') {
+    return state.ui.theme
+  }
+  return config.value.theme
+})
 
 // Methods
 const toggleTheme = () => {
-  const newTheme = state.ui.theme === 'light' ? 'dark' : 'light'
+  // Toggle between light and dark (respecting system theme if set)
+  const currentTheme = state.ui.theme
+  const newTheme = currentTheme === 'light' ? 'dark' : 'light'
   setTheme(newTheme)
 }
 
@@ -139,12 +158,24 @@ const handleDeleteSession = (sessionId: string) => {
   emit('sessionDelete', sessionId)
 }
 
+const handleUpdateSessionTitle = (sessionId: string, title: string) => {
+  updateSessionTitle(sessionId, title)
+  emit('sessionTitleUpdate', sessionId, title)
+}
+
+const handleEditMessage = (message: import('@/types').Message) => {
+  // Emit edit event for parent components to handle (e.g., fill input with message content)
+  emit('editMessage', message)
+}
+
 // Emits
 interface Emits {
   (e: 'panelToggle', data: { isOpen: boolean; mode: string }): void
   (e: 'sessionChange', sessionId: string): void
   (e: 'sessionCreate', sessionId: string): void
   (e: 'sessionDelete', sessionId: string): void
+  (e: 'sessionTitleUpdate', sessionId: string, title: string): void
+  (e: 'editMessage', message: import('@/types').Message): void
 }
 
 const emit = defineEmits<Emits>()
@@ -160,6 +191,11 @@ watch(
 // Initialize theme
 onMounted(() => {
   setTheme(config.value.theme)
+})
+
+// Cleanup on unmount
+onUnmounted(() => {
+  cleanup()
 })
 
 // Expose methods
