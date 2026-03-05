@@ -55,12 +55,18 @@
 
       <!-- Actions -->
       <div v-if="showActions" class="chatbot-message__actions">
+        <!-- Copy feedback -->
+        <Transition name="fade">
+          <span v-if="showCopyFeedback" class="chatbot-message__copy-feedback">
+            Copied!
+          </span>
+        </Transition>
         <!-- Copy button -->
         <button
           v-if="enableCopy && canCopy"
           class="chatbot-message__action-btn"
           title="Copy"
-          @click="$emit('copy')"
+          @click="handleCopy"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
@@ -96,9 +102,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Message } from '@/types'
-import { formatTime } from '@/utils/helpers'
+import { formatTime, copyToClipboard } from '@/utils/helpers'
 import { formatMessageContent } from '@/utils/message'
 
 interface Props {
@@ -133,7 +139,7 @@ interface Emits {
   (e: 'image-click', url: string): void
 }
 
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
 
 // Computed
 const isUser = computed(() => props.message.role === 'user')
@@ -165,6 +171,33 @@ const bubbleClasses = computed(() => [
     'chatbot-message__bubble--mixed': hasText.value && hasImages.value,
   },
 ])
+
+// Copy feedback
+const showCopyFeedback = ref(false)
+let copyFeedbackTimer: ReturnType<typeof setTimeout> | null = null
+
+const handleCopy = async () => {
+  if (!props.message.content || props.isStreaming) return
+
+  const success = await copyToClipboard(props.message.content)
+  if (success) {
+    // Clear existing timer if any
+    if (copyFeedbackTimer) {
+      clearTimeout(copyFeedbackTimer)
+    }
+
+    showCopyFeedback.value = true
+
+    // Hide feedback after 2000ms
+    copyFeedbackTimer = setTimeout(() => {
+      showCopyFeedback.value = false
+      copyFeedbackTimer = null
+    }, 2000)
+
+    // Emit copy event for parent components
+    emit('copy')
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -351,6 +384,17 @@ const bubbleClasses = computed(() => [
     }
   }
 
+  &__copy-feedback {
+    display: flex;
+    align-items: center;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: var(--chatbot-success-color, #67c23a);
+    background-color: rgba(103, 194, 58, 0.1);
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
   &__action-btn {
     display: flex;
     align-items: center;
@@ -388,5 +432,15 @@ const bubbleClasses = computed(() => [
   51%, 100% {
     opacity: 0;
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
