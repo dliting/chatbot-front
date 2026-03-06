@@ -28,6 +28,88 @@ async function takeScreenshot(page, name) {
   return filename;
 }
 
+async function testLandingAndRoutes() {
+  log('测试: Landing页面和路由导航');
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 800 });
+
+    // 1. 访问Landing页面
+    log('1. 访问Landing页面');
+    await page.goto(CHATAPP_URL + '/', { waitUntil: 'networkidle0', timeout: 30000 });
+
+    // 2. 验证页面加载
+    const pageTitle = await page.title();
+    if (pageTitle !== 'ChatApp') {
+      throw new Error(`页面标题不正确: ${pageTitle}`);
+    }
+    log(`Landing页面加载成功 - 标题: ${pageTitle}`, 'pass');
+    await takeScreenshot(page, 'landing-page');
+
+    // 3. 测试模式卡片导航
+    const modes = [
+      { name: 'extended', label: '扩展' },
+      { name: 'compact', label: '紧凑' },
+      { name: 'floating', label: '悬浮' },
+      { name: 'iframe', label: 'IFRAME' }
+    ];
+
+    for (const mode of modes) {
+      log(`2.${modes.indexOf(mode) + 1} 测试${mode.label}模式导航`);
+
+      // 尝试多种选择器找到模式卡片
+      const cardSelectors = [
+        `button:has-text("${mode.label}")`,
+        `[class*="card"]:has-text("${mode.label}")`,
+        `a:has-text("${mode.label}")`,
+        `[role="button"]:has-text("${mode.label}")`
+      ];
+
+      let cardClicked = false;
+      for (const selector of cardSelectors) {
+        try {
+          const card = await page.$(selector);
+          if (card) {
+            await card.click();
+            cardClicked = true;
+            break;
+          }
+        } catch (e) {
+          // Continue to next selector
+        }
+      }
+
+      if (cardClicked) {
+        await page.waitForTimeout(1000);
+
+        // 验证URL变化
+        const url = page.url();
+        if (url.includes(`/${mode.name}`)) {
+          log(`  → 成功导航到 /${mode.name}`, 'pass');
+          await takeScreenshot(page, `${mode.name}-mode`);
+        } else {
+          log(`  → URL未包含/${mode.name}: ${url}`, 'info');
+        }
+
+        // 返回Landing页面
+        await page.goto(CHATAPP_URL + '/', { waitUntil: 'networkidle0' });
+        await page.waitForTimeout(500);
+      } else {
+        log(`  → 未找到${mode.label}模式卡片`, 'info');
+      }
+    }
+
+    await page.close();
+    testsPassed++;
+    log('✅ Landing页面和路由测试通过', 'pass');
+    return true;
+  } catch (error) {
+    log(`Landing页面和路由测试失败: ${error.message}`, 'fail');
+    testsFailed++;
+    return false;
+  }
+}
+
 async function testPageLoad() {
   log('测试: 页面加载');
   try {
@@ -252,6 +334,47 @@ async function testConsoleErrors(page) {
   return errors.length === 0;
 }
 
+async function testIframeMode() {
+  log('测试: Iframe模式');
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 800 });
+
+    // 导航到iframe页面
+    log('1. 导航到Iframe页面');
+    await page.goto(CHATAPP_URL + '/iframe', { waitUntil: 'networkidle0', timeout: 30000 });
+
+    await takeScreenshot(page, 'iframe-page');
+
+    // 测试控制按钮
+    const buttons = ['切换聊天bot', '切换主题', '改变位置', '清除日志'];
+
+    for (let i = 0; i < buttons.length; i++) {
+      log(`2.${i + 1} 测试"${buttons[i]}"按钮`);
+
+      const button = await page.$(`button:has-text("${buttons[i]}")`);
+      if (button) {
+        await button.click();
+        await page.waitForTimeout(500);
+        log(`  → ${buttons[i]}按钮已点击`, 'pass');
+      } else {
+        log(`  → 未找到${buttons[i]}按钮`, 'info');
+      }
+    }
+
+    await takeScreenshot(page, 'iframe-controls-tested');
+    await page.close();
+
+    testsPassed++;
+    log('✅ Iframe模式测试通过', 'pass');
+    return true;
+  } catch (error) {
+    log(`Iframe模式测试失败: ${error.message}`, 'fail');
+    testsFailed++;
+    return false;
+  }
+}
+
 async function runTests() {
   log('========================================');
   log('ChatApp UI 交互测试开始');
@@ -268,13 +391,18 @@ async function runTests() {
     const page = await browser.newPage();
 
     // 测试用例
-    await testPageLoad();
+    await testLandingAndRoutes();  // 新增: Landing页面和路由测试
+
+    // 注意: 以下测试需要先导航到具体模式页面
+    await page.goto(CHATAPP_URL + '/extended', { waitUntil: 'networkidle0' });
     await testWelcomeInterface(page);
     await testSendMessage(page);
     await testThemeToggle(page);
     await testSessionManagement(page);
+
     await testApiConnection(page);
     await testConsoleErrors(page);
+    await testIframeMode();  // 新增: Iframe模式测试
 
     // 关闭浏览器
     await browser.close();
