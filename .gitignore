@@ -41,3 +41,13 @@ coverage/
 # Misc
 *.tgz
 *.tar.gz
+
+# Backup and plans
+backup/
+docs/plans/
+
+# ChatApp frontend
+examples/chatapp/frontend/.env
+
+# Test screenshots
+tests/screenshots/*.png
