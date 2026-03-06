@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 // Mock fetch
 global.fetch = vi.fn()
@@ -8,31 +8,39 @@ describe('ollama service', () => {
     vi.clearAllMocks()
   })
 
-  it('should include chat_template_kwargs with enable_thinking when thinking is disabled', async () => {
-    // This test verifies the thinking mode configuration
-    const { streamChat } = await import('./ollama')
+  it('should convert message with images to OpenAI multimodal format', async () => {
+    const { convertToOpenAIMessage } = await import('./ollama')
 
-    const mockResponse = new ReadableStream({
-      start(controller) {
-        controller.enqueue(new TextEncoder().encode('{"message":{"content":"hello"},"done":true}\n'))
-        controller.close()
-      }
+    const message = {
+      role: 'user' as const,
+      content: 'What is this?',
+      images: ['iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==']
+    }
+
+    const result = convertToOpenAIMessage(message)
+
+    expect(result).toEqual({
+      role: 'user',
+      content: [
+        { type: 'text', text: 'What is this?' },
+        { type: 'image_url', image_url: { url: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' } }
+      ]
     })
+  })
 
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      body: mockResponse,
-    } as unknown as Response)
+  it('should pass message without images as plain text', async () => {
+    const { convertToOpenAIMessage } = await import('./ollama')
 
-    const messages = [{ role: 'user' as const, content: 'hi' }]
-    const iterator = streamChat(messages)
-    await iterator.next()
+    const message = {
+      role: 'user' as const,
+      content: 'Hello'
+    }
 
-    expect(fetch).toHaveBeenCalledWith(
-      expect.any(String),
-      expect.objectContaining({
-        body: expect.stringContaining('"think":'),
-      })
-    )
+    const result = convertToOpenAIMessage(message)
+
+    expect(result).toEqual({
+      role: 'user',
+      content: 'Hello'
+    })
   })
 })
