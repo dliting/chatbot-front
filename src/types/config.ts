@@ -1,12 +1,16 @@
 /**
  * Configuration types for AI Chatbot
  */
-import type { Position, Theme, Locale } from './index'
+import type { Position, Theme, Locale, InteractionMode, Layout } from './index'
 
 import type { PanelMode } from './index'
 
 export interface ChatbotConfig {
-  // Chat mode (determines layout and behavior)
+  // Interaction mode (new dual-dimension architecture)
+  mode?: InteractionMode
+  // Layout (auto-derived from mode if not specified)
+  layout?: Layout
+  // Legacy: Chat mode (for backward compatibility)
   chatMode?: 'extended' | 'compact' | 'floating'
 
   // Layout configuration
@@ -101,7 +105,11 @@ export const defaultChatbotLabels: ChatbotLabels = {
 }
 
 export const defaultChatbotConfig: Required<ChatbotConfig> = {
-  // Chat mode
+  // Interaction mode
+  mode: 'floating',
+  layout: 'compact',
+
+  // Legacy: Chat mode
   chatMode: 'floating',
 
   // Layout

@@ -36,6 +36,17 @@ export type ChatMode = 'extended' | 'compact' | 'floating' | 'fullscreen'
 export type Theme = 'light' | 'dark' | 'system'
 export type Locale = 'zh-CN' | 'en-US'
 
+// Interaction Mode Types (new dual-dimension architecture)
+export type InteractionMode = 'floating' | 'extended' | 'sidebar'
+export type Layout = 'split' | 'compact'
+
+// Layout auto-derivation mapping
+export const modeToLayoutMap: Record<InteractionMode, Layout> = {
+  'floating': 'compact',
+  'extended': 'split',
+  'sidebar': 'compact'
+}
+
 // Point coordinates
 export interface Point {
   x: number
