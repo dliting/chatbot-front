@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-// 导航到指定模式的聊天页面
-function startChat(mode: 'extended' | 'compact' | 'floating') {
-  router.push({ name: mode })
+// 导航到指定模式的演示页面
+function goToDemo(mode: 'extended' | 'compact' | 'floating' | 'iframe') {
+  router.push(`/${mode}`)
 }
 </script>
 
@@ -24,7 +23,7 @@ function startChat(mode: 'extended' | 'compact' | 'floating') {
       <div class="mode-section">
         <h2 class="mode-section-title">选择模式</h2>
         <div class="mode-cards">
-          <button class="mode-card primary" @click="startChat('extended')">
+          <button class="mode-card primary" @click="goToDemo('extended')">
             <div class="mode-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -36,7 +35,7 @@ function startChat(mode: 'extended' | 'compact' | 'floating') {
             <p class="description">桌面端全屏聊天界面，左侧会话列表 + 右侧聊天区</p>
           </button>
 
-          <button class="mode-card" @click="startChat('compact')">
+          <button class="mode-card" @click="goToDemo('compact')">
             <div class="mode-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
@@ -48,7 +47,7 @@ function startChat(mode: 'extended' | 'compact' | 'floating') {
             <p class="description">桌面端边栏或移动端全屏界面</p>
           </button>
 
-          <button class="mode-card primary" @click="startChat('floating')">
+          <button class="mode-card primary" @click="goToDemo('floating')">
             <div class="mode-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="10"/>
@@ -58,6 +57,18 @@ function startChat(mode: 'extended' | 'compact' | 'floating') {
             <h2>悬浮模式</h2>
             <p class="subtitle">Floating Mode</p>
             <p class="description">页面右下角悬浮球，点击打开聊天对话框</p>
+          </button>
+
+          <button class="mode-card" @click="goToDemo('iframe')">
+            <div class="mode-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="14" rx="2"/>
+                <path d="M3 21h18"/>
+              </svg>
+            </div>
+            <h2>Iframe嵌入</h2>
+            <p class="subtitle">Iframe Mode</p>
+            <p class="description">通过iframe嵌入任何网站，支持postMessage通信</p>
           </button>
         </div>
       </div>
@@ -235,6 +246,7 @@ html, body, #app {
 .mode-card:nth-child(1) { animation-delay: 0.1s; }
 .mode-card:nth-child(2) { animation-delay: 0.2s; }
 .mode-card:nth-child(3) { animation-delay: 0.3s; }
+.mode-card:nth-child(4) { animation-delay: 0.4s; }
 
 .mode-card:hover {
   transform: translateY(-8px);
