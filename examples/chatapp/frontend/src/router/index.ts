@@ -7,14 +7,14 @@ const routes: RouteRecordRaw[] = [
     component: () => import('../views/LandingPage.vue')
   },
   {
-    path: '/compact',
-    name: 'compact',
-    component: () => import('../views/CompactDemo.vue')
-  },
-  {
     path: '/extended',
     name: 'extended',
     component: () => import('../views/ExtendedDemo.vue')
+  },
+  {
+    path: '/sidebar',
+    name: 'sidebar',
+    component: () => import('../views/SidebarDemo.vue')
   },
   {
     path: '/floating',
