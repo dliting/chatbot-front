@@ -10,10 +10,42 @@ export interface OllamaMessage {
   images?: string[]
 }
 
+// Convert OllamaMessage format to OpenAI format
+export function convertToOpenAIMessage(message: OllamaMessage): { role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> } {
+  if (!message.images || message.images.length === 0) {
+    return {
+      role: message.role,
+      content: message.content
+    }
+  }
+
+  // Convert to OpenAI multimodal format
+  const content: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
+    { type: 'text', text: message.content }
+  ]
+
+  for (const img of message.images) {
+    // Check if already has data URI prefix
+    const dataUrl = img.startsWith('data:') ? img : `data:image/png;base64,${img}`
+    content.push({
+      type: 'image_url',
+      image_url: { url: dataUrl }
+    })
+  }
+
+  return {
+    role: message.role,
+    content
+  }
+}
+
 export async function* streamChat(
   messages: OllamaMessage[]
 ): AsyncGenerator<ChatMessage, void, unknown> {
-  const url = `${OLLAMA_BASE_URL}/api/chat`
+  const url = `${OLLAMA_BASE_URL}/v1/chat/completions`
+
+  // Convert messages to OpenAI format
+  const openAIMessages = messages.map(convertToOpenAIMessage)
 
   const response = await fetch(url, {
     method: 'POST',
@@ -22,9 +54,8 @@ export async function* streamChat(
     },
     body: JSON.stringify({
       model: OLLAMA_MODEL,
-      messages,
-      stream: true,
-      think: OLLAMA_THINKING_ENABLED
+      messages: openAIMessages,
+      stream: true
     })
   })
 
@@ -53,13 +84,15 @@ export async function* streamChat(
       buffer = lines.pop() || ''
 
       for (const line of lines) {
-        if (!line.trim()) continue
+        if (!line.trim() || !line.startsWith('data: ')) continue
         try {
-          const data = JSON.parse(line)
-          if (data.message?.content) {
-            yield { type: 'token', content: data.message.content }
+          const jsonStr = line.replace(/^data: /, '').trim()
+          if (jsonStr === '[DONE]') continue
+          const data = JSON.parse(jsonStr)
+          if (data.choices?.[0]?.delta?.content) {
+            yield { type: 'token', content: data.choices[0].delta.content }
           }
-          if (data.done) {
+          if (data.choices?.[0]?.finish_reason) {
             yield { type: 'end', fullContent: '' }
           }
         } catch {
@@ -73,7 +106,10 @@ export async function* streamChat(
 }
 
 export async function chat(messages: OllamaMessage[]): Promise<string> {
-  const url = `${OLLAMA_BASE_URL}/api/chat`
+  const url = `${OLLAMA_BASE_URL}/v1/chat/completions`
+
+  // Convert messages to OpenAI format
+  const openAIMessages = messages.map(convertToOpenAIMessage)
 
   const response = await fetch(url, {
     method: 'POST',
@@ -82,9 +118,8 @@ export async function chat(messages: OllamaMessage[]): Promise<string> {
     },
     body: JSON.stringify({
       model: OLLAMA_MODEL,
-      messages,
-      stream: false,
-      think: OLLAMA_THINKING_ENABLED
+      messages: openAIMessages,
+      stream: false
     })
   })
 
@@ -92,6 +127,6 @@ export async function chat(messages: OllamaMessage[]): Promise<string> {
     throw new Error(`Ollama request failed: ${response.status} ${response.statusText}`)
   }
 
-  const data = await response.json() as { message?: { content?: string } }
-  return data.message?.content || ''
+  const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> }
+  return data.choices?.[0]?.message?.content || ''
 }

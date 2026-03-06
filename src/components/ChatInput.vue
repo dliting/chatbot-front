@@ -89,7 +89,6 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { createMockUploadEndpoint } from '@/utils/upload'
 
 interface Props {
   disabled?: boolean
@@ -116,8 +115,19 @@ const selectedImages = ref<string[]>([])
 const isMenuOpen = ref(false)
 const currentFileAccept = ref('*')
 
-// Mock API
-const uploadEndpoint = createMockUploadEndpoint(1000)
+// Convert file to base64 for direct sending to backend
+const convertFileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+      const result = reader.result as string
+      // Remove data URL prefix (e.g., "data:image/png;base64,")
+      resolve(result.split(',')[1])
+    }
+    reader.onerror = () => reject(new Error('Failed to read file'))
+    reader.readAsDataURL(file)
+  })
+}
 
 // Menu items
 const menuItems = [
@@ -195,12 +205,13 @@ const handleFileSelect = async (e: Event) => {
   if (!files || files.length === 0) return
 
   try {
-    const result = await uploadEndpoint.upload(Array.from(files))
-    if (result.urls && result.urls.length > 0) {
-      selectedImages.value.push(...result.urls)
+    // Convert files to base64 directly
+    for (const file of Array.from(files)) {
+      const base64 = await convertFileToBase64(file)
+      selectedImages.value.push(base64)
     }
   } catch (error) {
-    console.error('Upload failed:', error)
+    console.error('File processing failed:', error)
   }
 
   target.value = ''
