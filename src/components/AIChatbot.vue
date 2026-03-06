@@ -1,8 +1,8 @@
 <template>
   <div class="ai-chatbot" :data-theme="config.theme">
-    <!-- Suspended Ball -->
+    <!-- Suspended Ball (only for floating mode) -->
     <SuspendedBall
-      v-if="!state.ui.isPanelOpen"
+      v-if="chatMode === 'floating' && !state.ui.isPanelOpen"
       :position="config.position"
       :size="ballSize"
       :icon-color="config.theme === 'dark' ? '#ffffff' : '#ffffff'"
@@ -13,6 +13,7 @@
 
     <!-- Chat Panel -->
     <ChatPanel
+      v-if="chatMode !== 'extended'"
       :is-open="state.ui.isPanelOpen"
       :mode="effectivePanelMode"
       :position="config.position"
@@ -51,6 +52,14 @@
         :api-client="apiClient"
       />
     </ChatPanel>
+
+    <!-- Extended Mode: AIChat renders its own layout directly -->
+    <AIChat
+      v-else
+      :mode="chatMode"
+      :config="config"
+      :api-client="apiClient"
+    />
   </div>
 </template>
 

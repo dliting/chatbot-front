@@ -140,14 +140,14 @@
 
   <!-- Modals and Overlays -->
   <VoiceOverlay
-    v-if="isRecording"
+    v-if="_isRecording"
     @cancel="cancelVoice"
   />
 
   <ImagePreviewModal
-    v-if="previewImage"
-    :url="previewImage"
-    @close="previewImage = null"
+    v-if="_previewImage"
+    :url="_previewImage"
+    @close="_previewImage = null"
   />
 </template>
 
