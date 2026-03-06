@@ -30,8 +30,9 @@ async function takeScreenshot(page, name) {
 
 async function testLandingAndRoutes() {
   log('测试: Landing页面和路由导航');
+  let page;
   try {
-    const page = await browser.newPage();
+    page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 800 });
 
     // 1. 访问Landing页面
@@ -57,27 +58,17 @@ async function testLandingAndRoutes() {
     for (const mode of modes) {
       log(`2.${modes.indexOf(mode) + 1} 测试${mode.label}模式导航`);
 
-      // 尝试多种选择器找到模式卡片
-      const cardSelectors = [
-        `button:has-text("${mode.label}")`,
-        `[class*="card"]:has-text("${mode.label}")`,
-        `a:has-text("${mode.label}")`,
-        `[role="button"]:has-text("${mode.label}")`
-      ];
-
-      let cardClicked = false;
-      for (const selector of cardSelectors) {
-        try {
-          const card = await page.$(selector);
-          if (card) {
-            await card.click();
-            cardClicked = true;
-            break;
-          }
-        } catch (e) {
-          // Continue to next selector
+      // 使用 page.evaluate 来查找和点击包含特定文本的元素
+      const cardClicked = await page.evaluate((label) => {
+        // 查找所有按钮、链接和可点击元素
+        const clickableElements = Array.from(document.querySelectorAll('button, a, [role="button"], [class*="card"]'));
+        const card = clickableElements.find(el => el.textContent.includes(label));
+        if (card) {
+          card.click();
+          return true;
         }
-      }
+        return false;
+      }, mode.label);
 
       if (cardClicked) {
         await page.waitForTimeout(1000);
@@ -99,7 +90,6 @@ async function testLandingAndRoutes() {
       }
     }
 
-    await page.close();
     testsPassed++;
     log('✅ Landing页面和路由测试通过', 'pass');
     return true;
@@ -107,13 +97,16 @@ async function testLandingAndRoutes() {
     log(`Landing页面和路由测试失败: ${error.message}`, 'fail');
     testsFailed++;
     return false;
+  } finally {
+    if (page) await page.close().catch(() => {});
   }
 }
 
 async function testPageLoad() {
   log('测试: 页面加载');
+  let page;
   try {
-    const page = await browser.newPage();
+    page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 800 });
     await page.goto(CHATAPP_URL, { waitUntil: 'networkidle0', timeout: 30000 });
 
@@ -138,7 +131,7 @@ async function testPageLoad() {
     return page;
   } catch (error) {
     log(`页面加载失败: ${error.message}`, 'fail');
-    testsFailed++;
+    if (page) await page.close().catch(() => {});
     throw error;
   }
 }
@@ -336,8 +329,9 @@ async function testConsoleErrors(page) {
 
 async function testIframeMode() {
   log('测试: Iframe模式');
+  let page;
   try {
-    const page = await browser.newPage();
+    page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 800 });
 
     // 导航到iframe页面
@@ -352,9 +346,18 @@ async function testIframeMode() {
     for (let i = 0; i < buttons.length; i++) {
       log(`2.${i + 1} 测试"${buttons[i]}"按钮`);
 
-      const button = await page.$(`button:has-text("${buttons[i]}")`);
-      if (button) {
-        await button.click();
+      // 使用 page.evaluate 来查找和点击包含特定文本的按钮
+      const buttonClicked = await page.evaluate((buttonText) => {
+        const buttons = Array.from(document.querySelectorAll('button'));
+        const button = buttons.find(el => el.textContent.includes(buttonText));
+        if (button) {
+          button.click();
+          return true;
+        }
+        return false;
+      }, buttons[i]);
+
+      if (buttonClicked) {
         await page.waitForTimeout(500);
         log(`  → ${buttons[i]}按钮已点击`, 'pass');
       } else {
@@ -363,7 +366,6 @@ async function testIframeMode() {
     }
 
     await takeScreenshot(page, 'iframe-controls-tested');
-    await page.close();
 
     testsPassed++;
     log('✅ Iframe模式测试通过', 'pass');
@@ -372,6 +374,8 @@ async function testIframeMode() {
     log(`Iframe模式测试失败: ${error.message}`, 'fail');
     testsFailed++;
     return false;
+  } finally {
+    if (page) await page.close().catch(() => {});
   }
 }
 
