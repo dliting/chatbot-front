@@ -723,9 +723,9 @@ interface IframeMessages {
 
   // iframe → 主站
   'chatbot:ready': {}
-  'chat:message-sent': { message: Message }
-  'chat:message-received': { message: Message }
-  'chat:error': { error: ChatError }
+  'chatbot:message-sent': { message: Message }
+  'chatbot:message-received': { message: Message }
+  'chatbot:error': { error: ChatError }
 }
 ```
 
