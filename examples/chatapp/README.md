@@ -29,7 +29,7 @@ ollama serve
 ollama run qwen3.5:9b
 
 # 然后启动后端
-cd backend
+cd backend-real
 npm install
 npm run dev
 ```
@@ -61,7 +61,7 @@ chatapp/
 │   ├── .env           # 环境配置
 │   ├── package.json
 │   └── vite.config.ts
-├── backend/           # Real 后端 (Express + TypeScript + SQLite)
+├── backend-real/           # Real 后端 (Express + TypeScript + SQLite)
 │   ├── src/
 │   │   ├── index.ts           # 服务入口
 │   │   ├── routes/chat.ts     # API 路由
@@ -106,12 +106,12 @@ npm run dev
 ### 启动 Real 模式（需要 Ollama）
 
 ```bash
-# 1. 启动 Ollama
+# 1. 启动 Ollama(如果没启动)
 ollama serve
 ollama run qwen3.5:9b
 
 # 2. 启动 Real 后端
-cd backend
+cd backend-real
 npm install
 npm run dev
 

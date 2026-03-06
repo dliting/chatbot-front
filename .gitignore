@@ -49,5 +49,8 @@ docs/plans/
 # ChatApp frontend
 examples/chatapp/frontend/.env
 
+# Mock database
+examples/chatapp/backend-mock/data/*.db
+
 # Test screenshots
 tests/screenshots/*.png
