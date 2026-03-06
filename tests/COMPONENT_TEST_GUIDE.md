@@ -10,11 +10,23 @@
 - **组件测试**: @vue/test-utils
 - **覆盖率**: vitest --coverage
 
+## 项目结构说明
+
+ChatApp前端的Demo页面位于 `examples/chatapp/frontend/src/views/` 目录。
+组件测试可以与组件同目录放置（`__tests__`子目录）或统一放在 `tests/` 目录。
+
+当前已存在的测试:
+- `examples/chatapp/frontend/src/router/__tests__/index.test.ts` - 路由配置测试
+
+本指南提供的测试示例为参考实现，可根据项目需要调整文件位置。
+
 ## Demo页面组件测试
 
 ### LandingPage.vue 测试
 
-**测试文件**: `tests/views/LandingPage.spec.ts`
+**测试文件** (示例): `examples/chatapp/frontend/src/views/__tests__/LandingPage.spec.ts`
+
+> **注**: 以下测试示例为参考实现，实际测试文件需要根据项目结构创建。
 
 ```typescript
 import { describe, it, expect } from 'vitest'
@@ -61,7 +73,13 @@ describe('LandingPage', () => {
     })
 
     // 点击扩展模式卡片
-    await wrapper.find('.mode-card').filter((w) => w.text().includes('扩展模式')).trigger('click')
+    const cards = wrapper.findAll('.mode-card')
+    for (const card of cards) {
+      if (card.text().includes('扩展模式')) {
+        await card.trigger('click')
+        break
+      }
+    }
     expect(router.currentRoute.value.path).toBe('/extended')
   })
 })
@@ -69,7 +87,9 @@ describe('LandingPage', () => {
 
 ### CompactDemo.vue 测试
 
-**测试文件**: `tests/views/CompactDemo.spec.ts`
+**测试文件** (示例): `examples/chatapp/frontend/src/views/__tests__/CompactDemo.spec.ts`
+
+> **注**: 以下测试示例为参考实现，实际测试文件需要根据项目结构创建。
 
 ```typescript
 import { describe, it, expect } from 'vitest'
@@ -105,7 +125,7 @@ describe('CompactDemo', () => {
 
 ## 路由配置测试
 
-**测试文件**: `tests/router/index.spec.ts` (已存在)
+**测试文件**: `examples/chatapp/frontend/src/router/__tests__/index.test.ts` (已存在)
 
 已有测试覆盖：
 - 路由路径验证
@@ -121,8 +141,8 @@ npm test
 # 运行特定测试文件
 npm test LandingPage
 
-# 查看覆盖率
-npm run test:coverage
+# 运行带覆盖率的测试
+npm test -- --coverage
 ```
 
 ## 测试覆盖目标
