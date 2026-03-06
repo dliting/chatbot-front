@@ -1,8 +1,8 @@
 <template>
   <div class="ai-chatbot" :data-theme="resolvedTheme">
-    <!-- Suspended Ball -->
+    <!-- Suspended Ball (only for floating mode) -->
     <SuspendedBall
-      v-if="!state.ui.isPanelOpen"
+      v-if="chatMode === 'floating' && !state.ui.isPanelOpen"
       :position="config.position"
       :size="ballSize"
       :icon-color="state.ui.theme === 'dark' ? '#ffffff' : '#ffffff'"
@@ -11,10 +11,11 @@
       @click="togglePanel"
     />
 
-    <!-- Chat Panel -->
+    <!-- Chat Panel (for sidebar and floating modes) -->
     <ChatPanel
+      v-if="chatMode !== 'extended'"
       :is-open="state.ui.isPanelOpen"
-      :mode="state.ui.panelMode"
+      :mode="effectivePanelMode"
       :position="config.position"
       :theme="state.ui.theme"
       :title="config.labels?.title"
@@ -41,6 +42,14 @@
         @edit-message="handleEditMessage"
       />
     </ChatPanel>
+
+    <!-- Extended Mode: AIChat renders its own layout directly -->
+    <AIChat
+      v-else
+      :mode="chatMode"
+      :config="config"
+      :api-client="apiClient"
+    />
   </div>
 </template>
 
@@ -116,6 +125,7 @@ const unreadCount = computed(() => {
   )
   return currentSession?.unreadCount ?? 0
 })
+
 // Determine the chat mode based on interaction mode (new dual-dimension architecture)
 // - 'extended' mode uses 'extended' layout (split layout)
 // - 'sidebar' mode uses 'compact' layout (tab switching)
@@ -132,6 +142,14 @@ const chatMode = computed(() => {
   if (panelMode === 'sidebar') return 'extended'
   return 'internal' // dialog, fullscreen
 })
+
+// Map chatMode to effective panelMode for ChatPanel
+const effectivePanelMode = computed(() => {
+  const mode = config.value.mode || config.value.chatMode || 'floating'
+  if (mode === 'extended' || mode === 'sidebar') return 'sidebar'
+  return mode
+})
+
 // Resolve theme for data-theme attribute (supports 'system' theme)
 const resolvedTheme = computed(() => {
   if (config.value.theme === 'system') {
