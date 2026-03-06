@@ -4,27 +4,27 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'landing',
-    component: () => import('@/views/LandingPage.vue')
+    component: () => import('../views/LandingPage.vue')
   },
   {
     path: '/compact',
     name: 'compact',
-    component: () => import('@/views/CompactDemo.vue')
+    component: () => import('../views/CompactDemo.vue')
   },
   {
     path: '/extended',
     name: 'extended',
-    component: () => import('@/views/ExtendedDemo.vue')
+    component: () => import('../views/ExtendedDemo.vue')
   },
   {
     path: '/floating',
     name: 'floating',
-    component: () => import('@/views/FloatingDemo.vue')
+    component: () => import('../views/FloatingDemo.vue')
   },
   {
     path: '/iframe',
     name: 'iframe',
-    component: () => import('@/views/IframeDemo.vue')
+    component: () => import('../views/IframeDemo.vue')
   }
 ]
 

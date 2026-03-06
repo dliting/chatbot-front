@@ -7,6 +7,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '../../../src'),
+      '@/views': path.resolve(__dirname, './src/views'),
       'chatbot': path.resolve(__dirname, '../../../src/index.ts')
     }
   },
@@ -17,6 +18,14 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true
       }
+    }
+  },
+  test: {
+    globals: true,
+    environment: 'jsdom',
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'html']
     }
   }
 })
