@@ -28,7 +28,7 @@ function goHome() {
 <template>
   <div class="compact-demo">
     <!-- 返回首页链接 -->
-    <a href="/" class="back-link">← 返回首页</a>
+    <a href="/" class="back-link" @click.prevent="goHome">← 返回首页</a>
 
     <!-- 主内容区域 -->
     <main class="main-content">
