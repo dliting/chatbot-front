@@ -230,9 +230,9 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
-// Merge config
+// Merge config - props.mode should take priority over config.chatMode
 const config = computed(() => ({ ...defaultChatbotConfig, ...props.config }))
-const chatMode = computed(() => config.value.chatMode || props.mode)
+const chatMode = computed(() => props.mode || config.value.chatMode)
 
 // State
 const {

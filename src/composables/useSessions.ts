@@ -50,7 +50,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
   }
 
   /**
-   * Initialize sessions
+   * Initialize sessions (auto-called)
    */
   const init = () => {
     const stored = loadFromStorage()
@@ -64,6 +64,9 @@ export function useSessions(options: UseSessionsOptions = {}) {
       createSession()
     }
   }
+
+  // Auto-initialize on mount
+  init()
 
   /**
    * Create a new session

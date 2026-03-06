@@ -29,19 +29,7 @@
       @close="togglePanel"
       @toggle-theme="toggleTheme"
     >
-      <!-- Session Sidebar -->
-      <SessionManager
-        v-if="config.enableSessionManager && state.ui.panelMode === 'sidebar'"
-        :sessions="state.sessions.list"
-        :current-session-id="state.sessions.currentId"
-        :new-chat-label="config.labels?.newChat"
-        @create-session="handleCreateSession"
-        @switch-session="handleSwitchSession"
-        @delete-session="handleDeleteSession"
-        @update-session-title="handleUpdateSessionTitle"
-      />
-
-      <!-- AIChat Component (Internal Mode) -->
+      <!-- AIChat Component (handles all layouts internally) -->
       <AIChat
         :mode="chatMode"
         :hide-header="true"
@@ -66,7 +54,6 @@ import { useApiClient } from '@/composables/useApiClient'
 // Components
 import SuspendedBall from './SuspendedBall.vue'
 import ChatPanel from './ChatPanel.vue'
-import SessionManager from './SessionManager.vue'
 import AIChat from './AIChat.vue'
 
 // Props
@@ -80,7 +67,12 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Merge config with defaults
 const config = computed((): Required<ChatbotConfig> => {
-  return { ...defaultChatbotConfig, ...props.config } as Required<ChatbotConfig>
+  const merged = { ...defaultChatbotConfig, ...props.config } as Required<ChatbotConfig>
+  // Use new mode field if provided, fallback to legacy chatMode
+  if (!merged.mode && merged.chatMode) {
+    merged.mode = merged.chatMode as any
+  }
+  return merged
 })
 
 // AIChat config (internal mode)
@@ -89,6 +81,7 @@ const aiChatConfig = computed(() => ({
   enableImageUpload: config.value.enableImageUpload,
   maxImageCount: config.value.maxImageCount,
   maxImageSize: config.value.maxImageSize,
+  defaultExpanded: config.value.defaultExpanded,
 }))
 
 // API client (only create if apiBaseUrl is configured)
@@ -123,9 +116,21 @@ const unreadCount = computed(() => {
   )
   return currentSession?.unreadCount ?? 0
 })
-// Determine the chat mode based on panel mode - only floating uses floating style, others use internal
+// Determine the chat mode based on interaction mode (new dual-dimension architecture)
+// - 'extended' mode uses 'extended' layout (split layout)
+// - 'sidebar' mode uses 'compact' layout (tab switching)
+// - 'floating' mode uses 'compact' layout (tab switching)
 const chatMode = computed(() => {
-  return state.ui.panelMode === 'floating' ? 'floating' : 'internal'
+  // Use new mode field if provided
+  if (config.value.mode === 'extended') return 'extended'
+  if (config.value.mode === 'sidebar') return 'compact'
+  if (config.value.mode === 'floating') return 'floating'
+
+  // Legacy fallback based on panel mode
+  const panelMode = state.ui.panelMode
+  if (panelMode === 'floating') return 'floating'
+  if (panelMode === 'sidebar') return 'extended'
+  return 'internal' // dialog, fullscreen
 })
 // Resolve theme for data-theme attribute (supports 'system' theme)
 const resolvedTheme = computed(() => {
