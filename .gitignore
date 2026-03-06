@@ -48,6 +48,7 @@ docs/plans/
 
 # ChatApp frontend
 examples/chatapp/frontend/.env
+examples/chatapp/backend-real/
 
 # Mock database
 examples/chatapp/backend-mock/data/*.db
