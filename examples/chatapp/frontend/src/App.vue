@@ -9,7 +9,7 @@ const selectedMode = ref<'extended' | 'compact' | 'floating'>('floating')
 // 聊天组件配置
 const config = computed(() => ({
   chatMode: selectedMode.value,
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
   streamEnabled: true,
   enableImageUpload: true,
   enableSessionManager: true,
