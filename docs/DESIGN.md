@@ -865,3 +865,125 @@ src/
     ├── sanitizer.ts                 # XSS 防护
     └── storage.ts                   # 本地存储
 ```
+
+---
+
+## 附录A: 使用示例
+
+### A.1 模式对比
+
+| 模式 | 路由 | 适用场景 | 特点 |
+|------|------|----------|------|
+| **扩展模式** | `/extended` | 独立聊天应用 | 全屏界面，左侧会话列表 + 右侧聊天区 |
+| **紧凑模式** | `/compact` | SaaS后台、客服平台 | 桌面端侧边栏固定，移动端自动全屏 |
+| **悬浮模式** | `/floating` | 营销落地页、文档页 | 悬浮球按钮，点击弹出对话框 |
+| **Iframe嵌入** | `/iframe` | 第三方网站集成 | 跨域嵌入，postMessage通信 |
+
+### A.2 模式配置示例
+
+#### 扩展模式配置
+
+```typescript
+const config = {
+  chatMode: 'extended',
+  apiBaseUrl: 'http://localhost:3001',
+  enableImageUpload: true,
+  enableSessionManager: true,
+  labels: {
+    title: '智能助手',
+    placeholder: '输入消息...',
+    newChat: '新建对话',
+    history: '历史对话',
+  },
+}
+```
+
+#### 紧凑模式配置（包含边栏模式）
+
+```typescript
+const config = {
+  chatMode: 'compact',
+  apiBaseUrl: 'http://localhost:3001',
+  enableImageUpload: true,
+  maxImageCount: 3,
+  enableSessionManager: true,
+}
+```
+
+**特性：**
+- 桌面端：主内容 + 右侧聊天侧边栏（400px）
+- 移动端：自动切换为全屏聊天
+- 收起时显示悬浮球（可配置）
+
+#### 悬浮模式配置
+
+```typescript
+const config = {
+  chatMode: 'floating',
+  apiBaseUrl: 'http://localhost:3001',
+  position: 'bottom-right',
+  panelWidth: 400,
+  panelHeight: 600,
+  defaultExpanded: false,
+  draggable: true,
+  resizable: true,
+  rememberPosition: true,
+}
+```
+
+#### Iframe嵌入配置
+
+```typescript
+const config = {
+  chatMode: 'floating',  // iframe内部使用floating模式
+  iframeMode: true,
+  // 通过postMessage通信
+}
+```
+
+**通信事件：**
+```typescript
+// 主站 → iframe
+postMessage({
+  source: 'host-page',
+  type: 'host:toggle',
+  data: {}
+}, '*')
+
+// iframe → 主站
+postMessage({
+  source: 'ai-chatbot',
+  type: 'chat:ready',
+  data: {}
+}, '*')
+```
+
+### A.3 快速开始
+
+#### 安装
+
+```bash
+cd examples/chatapp/frontend
+npm install
+```
+
+#### 配置
+
+创建 `.env` 文件：
+
+```bash
+VITE_API_BASE_URL=http://localhost:3001
+```
+
+#### 运行
+
+```bash
+# 开发模式
+npm run dev
+
+# 构建生产版本
+npm run build
+
+# 预览构建结果
+npm run preview
+```

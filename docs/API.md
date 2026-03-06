@@ -4,8 +4,8 @@
 | 项目 | 内容 |
 |------|------|
 | 产品名称 | AI Chatbot Frontend |
-| 版本 | v1.0 |
-| 最后更新 | 2026-02-10 |
+| 版本 | v1.1 |
+| 最后更新 | 2026-03-06 |
 
 ---
 
@@ -20,6 +20,45 @@
 ```
 开发环境: http://localhost:3000/api
 生产环境: https://api.example.com/chatbot
+```
+
+### 1.3 路由API (ChatApp Frontend)
+
+ChatApp Frontend 使用 vue-router 4 进行客户端路由导航。
+
+#### router.push()
+
+导航到指定路由：
+
+```typescript
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+// 导航到紧凑模式
+router.push('/compact')
+
+// 导航到扩展模式
+router.push('/extended')
+
+// 使用路由名称
+router.push({ name: 'floating' })
+
+// 返回首页
+router.push('/')
+```
+
+#### router.currentRoute
+
+获取当前路由信息：
+
+```typescript
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+console.log(route.path)      // '/compact'
+console.log(route.name)      // 'compact'
+console.log(route.params)   // {}
 ```
 
 ---
