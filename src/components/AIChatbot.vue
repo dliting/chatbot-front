@@ -32,7 +32,7 @@
       <!-- AIChat Component (handles all layouts internally) -->
       <AIChat
         :mode="chatMode"
-        :hide-header="true"
+        :hide-header="chatMode === 'extended'"
         :hide-welcome="state.ui.panelMode === 'dialog'"
         :hide-quick-actions="state.ui.panelMode === 'dialog'"
         :hide-input-area="false"
