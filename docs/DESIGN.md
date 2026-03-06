@@ -722,7 +722,7 @@ interface IframeMessages {
   'chat:set-theme': { theme: Theme }
 
   // iframe → 主站
-  'chat:ready': {}
+  'chatbot:ready': {}
   'chat:message-sent': { message: Message }
   'chat:message-received': { message: Message }
   'chat:error': { error: ChatError }
@@ -944,16 +944,16 @@ const config = {
 **通信事件：**
 ```typescript
 // 主站 → iframe
-postMessage({
+window.parent.postMessage({
   source: 'host-page',
   type: 'host:toggle',
   data: {}
 }, '*')
 
 // iframe → 主站
-postMessage({
+window.parent.postMessage({
   source: 'ai-chatbot',
-  type: 'chat:ready',
+  type: 'chatbot:ready',
   data: {}
 }, '*')
 ```

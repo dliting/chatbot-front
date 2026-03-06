@@ -106,7 +106,7 @@ export const EVENT_NAMES = {
   // Lifecycle events
   MOUNT: 'chat:mount',
   UNMOUNT: 'chat:unmount',
-  READY: 'chat:ready',
+  READY: 'chatbot:ready',
 
   // Error events
   ERROR: 'chat:error',
