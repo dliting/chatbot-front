@@ -4,8 +4,8 @@
 | 项目 | 内容 |
 |------|------|
 | 产品名称 | AI Chatbot Frontend |
-| 版本 | v1.0 |
-| 最后更新 | 2026-03-05 |
+| 版本 | v1.1 |
+| 最后更新 | 2026-03-06 |
 
 ---
 
@@ -63,6 +63,42 @@ AIChat
 | FloatingBall | 紧凑/悬浮模式特有 | Compact, Floating | 悬浮球组件 |
 | FloatingPanel | 悬浮模式特有 | Floating | 悬浮面板组件 |
 | DraggableWindow | 悬浮模式特有 | Floating | 可拖拽窗口组件 |
+| LandingPage | Demo导航页 | Landing | 首页模式导航卡片组件 |
+| CompactDemo | Demo演示页 | /compact | 紧凑模式演示页面 |
+| ExtendedDemo | Demo演示页 | /extended | 扩展模式演示页面 |
+| FloatingDemo | Demo演示页 | /floating | 悬浮模式演示页面 |
+| IframeDemo | Demo演示页 | /iframe | iframe通信演示页面 |
+
+### 1.4 路由架构
+
+```
+Router (vue-router 4)
+├── / (LandingPage) - 首页导航
+│   ├── Extended Mode Card → /extended
+│   ├── Compact Mode Card → /compact
+│   ├── Floating Mode Card → /floating
+│   └── Iframe Mode Card → /iframe
+│
+├── /compact (CompactDemo) - 紧凑模式演示
+│   └── ChatArea (共用组件)
+│
+├── /extended (ExtendedDemo) - 扩展模式演示
+│   └── ChatArea (共用组件)
+│
+├── /floating (FloatingDemo) - 悬浮模式演示
+│   └── ChatFloating (悬浮模式组件)
+│
+└── /iframe (IframeDemo) - Iframe嵌入演示
+    └── postMessage 通信
+```
+
+**路由配置文件**: `examples/chatapp/frontend/src/router/index.ts`
+
+**路由特性**:
+- HTML5 History 模式
+- 懒加载组件 (使用 `() => import()`)
+- 使用 `router.push()` 进行 SPA 导航
+- 支持 `VITE_API_BASE_URL` 环境变量配置 API 地址
 
 ---
 
