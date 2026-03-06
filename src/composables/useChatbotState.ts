@@ -3,7 +3,34 @@
  */
 import { reactive, computed } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
-import type { Theme, PanelMode, Locale } from '@/types'
+import type { Theme, PanelMode, Locale, Session } from '@/types'
+
+// Storage key for sessions
+const SESSIONS_STORAGE_KEY = 'chatbot-sessions'
+
+// Load sessions from localStorage
+function loadSessionsFromStorage(): Session[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const stored = localStorage.getItem(SESSIONS_STORAGE_KEY)
+    if (stored) {
+      return JSON.parse(stored)
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return []
+}
+
+// Save sessions to localStorage
+function saveSessionsToStorage(sessions: Session[]): void {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.setItem(SESSIONS_STORAGE_KEY, JSON.stringify(sessions))
+  } catch {
+    // Ignore storage errors
+  }
+}
 
 interface UIState {
   isPanelOpen: boolean
@@ -12,6 +39,8 @@ interface UIState {
   locale: Locale
   screenWidth: number
   isMobile: boolean
+  // Compact layout view state: 'sessions' or 'chat'
+  currentView: 'sessions' | 'chat'
 }
 
 interface MessagesState {
@@ -88,6 +117,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     locale: config.locale,
     screenWidth: window.innerWidth,
     isMobile: window.innerWidth < 768,
+    currentView: 'chat', // Default to chat view
   })
 
   // Messages State
@@ -97,10 +127,20 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     streamingMessageId: null,
   })
 
-  // Sessions State
+  // Sessions State - load from localStorage or create new
+  const storedSessions = loadSessionsFromStorage()
+  const initialSessionId = storedSessions.length > 0 ? storedSessions[0].id : `session_${Date.now()}`
+
   const sessions = reactive<SessionsState>({
-    list: [],
-    currentId: messages.currentSessionId,
+    list: storedSessions.length > 0 ? storedSessions : [{
+      id: initialSessionId,
+      title: 'New Chat',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      messageCount: 0,
+      unreadCount: 0,
+    }],
+    currentId: initialSessionId,
   })
 
   // Interaction State
@@ -133,6 +173,16 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     ui.theme = resolvedTheme
     // Apply theme to document
     document.documentElement.setAttribute('data-theme', resolvedTheme)
+  }
+
+  // Set current view for compact layout
+  const setCurrentView = (view: 'sessions' | 'chat') => {
+    ui.currentView = view
+  }
+
+  // Toggle between sessions and chat views
+  const toggleView = () => {
+    ui.currentView = ui.currentView === 'sessions' ? 'chat' : 'sessions'
   }
 
   const updateScreenSize = () => {
@@ -206,6 +256,13 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   const switchSession = (sessionId: string) => {
     messages.currentSessionId = sessionId
     sessions.currentId = sessionId
+    // Move session to top of list
+    const index = sessions.list.findIndex(s => s.id === sessionId)
+    if (index > 0) {
+      const session = sessions.list.splice(index, 1)[0]
+      sessions.list.unshift(session)
+      saveSessionsToStorage(sessions.list)
+    }
   }
 
   const updateSessionTitle = (sessionId: string, title: string) => {
@@ -213,14 +270,27 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     if (session) {
       session.title = title
       session.updatedAt = Date.now()
+      saveSessionsToStorage(sessions.list)
     }
   }
 
   const createSession = () => {
-    const newSessionId = `session_${Date.now()}`
-    messages.currentSessionId = newSessionId
-    sessions.currentId = newSessionId
-    return newSessionId
+    const newSession: Session = {
+      id: `session_${Date.now()}`,
+      title: 'New Chat',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      messageCount: 0,
+      unreadCount: 0,
+    }
+    // Add to beginning of list
+    sessions.list.unshift(newSession)
+    // Switch to new session
+    sessions.currentId = newSession.id
+    messages.currentSessionId = newSession.id
+    // Save to localStorage
+    saveSessionsToStorage(sessions.list)
+    return newSession.id
   }
 
   const deleteSession = (sessionId: string) => {
@@ -231,6 +301,8 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     const index = sessions.list.findIndex(s => s.id === sessionId)
     if (index > -1) {
       sessions.list.splice(index, 1)
+      // Save to localStorage
+      saveSessionsToStorage(sessions.list)
     }
 
     // If deleted session was current, switch to another
@@ -308,6 +380,8 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     // UI Actions
     togglePanel,
     setTheme,
+    setCurrentView,
+    toggleView,
     updateScreenSize,
 
     // Message Actions
