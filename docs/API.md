@@ -22,11 +22,11 @@
 生产环境: https://api.example.com/chatbot
 ```
 
-### 1.3 路由API (ChatApp Frontend)
+## 路由API
 
 ChatApp Frontend 使用 vue-router 4 进行客户端路由导航。
 
-#### router.push()
+### router.push()
 
 导航到指定路由：
 
@@ -48,7 +48,7 @@ router.push({ name: 'floating' })
 router.push('/')
 ```
 
-#### router.currentRoute
+### router.currentRoute
 
 获取当前路由信息：
 
