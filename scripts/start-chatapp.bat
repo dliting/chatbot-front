@@ -54,27 +54,18 @@ rem Check and kill ports
 echo DEBUG: Checking ports...
 for %%p in (5173 5174 5175 5176 5177 5178 5179 5180 %BACKEND_PORT%) do (
     echo DEBUG: Checking port %%p
-    netstat -ano ^| findstr ":%%p " >nul 2^>^&1
+    netstat -ano ^| findstr ":%%p " >nul 2>nul
     if !errorlevel! equ 0 (
         echo DEBUG: Port %%p is in use, killing process
         for /f "tokens=5" %%i in ('netstat -ano ^| findstr ":%%p " ^| findstr LISTENING') do (
             echo DEBUG: Killing PID %%i
-            taskkill //F //PID %%i >nul 2^>nul
+            taskkill /F /PID %%i >nul 2>nul
         )
     ) else (
         echo DEBUG: Port %%p is free
     )
 )
 echo DEBUG: Port check complete
-for %%p in (5173 5174 5175 5176 5177 5178 5179 5180 %BACKEND_PORT%) do (
-    netstat -ano ^| findstr ":%%p " >nul 2^>^&1
-    if !errorlevel! equ 0 (
-        for /f "tokens=5" %%i in ('netstat -ano ^| findstr ":%%p " ^| findstr LISTENING') do (
-            taskkill //F //PID %%i >nul 2^>nul
-        )
-    )
-)
-
 ping -n 2 127.0.0.1 >nul
 
 rem Check backend dependencies
