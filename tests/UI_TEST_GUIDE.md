@@ -2,13 +2,57 @@
 
 ## 概述
 
-本指南基于产品需求文档（PRD）制定，涵盖所有核心功能、重要功能和扩展功能的UI交互测试。
+- 本指南基于产品需求文档（PRD）制定，涵盖所有核心功能、重要功能和扩展功能的UI交互测试。
+- 主要测试通过和“examples/ChatApp”这个应用的前端页面交互来进行。
 
 **测试原则**:
 - 这类交互测试不仅仅是判断页面中某个ui元素是否存在，而是模拟人和浏览器交互操作来测试
-- 使用 "chrome-devtools" MCP 来和浏览器交互进行测试
+- 使用 "chrome-devtools" 插件来和浏览器交互进行测试
 - 每个操作通常不应该超过3分钟，否则应认为响应超时而强制中断
 - 测试覆盖共用功能、扩展模式、紧凑模式、悬浮模式
+
+## 强制验证检查（每次测试后必查）
+
+> ⚠️ **重要**：每次页面加载或操作后，**必须**执行以下验证检查。这是确保测试有效性的关键步骤。
+
+| 检查项 | 操作命令 | 通过标准 |
+|--------|----------|----------|
+| **控制台错误** | `list_console_messages()` | 无 error 级别消息 |
+| **Vue 挂载警告** | 检查 Vue warn | 无 "Failed to mount app" 警告 |
+| **资源加载** | `list_network_requests()` | 无 404/500 状态码（除 favicon.ico） |
+| **关键元素存在** | `take_snapshot()` + 目视检查 | 预期的 UI 元素都存在 |
+| **元素非空验证** | 检查容器元素内容 | 应该包含内容的容器不为空 |
+
+**验证检查示例流程**：
+
+```javascript
+// 1. 导航到页面
+navigate_page("[ChatApp根url]/compact")
+
+// 2. 获取快照
+take_snapshot()
+
+// 3. 检查控制台错误（关键！）
+list_console_messages()
+// 查找：[Vue warn], [error], 404 等问题
+
+// 4. 验证关键元素内容
+evaluate_script(() => {
+  const app = document.querySelector('#app');
+  return {
+    hasApp: !!app,
+    hasChildren: app ? app.children.length > 0 : false,
+    consoleErrors: []
+  };
+})
+```
+
+**常见错误信号**：
+- `[Vue warn]: Failed to mount app: mount target selector "#xxx" returned null` → Vue 挂载失败，页面 HTML 和入口文件不匹配
+- `Failed to load resource: 404` → 资源文件缺失或路径错误
+- 容器元素存在但内容为空 → 可能是组件未正确渲染或数据未加载
+
+---
 
 ## 功能测试分类
 
@@ -24,7 +68,7 @@
 ## 测试环境
 
 - **测试工具**: chrome-devtools MCP
-- **测试入口**: http://localhost:5180/
+- **测试入口**: [ChatApp根url]/
 - **测试浏览器**: Chrome (支持无头模式)
 - **路由模式**: SPA导航，无页面刷新
 
@@ -38,8 +82,9 @@
 
 | 测试项 | 操作步骤 | 预期结果 |
 |--------|----------|----------|
-| 主页访问 | 导航到 `http://localhost:5180/` | 页面正常加载，显示模式选择卡片 |
-| 卡片数量 | 检查模式卡片 | 显示4个模式卡片（扩展、紧凑、悬浮、iframe） |
+| 主页访问 | 导航到 `[ChatApp根url]/` | 页面正常加载，显示标题 "AI Chatbot" |
+| 副标题显示 | 检查页面内容 | 显示 "Vue 3 + TypeScript 通用聊天组件" |
+| 版本号显示 | 检查版本标签 | 显示 "v1.0.0" |
 | 无控制台错误 | 检查 console messages | 无 error 级别消息 |
 
 ### 1.2 模式卡片测试
@@ -364,7 +409,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ## 三、扩展模式测试
 
-> 测试入口: http://localhost:5180/extended
+> 测试入口: `[ChatApp根url]/extended`
 
 ### 3.1 页面基础测试
 
@@ -451,8 +496,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ## 四、边栏模式测试
 
-> 测试入口: http://localhost:5180/sidebar
-> 说明: 边栏模式使用紧凑布局（Tab切换会话/聊天视图）
+> 测试入口: `[ChatApp根url]/compact`
 
 ### 4.1 页面基础测试
 
@@ -511,7 +555,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ## 五、悬浮模式测试
 
-> 测试入口: http://localhost:5180/floating
+> 测试入口: `[ChatApp根url]/floating`
 
 ### 5.1 页面基础测试
 
@@ -839,47 +883,3 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 - [ ] F-502: 面板调整大小 (TC-FLOATING-007)
 - [ ] F-503: 面板样式 (TC-FLOATING-008)
 
----
-
-## 附录：chrome-devtools MCP 常用命令
-
-```javascript
-// 导航到页面
-navigate_page(url)
-
-// 点击元素
-click(uid)
-
-// 填充输入框
-fill(uid, value)
-
-// 截图
-take_screenshot(filePath)
-
-// 获取页面快照
-take_snapshot()
-
-// 获取控制台消息
-list_console_messages()
-
-// 获取网络请求
-list_network_requests()
-
-// 等待元素出现
-wait_for(text)
-
-// 调整窗口大小
-resize_page(width, height)
-
-// 模拟移动端
-emulate(viewport={width: 375, height: 667, isMobile: true})
-
-// 拖拽元素
-drag(from_uid, to_uid)
-
-// 悬停元素
-hover(uid)
-
-// 按键
-press_key(key)
-```

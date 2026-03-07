@@ -1,7 +1,7 @@
 /**
  * AI Chatbot UI 交互测试脚本
  *
- * 使用 chrome-devtools MCP 进行 UI 交互测试
+ * 使用 chrome-devtools-mcp 插件进行 UI 交互测试
  *
  * 运行方式：
  * 1. 启动开发服务器: npm run dev

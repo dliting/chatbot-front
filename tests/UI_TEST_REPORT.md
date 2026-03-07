@@ -3,7 +3,7 @@
 ## 测试概述
 
 **测试日期**: 2026-03-03
-**测试工具**: chrome-devtools MCP
+**测试工具**: chrome-devtools-mcp 插件
 **测试环境**: http://localhost:5173/
 **测试执行**: 使用 chrome-devtools MCP 进行真实的用户交互模拟测试
 
@@ -354,7 +354,7 @@ AI Chatbot 组件在深度交互测试中表现良好，但发现了一个**阻�
 
 ## 附录：测试环境
 
-- **浏览器**: Chrome (via chrome-devtools MCP)
+- **浏览器**: Chrome (via chrome-devtools-mcp plugin)
 - **Node.js**: v20+
 - **Vue**: 3.x
 - **Vite**: 5.4.21
