@@ -1,9 +1,14 @@
+import type { BrowserHelper } from './browser.js'
+
 export interface TestAssertion {
   pass: boolean
   message: string
   actual?: any
   expected?: any
 }
+
+// Snapshot type is 'any' because chrome-devtools-mcp returns dynamic JSON structures
+// that vary based on page content. Assertions work by string matching.
 
 export class AssertionError extends Error {
   constructor(public assertion: TestAssertion) {
@@ -70,7 +75,7 @@ export function assertButtonDisabled(snapshot: any, buttonText: string): void {
   )
 }
 
-export async function assertNoConsoleErrors(browser: any): Promise<void> {
+export async function assertNoConsoleErrors(browser: BrowserHelper): Promise<void> {
   const errors = await browser.listConsoleMessages()
   assert(
     errors.length === 0,
