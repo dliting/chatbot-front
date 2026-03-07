@@ -378,8 +378,7 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
   addMessage(aiMessage)
   setStreamingMessage(aiMessage.id)
 
-  // Wrap stream consumption with timeout
-  const streamPromise = (async () => {
+  try {
     // Use API client if provided, otherwise use mock
     if (props.apiClient) {
       // Use real API with streaming
@@ -408,22 +407,10 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
         }
       }
     }
-  })()
-
-  // Add timeout to prevent infinite waiting
-  const timeoutPromise = new Promise((_, reject) => {
-    setTimeout(() => reject(new Error('Stream timeout')), 30000)
-  })
-
-  try {
-    await Promise.race([streamPromise, timeoutPromise])
   } catch (error) {
     console.error('[AIChatPanel] Error:', error)
-    // If timeout or error and message still loading, mark as sent with current content
-    if (aiMessage.status === 'loading') {
-      aiMessage.status = 'sent'
-      updateMessage(aiMessage.id, { status: 'sent' })
-    }
+    aiMessage.status = 'error'
+    updateMessage(aiMessage.id, { status: 'error' })
   } finally {
     setStreamingMessage(null)
     await nextTick()

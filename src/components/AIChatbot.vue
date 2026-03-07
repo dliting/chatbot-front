@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, onUnmounted } from 'vue'
+import { computed, watch, onMounted, onUnmounted, ref } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
 import type { Layout } from '@/types'
@@ -98,16 +98,22 @@ const aiChatConfig = computed(() => ({
   defaultExpanded: config.value.defaultExpanded,
 }))
 
-// API client (only create if apiBaseUrl is configured)
-const apiClient = computed(() => {
-  if (config.value.apiBaseUrl) {
-    return useApiClient({
-      baseUrl: config.value.apiBaseUrl,
-      streamEnabled: config.value.streamEnabled !== false,
-    })
-  }
-  return undefined
-})
+// API client - use ref to avoid instance loss (key fix)
+const apiClient = ref()
+watch(
+  () => config.value.apiBaseUrl,
+  (newUrl) => {
+    if (newUrl) {
+      apiClient.value = useApiClient({
+        baseUrl: newUrl,
+        streamEnabled: config.value.streamEnabled ?? true,
+      })
+    } else {
+      apiClient.value = undefined
+    }
+  },
+  { immediate: true }
+)
 
 // State
 const {
