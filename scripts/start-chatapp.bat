@@ -41,6 +41,13 @@ echo === ChatApp Starting ===
 echo Mode: %MODE%
 echo Config: %CONFIG_FILE%
 echo API:  %API_URL%
+echo DEBUG: BACKEND_DIR_FULL=%BACKEND_DIR_FULL%
+echo DEBUG: Checking if node_modules exists...
+if exist "%BACKEND_DIR_FULL%\node_modules" (
+    echo DEBUG: node_modules exists, skipping install
+) else (
+    echo DEBUG: node_modules not found
+)
 echo.
 
 rem Check and kill ports
