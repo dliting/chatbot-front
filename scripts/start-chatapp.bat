@@ -13,21 +13,23 @@ set "MODE=mock"
 if "%1"=="real" set "MODE=real"
 if "%1"=="mock" set "MODE=mock"
 
-rem Load config based on mode
-if "%MODE%"=="real" (
-    set "BACKEND_PORT=3000"
-    set "BACKEND_DIR=backend-real"
-    set "API_URL=http://localhost:3000"
-) else (
-    set "BACKEND_PORT=3001"
-    set "BACKEND_DIR=backend-mock"
-    set "API_URL=http://localhost:3001"
+rem Load config from file
+set "CONFIG_FILE=%CONFIG_DIR%\%MODE%.env"
+if not exist "%CONFIG_FILE%" (
+    echo Error: Config file %CONFIG_FILE% not found
+    exit /b 1
+)
+
+rem Parse config file (simple key=value format)
+for /f "tokens=1,* delims==" %%a in ('findstr /i "BACKEND_PORT BACKEND_DIR API_URL" "%CONFIG_FILE%"') do (
+    set "%%a=%%b"
 )
 
 set "BACKEND_DIR_FULL=%CONFIG_DIR%\%BACKEND_DIR%"
 
 echo === ChatApp Starting ===
 echo Mode: %MODE%
+echo Config: %CONFIG_FILE%
 echo API:  %API_URL%
 echo.
 
@@ -50,14 +52,14 @@ if not exist "%BACKEND_DIR_FULL%\node_modules" (
     call npm install
 )
 
-rem Start backend
+rem Start backend with PORT environment variable
 echo Starting backend server...
-start "ChatApp Backend (%MODE%)" cmd /k "cd /d "%BACKEND_DIR_FULL%" && echo Backend running on port %BACKEND_PORT% && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
+start "ChatApp Backend (%MODE%)" cmd /k "cd /d "%BACKEND_DIR_FULL%" && set PORT=%BACKEND_PORT% && echo Backend running on port %BACKEND_PORT% && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
 
 rem Wait for backend
 ping -n 3 127.0.0.1 >nul
 
-rem Copy env file for frontend (only VITE_ variables needed)
+rem Create frontend .env file
 if "%MODE%"=="real" (
     (
         echo # Frontend Configuration
