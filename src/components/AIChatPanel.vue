@@ -405,6 +405,7 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
       }
     }
   } catch (error) {
+    console.error('[AIChatPanel] Error:', error)
     aiMessage.status = 'error'
     updateMessage(aiMessage.id, { status: 'error' })
   } finally {

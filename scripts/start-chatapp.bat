@@ -57,9 +57,20 @@ start "ChatApp Backend (%MODE_DESC%)" cmd /k "cd /d "%BACKEND_DIR%" && echo Back
 rem 等待后端启动
 ping -n 3 127.0.0.1 >nul
 
+rem 根据模式复制对应的环境配置文件
+if "%MODE%"=="real" (
+    if exist "%CHATAPP_DIR%\.env.real" (
+        copy /Y "%CHATAPP_DIR%\.env.real" "%CHATAPP_DIR%\.env" >nul
+    )
+) else (
+    if exist "%CHATAPP_DIR%\.env.mock" (
+        copy /Y "%CHATAPP_DIR%\.env.mock" "%CHATAPP_DIR%\.env" >nul
+    )
+)
+
 rem 在新窗口中启动前端服务
 echo Starting frontend...
-start "ChatApp Frontend" cmd /k "cd /d "%CHATAPP_DIR%" && set VITE_API_BASE_URL=%API_URL% && echo Frontend running on http://localhost:5180 && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
+start "ChatApp Frontend" cmd /k "cd /d "%CHATAPP_DIR%" && echo Frontend running on http://localhost:5180 && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
 
 echo.
 echo === ChatApp Started ===
