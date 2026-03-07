@@ -45,10 +45,57 @@
 
 ## 测试环境
 
-- **测试工具**: chrome-devtools MCP
+- **测试工具**:
+  - **chrome-devtools MCP**: 主要工具，通过 MCP 服务与浏览器交互
+  - **Puppeteer**: 备用工具，用于自动化测试脚本和控制台输出捕获
 - **测试入口**: [ChatApp根url]/
 - **测试浏览器**: Chrome (支持无头模式)
 - **路由模式**: SPA导航，无页面刷新
+
+### Puppeteer 使用说明
+
+项目中已安装 Puppeteer (`puppeteer@24.38.0`)，可用于：
+
+1. **自动化测试脚本**: 创建可重复运行的测试用例
+2. **控制台输出捕获**: 监控和分析浏览器控制台消息
+3. **网络请求监控**: 跟踪请求/响应状态
+
+#### 基本使用示例
+
+```javascript
+import puppeteer from 'puppeteer'
+
+// 启动浏览器
+const browser = await puppeteer.launch({
+  headless: false,  // 显示浏览器窗口
+  devtools: true    // 打开开发者工具
+})
+
+const page = await browser.newPage()
+
+// 捕获控制台消息
+page.on('console', (msg) => {
+  console.log(`[${msg.type()}]`, msg.text())
+})
+
+// 捕获网络请求
+page.on('request', (request) => {
+  console.log('Request:', request.url())
+})
+
+// 导航到页面
+await page.goto('http://localhost:5180/extended')
+
+// 关闭浏览器
+await browser.close()
+```
+
+#### 运行测试脚本
+
+```bash
+# 在项目根目录运行
+node your-test-script.js
+```
 
 ---
 
