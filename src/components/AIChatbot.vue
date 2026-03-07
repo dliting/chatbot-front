@@ -30,8 +30,8 @@
       @close="togglePanel"
       @toggle-theme="toggleTheme"
     >
-      <!-- AIChat Component (handles all layouts internally) -->
-      <AIChat
+      <!-- AIChatPanel Component (handles all layouts internally) -->
+      <AIChatPanel
         :mode="chatMode"
         :layout="layout"
         :panel-open="state.ui.isPanelOpen"
@@ -45,8 +45,8 @@
       />
     </ChatPanel>
 
-    <!-- Extended Mode: AIChat renders its own layout directly -->
-    <AIChat
+    <!-- Extended Mode: AIChatPanel renders its own layout directly -->
+    <AIChatPanel
       v-else
       :mode="chatMode"
       :layout="layout"
@@ -68,7 +68,7 @@ import { useApiClient } from '@/composables/useApiClient'
 // Components
 import SuspendedBall from './SuspendedBall.vue'
 import ChatPanel from './ChatPanel.vue'
-import AIChat from './AIChat.vue'
+import AIChatPanel from './AIChatPanel.vue'
 
 // Props
 interface Props {

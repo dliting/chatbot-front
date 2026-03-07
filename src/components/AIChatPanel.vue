@@ -1,7 +1,35 @@
 <template>
-  <!-- Floating Mode: Use DraggableWindow -->
+  <!-- Embedded mode: When panelOpen is provided, AIChatbot/ChatPanel manages DraggableWindow -->
+  <!-- Only render content, no window decorations -->
+  <template v-if="props.panelOpen !== undefined">
+    <div class="ai-chat__body">
+      <ChatContent
+        v-if="viewState.currentView === 'chat'"
+        :messages="currentMessages"
+        :welcome-visible="!hideWelcome && currentMessages.length === 0"
+        :quick-actions-visible="!hideQuickActions"
+        :is-streaming="isStreaming"
+        @send-message="handleSend"
+        @quick-action="sendQuickMessage"
+        @edit="handleMessageEdit"
+      />
+      <SessionListView
+        v-else
+        :sessions="sessions"
+        :current-session-id="currentSessionId"
+        :config="config"
+        @close="showChatView"
+        @create-session="handleCreateSession"
+        @select-session="handleSwitchSession"
+        @delete-session="handleDeleteSession"
+      />
+    </div>
+  </template>
+
+  <!-- Standalone mode: When panelOpen is undefined, manage own DraggableWindow -->
+  <!-- Floating Mode with DraggableWindow -->
   <DraggableWindow
-    v-if="chatMode === 'floating' && isPanelOpen"
+    v-else-if="chatMode === 'floating' && isPanelOpen"
     v-model="isPanelOpen"
     v-model:x="windowState.x"
     v-model:y="windowState.y"
@@ -53,72 +81,46 @@
     </div>
   </DraggableWindow>
 
-  <!-- Non-Floating Modes: Use container with optional SuspendedBall -->
-  <template v-else>
-    <!-- Suspended Ball for floating mode (when closed) -->
-    <SuspendedBall
-      v-if="chatMode === 'floating' && !isPanelOpen"
-      :position="config.position || 'bottom-right'"
-      :size="56"
-      :background-color="config.primaryColor || '#667eea'"
-      :badge="0"
-      @click="openPanel"
-    />
+  <!-- Suspended Ball for floating mode (when closed) -->
+  <SuspendedBall
+    v-else-if="chatMode === 'floating' && !isPanelOpen"
+    :position="config.position || 'bottom-right'"
+    :size="56"
+    :background-color="config.primaryColor || '#667eea'"
+    :badge="0"
+    @click="openPanel"
+  />
 
-    <!-- Main container for other modes -->
-    <div
-      v-else-if="chatMode !== 'floating' || isPanelOpen"
-      :class="containerClasses"
-    >
-      <!-- Dual Layout: Sidebar + Main Content -->
-      <template v-if="effectiveLayout === 'dual'">
-        <!-- Session Sidebar -->
-        <aside class="ai-chat__sidebar">
-          <SessionListView
-            :sessions="sessions"
-            :current-session-id="currentSessionId"
-            :config="config"
-            :is-embedded="true"
-            @create-session="handleCreateSession"
-            @select-session="handleSwitchSession"
-            @delete-session="handleDeleteSession"
-          />
-        </aside>
+  <!-- Non-Floating Modes: Main container -->
+  <div
+    v-else
+    :class="containerClasses"
+  >
+    <!-- Dual Layout: Sidebar + Main Content -->
+    <template v-if="effectiveLayout === 'dual'">
+      <!-- Session Sidebar -->
+      <aside class="ai-chat__sidebar">
+        <SessionListView
+          :sessions="sessions"
+          :current-session-id="currentSessionId"
+          :config="config"
+          :is-embedded="true"
+          @create-session="handleCreateSession"
+          @select-session="handleSwitchSession"
+          @delete-session="handleDeleteSession"
+        />
+      </aside>
 
-        <!-- Main Chat Area -->
-        <main class="ai-chat__main">
-          <ChatHeader
-            v-if="!hideHeader"
-            :title="config.labels?.title || '智能助手'"
-            :theme="config.theme || 'light'"
-            :show-theme-toggle="true"
-            @toggle-theme="toggleTheme"
-          />
-          <ChatContent
-            :messages="currentMessages"
-            :welcome-visible="!hideWelcome && currentMessages.length === 0"
-            :quick-actions-visible="!hideQuickActions"
-            :is-streaming="isStreaming"
-            @send-message="handleSend"
-            @quick-action="sendQuickMessage"
-            @edit="handleMessageEdit"
-          />
-        </main>
-      </template>
-
-      <!-- Other Modes: View-based switching -->
-      <template v-else>
+      <!-- Main Chat Area -->
+      <main class="ai-chat__main">
         <ChatHeader
-          v-if="!hideHeader && viewState.currentView === 'chat'"
+          v-if="!hideHeader"
           :title="config.labels?.title || '智能助手'"
           :theme="config.theme || 'light'"
-          :show-sessions-button="true"
           :show-theme-toggle="true"
-          @sessions="showSessionsView"
           @toggle-theme="toggleTheme"
         />
         <ChatContent
-          v-if="viewState.currentView === 'chat'"
           :messages="currentMessages"
           :welcome-visible="!hideWelcome && currentMessages.length === 0"
           :quick-actions-visible="!hideQuickActions"
@@ -127,21 +129,44 @@
           @quick-action="sendQuickMessage"
           @edit="handleMessageEdit"
         />
-        <SessionListView
-          v-else
-          :sessions="sessions"
-          :current-session-id="currentSessionId"
-          :config="config"
-          @close="showChatView"
-          @create-session="handleCreateSession"
-          @select-session="handleSwitchSession"
-          @delete-session="handleDeleteSession"
-        />
-      </template>
-    </div>
-  </template>
+      </main>
+    </template>
 
-  <!-- Modals and Overlays -->
+    <!-- Other Modes: View-based switching -->
+    <template v-else>
+      <ChatHeader
+        v-if="!hideHeader && viewState.currentView === 'chat'"
+        :title="config.labels?.title || '智能助手'"
+        :theme="config.theme || 'light'"
+        :show-sessions-button="true"
+        :show-theme-toggle="true"
+        @sessions="showSessionsView"
+        @toggle-theme="toggleTheme"
+      />
+      <ChatContent
+        v-if="viewState.currentView === 'chat'"
+        :messages="currentMessages"
+        :welcome-visible="!hideWelcome && currentMessages.length === 0"
+        :quick-actions-visible="!hideQuickActions"
+        :is-streaming="isStreaming"
+        @send-message="handleSend"
+        @quick-action="sendQuickMessage"
+        @edit="handleMessageEdit"
+      />
+      <SessionListView
+        v-else
+        :sessions="sessions"
+        :current-session-id="currentSessionId"
+        :config="config"
+        @close="showChatView"
+        @create-session="handleCreateSession"
+        @select-session="handleSwitchSession"
+        @delete-session="handleDeleteSession"
+      />
+    </template>
+  </div>
+
+  <!-- Modals and Overlays (always visible) -->
   <VoiceOverlay
     v-if="isRecording"
     @cancel="cancelVoice"
@@ -213,7 +238,7 @@ interface Props {
   hideQuickActions?: boolean
   hideInputArea?: boolean
   apiClient?: ReturnType<typeof useApiClient>
-  panelOpen?: boolean // External panel state (used when AIChat is embedded in AIChatbot)
+  panelOpen?: boolean // External panel state (used when embedded in AIChatbot)
 }
 
 const props = withDefaults(defineProps<Props>(), {
