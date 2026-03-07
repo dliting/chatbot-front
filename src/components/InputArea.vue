@@ -22,15 +22,15 @@
 
     <!-- Input container -->
     <div class="chatbot-input__container">
-      <!-- Image upload button -->
+      <!-- Attachment button -->
       <button
         v-if="enableImageUpload"
         class="chatbot-input__action-btn"
-        title="Upload image"
+        title="Attach file"
         @click="triggerFileInput"
       >
         <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/>
+          <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
         </svg>
       </button>
 

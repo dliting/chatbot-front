@@ -33,8 +33,9 @@
       <!-- AIChat Component (handles all layouts internally) -->
       <AIChat
         :mode="chatMode"
+        :layout="layout"
         :panel-open="state.ui.isPanelOpen"
-        :hide-header="chatMode === 'extended'"
+        :hide-header="!showAIChatHeader"
         :hide-welcome="state.ui.panelMode === 'dialog'"
         :hide-quick-actions="state.ui.panelMode === 'dialog'"
         :hide-input-area="false"
@@ -48,6 +49,7 @@
     <AIChat
       v-else
       :mode="chatMode"
+      :layout="layout"
       :config="config"
       :api-client="apiClient"
     />
@@ -58,6 +60,8 @@
 import { computed, watch, onMounted, onUnmounted } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
+import type { Layout } from '@/types'
+import { modeToLayoutMap } from '@/types'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useApiClient } from '@/composables/useApiClient'
 
@@ -128,13 +132,13 @@ const unreadCount = computed(() => {
 })
 
 // Determine the chat mode based on interaction mode (new dual-dimension architecture)
-// - 'extended' mode uses 'extended' layout (split layout)
-// - 'sidebar' mode uses 'compact' layout (tab switching)
-// - 'floating' mode uses 'compact' layout (tab switching)
+// - 'extended' mode uses 'dual' layout (split layout)
+// - 'sidebar' mode uses 'single' layout (tab switching)
+// - 'floating' mode uses 'single' layout (tab switching)
 const chatMode = computed(() => {
   // Use new mode field if provided
   if (config.value.mode === 'extended') return 'extended'
-  if (config.value.mode === 'sidebar') return 'compact'
+  if (config.value.mode === 'sidebar') return 'single'
   if (config.value.mode === 'floating') return 'floating'
 
   // Legacy fallback based on panel mode
@@ -142,6 +146,22 @@ const chatMode = computed(() => {
   if (panelMode === 'floating') return 'floating'
   if (panelMode === 'sidebar') return 'extended'
   return 'internal' // dialog, fullscreen
+})
+
+// Derive layout type from interaction mode using modeToLayoutMap
+const layout = computed(() => {
+  const mode = config.value.mode
+  if (mode === 'floating' || mode === 'sidebar' || mode === 'extended') {
+    return modeToLayoutMap[mode]
+  }
+  return 'single' // default
+})
+
+// Determine if AIChat should show its own header
+// Extended mode: yes (has its own sidebar)
+// Sidebar/Floating modes: no (ChatPanel already has a header)
+const showAIChatHeader = computed(() => {
+  return chatMode.value === 'extended'
 })
 
 // Map chatMode to effective panelMode for ChatPanel
