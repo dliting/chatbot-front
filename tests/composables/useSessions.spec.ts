@@ -36,13 +36,15 @@ describe('useSessions', () => {
   })
 
   describe('Initial State', () => {
-    it('should initialize with empty sessions', () => {
+    it('should initialize and create first session automatically', () => {
       const { sessions, currentSessionId } = useSessions({
         persistToStorage: false,
       })
 
-      expect(sessions.value).toEqual([])
-      expect(currentSessionId.value).toBeFalsy()
+      // init() is auto-called, creates initial session
+      expect(sessions.value.length).toBe(1)
+      expect(currentSessionId.value).toBeTruthy()
+      expect(sessions.value[0].title).toBe('New Chat')
     })
 
     it('should initialize and create first session when init is called', () => {
@@ -50,8 +52,7 @@ describe('useSessions', () => {
         persistToStorage: false,
       })
 
-      init()
-
+      // init() is auto-called, so no need to call again
       expect(sessions.value.length).toBe(1)
       expect(currentSessionId.value).toBeTruthy()
       expect(sessions.value[0].title).toBe('New Chat')
@@ -77,13 +78,12 @@ describe('useSessions', () => {
 
       localStorageMock.setItem('chatbot-sessions', JSON.stringify(storedSessions))
 
-      const { sessions, currentSessionId, init } = useSessions({
+      const { sessions, currentSessionId } = useSessions({
         storageKey: 'chatbot-sessions',
         persistToStorage: true,
       })
 
-      init()
-
+      // init() is auto-called, loads from storage
       expect(sessions.value.length).toBe(2)
       expect(sessions.value[0].id).toBe('session-1')
       expect(currentSessionId.value).toBe('session-1')
@@ -96,9 +96,11 @@ describe('useSessions', () => {
         persistToStorage: false,
       })
 
+      // init() is auto-called, creating 1 session
+      const initialLength = sessions.value.length
       const sessionId = createSession()
 
-      expect(sessions.value.length).toBe(1)
+      expect(sessions.value.length).toBe(initialLength + 1)
       expect(currentSessionId.value).toBe(sessionId)
       expect(sessions.value[0].id).toBe(sessionId)
       expect(sessions.value[0].title).toBe('New Chat')
@@ -109,7 +111,8 @@ describe('useSessions', () => {
         persistToStorage: false,
       })
 
-      const firstId = createSession()
+      // init() is auto-called
+      const firstId = sessions.value[0].id
       const secondId = createSession()
 
       expect(sessions.value.length).toBe(2)
@@ -123,7 +126,7 @@ describe('useSessions', () => {
         persistToStorage: false,
       })
 
-      createSession()
+      // init() is auto-called, creating 1 session
       createSession()
       createSession()
       createSession()
@@ -137,7 +140,8 @@ describe('useSessions', () => {
         persistToStorage: false,
       })
 
-      const firstId = createSession()
+      // init() is auto-called
+      const firstId = sessions.value[0].id
       expect(currentSessionId.value).toBe(firstId)
 
       const secondId = createSession()
@@ -147,19 +151,21 @@ describe('useSessions', () => {
 
     it('should save to storage after creation', () => {
       const storageKey = 'test-sessions'
-      const { createSession } = useSessions({
+      const { sessions, createSession } = useSessions({
         storageKey,
         persistToStorage: true,
       })
 
+      // init() is auto-called, creating 1 session
       createSession()
 
       const stored = localStorageMock.getItem(storageKey)
       expect(stored).toBeTruthy()
 
       if (stored) {
-        const sessions = JSON.parse(stored) as Session[]
-        expect(sessions.length).toBe(1)
+        const storedSessions = JSON.parse(stored) as Session[]
+        // init() creates 1 + createSession() creates 1 = 2 sessions
+        expect(storedSessions.length).toBe(sessions.value.length)
       }
     })
   })
@@ -328,7 +334,8 @@ describe('useSessions', () => {
         persistToStorage: false,
       })
 
-      const firstId = createSession()
+      // init() is auto-called
+      const firstId = sessions.value[0].id
       const secondId = createSession()
 
       expect(sessions.value.length).toBe(2)
@@ -344,7 +351,8 @@ describe('useSessions', () => {
         persistToStorage: false,
       })
 
-      const firstId = createSession()
+      // init() is auto-called
+      const firstId = sessions.value[0].id
       const secondId = createSession()
 
       expect(currentSessionId.value).toBe(secondId)
@@ -356,15 +364,17 @@ describe('useSessions', () => {
     })
 
     it('should create new session when deleting last session', () => {
-      const { sessions, currentSessionId, createSession, deleteSession } = useSessions({
+      const { sessions, currentSessionId, deleteSession } = useSessions({
         persistToStorage: false,
       })
 
-      const sessionId = createSession()
+      // init() is auto-called
+      const sessionId = sessions.value[0].id
       expect(sessions.value.length).toBe(1)
 
       deleteSession(sessionId)
 
+      // Should create a new session
       expect(sessions.value.length).toBe(1)
       expect(currentSessionId.value).not.toBe(sessionId)
     })
@@ -382,12 +392,13 @@ describe('useSessions', () => {
 
     it('should save to storage after delete', () => {
       const storageKey = 'test-sessions-delete'
-      const { createSession, deleteSession } = useSessions({
+      const { sessions, createSession, deleteSession } = useSessions({
         storageKey,
         persistToStorage: true,
       })
 
-      const firstId = createSession()
+      // init() is auto-called
+      const firstId = sessions.value[0].id
       const secondId = createSession()
 
       deleteSession(firstId)
@@ -409,11 +420,12 @@ describe('useSessions', () => {
         persistToStorage: false,
       })
 
+      // init() is auto-called, creating 1 session
       createSession()
       createSession()
       createSession()
 
-      expect(sessions.value.length).toBe(3)
+      expect(sessions.value.length).toBe(4)
 
       deleteAllSessions()
 
@@ -423,15 +435,15 @@ describe('useSessions', () => {
 
   describe('Computed Properties', () => {
     it('should return current session', () => {
-      const { currentSession, createSession, switchSession } = useSessions({
+      const { currentSession, sessions, createSession, switchSession } = useSessions({
         persistToStorage: false,
       })
 
-      expect(currentSession.value).toBeUndefined()
+      // init() is auto-called, so currentSession is defined
+      expect(currentSession.value).toBeDefined()
+      expect(currentSession.value?.id).toBe(sessions.value[0].id)
 
-      const firstId = createSession()
-      expect(currentSession.value?.id).toBe(firstId)
-
+      const firstId = sessions.value[0].id
       const secondId = createSession()
       expect(currentSession.value?.id).toBe(secondId)
 
@@ -444,11 +456,12 @@ describe('useSessions', () => {
         persistToStorage: false,
       })
 
+      // init() is auto-called, creating 1 session
       createSession()
       createSession()
       createSession()
 
-      expect(sortedSessions.value.length).toBe(3)
+      expect(sortedSessions.value.length).toBe(4)
       expect(sortedSessions.value[0].createdAt).toBeGreaterThanOrEqual(sortedSessions.value[1].createdAt)
     })
   })
@@ -533,11 +546,12 @@ describe('useSessions', () => {
         persistToStorage: false,
       })
 
+      // init() is auto-called, creating 1 session
       for (let i = 0; i < 10; i++) {
         createSession()
       }
 
-      expect(sessions.value.length).toBe(10)
+      expect(sessions.value.length).toBe(11)
     })
   })
 })

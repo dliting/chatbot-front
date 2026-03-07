@@ -143,14 +143,14 @@
 
   <!-- Modals and Overlays -->
   <VoiceOverlay
-    v-if="_isRecording"
+    v-if="isRecording"
     @cancel="cancelVoice"
   />
 
   <ImagePreviewModal
-    v-if="_previewImage"
-    :url="_previewImage"
-    @close="_previewImage = null"
+    v-if="previewImage"
+    :url="previewImage"
+    @close="previewImage = null"
   />
 </template>
 
@@ -231,8 +231,15 @@ interface Emits {
 const emit = defineEmits<Emits>()
 
 // Merge config - props.mode should take priority over config.chatMode
-const config = computed(() => ({ ...defaultChatbotConfig, ...props.config }))
-const chatMode = computed(() => props.mode || config.value.chatMode)
+// Handle both plain objects and ref objects
+const configRef = computed(() => {
+  const cfg = props.config
+  // If config is a ref, use its value; otherwise use it directly
+  const configValue = cfg?.value ?? cfg
+  return { ...defaultChatbotConfig, ...configValue }
+})
+// In Vue 3 script setup, computed refs are auto-unwrapped, so use configRef directly
+const chatMode = computed(() => props.mode || configRef.value?.chatMode || defaultChatbotConfig.mode)
 
 // State
 const {
@@ -246,18 +253,18 @@ const {
   createSession,
   deleteSession,
   cleanup,
-} = useChatbotState(config.value)
+} = useChatbotState(configRef.value)
 
 // View state
 const { viewState, showChatView, showSessionsView } = useChatView(chatMode.value)
 
 // Panel state for floating mode
-const isPanelOpen = ref(config.value.defaultExpanded)
+const isPanelOpen = ref(configRef.value.defaultExpanded)
 const windowState = ref({
   x: 0,
   y: 0,
-  width: config.value.panelWidth,
-  height: config.value.panelHeight,
+  width: configRef.value.panelWidth,
+  height: configRef.value.panelHeight,
 })
 
 // Local state
@@ -272,7 +279,7 @@ const _uploadEndpoint = createMockUploadEndpoint(1000)
 const containerClasses = computed(() => [
   'ai-chat',
   `ai-chat--${chatMode.value}`,
-  `ai-chat--${config.value.theme || 'light'}`,
+  `ai-chat--${configRef.value.theme || 'light'}`,
 ])
 
 const sessions = computed(() => state.sessions.list)
@@ -283,7 +290,7 @@ const openPanel = () => { isPanelOpen.value = true }
 const closePanel = () => { isPanelOpen.value = false }
 
 const toggleTheme = () => {
-  const _newTheme = config.value.theme === 'light' ? 'dark' : 'light'
+  const _newTheme = configRef.value.theme === 'light' ? 'dark' : 'light'
   // Update theme logic here
 }
 
@@ -408,10 +415,10 @@ onMounted(() => {
     const windowWidth = window.innerWidth
     const windowHeight = window.innerHeight
     windowState.value = {
-      x: windowWidth - config.value.panelWidth - 20,
-      y: Math.max(20, (windowHeight - config.value.panelHeight) / 2),
-      width: config.value.panelWidth,
-      height: config.value.panelHeight,
+      x: windowWidth - configRef.value.panelWidth - 20,
+      y: Math.max(20, (windowHeight - configRef.value.panelHeight) / 2),
+      width: configRef.value.panelWidth,
+      height: configRef.value.panelHeight,
     }
   }
 })

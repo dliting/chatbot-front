@@ -72,10 +72,11 @@ describe('useChatbotState', () => {
       expect(state.messages.streamingMessageId).toBe(null)
     })
 
-    it('should initialize sessions state with empty list', () => {
+    it('should initialize sessions state with one session (auto-init)', () => {
       const { state } = useChatbotState(mockConfig)
 
-      expect(state.sessions.list).toEqual([])
+      // useSessions auto-init creates one session
+      expect(state.sessions.list.length).toBe(1)
       expect(state.sessions.currentId).toBeTruthy()
     })
 
@@ -109,7 +110,8 @@ describe('useChatbotState', () => {
     it('should return current session object', () => {
       const { state, currentSession, addMessage } = useChatbotState(mockConfig)
 
-      expect(currentSession.value).toBeUndefined()
+      // useSessions auto-init creates session, so currentSession is defined
+      expect(currentSession.value).toBeDefined()
 
       addMessage({
         id: 'msg-1',
@@ -424,6 +426,10 @@ describe('useChatbotState', () => {
     it('should create new session when deleting current session if no other sessions', () => {
       const { state, addMessage, deleteSession } = useChatbotState(mockConfig)
 
+      // useSessions auto-init creates 1 session
+      const initialSessionCount = state.sessions.list.length
+      expect(initialSessionCount).toBe(1)
+
       const currentSessionId = state.messages.currentSessionId
       addMessage({
         id: 'msg-1',
@@ -434,17 +440,13 @@ describe('useChatbotState', () => {
         status: 'sent',
       })
 
-      expect(state.sessions.list.length).toBe(1)
+      expect(state.sessions.list.length).toBe(initialSessionCount)
 
       deleteSession(currentSessionId)
 
-      // createSession() is called but doesn't add to sessions.list
-      // Sessions are added when messages are added
-      // The list will be empty until a message is added to the new session
-      expect(state.sessions.list.length).toBe(0)
-
-      // The createSession() uses session_${Date.now()} which might be the same
-      // as the original if called at the same time. The implementation does
+      // After delete, a new session is created by useSessions
+      // The list will have 1 session (the new one)
+      expect(state.sessions.list.length).toBe(1)
       // update the current session IDs even if they're the same string.
       // Just verify that deletion occurred (list is empty).
     })
@@ -454,7 +456,8 @@ describe('useChatbotState', () => {
     it('should create session when adding first message', () => {
       const { state, addMessage } = useChatbotState(mockConfig)
 
-      expect(state.sessions.list.length).toBe(0)
+      // useSessions auto-init creates 1 session
+      expect(state.sessions.list.length).toBe(1)
 
       addMessage({
         id: 'msg-1',

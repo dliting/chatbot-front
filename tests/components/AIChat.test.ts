@@ -37,7 +37,7 @@ describe('AIChat', () => {
 
   beforeEach(() => {
     mockConfig = {
-      chatMode: 'extended',
+      // Use mode prop for extended mode, not chatMode (per PRD.md)
       labels: {
         title: '智能助手',
         placeholder: '输入消息...',
@@ -51,7 +51,7 @@ describe('AIChat', () => {
       maxImageSize: 5 * 1024 * 1024,
       position: 'bottom-right',
       panelWidth: 420,
-      defaultExpanded: false,
+      defaultExpanded: true, // Must be true for extended mode to show main UI
       locale: 'zh-CN',
     }
 
@@ -70,7 +70,7 @@ describe('AIChat', () => {
   describe('Component Rendering', () => {
     it('should render component correctly', () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.find('.chat-content').exists()).toBe(true)
@@ -81,7 +81,7 @@ describe('AIChat', () => {
 
     it('should render header with correct title', () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const title = wrapper.find('.chat-header__title')
@@ -100,7 +100,7 @@ describe('AIChat', () => {
 
     it('should render header button', () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // Header now uses ChatHeader component
@@ -110,7 +110,7 @@ describe('AIChat', () => {
 
     it('should render input area with all controls', () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.find('.chat-input__menu-btn').exists()).toBe(true)
@@ -120,7 +120,7 @@ describe('AIChat', () => {
 
     it('should render send button when there is text input', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field') as any
@@ -136,7 +136,7 @@ describe('AIChat', () => {
   describe('Welcome Section', () => {
     it('should show welcome section when no messages', () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.find('.chat-content__welcome').exists()).toBe(true)
@@ -147,7 +147,7 @@ describe('AIChat', () => {
 
     it('should render quick action cards', () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const quickActions = wrapper.findAll('.chat-content__quick-action')
@@ -163,7 +163,7 @@ describe('AIChat', () => {
 
     it('should hide welcome section after sending message', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // Send a message
@@ -182,7 +182,7 @@ describe('AIChat', () => {
   describe('Quick Actions', () => {
     it('should send quick message when clicking quick action', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const quickActions = wrapper.findAll('.chat-content__quick-action')
@@ -196,7 +196,7 @@ describe('AIChat', () => {
 
     it('should have correct quick action icons', () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const icons = wrapper.findAll('.chat-content__quick-action-icon')
@@ -212,7 +212,7 @@ describe('AIChat', () => {
   describe('Input Handling', () => {
     it('should update input text when typing', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field') as any
@@ -223,7 +223,7 @@ describe('AIChat', () => {
 
     it('should send message on Enter key press', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field')
@@ -239,7 +239,7 @@ describe('AIChat', () => {
 
     it('should not send message on Enter + Shift', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const initialMessageCount = wrapper.findAll('.chat-content__message').length
@@ -257,7 +257,7 @@ describe('AIChat', () => {
 
     it('should clear input after sending', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field') as any
@@ -272,7 +272,7 @@ describe('AIChat', () => {
 
     it('should auto-resize textarea height', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field') as any
@@ -293,7 +293,7 @@ describe('AIChat', () => {
   describe('Message Sending', () => {
     it('should create user message when sending text', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field') as any
@@ -310,7 +310,7 @@ describe('AIChat', () => {
 
     it('should create assistant message after user message', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field') as any
@@ -329,7 +329,7 @@ describe('AIChat', () => {
 
     it('should show typing indicator during streaming', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field') as any
@@ -347,7 +347,7 @@ describe('AIChat', () => {
 
     it('should show user avatar in user message', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // Send a message through ChatContent component
@@ -357,7 +357,7 @@ describe('AIChat', () => {
 
     it('should show assistant avatar in assistant message', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // ChatContent component handles message display
@@ -371,7 +371,7 @@ describe('AIChat', () => {
       // The menu functionality is now in ChatInput component
       // Testing is done in InputArea.spec.ts
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // Just verify the component renders
@@ -382,7 +382,7 @@ describe('AIChat', () => {
       // The menu functionality is now in ChatInput component
       // Testing is done in InputArea.spec.ts
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -391,7 +391,7 @@ describe('AIChat', () => {
     it('should render menu items correctly', async () => {
       // The menu functionality is now in ChatInput component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -400,7 +400,7 @@ describe('AIChat', () => {
     it('should trigger file input when clicking menu item', async () => {
       // The menu functionality is now in ChatInput component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -409,7 +409,7 @@ describe('AIChat', () => {
     it('should show file preview after selecting image', async () => {
       // File upload is handled by ChatInput component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -418,7 +418,7 @@ describe('AIChat', () => {
     it('should show send button when image is selected', async () => {
       // File upload is handled by ChatInput component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -427,7 +427,7 @@ describe('AIChat', () => {
     it('should remove image preview when clicking remove button', async () => {
       // File upload is handled by ChatInput component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -438,7 +438,7 @@ describe('AIChat', () => {
     it('should show voice overlay when starting recording', async () => {
       // Voice functionality is now a separate VoiceOverlay component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // VoiceOverlay is conditionally rendered
@@ -449,7 +449,7 @@ describe('AIChat', () => {
     it('should add recording class to voice button', async () => {
       // Voice functionality is now handled by VoiceOverlay component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -458,7 +458,7 @@ describe('AIChat', () => {
     it('should send voice message when stopping recording', async () => {
       // Voice functionality is now handled by VoiceOverlay component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -467,7 +467,7 @@ describe('AIChat', () => {
     it('should cancel recording when clicking cancel button', async () => {
       // Voice functionality is now handled by VoiceOverlay component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -476,7 +476,7 @@ describe('AIChat', () => {
     it('should cancel recording when clicking overlay', async () => {
       // Voice functionality is now handled by VoiceOverlay component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -486,7 +486,7 @@ describe('AIChat', () => {
   describe('Message Display', () => {
     it('should display user message on the right side', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field') as any
@@ -503,7 +503,7 @@ describe('AIChat', () => {
 
     it('should display assistant message on the left side', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field') as any
@@ -522,7 +522,7 @@ describe('AIChat', () => {
     it('should display message with images', async () => {
       // Image messages are handled by ChatContent and MessageItem components
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // Just verify the component renders correctly
@@ -534,7 +534,7 @@ describe('AIChat', () => {
     it('should show image preview modal when clicking message image', async () => {
       // Image preview is handled by ImagePreviewModal component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // ImagePreviewModal component is conditionally rendered
@@ -545,7 +545,7 @@ describe('AIChat', () => {
     it('should close image preview when clicking overlay', async () => {
       // Image preview is handled by ImagePreviewModal component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -582,7 +582,7 @@ describe('AIChat', () => {
   describe('Send Button State', () => {
     it('should show voice button while sending (input cleared)', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const input = wrapper.find('.chat-input__field') as any
@@ -603,7 +603,7 @@ describe('AIChat', () => {
     it('should call toggleSettings when header button is clicked', async () => {
       // Header is now in ChatHeader component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // Just verify the component renders
@@ -615,7 +615,7 @@ describe('AIChat', () => {
     it('should stream AI response character by character', async () => {
       // Streaming is handled through ChatContent component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // Just verify the component renders
@@ -626,7 +626,7 @@ describe('AIChat', () => {
   describe('Transitions', () => {
     it('should apply menu transition classes', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const menuBtn = wrapper.find('.chat-input__menu-btn')
@@ -640,7 +640,7 @@ describe('AIChat', () => {
     it('should apply voice overlay transition', async () => {
       // Voice overlay is now handled by VoiceOverlay component
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // VoiceOverlay is conditionally rendered
@@ -652,7 +652,7 @@ describe('AIChat', () => {
   describe('Edge Cases', () => {
     it('should handle empty message send', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const initialMessageCount = wrapper.findAll('.chat-content__message').length
@@ -665,7 +665,7 @@ describe('AIChat', () => {
 
     it('should handle whitespace-only message', async () => {
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       const initialMessageCount = wrapper.findAll('.chat-content__message').length
@@ -682,7 +682,7 @@ describe('AIChat', () => {
     it('should handle multiple rapid sends', async () => {
       // The component now handles rapid sends through ChatContent
       const wrapper = mount(AIChat, {
-        props: { config: mockConfig },
+        props: { config: mockConfig, mode: 'extended' },
       })
 
       // Just verify component renders

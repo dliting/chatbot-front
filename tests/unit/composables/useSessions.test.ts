@@ -27,23 +27,21 @@ describe('composables/useSessions', () => {
 
   describe('useSessions', () => {
     it('should initialize with empty sessions', () => {
-      const { sessions, currentSessionId, init } = useSessions({
+      const { sessions, currentSessionId } = useSessions({
         persistToStorage: false,
       })
 
-      init()
-
+      // init() is auto-called, creates initial session
       expect(sessions.value.length).toBe(1) // Creates initial session
       expect(currentSessionId.value).toBeTruthy()
     })
 
     it('should create a new session', () => {
-      const { sessions, currentSessionId, createSession, init } = useSessions({
+      const { sessions, currentSessionId, createSession } = useSessions({
         persistToStorage: false,
       })
 
-      init()
-
+      // init() is auto-called, creating 1 session
       const initialLength = sessions.value.length
       const newId = createSession()
 
@@ -58,7 +56,8 @@ describe('composables/useSessions', () => {
         persistToStorage: false,
       })
 
-      const session1 = createSession()
+      // init() is auto-called, session1 created
+      const session1 = sessions.value[0].id
       const session2 = createSession()
 
       expect(currentSessionId.value).toBe(session2)
@@ -73,7 +72,8 @@ describe('composables/useSessions', () => {
         persistToStorage: false,
       })
 
-      const session1 = createSession()
+      // init() is auto-called, so we have 1 session already
+      const session1 = sessions.value[0].id
       const session2 = createSession()
       const session3 = createSession()
 
@@ -85,12 +85,12 @@ describe('composables/useSessions', () => {
     })
 
     it('should delete a session', () => {
-      const { sessions, currentSessionId, createSession, deleteSession, init } = useSessions({
+      const { sessions, currentSessionId, createSession, deleteSession } = useSessions({
         persistToStorage: false,
       })
 
-      init()
-      const session1 = createSession()
+      // init() is auto-called
+      const session1 = sessions.value[0].id
       const session2 = createSession()
       const session3 = createSession()
 
@@ -106,7 +106,8 @@ describe('composables/useSessions', () => {
         persistToStorage: false,
       })
 
-      const session1 = createSession()
+      // init() is auto-called, session1 created
+      const session1 = sessions.value[0].id
       const session2 = createSession()
 
       expect(currentSessionId.value).toBe(session2)
@@ -117,11 +118,11 @@ describe('composables/useSessions', () => {
     })
 
     it('should create new session when deleting last session', () => {
-      const { sessions, currentSessionId, createSession, deleteSession } = useSessions({
+      const { sessions, currentSessionId, deleteSession } = useSessions({
         persistToStorage: false,
       })
 
-      const session = createSession()
+      // init() is auto-called, we have 1 session
 
       // Delete all sessions except the init one
       while (sessions.value.length > 1) {
@@ -143,6 +144,7 @@ describe('composables/useSessions', () => {
         persistToStorage: false,
       })
 
+      // init() is auto-called, creating 1 session
       // Create more than max sessions
       for (let i = 0; i < 5; i++) {
         createSession()
@@ -175,12 +177,12 @@ describe('composables/useSessions', () => {
       ]
 
       // Create a session first
-      const { sessions, createSession, updateSessionTitle, init } = useSessions({
+      const { sessions, createSession, updateSessionTitle } = useSessions({
         persistToStorage: false,
       })
 
-      init()
-      const sessionId = createSession()
+      // init() is auto-called
+      const sessionId = sessions.value[0].id
       updateSessionTitle(sessionId, messages)
 
       const session = sessions.value.find(s => s.id === sessionId)
@@ -192,6 +194,7 @@ describe('composables/useSessions', () => {
         persistToStorage: false,
       })
 
+      // init() is auto-called, creating 1 session
       // Create multiple sessions
       createSession()
       createSession()
@@ -228,16 +231,13 @@ describe('composables/useSessions', () => {
     })
 
     it('should return current session', () => {
-      const { currentSession, createSession } = useSessions({
+      const { currentSession, sessions } = useSessions({
         persistToStorage: false,
       })
 
-      expect(currentSession.value).toBeUndefined()
-
-      const sessionId = createSession()
-
+      // init() is auto-called, so currentSession should be defined
       expect(currentSession.value).toBeDefined()
-      expect(currentSession.value?.id).toBe(sessionId)
+      expect(currentSession.value?.id).toBe(sessions.value[0].id)
     })
 
     it('should return sorted sessions', () => {
@@ -245,6 +245,7 @@ describe('composables/useSessions', () => {
         persistToStorage: false,
       })
 
+      // init() is auto-called
       createSession()
       createSession()
 

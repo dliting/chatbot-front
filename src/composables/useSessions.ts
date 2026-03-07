@@ -50,25 +50,6 @@ export function useSessions(options: UseSessionsOptions = {}) {
   }
 
   /**
-   * Initialize sessions (auto-called)
-   */
-  const init = () => {
-    const stored = loadFromStorage()
-    sessions.value = stored
-
-    if (stored.length > 0) {
-      // Use most recent session
-      currentSessionId.value = stored[0].id
-    } else {
-      // Create new session
-      createSession()
-    }
-  }
-
-  // Auto-initialize on mount
-  init()
-
-  /**
    * Create a new session
    */
   const createSession = (): string => {
@@ -96,6 +77,25 @@ export function useSessions(options: UseSessionsOptions = {}) {
 
     return newSession.id
   }
+
+  /**
+   * Initialize sessions (auto-called)
+   */
+  const init = () => {
+    const stored = loadFromStorage()
+    sessions.value = stored
+
+    if (stored.length > 0) {
+      // Use most recent session
+      currentSessionId.value = stored[0].id
+    } else {
+      // Create new session
+      createSession()
+    }
+  }
+
+  // Auto-initialize on mount
+  init()
 
   /**
    * Switch to a different session
