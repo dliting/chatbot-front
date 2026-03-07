@@ -64,7 +64,7 @@ if not exist "%BACKEND_DIR_FULL%\node_modules" (
 
 rem Start backend with PORT environment variable
 echo Starting backend server...
-start "ChatApp Backend (%MODE%)" cmd /k "cd /d "%BACKEND_DIR_FULL%" && set PORT=%BACKEND_PORT% && echo Backend running on port %BACKEND_PORT% && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
+start "ChatApp-Backend-%MODE%" cmd /k "cd /d "%BACKEND_DIR_FULL%" && set PORT=%BACKEND_PORT% && echo Backend running on port %BACKEND_PORT% && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
 
 rem Wait for backend
 ping -n 3 127.0.0.1 >nul
