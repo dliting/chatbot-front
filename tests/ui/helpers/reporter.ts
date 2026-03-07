@@ -70,7 +70,7 @@ export class TestReporter {
   generateHTML(report: TestReport): string {
     const timestamp = new Date(report.timestamp).toLocaleString('zh-CN')
 
-    let resultsHTML = report.results.map(r => {
+    const resultsHTML = report.results.map(r => {
       const safeName = escapeHtml(r.name)
       const safeError = r.error ? escapeHtml(r.error) : ''
       const safeScreenshot = r.screenshot ? escapeHtml(r.screenshot) : ''
