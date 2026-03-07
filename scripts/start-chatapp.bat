@@ -20,19 +20,19 @@ if not exist "%CONFIG_FILE%" (
     exit /b 1
 )
 
-rem Parse config file - only PORT is needed
-for /f "tokens=1,* delims==" %%a in ('findstr /i "^PORT" "%CONFIG_FILE%"') do (
+rem Parse config file - read HOST and PORT
+for /f "tokens=1,* delims==" %%a in ('findstr /i "^HOST ^PORT" "%CONFIG_FILE%"') do (
     set "%%a=%%b"
 )
 
-rem Derive other values from PORT and MODE
+rem Derive other values from HOST, PORT and MODE
 set "BACKEND_PORT=%PORT%"
 if "%MODE%"=="real" (
     set "BACKEND_DIR=backend-real"
 ) else (
     set "BACKEND_DIR=backend-mock"
 )
-set "API_URL=http://localhost:%PORT%"
+set "API_URL=http://%HOST%:%PORT%"
 set "VITE_API_BASE_URL=%API_URL%"
 
 set "BACKEND_DIR_FULL=%CONFIG_DIR%\%BACKEND_DIR%"

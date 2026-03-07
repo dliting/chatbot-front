@@ -47,7 +47,7 @@ else
     CONFIG_FILE="$PROJECT_ROOT/examples/chatapp/mock.env"
 fi
 
-# 读取配置文件 (只读取PORT)
+# 读取配置文件 (读取HOST和PORT)
 if [ -f "$CONFIG_FILE" ]; then
     source "$CONFIG_FILE"
 else
@@ -55,7 +55,11 @@ else
     exit 1
 fi
 
-# 从PORT和MODE派生其他值
+# 设置默认值
+HOST="${HOST:-localhost}"
+PORT="${PORT:-3001}"
+
+# 从HOST, PORT和MODE派生其他值
 if [ "$MODE" = "real" ]; then
     BACKEND_DIR="backend-real"
     MODE_DESC="Real (Ollama)"
@@ -63,6 +67,8 @@ else
     BACKEND_DIR="backend-mock"
     MODE_DESC="Mock"
 fi
+API_URL="http://$HOST:$PORT"
+VITE_API_BASE_URL="$API_URL"
 API_URL="http://localhost:$PORT"
 VITE_API_BASE_URL="$API_URL"
 
