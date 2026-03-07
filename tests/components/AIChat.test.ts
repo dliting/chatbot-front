@@ -92,7 +92,7 @@ describe('AIChat', () => {
     it('should render custom title from config', () => {
       const customConfig = { ...mockConfig, labels: { title: '豆包助手' } }
       const wrapper = mount(AIChat, {
-        props: { config: customConfig },
+        props: { config: customConfig, panelOpen: true },
       })
 
       expect(wrapper.find('.chat-header__title').text()).toBe('豆包助手')

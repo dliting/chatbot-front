@@ -212,6 +212,7 @@ interface Props {
   hideQuickActions?: boolean
   hideInputArea?: boolean
   apiClient?: ReturnType<typeof useApiClient>
+  panelOpen?: boolean // External panel state (used when AIChat is embedded in AIChatbot)
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -259,7 +260,9 @@ const {
 const { viewState, showChatView, showSessionsView } = useChatView(chatMode.value)
 
 // Panel state for floating mode
-const isPanelOpen = ref(configRef.value.defaultExpanded)
+// Use external panelOpen prop if provided (when embedded in AIChatbot), otherwise use internal state
+const internalIsPanelOpen = ref(configRef.value.defaultExpanded)
+const isPanelOpen = computed(() => props.panelOpen ?? internalIsPanelOpen.value)
 const windowState = ref({
   x: 0,
   y: 0,
@@ -286,8 +289,17 @@ const sessions = computed(() => state.sessions.list)
 const currentSessionId = computed(() => state.sessions.currentId)
 
 // Methods
-const openPanel = () => { isPanelOpen.value = true }
-const closePanel = () => { isPanelOpen.value = false }
+// Only manage panel state internally if no external panelOpen prop is provided
+const openPanel = () => {
+  if (props.panelOpen === undefined) {
+    internalIsPanelOpen.value = true
+  }
+}
+const closePanel = () => {
+  if (props.panelOpen === undefined) {
+    internalIsPanelOpen.value = false
+  }
+}
 
 const toggleTheme = () => {
   const _newTheme = configRef.value.theme === 'light' ? 'dark' : 'light'
