@@ -69,8 +69,6 @@ else
 fi
 API_URL="http://$HOST:$PORT"
 VITE_API_BASE_URL="$API_URL"
-API_URL="http://localhost:$PORT"
-VITE_API_BASE_URL="$API_URL"
 
 echo -e "${GREEN}=== ChatApp 启动脚本 ===${NC}"
 echo -e "后端模式: ${YELLOW}$MODE_DESC${NC}"
