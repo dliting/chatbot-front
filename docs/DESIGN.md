@@ -3,15 +3,60 @@
 ## 文档信息
 | 项目 | 内容 |
 |------|------|
-| 产品名称 | AI Chatbot Frontend |
-| 版本 | v1.1 |
-| 最后更新 | 2026-03-06 |
+| 产品名称 | AI Chatbot Frontend (AIChat) |
+| 版本 | v1.0 |
+| 最后更新 | 2026-03-07 |
 
 ---
 
-## 1. 架构概览
+## 1. 项目概述
 
-### 1.1 组件架构
+### 1.1 产品定位
+
+**本项目是一个通用的AI聊天前端组件AIChat，基于Vue框架，支持离线部署和运行。**
+
+基于 Vue 3 + TypeScript 开发的可嵌入 AI 聊天机器人前端组件，支持扩展模式、边栏模式、悬浮模式三种交互形式，具备响应式布局、多模态交互能力。
+
+### 1.2 项目结构
+
+```
+.
+├── README.md           # 项目总体说明
+├── public              # 静态资源
+├── docs                # 文档
+│   ├── PRD.md          # 产品需求文档
+│   ├── DESIGN.md       # 设计文档（本文件）
+│   ├── API.md          # API文档
+│   └── TDD.md          # 测试驱动开发文档
+├── examples
+│   └── chatapp         # 示例项目（ChatApp演示应用）
+│       ├── frontend    # 前端应用
+│       ├── backend-mock # Mock后端
+│       └── backend-real # Real后端（Ollama）
+├── tests               # 测试用例和代码
+│   ├── UI_TEST_GUIDE.md # UI交互测试指南
+│   └── ui-chatbot-test.cjs # UI测试脚本
+└── src                 # 源代码
+```
+
+---
+
+## 2. 架构概览
+
+### 2.1 双维度架构设计
+
+本组件采用双维度架构设计，将"交互模式"与"布局形式"解耦：
+
+**布局形式（Layout）**:
+- **平铺模式（Extended Layout）**: 会话列表和聊天窗口在同一页面展示
+- **紧凑模式（Compact Layout）**: 会话列表和聊天窗口在不同页面展示
+
+**交互模式（Interaction Mode）**:
+- **扩展模式（Extended）**: 作为全屏页面，内部使用平铺模式布局
+- **边栏模式（Sidebar）**: 作为边栏，内部使用紧凑模式布局
+- **悬浮模式（Floating）**: 悬浮球 + 悬浮窗口，内部使用紧凑模式布局
+
+### 2.2 组件架构
 
 ```
 AIChat (根组件)
@@ -25,10 +70,18 @@ AIChat (根组件)
 │       ├── WelcomeScreen (欢迎界面)
 │       └── InputArea (输入区域)
 │
-├── ChatCompact (紧凑模式)
-│   ├── CompactSidebar (侧边栏) ← 紧凑模式特有
+├── ChatSidebar (边栏模式) ← 新增
+│   ├── SidebarContainer (边栏容器)
+│   │   ├── TabView (Tab切换视图)
+│   │   │   ├── SessionTab (会话Tab)
+│   │   │   └── ChatTab (聊天Tab)
 │   │   └── ChatArea (聊天区域) ← 共用组件
-│   └── FloatingBall (悬浮球，收起时) ← 紧凑模式特有
+│   └── FloatingBall (悬浮球，收起时)
+│
+├── ChatCompact (紧凑模式)
+│   ├── CompactSidebar (侧边栏)
+│   │   └── ChatArea (聊天区域) ← 共用组件
+│   └── FloatingBall (悬浮球，收起时)
 │
 └── ChatFloating (悬浮模式)
     ├── FloatingBall (悬浮球) ← 悬浮模式特有
@@ -37,19 +90,19 @@ AIChat (根组件)
             └── ChatArea (聊天区域) ← 共用组件
 ```
 
-### 1.2 模式切换架构
+### 2.3 模式切换架构
 
 ```
 AIChat
-├── 检测 chatMode 配置
-├── 根据 chatMode 渲染对应组件
-│   ├── 'extended' → ChatExtended
-│   ├── 'compact' → ChatCompact
-│   └── 'floating' → ChatFloating
+├── 检测 mode 配置（新版本）或 chatMode（旧版本兼容）
+├── 根据 mode 渲染对应组件
+│   ├── 'extended' → ChatExtended (layout: 'split')
+│   ├── 'sidebar' → ChatSidebar (layout: 'compact')
+│   └── 'floating' → ChatFloating (layout: 'compact')
 └── 共用状态管理 (ChatStore)
 ```
 
-### 1.3 组件复用关系
+### 2.4 组件复用关系
 
 | 组件 | 类型 | 使用模式 | 说明 |
 |------|------|----------|------|
@@ -59,25 +112,32 @@ AIChat
 | WelcomeScreen | 共用 | 所有模式 | 欢迎界面组件 |
 | InputArea | 共用 | 所有模式 | 输入区域组件 |
 | SessionList | 扩展模式特有 | Extended | 会话列表组件 |
+| TabView | 边栏模式特有 | Sidebar | Tab切换视图组件 |
+| SidebarContainer | 边栏模式特有 | Sidebar | 边栏容器组件 |
 | CompactSidebar | 紧凑模式特有 | Compact | 侧边栏容器组件 |
-| FloatingBall | 紧凑/悬浮模式特有 | Compact, Floating | 悬浮球组件 |
+| FloatingBall | 边栏/紧凑/悬浮模式特有 | Sidebar, Compact, Floating | 悬浮球组件 |
 | FloatingPanel | 悬浮模式特有 | Floating | 悬浮面板组件 |
 | DraggableWindow | 悬浮模式特有 | Floating | 可拖拽窗口组件 |
 | LandingPage | Demo导航页 | Landing | 首页模式导航卡片组件 |
+| SidebarDemo | Demo演示页 | /sidebar | 边栏模式演示页面 |
 | CompactDemo | Demo演示页 | /compact | 紧凑模式演示页面 |
 | ExtendedDemo | Demo演示页 | /extended | 扩展模式演示页面 |
 | FloatingDemo | Demo演示页 | /floating | 悬浮模式演示页面 |
 | IframeDemo | Demo演示页 | /iframe | iframe通信演示页面 |
 
-### 1.4 路由架构
+### 2.5 路由架构
 
 ```
 Router (vue-router 4)
 ├── / (LandingPage) - 首页导航
 │   ├── Extended Mode Card → /extended
+│   ├── Sidebar Mode Card → /sidebar ← 新增
 │   ├── Compact Mode Card → /compact
 │   ├── Floating Mode Card → /floating
 │   └── Iframe Mode Card → /iframe
+│
+├── /sidebar (SidebarDemo) - 边栏模式演示 ← 新增
+│   └── ChatSidebar (边栏模式组件)
 │
 ├── /compact (CompactDemo) - 紧凑模式演示
 │   └── ChatArea (共用组件)
@@ -102,9 +162,9 @@ Router (vue-router 4)
 
 ---
 
-## 2. 共用组件设计
+## 3. 共用组件设计
 
-### 2.1 ChatArea (聊天区域)
+### 3.1 ChatArea (聊天区域)
 
 **用途**: 所有模式共用的核心聊天组件
 
@@ -132,7 +192,7 @@ interface ChatAreaProps {
 - `WelcomeScreen`: 欢迎界面（快捷操作卡片）
 - `InputArea`: 输入区域（文本输入、文件上传、发送按钮）
 
-### 2.2 MessageList (消息列表)
+### 3.2 MessageList (消息列表)
 
 **用途**: 渲染消息列表，支持虚拟滚动
 
@@ -166,7 +226,7 @@ interface Message {
 }
 ```
 
-### 2.3 InputArea (输入区域)
+### 3.3 InputArea (输入区域)
 
 **用途**: 处理用户输入和文件上传
 
@@ -189,7 +249,7 @@ interface InputAreaProps {
 - 语音输入按钮
 - 发送状态控制
 
-### 2.4 ChatHeader (聊天头部)
+### 3.4 ChatHeader (聊天头部)
 
 **用途**: 显示标题和操作按钮
 
@@ -209,9 +269,9 @@ interface ChatHeaderProps {
 - 显示标题
 - 主题切换按钮
 - 设置按钮（打开菜单）
-- 关闭按钮（紧凑/悬浮模式）
+- 关闭按钮（边栏/悬浮模式）
 
-### 2.5 WelcomeScreen (欢迎界面)
+### 3.5 WelcomeScreen (欢迎界面)
 
 **用途**: 显示欢迎信息和快捷操作
 
@@ -241,9 +301,9 @@ interface QuickAction {
 
 ---
 
-## 3. 扩展模式特有设计
+## 4. 扩展模式特有设计
 
-### 3.1 ChatExtended 组件
+### 4.1 ChatExtended 组件
 
 **结构**:
 ```vue
@@ -271,7 +331,7 @@ interface QuickAction {
 └─────────────────────────────────────────────┘
 ```
 
-### 3.2 SessionList (会话列表)
+### 4.2 SessionList (会话列表)
 
 **Props**:
 ```typescript
@@ -305,7 +365,7 @@ interface Session {
 }
 ```
 
-### 3.3 扩展模式配置
+### 4.3 扩展模式配置
 
 ```typescript
 interface ExtendedModeConfig {
@@ -323,9 +383,106 @@ interface ExtendedModeConfig {
 
 ---
 
-## 4. 紧凑模式特有设计
+## 5. 边栏模式特有设计
 
-### 4.1 ChatCompact 组件
+### 5.1 ChatSidebar 组件
+
+**用途**: 边栏模式组件，通过Tab切换会话/聊天视图
+
+**结构**:
+```vue
+<template>
+  <div class="chat-sidebar">
+    <SidebarContainer v-if="expanded">
+      <TabView v-model:activeTab="activeTab">
+        <SessionTab key="sessions" />
+        <ChatTab key="chat">
+          <ChatArea />
+        </ChatTab>
+      </TabView>
+    </SidebarContainer>
+    <FloatingBall v-else @click="expanded = true" />
+  </div>
+</template>
+```
+
+**布局**:
+```
+桌面端:
+┌─────────────────────────────────────────────┐
+│ ┌────────┐  ┌──────────────────────────────┐ │
+│ │        │  │                              │ │
+│ │ 聊天   │  │      主内容区域              │ │
+│ │ 边栏   │  │                              │ │
+│ │        │  │                              │ │
+│ │ 400px  │  │                              │ │
+│ │(可配置) │  │                              │ │
+│ └────────┘  └──────────────────────────────┘ │
+└─────────────────────────────────────────────┘
+
+移动端 (< 768px):
+┌─────────────────────────────────────────────┐
+│                                             │
+│              全屏聊天界面                    │
+│                                             │
+│  [← 返回]              [主题] [设置]        │
+│                                             │
+│  ┌─────────────────────────────────────┐   │
+│  │                                     │   │
+│  │         消息列表                     │   │
+│  │                                     │   │
+│  └─────────────────────────────────────┘   │
+│                                             │
+│  ┌─────────────────────────────────────┐   │
+│  │ [输入框...]                    [发送]│   │
+│  └─────────────────────────────────────┘   │
+└─────────────────────────────────────────────┘
+```
+
+### 5.2 TabView 组件
+
+**Props**:
+```typescript
+interface TabViewProps {
+  tabs: Tab[]
+  activeTab: string
+  onTabChange: (tabId: string) => void
+}
+```
+
+**功能**:
+- Tab切换视图
+- 会话Tab：显示会话列表
+- 聊天Tab：显示聊天区域
+- 切换动画
+
+### 5.3 边栏模式配置
+
+```typescript
+interface SidebarModeConfig {
+  // 边栏配置
+  sidebarWidth?: number           // 边栏宽度 (380-600px)
+  sidebarPosition?: 'left' | 'right'  // 边栏位置
+  defaultExpanded?: boolean       // 默认展开状态
+
+  // Tab配置
+  defaultTab?: 'sessions' | 'chat' // 默认Tab
+
+  // 响应式配置
+  mobileBreakpoint?: number       // 移动端断点 (默认 768px)
+  mobileFullscreen?: boolean      // 移动端全屏
+
+  // 悬浮球配置 (收起时)
+  showFloatingBall?: boolean      // 收起时显示悬浮球
+  floatingBallPosition?: 'bottom-left' | 'bottom-right'  // 悬浮球位置
+}
+```
+
+---
+
+## 6. 紧凑模式特有设计
+
+### 6.1 ChatCompact 组件
 
 **结构**:
 ```vue
@@ -371,7 +528,7 @@ interface ExtendedModeConfig {
 └─────────────────────────────────────────────┘
 ```
 
-### 4.2 CompactSidebar (紧凑侧边栏)
+### 6.2 CompactSidebar (紧凑侧边栏)
 
 **Props**:
 ```typescript
@@ -389,7 +546,7 @@ interface CompactSidebarProps {
 - 移动端自动全屏
 - 关闭按钮
 
-### 4.3 紧凑模式配置
+### 6.3 紧凑模式配置
 
 ```typescript
 interface CompactModeConfig {
@@ -410,9 +567,9 @@ interface CompactModeConfig {
 
 ---
 
-## 5. 悬浮模式特有设计
+## 7. 悬浮模式特有设计
 
-### 5.1 ChatFloating 组件
+### 7.1 ChatFloating 组件
 
 **结构**:
 ```vue
@@ -445,7 +602,7 @@ interface CompactModeConfig {
 └─────────────────────┘
 ```
 
-### 5.2 FloatingBall (悬浮球)
+### 7.2 FloatingBall (悬浮球)
 
 **Props**:
 ```typescript
@@ -465,7 +622,7 @@ interface FloatingBallProps {
 - 点击展开面板
 - 拖拽后吸附边缘
 
-### 5.3 FloatingPanel (悬浮面板)
+### 7.3 FloatingPanel (悬浮面板)
 
 **Props**:
 ```typescript
@@ -488,7 +645,7 @@ interface FloatingPanelProps {
 - 位置和大小记忆
 - 关闭后显示悬浮球
 
-### 5.4 DraggableWindow (可拖拽窗口)
+### 7.4 DraggableWindow (可拖拽窗口)
 
 **Props**:
 ```typescript
@@ -511,7 +668,7 @@ interface DraggableWindowProps {
 - 边界限制
 - 位置和大小记忆（localStorage）
 
-### 5.5 悬浮模式配置
+### 7.5 悬浮模式配置
 
 ```typescript
 interface FloatingModeConfig {
@@ -539,9 +696,9 @@ interface FloatingModeConfig {
 
 ---
 
-## 6. 状态管理设计
+## 8. 状态管理设计
 
-### 6.1 ChatStore (共用状态)
+### 8.1 ChatStore (共用状态)
 
 ```typescript
 interface ChatStore {
@@ -555,7 +712,7 @@ interface ChatStore {
 
   // UI 状态
   theme: Theme
-  sidebarExpanded: boolean    // 紧凑模式侧边栏状态
+  sidebarExpanded: boolean    // 边栏/紧凑模式侧边栏状态
   panelOpen: boolean          // 悬浮模式面板状态
 
   // 操作
@@ -569,13 +726,22 @@ interface ChatStore {
 }
 ```
 
-### 6.2 模式特定状态
+### 8.2 模式特定状态
 
 **扩展模式**:
 ```typescript
 interface ExtendedStore {
   sessionListWidth: number
   sessionListCollapsed: boolean
+}
+```
+
+**边栏模式**:
+```typescript
+interface SidebarStore {
+  sidebarExpanded: boolean
+  activeTab: 'sessions' | 'chat'
+  isMobile: boolean
 }
 ```
 
@@ -599,9 +765,9 @@ interface FloatingStore {
 
 ---
 
-## 7. 样式设计
+## 9. 样式设计
 
-### 7.1 主题系统
+### 9.1 主题系统
 
 ```typescript
 interface ThemeConfig {
@@ -631,12 +797,13 @@ interface ThemeConfig {
 }
 ```
 
-### 7.2 BEM 命名规范
+### 9.2 BEM 命名规范
 
 ```css
 /* 块 (Block) */
 .chat-extended {}
 .chat-compact {}
+.chat-sidebar {}  /* 新增 */
 .chat-floating {}
 
 /* 元素 (Element) */
@@ -647,6 +814,7 @@ interface ThemeConfig {
 /* 修饰符 (Modifier) */
 .chat-extended--collapsed {}
 .chat-compact--mobile {}
+.chat-sidebar--tab-sessions {}  /* 新增 */
 .chat-floating--panel-open {}
 
 /* 消息气泡 */
@@ -658,7 +826,7 @@ interface ThemeConfig {
 .message__timestamp {}
 ```
 
-### 7.3 响应式断点
+### 9.3 响应式断点
 
 ```scss
 $breakpoint-mobile: 768px;
@@ -683,9 +851,9 @@ $breakpoint-desktop: 1280px;
 
 ---
 
-## 8. 事件系统
+## 10. 事件系统
 
-### 8.1 组件事件
+### 10.1 组件事件
 
 ```typescript
 // AIChat 组件事件
@@ -705,13 +873,14 @@ interface ChatEvents {
   'panel-opened': () => void
   'panel-closed': () => void
   'sidebar-toggled': (expanded: boolean) => void
+  'tab-changed': (tab: string) => void  // 新增
 
   // 错误事件
   'error': (error: ChatError) => void
 }
 ```
 
-### 8.2 iframe 通信事件
+### 10.2 iframe 通信事件
 
 ```typescript
 // iframe 模式 postMessage 事件
@@ -731,9 +900,56 @@ interface IframeMessages {
 
 ---
 
-## 9. 性能优化
+## 11. 测试设计
 
-### 9.1 虚拟滚动
+### 11.1 单元测试
+
+**测试框架**: Vitest
+
+**覆盖率要求**: > 80%
+
+**测试范围**:
+- 组件单元测试
+- Composables 测试
+- 工具函数测试
+- 状态管理测试
+
+**测试文件位置**: `src/**/__tests__/*.test.ts`
+
+### 11.2 UI交互测试
+
+**测试工具**: chrome-devtools-mcp
+
+**测试指南**: `tests/UI_TEST_GUIDE.md`
+
+**测试范围**:
+- Landing页面测试
+- 共用功能测试（所有模式）
+- 扩展模式测试
+- 边栏模式测试（新增）
+- 紧凑模式测试
+- 悬浮模式测试
+- iframe通信测试
+
+**测试原则**:
+- 模拟人和浏览器交互操作
+- 每个操作响应不超过3分钟
+- 强制验证检查（控制台错误、资源加载、元素存在）
+
+### 11.3 回归测试
+
+**测试环境**:
+1. Mock模式: 访问虚构响应
+2. Real模式: 访问本地Ollama大模型服务
+
+**测试流程**:
+从ChatApp首页入手，逐级检查各模块功能，包括UI交互测试。
+
+---
+
+## 12. 性能优化
+
+### 12.1 虚拟滚动
 
 ```typescript
 // MessageList 使用虚拟滚动
@@ -745,7 +961,7 @@ const { list: virtualMessages, containerProps, wrapperProps } = useVirtualList(
 )
 ```
 
-### 9.2 图片懒加载
+### 12.2 图片懒加载
 
 ```vue
 <template>
@@ -753,7 +969,7 @@ const { list: virtualMessages, containerProps, wrapperProps } = useVirtualList(
 </template>
 ```
 
-### 9.3 消息去抖动
+### 12.3 消息去抖动
 
 ```typescript
 import { useDebounceFn } from '@vueuse/core'
@@ -763,7 +979,7 @@ const debouncedScroll = useDebounceFn(() => {
 }, 100)
 ```
 
-### 9.4 流式响应优化
+### 12.4 流式响应优化
 
 ```typescript
 // 使用 requestAnimationFrame 优化渲染
@@ -777,9 +993,9 @@ function* streamResponse(content: string) {
 
 ---
 
-## 10. 安全考虑
+## 13. 安全考虑
 
-### 10.1 XSS 防护
+### 13.1 XSS 防护
 
 ```typescript
 // 转义用户输入
@@ -793,7 +1009,7 @@ function sanitizeInput(input: string): string {
 }
 ```
 
-### 10.2 CSP 策略
+### 13.2 CSP 策略
 
 ```html
 <meta http-equiv="Content-Security-Policy"
@@ -803,7 +1019,7 @@ function sanitizeInput(input: string): string {
                style-src 'self' 'unsafe-inline';">
 ```
 
-### 10.3 跨域控制
+### 13.3 跨域控制
 
 ```typescript
 // iframe 模式白名单验证
@@ -820,7 +1036,7 @@ function validateOrigin(origin: string, allowedOrigins: string[]): boolean {
 
 ---
 
-## 11. 目录结构
+## 14. 目录结构
 
 ```
 src/
@@ -828,6 +1044,7 @@ src/
 │   ├── AIChat/
 │   │   ├── index.vue                 # 根组件
 │   │   ├── ChatExtended.vue          # 扩展模式组件
+│   │   ├── ChatSidebar.vue           # 边栏模式组件（新增）
 │   │   ├── ChatCompact.vue           # 紧凑模式组件
 │   │   └── ChatFloating.vue          # 悬浮模式组件
 │   ├── chat/                        # 共用聊天组件
@@ -842,12 +1059,16 @@ src/
 │   │   ├── SessionList.vue           # 扩展模式特有
 │   │   ├── SessionItem.vue
 │   │   └── NewSessionButton.vue
+│   ├── tab/                         # Tab切换组件（新增）
+│   │   ├── TabView.vue
+│   │   ├── SessionTab.vue
+│   │   └── ChatTab.vue
 │   ├── floating/                    # 悬浮组件
-│   │   ├── FloatingBall.vue          # 悬浮模式特有
-│   │   ├── FloatingPanel.vue         # 悬浮模式特有
-│   │   └── DraggableWindow.vue       # 悬浮模式特有
+│   │   ├── FloatingBall.vue
+│   │   ├── FloatingPanel.vue
+│   │   └── DraggableWindow.vue
 │   └── sidebar/                     # 侧边栏组件
-│       └── CompactSidebar.vue        # 紧凑模式特有
+│       └── CompactSidebar.vue
 ├── composables/
 │   ├── useChat.ts                   # 聊天逻辑
 │   ├── useMessage.ts                # 消息操作
@@ -868,6 +1089,94 @@ src/
 
 ---
 
+## 15. 配置接口
+
+### 15.1 主配置接口
+
+```typescript
+interface AIChatConfig {
+  // 模式配置（新版本）
+  mode?: 'extended' | 'sidebar' | 'floating'  // 交互模式
+  layout?: 'split' | 'compact'                 // 布局形式
+
+  // 兼容旧版本
+  chatMode?: 'extended' | 'compact' | 'floating'
+
+  // API配置
+  apiBaseUrl?: string
+  apiTimeout?: number
+
+  // 功能开关
+  enableImageUpload?: boolean
+  enableVoiceInput?: boolean
+  enableSessionManager?: boolean
+  enableCopyMessage?: boolean
+  enableDeleteMessage?: boolean
+  enableResend?: boolean
+  enableClearAll?: boolean
+
+  // 图片配置
+  maxImageCount?: number
+  maxImageSize?: number
+
+  // 主题配置
+  theme?: 'light' | 'dark' | 'auto'
+  primaryColor?: string
+
+  // 标签配置
+  labels?: {
+    title?: string
+    placeholder?: string
+    newChat?: string
+    history?: string
+    send?: string
+    // ...
+  }
+}
+```
+
+### 15.2 模式特定配置
+
+```typescript
+// 扩展模式配置
+interface ExtendedConfig extends AIChatConfig {
+  mode: 'extended'
+  layout?: 'split'
+  sessionListWidth?: number
+  sessionListCollapsed?: boolean
+}
+
+// 边栏模式配置（新增）
+interface SidebarConfig extends AIChatConfig {
+  mode: 'sidebar'
+  layout?: 'compact'
+  sidebarWidth?: number
+  defaultTab?: 'sessions' | 'chat'
+}
+
+// 紧凑模式配置
+interface CompactConfig extends AIChatConfig {
+  mode: 'compact'
+  layout?: 'compact'
+  sidebarWidth?: number
+  defaultExpanded?: boolean
+}
+
+// 悬浮模式配置
+interface FloatingConfig extends AIChatConfig {
+  mode: 'floating'
+  layout?: 'compact'
+  position?: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
+  panelWidth?: number
+  panelHeight?: number
+  draggable?: boolean
+  resizable?: boolean
+  rememberPosition?: boolean
+}
+```
+
+---
+
 ## 附录A: 使用示例
 
 ### A.1 模式对比
@@ -875,7 +1184,8 @@ src/
 | 模式 | 路由 | 适用场景 | 特点 |
 |------|------|----------|------|
 | **扩展模式** | `/extended` | 独立聊天应用 | 全屏界面，左侧会话列表 + 右侧聊天区 |
-| **紧凑模式** | `/compact` | SaaS后台、客服平台 | 桌面端侧边栏固定，移动端自动全屏 |
+| **边栏模式** | `/sidebar` | SaaS后台、客服平台 | Tab切换会话/聊天视图，桌面端侧边栏固定 |
+| **紧凑模式** | `/compact` | 内嵌页面 | 桌面端侧边栏固定，移动端自动全屏 |
 | **悬浮模式** | `/floating` | 营销落地页、文档页 | 悬浮球按钮，点击弹出对话框 |
 | **Iframe嵌入** | `/iframe` | 第三方网站集成 | 跨域嵌入，postMessage通信 |
 
@@ -885,7 +1195,7 @@ src/
 
 ```typescript
 const config = {
-  chatMode: 'extended',
+  mode: 'extended',
   apiBaseUrl: 'http://localhost:3001',
   enableImageUpload: true,
   enableSessionManager: true,
@@ -898,11 +1208,30 @@ const config = {
 }
 ```
 
-#### 紧凑模式配置（包含边栏模式）
+#### 边栏模式配置（新增）
 
 ```typescript
 const config = {
-  chatMode: 'compact',
+  mode: 'sidebar',
+  apiBaseUrl: 'http://localhost:3001',
+  enableImageUpload: true,
+  maxImageCount: 3,
+  enableSessionManager: true,
+  defaultTab: 'chat',
+}
+```
+
+**特性：**
+- Tab切换会话/聊天视图
+- 桌面端：主内容 + 右侧聊天边栏（400px）
+- 移动端：自动切换为全屏聊天
+- 收起时显示悬浮球（可配置）
+
+#### 紧凑模式配置
+
+```typescript
+const config = {
+  mode: 'compact',
   apiBaseUrl: 'http://localhost:3001',
   enableImageUpload: true,
   maxImageCount: 3,
@@ -919,7 +1248,7 @@ const config = {
 
 ```typescript
 const config = {
-  chatMode: 'floating',
+  mode: 'floating',
   apiBaseUrl: 'http://localhost:3001',
   position: 'bottom-right',
   panelWidth: 400,
@@ -935,7 +1264,7 @@ const config = {
 
 ```typescript
 const config = {
-  chatMode: 'floating',  // iframe内部使用floating模式
+  mode: 'floating',  // iframe内部使用floating模式
   iframeMode: true,
   // 通过postMessage通信
 }
