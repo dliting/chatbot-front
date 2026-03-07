@@ -75,6 +75,12 @@ rem Create frontend .env file (use API_URL from config)
     echo VITE_API_BASE_URL=%API_URL%
 ) > "%CHATAPP_DIR%\.env"
 
+rem Clear Vite cache to ensure fresh environment variables
+if exist "%CHATAPP_DIR%\node_modules\.vite" (
+    rd /s /q "%CHATAPP_DIR%\node_modules\.vite"
+    echo Cleared Vite cache for fresh environment variables
+)
+
 rem Start frontend
 echo Starting frontend...
 start "ChatApp Frontend" cmd /k "cd /d "%CHATAPP_DIR%" && echo Frontend running on http://localhost:5180 && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
