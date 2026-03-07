@@ -5,6 +5,7 @@
     <div class="ai-chat__body">
       <ChatContent
         v-if="viewState.currentView === 'chat'"
+        :key="currentMessages.length"
         :messages="currentMessages"
         :welcome-visible="!hideWelcome && currentMessages.length === 0"
         :quick-actions-visible="!hideQuickActions"
@@ -60,6 +61,7 @@
     <div class="ai-chat__body">
       <ChatContent
         v-if="viewState.currentView === 'chat'"
+        :key="currentMessages.length"
         :messages="currentMessages"
         :welcome-visible="!hideWelcome && currentMessages.length === 0"
         :quick-actions-visible="!hideQuickActions"
@@ -145,6 +147,7 @@
       />
       <ChatContent
         v-if="viewState.currentView === 'chat'"
+        :key="currentMessages.length"
         :messages="currentMessages"
         :welcome-visible="!hideWelcome && currentMessages.length === 0"
         :quick-actions-visible="!hideQuickActions"
@@ -180,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, h } from 'vue'
+import { ref, computed, onMounted, onUnmounted, h, nextTick } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
 import type { ChatMode, Layout } from '@/types'
@@ -405,10 +408,12 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
       }
     }
   } catch (error) {
+    console.error('[AIChatPanel] Error:', error)
     aiMessage.status = 'error'
     updateMessage(aiMessage.id, { status: 'error' })
   } finally {
     setStreamingMessage(null)
+    await nextTick()
   }
 }
 

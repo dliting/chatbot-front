@@ -4,6 +4,7 @@ import { corsMiddleware } from './middleware/cors'
 import chatRoutes from './routes/chat'
 import { initDatabase } from './services/database'
 
+const HOST = process.env.HOST || 'localhost'
 const PORT = process.env.PORT || 3001
 const app = express()
 
@@ -26,7 +27,7 @@ async function start() {
     console.log('Database initialized (mock mode)')
 
     app.listen(PORT, () => {
-      console.log(`Mock server running on http://localhost:${PORT}`)
+      console.log(`Mock server running on http://${HOST}:${PORT}`)
     })
   } catch (error) {
     console.error('Failed to start server:', error)

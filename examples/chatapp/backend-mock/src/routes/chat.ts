@@ -121,7 +121,9 @@ router.post('/chat/message', async (req: Request, res: Response) => {
 
 // POST /upload/images - Upload images (mock)
 router.post('/upload/images', (_req: Request, res: Response) => {
-  const urls = [`http://localhost:3001/uploads/${uuidv4()}.jpg`]
+  const HOST = process.env.HOST || 'localhost'
+  const PORT = process.env.PORT || 3001
+  const urls = [`http://${HOST}:${PORT}/uploads/${uuidv4()}.jpg`]
 
   const apiResponse: ApiResponse = {
     code: 0,

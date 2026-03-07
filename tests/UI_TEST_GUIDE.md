@@ -886,3 +886,43 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 - [ ] F-502: 面板调整大小 (TC-FLOATING-007)
 - [ ] F-503: 面板样式 (TC-FLOATING-008)
 
+---
+
+## 十二、自动化测试执行
+
+### 12.1 运行自动化测试
+
+**前提条件:**
+- 已安装项目依赖: `npm install`
+- ChatApp 测试服务器正在运行:
+  - Mock模式: `scripts/start-chatapp.bat mock`
+  - Real模式: `scripts/start-chatapp.bat real`
+- chrome-devtools-mcp 已连接
+
+**Mock后端模式:**
+```bash
+npm run test:ui:mock
+```
+
+**Real后端模式:**
+```bash
+npm run test:ui:real
+```
+
+### 12.2 测试报告
+
+测试完成后，HTML报告会生成在 `tests/ui/reports/` 目录，包含：
+- 测试摘要（总数、通过、失败、耗时）
+- 每个测试的详细结果
+- 失败测试的截图
+- 控制台错误日志
+
+### 12.3 测试场景
+
+当前实现的测试场景：
+
+| 场景 | 测试用例 | 描述 |
+|------|---------|------|
+| 聊天功能 | TC-COMMON-001, TC-COMMON-003, TC-COMMON-004 | 文本输入、发送按钮状态、消息发送和接收 |
+| 快捷操作 | TC-COMMON-022, TC-COMMON-023 | 快捷操作显示、点击填充 |
+| 上传功能 | TC-COMMON-012 | 图片上传按钮 |

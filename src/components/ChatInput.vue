@@ -33,9 +33,8 @@
       />
 
       <button
-        v-if="canSend"
         class="chat-input__send-btn"
-        :disabled="disabled"
+        :disabled="disabled || !canSend"
         @click="handleSend"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -45,7 +44,6 @@
       </button>
 
       <button
-        v-else
         class="chat-input__voice-btn"
         @click="$emit('toggle-voice')"
       >

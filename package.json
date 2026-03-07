@@ -33,7 +33,9 @@
     "format:check": "prettier --check src/",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:ui:mock": "tsx tests/ui/runner.ts mock",
+    "test:ui:real": "tsx tests/ui/runner.ts real"
   },
   "dependencies": {
     "element-plus": "^2.5.0",

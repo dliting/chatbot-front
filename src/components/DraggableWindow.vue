@@ -1,41 +1,43 @@
 <template>
-  <div
-    ref="windowRef"
-    :class="classes"
-    :style="windowStyle"
-  >
-    <!-- Header (Draggable area) -->
+  <div class="draggable-window-wrapper">
     <div
-      v-if="$slots.header"
-      class="draggable-window__header"
-      :class="{ 'draggable-window__header--draggable': draggable }"
-      @mousedown="startDrag"
+      ref="windowRef"
+      :class="classes"
+      :style="windowStyle"
     >
-      <slot name="header"/>
+      <!-- Header (Draggable area) -->
+      <div
+        v-if="$slots.header"
+        class="draggable-window__header"
+        :class="{ 'draggable-window__header--draggable': draggable }"
+        @mousedown="startDrag"
+      >
+        <slot name="header"/>
+      </div>
+
+      <!-- Body content -->
+      <div class="draggable-window__body">
+        <slot/>
+      </div>
     </div>
 
-    <!-- Body content -->
-    <div class="draggable-window__body">
-      <slot/>
-    </div>
+    <!-- Resize handles - Teleported to body for independent stacking context -->
+    <Teleport v-if="resizable && modelValue" to="body">
+      <div
+        class="draggable-window__resize-overlay"
+        :style="overlayStyle"
+      >
+        <div class="draggable-window__resize-handle draggable-window__resize-handle--n" @mousedown="startResize($event, 'n')"/>
+        <div class="draggable-window__resize-handle draggable-window__resize-handle--s" @mousedown="startResize($event, 's')"/>
+        <div class="draggable-window__resize-handle draggable-window__resize-handle--e" @mousedown="startResize($event, 'e')"/>
+        <div class="draggable-window__resize-handle draggable-window__resize-handle--w" @mousedown="startResize($event, 'w')"/>
+        <div class="draggable-window__resize-handle draggable-window__resize-handle--ne" @mousedown="startResize($event, 'ne')"/>
+        <div class="draggable-window__resize-handle draggable-window__resize-handle--nw" @mousedown="startResize($event, 'nw')"/>
+        <div class="draggable-window__resize-handle draggable-window__resize-handle--se" @mousedown="startResize($event, 'se')"/>
+        <div class="draggable-window__resize-handle draggable-window__resize-handle--sw" @mousedown="startResize($event, 'sw')"/>
+      </div>
+    </Teleport>
   </div>
-
-  <!-- Resize handles - Teleported to body for independent stacking context -->
-  <Teleport v-if="resizable && modelValue" to="body">
-    <div
-      class="draggable-window__resize-overlay"
-      :style="overlayStyle"
-    >
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--n" @mousedown="startResize($event, 'n')"/>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--s" @mousedown="startResize($event, 's')"/>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--e" @mousedown="startResize($event, 'e')"/>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--w" @mousedown="startResize($event, 'w')"/>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--ne" @mousedown="startResize($event, 'ne')"/>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--nw" @mousedown="startResize($event, 'nw')"/>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--se" @mousedown="startResize($event, 'se')"/>
-      <div class="draggable-window__resize-handle draggable-window__resize-handle--sw" @mousedown="startResize($event, 'sw')"/>
-    </div>
-  </Teleport>
 </template>
 
 <script setup lang="ts">
@@ -332,6 +334,11 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
+// Wrapper to ensure single root element for Transition compatibility
+.draggable-window-wrapper {
+  display: contents;
+}
+
 .draggable-window {
   position: fixed;
   background-color: #ffffff;
