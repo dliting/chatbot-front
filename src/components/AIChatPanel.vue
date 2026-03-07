@@ -365,10 +365,9 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
   }
   addMessage(userMessage)
 
-  // Create AI message - use separate variable for ID
-  const aiMessageId = `msg_${Date.now()}_ai`
+  // Create AI message
   const aiMessage = {
-    id: aiMessageId,
+    id: `msg_${Date.now()}_ai`,
     sessionId,
     role: 'assistant' as const,
     type: 'text' as const,
@@ -377,10 +376,7 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
     status: 'loading' as const,
   }
   addMessage(aiMessage)
-  setStreamingMessage(aiMessageId)
-
-  // Use separate variable to accumulate content
-  let streamingContent = ''
+  setStreamingMessage(aiMessage.id)
 
   try {
     // Use API client if provided, otherwise use mock
@@ -389,10 +385,11 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
       const stream = props.apiClient.streamChat(sessionId, content, images)
       for await (const event of stream) {
         if (event.type === 'token' && event.content) {
-          streamingContent += event.content
-          updateMessage(aiMessageId, { content: streamingContent })
+          aiMessage.content += event.content
+          updateMessage(aiMessage.id, { content: aiMessage.content })
         } else if (event.type === 'end') {
-          updateMessage(aiMessageId, { status: 'sent', content: streamingContent })
+          aiMessage.status = 'sent'
+          updateMessage(aiMessage.id, { status: 'sent' })
         }
       }
     } else {
@@ -402,16 +399,18 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
 
       for await (const event of stream) {
         if (event.type === 'token' && event.content) {
-          streamingContent += event.content
-          updateMessage(aiMessageId, { content: streamingContent })
+          aiMessage.content += event.content
+          updateMessage(aiMessage.id, { content: aiMessage.content })
         } else if (event.type === 'end') {
-          updateMessage(aiMessageId, { status: 'sent', content: streamingContent })
+          aiMessage.status = 'sent'
+          updateMessage(aiMessage.id, { status: 'sent' })
         }
       }
     }
   } catch (error) {
     console.error('[AIChatPanel] Error:', error)
-    updateMessage(aiMessageId, { status: 'error' })
+    aiMessage.status = 'error'
+    updateMessage(aiMessage.id, { status: 'error' })
   } finally {
     setStreamingMessage(null)
     await nextTick()

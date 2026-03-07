@@ -220,7 +220,8 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
 
     const index = sessionMessages.findIndex(m => m.id === messageId)
     if (index > -1) {
-      Object.assign(sessionMessages[index], updates)
+      // Use splice to replace the message to ensure Vue 3 reactivity
+      sessionMessages.splice(index, 1, { ...sessionMessages[index], ...updates })
     }
   }
 
