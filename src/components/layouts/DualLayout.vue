@@ -1,14 +1,14 @@
 <template>
-  <div class="chatbot-split-layout">
+  <div class="chatbot-dual-layout">
     <!-- 左侧会话列表 -->
-    <aside class="chatbot-split-layout__sidebar">
+    <aside class="chatbot-dual-layout__sidebar">
       <slot name="sidebar">
         <SessionListView />
       </slot>
     </aside>
 
     <!-- 右侧聊天区域 -->
-    <main class="chatbot-split-layout__main">
+    <main class="chatbot-dual-layout__main">
       <slot name="main">
         <ChatArea />
       </slot>
@@ -17,13 +17,13 @@
 </template>
 
 <script setup lang="ts">
-// SplitLayout: 平铺布局，会话列表始终显示在左侧
+// DualLayout: 双栏布局，会话列表始终显示在左侧
 import SessionListView from '@/components/SessionListView.vue'
 import ChatArea from '@/components/ChatArea.vue'
 </script>
 
 <style scoped lang="scss">
-.chatbot-split-layout {
+.chatbot-dual-layout {
   display: flex;
   width: 100%;
   height: 100%;

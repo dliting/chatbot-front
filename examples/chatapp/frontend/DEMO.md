@@ -135,7 +135,7 @@ Router (vue-router 4)
 | 属性 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
 | `mode` | `'extended' \| 'sidebar' \| 'floating'` | `'floating'` | 交互模式 |
-| `layout` | `'split' \| 'compact'` | 根据mode自动 | 布局形式 |
+| `layout` | `'dual' \| 'single'` | 根据mode自动 | 布局形式 |
 | `apiBaseUrl` | `string` | - | API基础URL |
 | `enableImageUpload` | `boolean` | `true` | 启用图片上传 |
 | `enableSessionManager` | `boolean` | `true` | 启用会话管理 |
