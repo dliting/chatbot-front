@@ -70,8 +70,8 @@
       v-else-if="chatMode !== 'floating' || isPanelOpen"
       :class="containerClasses"
     >
-      <!-- Extended Mode: Sidebar + Main Content -->
-      <template v-if="chatMode === 'extended'">
+      <!-- Dual Layout: Sidebar + Main Content -->
+      <template v-if="effectiveLayout === 'dual'">
         <!-- Session Sidebar -->
         <aside class="ai-chat__sidebar">
           <SessionListView
@@ -158,7 +158,7 @@
 import { ref, computed, onMounted, onUnmounted, h } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
-import type { ChatMode } from '@/types'
+import type { ChatMode, Layout } from '@/types'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useChatView } from '@/composables/useChatView'
 import { useApiClient } from '@/composables/useApiClient'
@@ -207,6 +207,7 @@ const _quickActions = [
 interface Props {
   config?: ChatbotConfig
   mode?: ChatMode
+  layout?: Layout
   hideHeader?: boolean
   hideWelcome?: boolean
   hideQuickActions?: boolean
@@ -218,6 +219,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   config: () => ({}),
   mode: 'floating',
+  layout: 'single',
   hideHeader: false,
   hideWelcome: false,
   hideQuickActions: false,
@@ -241,6 +243,15 @@ const configRef = computed(() => {
 })
 // In Vue 3 script setup, computed refs are auto-unwrapped, so use configRef directly
 const chatMode = computed(() => props.mode || configRef.value?.chatMode || defaultChatbotConfig.mode)
+
+// Effective layout type - use prop if provided, otherwise derive from mode
+const effectiveLayout = computed(() => {
+  if (props.layout) return props.layout
+  // Derive layout from mode if not explicitly provided
+  if (chatMode.value === 'extended') return 'dual'
+  if (chatMode.value === 'floating') return 'single'
+  return 'single'
+})
 
 // State
 const {
@@ -485,11 +496,20 @@ defineExpose({
     height: 100vh;
   }
 
-  // Compact mode
+  // Dual layout (same as extended)
+  &--dual {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100vh;
+  }
+
+  // Single layout / compact mode
+  &--single,
   &--compact {
     width: 100%;
     height: 100%;
-    min-height: 100vh;
+    min-height: 100%;
   }
 
   &__sidebar {
