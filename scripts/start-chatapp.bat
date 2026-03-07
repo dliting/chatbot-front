@@ -5,79 +5,75 @@ set "SCRIPT_DIR=%~dp0"
 for %%i in ("%SCRIPT_DIR%") do set "SCRIPT_DIR=%%~fi"
 set "PROJECT_ROOT=%SCRIPT_DIR%\.."
 for %%i in ("%PROJECT_ROOT%") do set "PROJECT_ROOT=%%~fi"
-set "CHATAPP_DIR=%PROJECT_ROOT%\examples\chatapp\frontend"
-set "BACKEND_MOCK_DIR=%PROJECT_ROOT%\examples\chatapp\backend-mock"
-set "BACKEND_REAL_DIR=%PROJECT_ROOT%\examples\chatapp\backend-real"
+set "CONFIG_DIR=%PROJECT_ROOT%\examples\chatapp"
+set "CHATAPP_DIR=%CONFIG_DIR%\frontend"
 
 set "MODE=mock"
 
 if "%1"=="real" set "MODE=real"
 if "%1"=="mock" set "MODE=mock"
 
+rem Load config based on mode
 if "%MODE%"=="real" (
-    set "API_URL=http://localhost:3000"
-    set "MODE_DESC=Real (Ollama)"
-    set "BACKEND_DIR=%BACKEND_REAL_DIR%"
     set "BACKEND_PORT=3000"
+    set "BACKEND_DIR=backend-real"
+    set "API_URL=http://localhost:3000"
 ) else (
-    set "API_URL=http://localhost:3001"
-    set "MODE_DESC=Mock"
-    set "BACKEND_DIR=%BACKEND_MOCK_DIR%"
     set "BACKEND_PORT=3001"
+    set "BACKEND_DIR=backend-mock"
+    set "API_URL=http://localhost:3001"
 )
 
+set "BACKEND_DIR_FULL=%CONFIG_DIR%\%BACKEND_DIR%"
+
 echo === ChatApp Starting ===
-echo Mode: %MODE_DESC%
+echo Mode: %MODE%
 echo API:  %API_URL%
 echo.
 
-rem 检查并终止端口占用
-for %%p in (5173 5174 5175 5176 5177 5178 5179 5180 3000 3001) do (
+rem Check and kill ports
+for %%p in (5173 5174 5175 5176 5177 5178 5179 5180 %BACKEND_PORT%) do (
     netstat -ano ^| findstr ":%%p " >nul 2^>^&1
     if !errorlevel! equ 0 (
         for /f "tokens=5" %%i in ('netstat -ano ^| findstr ":%%p " ^| findstr LISTENING') do (
-            taskkill //F //PID %%i >nul 2^>^&1
+            taskkill //F //PID %%i >nul 2^>nul
         )
     )
 )
 
 ping -n 2 127.0.0.1 >nul
 
-rem 检查后端依赖是否安装
-if not exist "%BACKEND_DIR%\node_modules" (
+rem Check backend dependencies
+if not exist "%BACKEND_DIR_FULL%\node_modules" (
     echo Installing backend dependencies...
-    cd /d "%BACKEND_DIR%"
+    cd /d "%BACKEND_DIR_FULL%"
     call npm install
 )
 
-rem 在新窗口中启动后端服务
+rem Start backend
 echo Starting backend server...
-start "ChatApp Backend (%MODE_DESC%)" cmd /k "cd /d "%BACKEND_DIR%" && echo Backend running on port %BACKEND_PORT% && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
+start "ChatApp Backend (%MODE%)" cmd /k "cd /d "%BACKEND_DIR_FULL%" && echo Backend running on port %BACKEND_PORT% && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
 
-rem 等待后端启动
+rem Wait for backend
 ping -n 3 127.0.0.1 >nul
 
-rem 根据模式复制对应的环境配置文件
+rem Copy env file
 if "%MODE%"=="real" (
-    if exist "%CHATAPP_DIR%\.env.real" (
-        copy /Y "%CHATAPP_DIR%\.env.real" "%CHATAPP_DIR%\.env" >nul
-    )
+    if exist "%CHATAPP_DIR%\.env.real" copy /Y "%CHATAPP_DIR%\.env.real" "%CHATAPP_DIR%\.env" >nul
 ) else (
-    if exist "%CHATAPP_DIR%\.env.mock" (
-        copy /Y "%CHATAPP_DIR%\.env.mock" "%CHATAPP_DIR%\.env" >nul
-    )
+    if exist "%CHATAPP_DIR%\.env.mock" copy /Y "%CHATAPP_DIR%\.env.mock" "%CHATAPP_DIR%\.env" >nul
 )
 
-rem 在新窗口中启动前端服务
+rem Start frontend
 echo Starting frontend...
 start "ChatApp Frontend" cmd /k "cd /d "%CHATAPP_DIR%" && echo Frontend running on http://localhost:5180 && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
 
 echo.
 echo === ChatApp Started ===
-echo Mode: %MODE_DESC%
+echo Mode: %MODE%
 echo Backend: http://localhost:%BACKEND_PORT%
 echo Frontend: http://localhost:5180
 echo.
-echo If using Real mode, make sure Ollama is running: ollama serve
+if "%MODE%"=="real" echo If using Real mode, make sure Ollama is running: ollama serve
 echo.
 endlocal
