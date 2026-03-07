@@ -3,7 +3,7 @@
  * 悬浮窗模式 - 显示悬浮球，点击打开对话框
  */
 import { createApp } from 'vue'
-import AIChatPanel from '../components/AIChatPanel.vue'
+import AIChatbot from '../components/AIChatbot.vue'
 import '@/styles/chatbot.scss'
 
 // Local Fonts - Noto Sans SC (for offline deployment)
@@ -12,7 +12,7 @@ fontLink.rel = 'stylesheet'
 fontLink.href = '/fonts/noto-sans-sc.css'
 document.head.appendChild(fontLink)
 
-const app = createApp(AIChat, {
+const app = createApp(AIChatbot, {
   config: {
     chatMode: 'floating',
     position: 'bottom-right',

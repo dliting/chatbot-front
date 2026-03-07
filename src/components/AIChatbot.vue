@@ -60,7 +60,7 @@
 import { computed, watch, onMounted, onUnmounted, ref } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
-import type { Layout } from '@/types'
+import type { _Layout } from '@/types'
 import { modeToLayoutMap } from '@/types'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useApiClient } from '@/composables/useApiClient'
@@ -193,22 +193,22 @@ const toggleTheme = () => {
   setTheme(newTheme)
 }
 
-const handleCreateSession = () => {
+const _handleCreateSession = () => {
   const newId = createSession()
   emit('sessionCreate', newId)
 }
 
-const handleSwitchSession = (sessionId: string) => {
+const _handleSwitchSession = (sessionId: string) => {
   switchSession(sessionId)
   emit('sessionChange', sessionId)
 }
 
-const handleDeleteSession = (sessionId: string) => {
+const _handleDeleteSession = (sessionId: string) => {
   deleteSession(sessionId)
   emit('sessionDelete', sessionId)
 }
 
-const handleUpdateSessionTitle = (sessionId: string, title: string) => {
+const _handleUpdateSessionTitle = (sessionId: string, title: string) => {
   updateSessionTitle(sessionId, title)
   emit('sessionTitleUpdate', sessionId, title)
 }
