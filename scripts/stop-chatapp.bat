@@ -6,20 +6,12 @@ echo.
 
 set "KILLED=0"
 
-for %%p in (5173 5174 5175 5176 5177 5178 5179 5180 5181 5182 5183 5184 5185) do (
-    for /f "tokens=*" %%i in ('powershell.exe -NoProfile -Command "try { Get-NetTCPConnection -LocalPort %%p -ErrorAction Stop ^| Select-Object -ExpandProperty OwningProcess } catch { }"') do (
-        set "PID=%%i"
-        if defined PID (
-            for /f "tokens=*" %%j in ("!PID!") do (
-                if not "%%j"=="" (
-                    if not "%%j"=="OwningProcess" (
-                        echo Stopping port %%p, PID: %%j
-                        taskkill /F /PID %%j >nul 2>&1
-                        set "KILLED=1"
-                    )
-                )
-            )
-        )
+rem 直接查找所有node.exe进程并终止
+for /f "skip=1 tokens=2" %%a in ('tasklist /FI "IMAGENAME eq node.exe" 2^>nul') do (
+    if not "%%a"=="" (
+        echo Stopping Node process, PID: %%a
+        taskkill /F /PID %%a >nul 2>&1
+        set "KILLED=1"
     )
 )
 
@@ -27,7 +19,7 @@ if "%KILLED%"=="1" (
     echo.
     echo === ChatApp Stopped ===
 ) else (
-    echo No running servers found.
+    echo No running Node servers found.
 )
 
 echo.
