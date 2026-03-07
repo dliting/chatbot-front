@@ -1,4 +1,9 @@
 import type { Page } from 'chrome-devtools-mcp'
+import { sleep } from '@/utils/helpers'
+
+export const DEFAULT_TIMEOUT = 5000
+export const POLL_INTERVAL = 100
+export const CHATAPP_URL = 'http://localhost:5180'
 
 export interface BrowserHelper {
   navigate: (url: string) => Promise<void>
@@ -13,7 +18,17 @@ export interface BrowserHelper {
   listNetworkRequests: () => Promise<any[]>
 }
 
-export function createBrowserHelper(page: Page): BrowserHelper {
+function createBrowserHelper(page: Page): BrowserHelper {
+  // Private helper for polling
+  async function poll(condition: () => Promise<boolean>, timeout = DEFAULT_TIMEOUT): Promise<boolean> {
+    const startTime = Date.now()
+    while (Date.now() - startTime < timeout) {
+      if (await condition()) return true
+      await sleep(POLL_INTERVAL)
+    }
+    return false
+  }
+
   return {
     async navigate(url: string) {
       await page.navigate({ type: 'url', url })
@@ -32,26 +47,20 @@ export function createBrowserHelper(page: Page): BrowserHelper {
       await page.fill({ uid, value })
     },
 
-    async waitForText(text: string, timeout = 5000) {
-      const startTime = Date.now()
-      while (Date.now() - startTime < timeout) {
+    async waitForText(text: string, timeout = DEFAULT_TIMEOUT) {
+      return poll(async () => {
         const snapshot = await page.takeSnapshot()
         const snapshotText = JSON.stringify(snapshot)
-        if (snapshotText.includes(text)) return true
-        await new Promise(r => setTimeout(r, 100))
-      }
-      return false
+        return snapshotText.includes(text)
+      }, timeout)
     },
 
-    async waitFor(selector: string, timeout = 5000) {
-      const startTime = Date.now()
-      while (Date.now() - startTime < timeout) {
+    async waitFor(selector: string, timeout = DEFAULT_TIMEOUT) {
+      return poll(async () => {
         const snapshot = await page.takeSnapshot()
         const snapshotText = JSON.stringify(snapshot)
-        if (snapshotText.includes(selector)) return true
-        await new Promise(r => setTimeout(r, 100))
-      }
-      return false
+        return snapshotText.includes(selector)
+      }, timeout)
     },
 
     async screenshot(path) {
@@ -76,4 +85,4 @@ export function createBrowserHelper(page: Page): BrowserHelper {
   }
 }
 
-export const CHATAPP_URL = 'http://localhost:5180'
+export { createBrowserHelper }
