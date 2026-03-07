@@ -8,6 +8,8 @@ import {
   assertNoConsoleErrors
 } from '../../helpers/assertions.js'
 
+const AI_RESPONSE_TIMEOUT = 30000 // 30 seconds for streaming response
+
 export async function testTextInput(context: TestContext) {
   const { browser, reporter } = context
   const startTime = Date.now()
@@ -63,12 +65,14 @@ export async function testSendButtonState(context: TestContext) {
       el.attributes?.placeholder === '输入消息...'
     )
 
-    if (inputField) {
-      // Type text
-      await browser.fill(inputField.uid, '测试')
-      snapshot = await browser.takeSnapshot()
-      assertButtonEnabled(snapshot, '发送')
+    if (!inputField) {
+      throw new Error('Input field with placeholder "输入消息..." not found')
     }
+
+    // Type text
+    await browser.fill(inputField.uid, '测试')
+    snapshot = await browser.takeSnapshot()
+    assertButtonEnabled(snapshot, '发送')
 
     reporter.addResult({
       name: 'TC-COMMON-003: 发送按钮状态',
@@ -114,7 +118,7 @@ export async function testMessageSendAndReceive(context: TestContext) {
     await browser.click(sendButton.uid)
 
     // Wait for AI response (with longer timeout for streaming)
-    const hasResponse = await browser.waitForText('你好', 30000)
+    const hasResponse = await browser.waitForText('你好', AI_RESPONSE_TIMEOUT)
 
     if (!hasResponse) {
       throw new Error('Timeout waiting for AI response')
