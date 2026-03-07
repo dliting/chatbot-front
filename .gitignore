@@ -46,6 +46,9 @@ coverage/
 backup/
 docs/plans/
 
+# Git worktrees
+.worktrees/
+
 # ChatApp frontend
 examples/chatapp/frontend/.env
 examples/chatapp/backend-real/
