@@ -11,6 +11,13 @@ export default defineConfig({
       'chatbot': path.resolve(__dirname, '../../../src/index.ts')
     }
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        api: 'modern-compiler'
+      }
+    }
+  },
   server: {
     port: 5180,
     proxy: {
