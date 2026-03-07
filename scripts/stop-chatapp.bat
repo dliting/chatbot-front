@@ -1,22 +1,10 @@
 @echo off
+setlocal
 
 echo === ChatApp Stopping ===
 echo.
 
-set "KILLED=0"
+powershell -NoProfile -Command "try { $killed = 0; foreach($p in 5173..5185) { $conn = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue; if($conn) { $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue; if($proc -and $proc.ProcessName -eq 'node') { Write-Host \"Stopping ChatApp server on port $p (PID: $($conn.OwningProcess))\"; Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue; $killed = 1 } } }; if($killed -eq 0) { Write-Host 'No running ChatApp servers found.'; Write-Host ''; Write-Host 'Note: Only Vite dev servers on ports 5173-5185 are checked.'; Write-Host 'Other Node.js processes are left untouched.' } else { Write-Host ''; Write-Host '=== ChatApp Stopped ===' } } catch { Write-Host 'Error stopping servers:' $_.Exception.Message }"
 
-for %%p in (5173 5174 5175 5176 5177 5178 5179 5180) do (
-    for /f "tokens=*" %%i in ('powershell.exe -NoProfile -Command "Get-NetTCPConnection -LocalPort %%p 2>$null | Select-Object -ExpandProperty OwningProcess"') do (
-        if not "%%i"=="" (
-            echo [ChatApp] Stopping port %%p, PID: %%i
-            taskkill /F /PID %%i >nul 2>&1
-            set "KILLED=1"
-        )
-    )
-)
-
-if "%KILLED%"=="1" (
-    echo [ChatApp] Stopped.
-) else (
-    echo [ChatApp] No servers found.
-)
+echo.
+endlocal
