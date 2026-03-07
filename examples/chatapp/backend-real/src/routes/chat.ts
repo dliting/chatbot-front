@@ -132,7 +132,8 @@ router.post('/chat/message', async (req: Request, res: Response) => {
 router.post('/upload/images', (req: Request, res: Response) => {
   // For this example, we'll just return a placeholder URL
   // In production, you'd upload to cloud storage
-  const urls = [`http://localhost:3000/uploads/${uuidv4()}.jpg`]
+  const PORT = process.env.PORT || 3000
+  const urls = [`http://localhost:${PORT}/uploads/${uuidv4()}.jpg`]
 
   const apiResponse: ApiResponse = {
     code: 0,

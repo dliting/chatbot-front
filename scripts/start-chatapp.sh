@@ -26,30 +26,45 @@ trap 'cd "$ORIGINAL_DIR"' EXIT
 
 # 默认值
 MODE="mock"
+CONFIG_FILE=""
 
 # 解析参数
 if [ "$1" = "real" ]; then
     MODE="real"
+    CONFIG_FILE="$PROJECT_ROOT/examples/chatapp/real.env"
 elif [ "$1" = "mock" ]; then
     MODE="mock"
+    CONFIG_FILE="$PROJECT_ROOT/examples/chatapp/mock.env"
 elif [ -n "$1" ]; then
     echo -e "${RED}错误: 未知参数 '$1'${NC}"
     echo "用法: ./start-chatapp.sh [mock|real]"
     echo ""
     echo "参数说明:"
-    echo "  mock  使用Mock后端 (默认) - http://localhost:3001"
-    echo "  real  使用Real后端 (Ollama) - http://localhost:3000"
+    echo "  mock  使用Mock后端 (默认)"
+    echo "  real  使用Real后端 (Ollama)"
+    exit 1
+else
+    CONFIG_FILE="$PROJECT_ROOT/examples/chatapp/mock.env"
+fi
+
+# 读取配置文件 (只读取PORT)
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+else
+    echo -e "${RED}错误: 配置文件不存在: $CONFIG_FILE${NC}"
     exit 1
 fi
 
-# 设置API URL
+# 从PORT和MODE派生其他值
 if [ "$MODE" = "real" ]; then
-    API_URL="http://localhost:3000"
+    BACKEND_DIR="backend-real"
     MODE_DESC="Real (Ollama)"
 else
-    API_URL="http://localhost:3001"
+    BACKEND_DIR="backend-mock"
     MODE_DESC="Mock"
 fi
+API_URL="http://localhost:$PORT"
+VITE_API_BASE_URL="$API_URL"
 
 echo -e "${GREEN}=== ChatApp 启动脚本 ===${NC}"
 echo -e "后端模式: ${YELLOW}$MODE_DESC${NC}"

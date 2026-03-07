@@ -20,10 +20,20 @@ if not exist "%CONFIG_FILE%" (
     exit /b 1
 )
 
-rem Parse config file (simple key=value format)
-for /f "tokens=1,* delims==" %%a in ('findstr /i "BACKEND_PORT BACKEND_DIR API_URL" "%CONFIG_FILE%"') do (
+rem Parse config file - only PORT is needed
+for /f "tokens=1,* delims==" %%a in ('findstr /i "^PORT" "%CONFIG_FILE%"') do (
     set "%%a=%%b"
 )
+
+rem Derive other values from PORT and MODE
+set "BACKEND_PORT=%PORT%"
+if "%MODE%"=="real" (
+    set "BACKEND_DIR=backend-real"
+) else (
+    set "BACKEND_DIR=backend-mock"
+)
+set "API_URL=http://localhost:%PORT%"
+set "VITE_API_BASE_URL=%API_URL%"
 
 set "BACKEND_DIR_FULL=%CONFIG_DIR%\%BACKEND_DIR%"
 
@@ -59,18 +69,11 @@ start "ChatApp Backend (%MODE%)" cmd /k "cd /d "%BACKEND_DIR_FULL%" && set PORT=
 rem Wait for backend
 ping -n 3 127.0.0.1 >nul
 
-rem Create frontend .env file
-if "%MODE%"=="real" (
-    (
-        echo # Frontend Configuration
-        echo VITE_API_BASE_URL=http://localhost:3000
-    ) > "%CHATAPP_DIR%\.env"
-) else (
-    (
-        echo # Frontend Configuration
-        echo VITE_API_BASE_URL=http://localhost:3001
-    ) > "%CHATAPP_DIR%\.env"
-)
+rem Create frontend .env file (use API_URL from config)
+(
+    echo # Frontend Configuration
+    echo VITE_API_BASE_URL=%API_URL%
+) > "%CHATAPP_DIR%\.env"
 
 rem Start frontend
 echo Starting frontend...
