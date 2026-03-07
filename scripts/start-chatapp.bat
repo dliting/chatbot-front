@@ -57,11 +57,17 @@ start "ChatApp Backend (%MODE%)" cmd /k "cd /d "%BACKEND_DIR_FULL%" && echo Back
 rem Wait for backend
 ping -n 3 127.0.0.1 >nul
 
-rem Copy env file
+rem Copy env file for frontend (only VITE_ variables needed)
 if "%MODE%"=="real" (
-    if exist "%CHATAPP_DIR%\.env.real" copy /Y "%CHATAPP_DIR%\.env.real" "%CHATAPP_DIR%\.env" >nul
+    (
+        echo # Frontend Configuration
+        echo VITE_API_BASE_URL=http://localhost:3000
+    ) > "%CHATAPP_DIR%\.env"
 ) else (
-    if exist "%CHATAPP_DIR%\.env.mock" copy /Y "%CHATAPP_DIR%\.env.mock" "%CHATAPP_DIR%\.env" >nul
+    (
+        echo # Frontend Configuration
+        echo VITE_API_BASE_URL=http://localhost:3001
+    ) > "%CHATAPP_DIR%\.env"
 )
 
 rem Start frontend
