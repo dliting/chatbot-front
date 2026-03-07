@@ -41,18 +41,31 @@ echo === ChatApp Starting ===
 echo Mode: %MODE%
 echo Config: %CONFIG_FILE%
 echo API:  %API_URL%
+echo DEBUG: BACKEND_DIR_FULL=%BACKEND_DIR_FULL%
+echo DEBUG: Checking if node_modules exists...
+if exist "%BACKEND_DIR_FULL%\node_modules" (
+    echo DEBUG: node_modules exists, skipping install
+) else (
+    echo DEBUG: node_modules not found
+)
 echo.
 
 rem Check and kill ports
+echo DEBUG: Checking ports...
 for %%p in (5173 5174 5175 5176 5177 5178 5179 5180 %BACKEND_PORT%) do (
-    netstat -ano ^| findstr ":%%p " >nul 2^>^&1
+    echo DEBUG: Checking port %%p
+    netstat -ano ^| findstr ":%%p " >nul 2>nul
     if !errorlevel! equ 0 (
+        echo DEBUG: Port %%p is in use, killing process
         for /f "tokens=5" %%i in ('netstat -ano ^| findstr ":%%p " ^| findstr LISTENING') do (
-            taskkill //F //PID %%i >nul 2^>nul
+            echo DEBUG: Killing PID %%i
+            taskkill /F /PID %%i >nul 2>nul
         )
+    ) else (
+        echo DEBUG: Port %%p is free
     )
 )
-
+echo DEBUG: Port check complete
 ping -n 2 127.0.0.1 >nul
 
 rem Check backend dependencies
@@ -74,12 +87,6 @@ rem Create frontend .env file (use API_URL from config)
     echo # Frontend Configuration
     echo VITE_API_BASE_URL=%API_URL%
 ) > "%CHATAPP_DIR%\.env"
-
-rem Clear Vite cache to ensure fresh environment variables
-if exist "%CHATAPP_DIR%\node_modules\.vite" (
-    rd /s /q "%CHATAPP_DIR%\node_modules\.vite"
-    echo Cleared Vite cache for fresh environment variables
-)
 
 rem Start frontend
 echo Starting frontend...
