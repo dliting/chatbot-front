@@ -202,12 +202,15 @@ const startDrag = (e: MouseEvent) => {
 const onDrag = (e: MouseEvent) => {
   if (!isDragging.value) return
 
+  const el = windowRef.value
+  if (!el) return
+
   const newX = e.clientX - dragOffset.value.x
   const newY = e.clientY - dragOffset.value.y
 
   // Constrain to viewport
-  const maxX = window.innerWidth - windowRef.value!.offsetWidth
-  const maxY = window.innerHeight - windowRef.value!.offsetHeight
+  const maxX = window.innerWidth - el.offsetWidth
+  const maxY = window.innerHeight - el.offsetHeight
 
   windowState.value.x = Math.max(0, Math.min(newX, maxX))
   windowState.value.y = Math.max(0, Math.min(newY, maxY))

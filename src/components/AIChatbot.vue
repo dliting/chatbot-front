@@ -60,6 +60,7 @@
 import { computed, watch, onMounted, onUnmounted, ref } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
+import type { InteractionMode } from '@/types'
 import { modeToLayoutMap } from '@/types'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useApiClient } from '@/composables/useApiClient'
@@ -83,7 +84,7 @@ const config = computed((): Required<ChatbotConfig> => {
   const merged = { ...defaultChatbotConfig, ...props.config } as Required<ChatbotConfig>
   // Use new mode field if provided, fallback to legacy chatMode
   if (!merged.mode && merged.chatMode) {
-    merged.mode = merged.chatMode as any
+    merged.mode = merged.chatMode as InteractionMode
   }
   return merged
 })
