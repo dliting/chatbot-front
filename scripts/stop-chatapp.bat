@@ -6,13 +6,21 @@ echo.
 
 set "KILLED=0"
 
-rem 使用PowerShell查找并停止Vite服务器
+rem 检查每个端口
 for %%p in (5173 5174 5175 5176 5177 5178 5179 5180 5181 5182 5183 5184 5185) do (
-    for /f %%i in ('powershell -NoProfile -Command "$ErrorActionPreference='SilentlyContinue'; try { $conn = Get-NetTCPConnection -LocalPort %%p -State Listen -ErrorAction SilentlyContinue; if ($conn) { $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue; if ($proc -and $proc.ProcessName -eq 'node') { $conn.OwningProcess } } } catch {}" 2^>nul') do (
-        if not "%%i"=="" (
-            echo Stopping ChatApp server on port %%p (PID: %%i)
-            taskkill /F /PID %%i >nul 2>&1
-            set "KILLED=1"
+    rem 使用netstat和findstr查找LISTENING状态的端口
+    for /f "tokens=5" %%a in ('netstat -ano 2^>nul ^| findstr "LISTENING" ^| findstr ":%%p "') do (
+        set "PID=%%a"
+        if not "!PID!"=="" (
+            if not "!PID!"=="0" (
+                rem 验证PID是node进程
+                tasklist /FI "PID eq !PID!" 2>nul | findstr /i "node.exe" >nul
+                if !errorlevel! equ 0 (
+                    echo Stopping ChatApp server on port %%p (PID: !PID!)
+                    taskkill /F /PID !PID! >nul 2>&1
+                    set "KILLED=1"
+                )
+            )
         )
     )
 )
