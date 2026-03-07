@@ -5,6 +5,7 @@
     <div class="ai-chat__body">
       <ChatContent
         v-if="viewState.currentView === 'chat'"
+        :key="currentMessages.length"
         :messages="currentMessages"
         :welcome-visible="!hideWelcome && currentMessages.length === 0"
         :quick-actions-visible="!hideQuickActions"
@@ -60,6 +61,7 @@
     <div class="ai-chat__body">
       <ChatContent
         v-if="viewState.currentView === 'chat'"
+        :key="currentMessages.length"
         :messages="currentMessages"
         :welcome-visible="!hideWelcome && currentMessages.length === 0"
         :quick-actions-visible="!hideQuickActions"
@@ -145,6 +147,7 @@
       />
       <ChatContent
         v-if="viewState.currentView === 'chat'"
+        :key="currentMessages.length"
         :messages="currentMessages"
         :welcome-visible="!hideWelcome && currentMessages.length === 0"
         :quick-actions-visible="!hideQuickActions"
@@ -180,7 +183,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, h } from 'vue'
+import { ref, computed, onMounted, onUnmounted, h, nextTick } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
 import type { ChatMode, Layout } from '@/types'
@@ -375,7 +378,8 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
   addMessage(aiMessage)
   setStreamingMessage(aiMessage.id)
 
-  try {
+  // Wrap stream consumption with timeout
+  const streamPromise = (async () => {
     // Use API client if provided, otherwise use mock
     if (props.apiClient) {
       // Use real API with streaming
@@ -404,12 +408,25 @@ const handleSend = async (data: { content: string; images?: string[] }) => {
         }
       }
     }
+  })()
+
+  // Add timeout to prevent infinite waiting
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Stream timeout')), 30000)
+  })
+
+  try {
+    await Promise.race([streamPromise, timeoutPromise])
   } catch (error) {
     console.error('[AIChatPanel] Error:', error)
-    aiMessage.status = 'error'
-    updateMessage(aiMessage.id, { status: 'error' })
+    // If timeout or error and message still loading, mark as sent with current content
+    if (aiMessage.status === 'loading') {
+      aiMessage.status = 'sent'
+      updateMessage(aiMessage.id, { status: 'sent' })
+    }
   } finally {
     setStreamingMessage(null)
+    await nextTick()
   }
 }
 
