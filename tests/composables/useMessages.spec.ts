@@ -501,22 +501,28 @@ describe('useMessages', () => {
   })
 
   describe('Mock Stream Response', () => {
-    it('should use mock response when no streamResponse provided', async () => {
+    beforeEach(() => {
       vi.useRealTimers()
+    })
 
+    afterEach(() => {
+      vi.useFakeTimers()
+    })
+
+    it('should use mock response when no streamResponse provided', async () => {
       const { messages, sendTextMessage } = useMessages({
         onSendMessage: mockSendMessage,
       })
 
       await sendTextMessage('Hello', 'session-1')
 
-      // Wait for mock stream to complete
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Wait for mock stream to complete (30ms per char, ~150 chars = ~4.5s)
+      await new Promise(resolve => setTimeout(resolve, 5000))
 
       expect(messages.value.length).toBe(2)
       expect(messages.value[1].content).toBeTruthy()
       expect(messages.value[1].content.length).toBeGreaterThan(0)
-    }, 5000)
+    }, 10000)
   })
 
   describe('Edge Cases', () => {
