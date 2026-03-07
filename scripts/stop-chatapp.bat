@@ -1,39 +1,10 @@
 @echo off
-setlocal enabledelayedexpansion
+setlocal
 
 echo === ChatApp Stopping ===
 echo.
 
-set "KILLED=0"
-
-rem 检查每个端口
-for %%p in (5173 5174 5175 5176 5177 5178 5179 5180 5181 5182 5183 5184 5185) do (
-    rem 使用netstat和findstr查找LISTENING状态的端口
-    for /f "tokens=5" %%a in ('netstat -ano 2^>nul ^| findstr "LISTENING" ^| findstr ":%%p "') do (
-        set "PID=%%a"
-        if not "!PID!"=="" (
-            if not "!PID!"=="0" (
-                rem 验证PID是node进程
-                tasklist /FI "PID eq !PID!" 2>nul | findstr /i "node.exe" >nul
-                if !errorlevel! equ 0 (
-                    echo Stopping ChatApp server on port %%p (PID: !PID!)
-                    taskkill /F /PID !PID! >nul 2>&1
-                    set "KILLED=1"
-                )
-            )
-        )
-    )
-)
-
-if "%KILLED%"=="1" (
-    echo.
-    echo === ChatApp Stopped ===
-) else (
-    echo No running ChatApp servers found.
-    echo.
-    echo Note: Only Vite dev servers on ports 5173-5185 are checked.
-    echo Other Node.js processes are left untouched.
-)
+powershell -NoProfile -Command "try { $killed = 0; foreach($p in 5173..5185) { $conn = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue; if($conn) { $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue; if($proc -and $proc.ProcessName -eq 'node') { Write-Host \"Stopping ChatApp server on port $p (PID: $($conn.OwningProcess))\"; Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue; $killed = 1 } } }; if($killed -eq 0) { Write-Host 'No running ChatApp servers found.'; Write-Host ''; Write-Host 'Note: Only Vite dev servers on ports 5173-5185 are checked.'; Write-Host 'Other Node.js processes are left untouched.' } else { Write-Host ''; Write-Host '=== ChatApp Stopped ===' } } catch { Write-Host 'Error stopping servers:' $_.Exception.Message }"
 
 echo.
 endlocal
