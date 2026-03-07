@@ -4,19 +4,13 @@ A Vue 3 + TypeScript + Element Plus chatbot component that can be embedded in an
 
 ## Modes
 
-The component supports three display modes:
+The component supports three interactive modes:
 
 | Mode | Description | Use Case |
 |-------|-------------|-----------|
 | **扩展模式 (Extended)** | Full desktop chat with session sidebar + chat area | Desktop-first chat application |
-| **紧凑模式 (Compact)** | Desktop sidebar or mobile full screen | Sidebar panel or mobile chat interface |
+| **紧凑模式 (Compact)** | Desktop sidebar or mobile full screen chat interface |
 | **悬浮模式 (Floating)** | Floating ball that opens chat dialog | Space-saving, on-demand access |
-
-## Examples
-
-- **扩展模式**: [extended.html](examples/extended.html) - Full desktop chat interface
-- **紧凑模式**: [compact.html](examples/compact.html) - Desktop sidebar or mobile interface
-- **悬浮模式**: [floating.html](examples/floating.html) - Floating ball with chat dialog
 
 ## Features
 
@@ -68,19 +62,6 @@ import { AIChatbot } from 'ai-chatbot-frontend'
 import 'ai-chatbot-frontend/style.css'
 </script>
 ```
-
-### Iframe Embed
-
-```html
-<iframe
-  src="https://your-domain.com/chatbot-iframe.html"
-  width="100%"
-  height="600px"
-  frameborder="0"
-></iframe>
-```
-
-See `examples/demo-iframe.html` for a complete example.
 
 ## Configuration
 

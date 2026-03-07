@@ -2,11 +2,12 @@
 
 ## 概述
 
-本指南基于产品需求文档（PRD）制定，涵盖所有核心功能、重要功能和扩展功能的UI交互测试。
+- 本指南基于产品需求文档（PRD）制定，涵盖所有核心功能、重要功能和扩展功能的UI交互测试。
+- 主要测试通过和“examples/ChatApp”这个应用的前端页面交互来进行。
 
 **测试原则**:
 - 这类交互测试不仅仅是判断页面中某个ui元素是否存在，而是模拟人和浏览器交互操作来测试
-- 使用 "chrome-devtools" MCP 来和浏览器交互进行测试
+- 使用 "chrome-devtools" 插件来和浏览器交互进行测试
 - 每个操作通常不应该超过3分钟，否则应认为响应超时而强制中断
 - 测试覆盖共用功能、扩展模式、紧凑模式、悬浮模式
 
@@ -26,7 +27,7 @@
 
 ```javascript
 // 1. 导航到页面
-navigate_page("http://localhost:5173/examples/compact.html")
+navigate_page("[ChatApp根url]/compact")
 
 // 2. 获取快照
 take_snapshot()
@@ -65,7 +66,7 @@ evaluate_script(() => {
 ## 测试环境
 
 - **测试工具**: chrome-devtools MCP
-- **测试入口**: http://localhost:5173/
+- **测试入口**: [ChatApp根url]/
 - **测试浏览器**: Chrome (支持无头模式)
 - **测试模式**: 所有示例页面需逐级测试
 
@@ -77,7 +78,7 @@ evaluate_script(() => {
 
 | 测试项 | 操作步骤 | 预期结果 |
 |--------|----------|----------|
-| 主页访问 | 导航到 `http://localhost:5173/` | 页面正常加载，显示标题 "AI Chatbot" |
+| 主页访问 | 导航到 `[ChatApp根url]/` | 页面正常加载，显示标题 "AI Chatbot" |
 | 副标题显示 | 检查页面内容 | 显示 "Vue 3 + TypeScript 通用聊天组件" |
 | 版本号显示 | 检查版本标签 | 显示 "v1.0.0" |
 | 无控制台错误 | 检查 console messages | 无 error 级别消息 |
@@ -378,7 +379,7 @@ evaluate_script(() => {
 
 ## 三、扩展模式特有功能测试
 
-> 测试入口: `/examples/extended.html`
+> 测试入口: `[ChatApp根url]/extended`
 
 ### 3.1 页面基础测试
 
@@ -465,7 +466,7 @@ evaluate_script(() => {
 
 ## 四、紧凑模式特有功能测试
 
-> 测试入口: `/examples/compact.html`
+> 测试入口: `[ChatApp根url]/compact`
 
 ### 4.1 页面基础测试
 
@@ -554,7 +555,7 @@ evaluate_script(() => {
 
 ## 五、悬浮模式特有功能测试
 
-> 测试入口: `/examples/floating.html`
+> 测试入口: `[ChatApp根url]/floating`
 
 ### 5.1 页面基础测试
 
@@ -842,47 +843,3 @@ evaluate_script(() => {
 - [ ] F-502: 面板调整大小 (TC-FLOATING-007)
 - [ ] F-503: 面板样式 (TC-FLOATING-008)
 
----
-
-## 附录：chrome-devtools MCP 常用命令
-
-```javascript
-// 导航到页面
-navigate_page(url)
-
-// 点击元素
-click(uid)
-
-// 填充输入框
-fill(uid, value)
-
-// 截图
-take_screenshot(filePath)
-
-// 获取页面快照
-take_snapshot()
-
-// 获取控制台消息
-list_console_messages()
-
-// 获取网络请求
-list_network_requests()
-
-// 等待元素出现
-wait_for(text)
-
-// 调整窗口大小
-resize_page(width, height)
-
-// 模拟移动端
-emulate(viewport={width: 375, height: 667, isMobile: true})
-
-// 拖拽元素
-drag(from_uid, to_uid)
-
-// 悬停元素
-hover(uid)
-
-// 按键
-press_key(key)
-```
