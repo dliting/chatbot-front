@@ -20,11 +20,6 @@ const routes: RouteRecordRaw[] = [
     path: '/floating',
     name: 'floating',
     component: () => import('../views/FloatingDemo.vue')
-  },
-  {
-    path: '/iframe',
-    name: 'iframe',
-    component: () => import('../views/IframeDemo.vue')
   }
 ]
 

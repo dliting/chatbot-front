@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 
 // 导航到指定模式的演示页面
-function goToDemo(mode: 'extended' | 'compact' | 'floating' | 'iframe') {
+function goToDemo(mode: 'extended' | 'sidebar' | 'floating') {
   router.push(`/${mode}`)
 }
 </script>
@@ -21,7 +21,7 @@ function goToDemo(mode: 'extended' | 'compact' | 'floating' | 'iframe') {
 
       <!-- Mode Cards -->
       <div class="mode-section">
-        <h2 class="mode-section-title">选择模式</h2>
+        <h2 class="mode-section-title">选择交互模式</h2>
         <div class="mode-cards">
           <button class="mode-card primary" @click="goToDemo('extended')">
             <div class="mode-icon">
@@ -32,19 +32,20 @@ function goToDemo(mode: 'extended' | 'compact' | 'floating' | 'iframe') {
             </div>
             <h2>扩展模式</h2>
             <p class="subtitle">Extended Mode</p>
-            <p class="description">桌面端全屏聊天界面，左侧会话列表 + 右侧聊天区</p>
+            <p class="description">全屏页面，内部使用平铺布局（会话列表 + 聊天区）</p>
           </button>
 
-          <button class="mode-card" @click="goToDemo('compact')">
+          <button class="mode-card primary" @click="goToDemo('sidebar')">
             <div class="mode-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <path d="M9 3v18"/>
+                <path d="M15 9l3 3-3 3"/>
               </svg>
             </div>
-            <h2>紧凑模式</h2>
-            <p class="subtitle">Compact Mode</p>
-            <p class="description">桌面端边栏或移动端全屏界面</p>
+            <h2>边栏模式</h2>
+            <p class="subtitle">Sidebar Mode</p>
+            <p class="description">边栏形式，内部使用紧凑布局（Tab切换会话/聊天）</p>
           </button>
 
           <button class="mode-card primary" @click="goToDemo('floating')">
@@ -56,19 +57,7 @@ function goToDemo(mode: 'extended' | 'compact' | 'floating' | 'iframe') {
             </div>
             <h2>悬浮模式</h2>
             <p class="subtitle">Floating Mode</p>
-            <p class="description">页面右下角悬浮球，点击打开聊天对话框</p>
-          </button>
-
-          <button class="mode-card" @click="goToDemo('iframe')">
-            <div class="mode-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="18" height="14" rx="2"/>
-                <path d="M3 21h18"/>
-              </svg>
-            </div>
-            <h2>Iframe嵌入</h2>
-            <p class="subtitle">Iframe Mode</p>
-            <p class="description">通过iframe嵌入任何网站，支持postMessage通信</p>
+            <p class="description">悬浮球 + 悬浮窗口，内部使用紧凑布局</p>
           </button>
         </div>
       </div>
@@ -125,7 +114,7 @@ import AIChatbot from 'ai-chatbot'
 
 const app = createApp(AIChatbot, {
   config: {
-    chatMode: 'floating',
+    mode: 'floating',
     apiBaseUrl: '/api',
     enableImageUpload: true,
   }
@@ -246,7 +235,6 @@ html, body, #app {
 .mode-card:nth-child(1) { animation-delay: 0.1s; }
 .mode-card:nth-child(2) { animation-delay: 0.2s; }
 .mode-card:nth-child(3) { animation-delay: 0.3s; }
-.mode-card:nth-child(4) { animation-delay: 0.4s; }
 
 .mode-card:hover {
   transform: translateY(-8px);
