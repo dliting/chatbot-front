@@ -1,5 +1,5 @@
 <template>
-  <Transition :name="transitionName" :css="false">
+  <Transition :name="transitionName">
     <!-- Floating mode: use DraggableWindow component -->
     <DraggableWindow
       v-if="isOpen && isFloating"
