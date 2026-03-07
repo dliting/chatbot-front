@@ -1,10 +1,18 @@
+// Console message interface from chrome-devtools-mcp
+export interface ConsoleMessage {
+  level: string
+  text: string
+  url?: string
+  line?: number
+}
+
 export interface TestCaseResult {
   name: string
   status: 'pass' | 'fail'
   duration: number
   error?: string
   screenshot?: string
-  consoleErrors?: any[]
+  consoleErrors?: ConsoleMessage[]
 }
 
 export interface TestReport {
@@ -14,6 +22,16 @@ export interface TestReport {
   failed: number
   duration: number
   results: TestCaseResult[]
+}
+
+// HTML escaping utility
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
 }
 
 export class TestReporter {
@@ -52,29 +70,36 @@ export class TestReporter {
   generateHTML(report: TestReport): string {
     const timestamp = new Date(report.timestamp).toLocaleString('zh-CN')
 
-    let resultsHTML = report.results.map(r => `
+    let resultsHTML = report.results.map(r => {
+      const safeName = escapeHtml(r.name)
+      const safeError = r.error ? escapeHtml(r.error) : ''
+      const safeScreenshot = r.screenshot ? escapeHtml(r.screenshot) : ''
+      const consoleErrorsHtml = r.consoleErrors && r.consoleErrors.length > 0 ? `
+        <div class="console-errors">
+          <h4>控制台错误:</h4>
+          <ul>
+            ${r.consoleErrors.map(e => `<li>${escapeHtml(e.text)}</li>`).join('')}
+          </ul>
+        </div>
+      ` : ''
+
+      return `
       <div class="test-case ${r.status}">
-        <h3>${r.status === 'pass' ? '✅' : '❌'} ${r.name}</h3>
+        <h3>${r.status === 'pass' ? '✅' : '❌'} ${safeName}</h3>
         <p><strong>耗时:</strong> ${(r.duration / 1000).toFixed(2)}s</p>
-        ${r.error ? `<p class="error"><strong>失败:</strong> ${r.error}</p>` : ''}
-        ${r.screenshot ? `<img src="${r.screenshot}" alt="screenshot" />` : ''}
-        ${r.consoleErrors && r.consoleErrors.length > 0 ? `
-          <div class="console-errors">
-            <h4>控制台错误:</h4>
-            <ul>
-              ${r.consoleErrors.map(e => `<li>${e.text}</li>`).join('')}
-            </ul>
-          </div>
-        ` : ''}
+        ${safeError ? `<p class="error"><strong>失败:</strong> ${safeError}</p>` : ''}
+        ${safeScreenshot ? `<img src="${safeScreenshot}" alt="screenshot" />` : ''}
+        ${consoleErrorsHtml}
       </div>
-    `).join('')
+    `
+    }).join('')
 
     return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UI测试报告 - ${timestamp}</title>
+  <title>UI测试报告 - ${escapeHtml(timestamp)}</title>
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
     .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
@@ -97,7 +122,7 @@ export class TestReporter {
 <body>
   <div class="container">
     <h1>🧪 UI自动化测试报告</h1>
-    <p><strong>测试时间:</strong> ${timestamp}</p>
+    <p><strong>测试时间:</strong> ${escapeHtml(timestamp)}</p>
 
     <div class="summary">
       <div class="summary-item total">
@@ -122,16 +147,33 @@ export class TestReporter {
   }
 
   async saveHTML(report: TestReport, filename: string): Promise<void> {
+    // Validate filename
+    if (!filename || typeof filename !== 'string') {
+      throw new Error('Filename must be a non-empty string')
+    }
+
+    // Prevent path traversal
+    const basename = filename.replace(/[^a-zA-Z0-9._-]/g, '')
+    if (basename !== filename || basename.length === 0) {
+      throw new Error('Filename contains invalid characters')
+    }
+
     const html = this.generateHTML(report)
     const fs = await import('fs/promises')
     const path = await import('path')
 
     const reportsDir = path.join(process.cwd(), 'tests/ui/reports')
-    await fs.mkdir(reportsDir, { recursive: true })
 
-    const filepath = path.join(reportsDir, filename)
-    await fs.writeFile(filepath, html, 'utf-8')
+    try {
+      await fs.mkdir(reportsDir, { recursive: true })
 
-    console.log(`📊 报告已生成: ${filepath}`)
+      const filepath = path.join(reportsDir, basename)
+      await fs.writeFile(filepath, html, 'utf-8')
+
+      console.log(`📊 报告已生成: ${filepath}`)
+    } catch (error) {
+      console.error(`❌ 报告生成失败: ${error}`)
+      throw error
+    }
   }
 }
