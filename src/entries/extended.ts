@@ -3,7 +3,7 @@
  * 扩展模式 - 桌面端聊天界面（左侧会话列表 + 右侧聊天区）
  */
 import { createApp } from 'vue'
-import AIChat from '../components/AIChat.vue'
+import AIChatPanel from '../components/AIChatPanel.vue'
 import '@/styles/chatbot.scss'
 
 // Local Fonts - Noto Sans SC (for offline deployment)
