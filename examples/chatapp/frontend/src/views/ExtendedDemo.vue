@@ -9,7 +9,7 @@ const config = computed(() => ({
   mode: 'extended', // 使用新的交互模式参数
   layout: 'dual',  // 明确指定双栏布局
   defaultExpanded: true, // 默认展开聊天面板
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
   streamEnabled: true,
   enableImageUpload: true,
   maxImageCount: 3,

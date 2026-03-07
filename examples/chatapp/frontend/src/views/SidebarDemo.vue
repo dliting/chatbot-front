@@ -10,7 +10,7 @@ const config = computed(() => ({
   layout: 'compact', // 紧凑布局（Tab切换会话/聊天）
   panelWidth: 400,
   defaultExpanded: true,
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
   streamEnabled: true,
   enableImageUpload: true,
   maxImageCount: 3,

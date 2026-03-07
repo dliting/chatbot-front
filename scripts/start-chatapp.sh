@@ -12,11 +12,17 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# 保存原始工作目录
+ORIGINAL_DIR="$(pwd)"
+
 # 脚本目录
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # 项目根目录 (scripts的父目录)
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 CHATAPP_DIR="$PROJECT_ROOT/examples/chatapp/frontend"
+
+# 退出时恢复原始工作目录
+trap 'cd "$ORIGINAL_DIR"' EXIT
 
 # 默认值
 MODE="mock"

@@ -7,7 +7,7 @@ const router = useRouter()
 
 const config = computed(() => ({
   mode: 'floating',
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
   streamEnabled: true,
   position: 'bottom-right',
   panelWidth: 400,
