@@ -15,10 +15,9 @@
 
     <!-- Input Row -->
     <div class="chat-input__row">
-      <button class="chat-input__menu-btn" @click="toggleMenu">
+      <button class="chat-input__upload-btn" @click="handleUploadClick">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="12" y1="5" x2="12" y2="19" stroke-linecap="round"/>
-          <line x1="5" y1="12" x2="19" y2="12" stroke-linecap="round"/>
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
 
@@ -59,28 +58,11 @@
       </button>
     </div>
 
-    <!-- Menu Panel -->
-    <Transition name="chat-input-menu">
-      <div v-if="isMenuOpen" class="chat-input__menu">
-        <div class="chat-input__menu-grid">
-          <div
-            v-for="item in menuItems"
-            :key="item.id"
-            class="chat-input__menu-item"
-            @click="handleMenuAction(item.type)"
-          >
-            <div class="chat-input__menu-icon">{{ item.icon }}</div>
-            <div class="chat-input__menu-label">{{ item.label }}</div>
-          </div>
-        </div>
-      </div>
-    </Transition>
-
     <!-- Hidden File Input -->
     <input
       ref="fileInputRef"
       type="file"
-      :accept="currentFileAccept"
+      accept="*"
       style="display: none"
       @change="handleFileSelect"
     />
@@ -112,8 +94,6 @@ const fileInputRef = ref<HTMLInputElement>()
 // State
 const inputText = ref('')
 const selectedImages = ref<string[]>([])
-const isMenuOpen = ref(false)
-const currentFileAccept = ref('*')
 
 // Convert file to base64 for direct sending to backend
 const convertFileToBase64 = (file: File): Promise<string> => {
@@ -128,14 +108,6 @@ const convertFileToBase64 = (file: File): Promise<string> => {
     reader.readAsDataURL(file)
   })
 }
-
-// Menu items
-const menuItems = [
-  { id: 1, type: 'image', icon: '📷', label: '图片' },
-  { id: 2, type: 'document', icon: '📄', label: '文档' },
-  { id: 3, type: 'file', icon: '📁', label: '文件' },
-  { id: 4, type: 'audio', icon: '🎵', label: '音频' },
-]
 
 // Computed
 const canSend = computed(() => inputText.value.trim() || selectedImages.value.length > 0)
@@ -177,25 +149,7 @@ const removeImage = (index: number) => {
   selectedImages.value.splice(index, 1)
 }
 
-const toggleMenu = () => {
-  isMenuOpen.value = !isMenuOpen.value
-}
-
-const handleMenuAction = (type: string) => {
-  isMenuOpen.value = false
-  switch (type) {
-    case 'image':
-      currentFileAccept.value = 'image/*'
-      break
-    case 'document':
-      currentFileAccept.value = '.pdf,.doc,.docx,.txt,.md'
-      break
-    case 'audio':
-      currentFileAccept.value = 'audio/*'
-      break
-    default:
-      currentFileAccept.value = '*'
-  }
+const handleUploadClick = () => {
   fileInputRef.value?.click()
 }
 
@@ -274,7 +228,7 @@ const handleFileSelect = async (e: Event) => {
     margin: 0 auto;
   }
 
-  &__menu-btn,
+  &__upload-btn,
   &__send-btn,
   &__voice-btn {
     width: 40px;
@@ -289,12 +243,12 @@ const handleFileSelect = async (e: Event) => {
     flex-shrink: 0;
   }
 
-  &__menu-btn {
+  &__upload-btn {
     background: linear-gradient(135deg, #f0f0f3 0%, #e8e8ec 100%);
 
     svg {
-      width: 24px;
-      height: 24px;
+      width: 20px;
+      height: 20px;
       stroke: #1a1a2e;
     }
 
@@ -360,78 +314,5 @@ const handleFileSelect = async (e: Event) => {
       color: #9ca3af;
     }
   }
-
-  &__menu {
-    position: absolute;
-    bottom: 70px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(20px);
-    border-radius: 16px;
-    padding: 12px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-    z-index: 99;
-  }
-
-  &__menu-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
-
-  &__menu-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 12px;
-    transition: all 0.2s ease;
-
-    &:hover {
-      background: rgba(102, 126, 234, 0.1);
-    }
-  }
-
-  &__menu-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-
-    .chat-input__menu-item:nth-child(1) & {
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-    .chat-input__menu-item:nth-child(2) & {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    .chat-input__menu-item:nth-child(3) & {
-      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    }
-    .chat-input__menu-item:nth-child(4) & {
-      background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    }
-  }
-
-  &__menu-label {
-    font-size: 11px;
-    color: #1a1a2e;
-  }
-}
-
-.chat-input-menu-enter-active,
-.chat-input-menu-leave-active {
-  transition: all 0.3s ease;
-}
-
-.chat-input-menu-enter-from,
-.chat-input-menu-leave-to {
-  opacity: 0;
-  transform: translateY(20px);
 }
 </style>
