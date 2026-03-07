@@ -53,8 +53,8 @@
 
 | 布局 | 说明 |
 |------|------|
-| **平铺模式（Extended Layout）** | 会话列表和聊天窗口在同一页面展示 |
-| **紧凑模式（Compact Layout）** | 会话列表和聊天窗口在不同页面展示 |
+| **双栏布局（Dual Layout）** | 会话列表和聊天窗口在同一页面展示，左右分栏 |
+| **单栏布局（Single Layout）** | 会话列表和聊天窗口在不同页面展示，通过Tab切换 |
 
 ### 2.2 交互模式（Interaction Mode）
 
@@ -68,9 +68,9 @@
 
 | 交互模式 | 内部布局 | 说明 |
 |---------|---------|------|
-| extended | split | 平铺布局，会话列表始终显示在左侧 |
-| sidebar | compact | 紧凑布局，通过Tab切换"会话"/"聊天"视图 |
-| floating | compact | 紧凑布局，通过Tab切换"会话"/"聊天"视图 |
+| extended | dual | 双栏布局，会话列表始终显示在左侧 |
+| sidebar | single | 单栏布局，通过Tab切换"会话"/"聊天"视图 |
+| floating | single | 单栏布局，通过Tab切换"会话"/"聊天"视图 |
 
 ---
 
@@ -95,8 +95,8 @@
 | 样式隔离 | ✅ | ✅ | ✅ | - |
 | 响应式适配 | ✅ | ✅ | ✅ | - |
 | **布局特性** |
-| 平铺布局(split) | ✅ | ❌ | ❌ | `layout: 'split'` |
-| 紧凑布局(compact) | ❌ | ✅ | ✅ | `layout: 'compact'` |
+| 双栏布局(dual) | ✅ | ❌ | ❌ | `layout: 'dual'` |
+| 单栏布局(single) | ❌ | ✅ | ✅ | `layout: 'single'` |
 | Tab切换 | ❌ | ✅ | ✅ | - |
 | **交互特性** |
 | 会话列表 | ✅ | ✅ | ✅ | `enableSessionManager` |

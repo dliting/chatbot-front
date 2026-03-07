@@ -48,8 +48,8 @@
 本组件采用双维度架构设计，将"交互模式"与"布局形式"解耦：
 
 **布局形式（Layout）**:
-- **平铺模式（Extended Layout）**: 会话列表和聊天窗口在同一页面展示
-- **紧凑模式（Compact Layout）**: 会话列表和聊天窗口在不同页面展示
+- **双栏布局（Dual Layout）**: 会话列表和聊天窗口在同一页面展示
+- **单栏布局（Single Layout）**: 会话列表和聊天窗口在不同页面展示
 
 **交互模式（Interaction Mode）**:
 - **扩展模式（Extended）**: 作为全屏页面，内部使用平铺模式布局
@@ -96,9 +96,9 @@ AIChat (根组件)
 AIChat
 ├── 检测 mode 配置（新版本）或 chatMode（旧版本兼容）
 ├── 根据 mode 渲染对应组件
-│   ├── 'extended' → ChatExtended (layout: 'split')
-│   ├── 'sidebar' → ChatSidebar (layout: 'compact')
-│   └── 'floating' → ChatFloating (layout: 'compact')
+│   ├── 'extended' → ChatExtended (layout: 'dual')
+│   ├── 'sidebar' → ChatSidebar (layout: 'single')
+│   └── 'floating' → ChatFloating (layout: 'single')
 └── 共用状态管理 (ChatStore)
 ```
 
@@ -1054,7 +1054,7 @@ src/
 interface AIChatConfig {
   // 模式配置（新版本）
   mode?: 'extended' | 'sidebar' | 'floating'  // 交互模式
-  layout?: 'split' | 'compact'                 // 布局形式
+  layout?: 'dual' | 'single'                   // 布局形式
 
   // 兼容旧版本
   chatMode?: 'extended' | 'compact' | 'floating'
@@ -1098,7 +1098,7 @@ interface AIChatConfig {
 // 扩展模式配置
 interface ExtendedConfig extends AIChatConfig {
   mode: 'extended'
-  layout?: 'split'
+  layout?: 'dual'
   sessionListWidth?: number
   sessionListCollapsed?: boolean
 }
@@ -1106,7 +1106,7 @@ interface ExtendedConfig extends AIChatConfig {
 // 边栏模式配置（新增）
 interface SidebarConfig extends AIChatConfig {
   mode: 'sidebar'
-  layout?: 'compact'
+  layout?: 'single'
   sidebarWidth?: number
   defaultTab?: 'sessions' | 'chat'
 }
@@ -1114,7 +1114,7 @@ interface SidebarConfig extends AIChatConfig {
 // 紧凑模式配置
 interface CompactConfig extends AIChatConfig {
   mode: 'compact'
-  layout?: 'compact'
+  layout?: 'single'
   sidebarWidth?: number
   defaultExpanded?: boolean
 }
@@ -1122,7 +1122,7 @@ interface CompactConfig extends AIChatConfig {
 // 悬浮模式配置
 interface FloatingConfig extends AIChatConfig {
   mode: 'floating'
-  layout?: 'compact'
+  layout?: 'single'
   position?: 'bottom-left' | 'bottom-right' | 'top-left' | 'top-right'
   panelWidth?: number
   panelHeight?: number

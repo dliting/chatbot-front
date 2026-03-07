@@ -107,7 +107,7 @@ export const defaultChatbotLabels: ChatbotLabels = {
 export const defaultChatbotConfig: Required<ChatbotConfig> = {
   // Interaction mode
   mode: 'floating',
-  layout: 'compact',
+  layout: 'single',
 
   // Legacy: Chat mode
   chatMode: 'floating',

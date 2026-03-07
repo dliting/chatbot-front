@@ -1,7 +1,7 @@
 <template>
-  <div class="chatbot-compact-layout">
+  <div class="chatbot-single-layout">
     <!-- Tab 导航 -->
-    <div class="chatbot-compact-layout__tabs">
+    <div class="chatbot-single-layout__tabs">
       <button
         :class="['tab-btn', { active: currentView === 'sessions' }]"
         @click="handleViewChange('sessions')"
@@ -23,7 +23,7 @@
     </div>
 
     <!-- 视图内容 -->
-    <div class="chatbot-compact-layout__content">
+    <div class="chatbot-single-layout__content">
       <Transition name="fade" mode="out-in">
         <SessionListView v-if="currentView === 'sessions'" key="sessions" />
         <ChatArea v-else key="chat" />
@@ -50,7 +50,7 @@ const handleViewChange = (view: ViewType) => {
 </script>
 
 <style scoped lang="scss">
-.chatbot-compact-layout {
+.chatbot-single-layout {
   display: flex;
   flex-direction: column;
   width: 100%;

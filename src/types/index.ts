@@ -38,13 +38,13 @@ export type Locale = 'zh-CN' | 'en-US'
 
 // Interaction Mode Types (new dual-dimension architecture)
 export type InteractionMode = 'floating' | 'extended' | 'sidebar'
-export type Layout = 'split' | 'compact'
+export type Layout = 'dual' | 'single'
 
 // Layout auto-derivation mapping
 export const modeToLayoutMap: Record<InteractionMode, Layout> = {
-  'floating': 'compact',
-  'extended': 'split',
-  'sidebar': 'compact'
+  'floating': 'single',
+  'extended': 'dual',
+  'sidebar': 'single'
 }
 
 // Point coordinates
