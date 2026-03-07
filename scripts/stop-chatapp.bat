@@ -1,10 +1,50 @@
 @echo off
 setlocal
 
+set "SCRIPT_DIR=%~dp0"
+set "PROJECT_ROOT=%SCRIPT_DIR%..\"
+set "CONFIG_DIR=%PROJECT_ROOT%examples\chatapp"
+
 echo === ChatApp Stopping ===
 echo.
 
-powershell -NoProfile -Command "try { $killed = 0; foreach($p in 5173..5185) { $conn = Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue; if($conn) { $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue; if($proc -and $proc.ProcessName -eq 'node') { Write-Host \"Stopping ChatApp server on port $p (PID: $($conn.OwningProcess))\"; Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue; $killed = 1 } } }; if($killed -eq 0) { Write-Host 'No running ChatApp servers found.'; Write-Host ''; Write-Host 'Note: Only Vite dev servers on ports 5173-5185 are checked.'; Write-Host 'Other Node.js processes are left untouched.' } else { Write-Host ''; Write-Host '=== ChatApp Stopped ===' } } catch { Write-Host 'Error stopping servers:' $_.Exception.Message }"
+rem Use PowerShell for reliable port checking and process killing
+powershell -NoProfile -Command ^
+  "$ErrorActionPreference = 'SilentlyContinue'; " ^
+  "$configDir = '%CONFIG_DIR%'; " ^
+  "$realPort = '3000'; " ^
+  "$mockPort = '3001'; " ^
+  "if (Test-Path \"$configDir\real.env\") { " ^
+  "  $portLine = Select-String -Path \"$configDir\real.env\" -Pattern '^PORT=' -ErrorAction SilentlyContinue; " ^
+  "  if ($portLine) { $realPort = ($portLine.Line -split '=')[1].Trim(); } " ^
+  "} " ^
+  "if (Test-Path \"$configDir\mock.env\") { " ^
+  "  $portLine = Select-String -Path \"$configDir\mock.env\" -Pattern '^PORT=' -ErrorAction SilentlyContinue; " ^
+  "  if ($portLine) { $mockPort = ($portLine.Line -split '=')[1].Trim(); } " ^
+  "} " ^
+  "Write-Host \"Backend ports configured: Real=$realPort, Mock=$mockPort\"; " ^
+  "$killed = 0; " ^
+  "$backendPorts = @($realPort, $mockPort) | Select-Object -Unique; " ^
+  "$frontendPorts = 5173..5185; " ^
+  "$allPorts = $backendPorts + $frontendPorts; " ^
+  "foreach ($port in $allPorts) { " ^
+  "  $conn = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue; " ^
+  "  if ($conn) { " ^
+  "    $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue; " ^
+  "    if ($proc) { " ^
+  "      $portType = if ($backendPorts -contains $port) { 'backend' } else { 'frontend' }; " ^
+  "      Write-Host \"Stopping $portType on port $port (PID: $($conn.OwningProcess), Process: $($proc.ProcessName))\"; " ^
+  "      Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue; " ^
+  "      $killed = 1; " ^
+  "    } " ^
+  "  } " ^
+  "} " ^
+  "Write-Host ''; " ^
+  "if ($killed -eq 0) { " ^
+  "  Write-Host 'No running ChatApp servers found.'; " ^
+  "} else { " ^
+  "  Write-Host '=== ChatApp Stopped ==='; " ^
+  "}"
 
 echo.
 endlocal
