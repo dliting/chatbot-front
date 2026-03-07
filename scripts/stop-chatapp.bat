@@ -27,6 +27,7 @@ powershell -NoProfile -Command ^
   "$backendPorts = @($realPort, $mockPort) | Select-Object -Unique; " ^
   "$frontendPorts = 5173..5185; " ^
   "$allPorts = $backendPorts + $frontendPorts; " ^
+  "$pidsToKill = @(); " ^
   "foreach ($port in $allPorts) { " ^
   "  $conn = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue; " ^
   "  if ($conn) { " ^
@@ -34,10 +35,14 @@ powershell -NoProfile -Command ^
   "    if ($proc) { " ^
   "      $portType = if ($backendPorts -contains $port) { 'backend' } else { 'frontend' }; " ^
   "      Write-Host \"Stopping $portType on port $port (PID: $($conn.OwningProcess), Process: $($proc.ProcessName))\"; " ^
-  "      Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue; " ^
+  "      $pidsToKill += $conn.OwningProcess; " ^
   "      $killed = 1; " ^
   "    } " ^
   "  } " ^
+  "} " ^
+  "if ($pidsToKill.Count -gt 0) { " ^
+  "  Stop-Process -Id $pidsToKill -Force -ErrorAction SilentlyContinue; " ^
+  "  Start-Sleep -Milliseconds 500; " ^
   "} " ^
   "Write-Host ''; " ^
   "if ($killed -eq 0) { " ^
@@ -45,6 +50,11 @@ powershell -NoProfile -Command ^
   "} else { " ^
   "  Write-Host '=== ChatApp Stopped ==='; " ^
   "}"
+
+rem Close ChatApp command windows
+echo.
+echo Closing command windows...
+powershell -ExecutionPolicy Bypass -NoProfile -File "%SCRIPT_DIR%close-chatapp-cmd-windows.ps1"
 
 echo.
 endlocal

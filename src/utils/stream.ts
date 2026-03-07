@@ -11,6 +11,8 @@ export class StreamClient {
   private reconnectAttempts = 0
   private maxReconnectAttempts = 3
   private reconnectDelay = 1000
+  private reconnectTimeoutId: ReturnType<typeof setTimeout> | null = null
+  private isDisconnected = false
 
   constructor(
     private url: string,
@@ -26,6 +28,11 @@ export class StreamClient {
    * Connect to the SSE stream
    */
   connect(): void {
+    if (this.isDisconnected) {
+      // Client has been explicitly disconnected, don't reconnect
+      return
+    }
+
     if (this.eventSource) {
       this.disconnect()
     }
@@ -59,24 +66,50 @@ export class StreamClient {
    * Handle connection errors
    */
   private handleError(): void {
-    this.disconnect()
+    // Clear any existing reconnect timeout
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId)
+      this.reconnectTimeoutId = null
+    }
 
-    if (this.options.reconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+    // Close the connection
+    this.disconnect(false)
+
+    // Only attempt reconnect if explicitly enabled
+    if (this.options.reconnect === true && this.reconnectAttempts < this.maxReconnectAttempts && !this.isDisconnected) {
       this.reconnectAttempts++
       const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
 
-      setTimeout(() => {
-        this.connect()
+      this.reconnectTimeoutId = setTimeout(() => {
+        if (!this.isDisconnected) {
+          this.connect()
+        }
       }, delay)
     } else {
-      this.options.onError?.(new Error('Stream connection failed'))
+      // Notify of connection failure without spamming
+      if (this.reconnectAttempts === 0 || this.reconnectAttempts >= this.maxReconnectAttempts) {
+        this.options.onError?.(new Error('Stream connection failed'))
+      }
     }
   }
 
   /**
    * Disconnect from the stream
+   * @param permanent - If true, mark as permanently disconnected (no auto-reconnect)
    */
-  disconnect(): void {
+  disconnect(permanent = true): void {
+    // Clear any pending reconnect timeout
+    if (this.reconnectTimeoutId) {
+      clearTimeout(this.reconnectTimeoutId)
+      this.reconnectTimeoutId = null
+    }
+
+    // Mark as permanently disconnected if requested
+    if (permanent) {
+      this.isDisconnected = true
+    }
+
+    // Close EventSource connection
     if (this.eventSource) {
       this.eventSource.close()
       this.eventSource = null
@@ -88,6 +121,14 @@ export class StreamClient {
    */
   isConnected(): boolean {
     return this.eventSource !== null && this.eventSource.readyState === EventSource.OPEN
+  }
+
+  /**
+   * Reset the disconnected state to allow reconnection
+   */
+  reset(): void {
+    this.isDisconnected = false
+    this.reconnectAttempts = 0
   }
 }
 

@@ -2,8 +2,53 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
+// Custom plugin to suppress Vite HMR reconnection errors
+function suppressHmrReconnectionErrors() {
+  return {
+    name: 'suppress-hmr-reconnection',
+    transformIndexHtml(html) {
+      // Inject script to override Vite client's reconnection behavior
+      const script = `
+<script>
+  // Store original console.error
+  const originalConsoleError = console.error;
+
+  // Override console.error to suppress Vite HMR reconnection spam
+  console.error = function(...args) {
+    const message = args[0];
+    if (
+      typeof message === 'string' &&
+      (message.includes('GET http://localhost:') || message.includes('ERR_CONNECTION_REFUSED')) &&
+      args.some(arg => typeof arg === 'string' && arg.includes('waitForSuccessfulPing'))
+    ) {
+      // Suppress Vite HMR reconnection errors
+      return;
+    }
+    originalConsoleError.apply(console, args);
+  };
+
+  // Also override window.onerror to catch these errors
+  window.addEventListener('error', function(event) {
+    if (
+      event.message &&
+      (event.message.includes('GET http://localhost:') || event.message.includes('ERR_CONNECTION_REFUSED'))
+    ) {
+      event.preventDefault();
+      event.stopPropagation();
+      return false;
+    }
+  }, true);
+</script>`;
+      return html.replace('</head>', script + '</head>');
+    }
+  };
+}
+
 export default defineConfig({
-  plugins: [vue()],
+  plugins: [
+    vue(),
+    suppressHmrReconnectionErrors()
+  ],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '../../../src'),
@@ -20,20 +65,38 @@ export default defineConfig({
   },
   server: {
     port: 5180,
+    strictPort: false,
+    watch: {
+      usePolling: false,
+      ignored: ['**/node_modules/**', '**/.git/**']
+    },
     proxy: {
       '/api': {
         target: process.env.VITE_API_BASE_URL || 'http://localhost:3001',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, '')
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        selfResponding: false,
+        configure: (proxy, _options) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            proxyReq.setTimeout(5000, () => {
+              if (res && !res.headersSent) {
+                res.writeHead(503, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify({ code: 503, message: 'Backend unavailable' }))
+              }
+            })
+          })
+          proxy.on('error', (err, req, res) => {
+            if (err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET') {
+              if (res && !res.headersSent) {
+                res.writeHead(503, { 'Content-Type': 'application/json' })
+                res.end(JSON.stringify({ code: 503, message: 'Backend service unavailable' }))
+              }
+            } else {
+              console.error('[Proxy Error]:', err.message)
+            }
+          })
+        }
       }
-    }
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html']
     }
   }
 })
