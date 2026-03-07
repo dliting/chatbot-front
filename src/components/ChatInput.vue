@@ -364,33 +364,31 @@ const handleFileSelect = async (e: Event) => {
   &__menu {
     position: absolute;
     bottom: 70px;
-    left: 16px;
-    right: 16px;
+    left: 50%;
+    transform: translateX(-50%);
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 20px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
     z-index: 99;
-    max-width: 400px;
-    margin: 0 auto;
   }
 
   &__menu-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
+    gap: 8px;
   }
 
   &__menu-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     cursor: pointer;
     padding: 8px;
     border-radius: 12px;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 
     &:hover {
       background: rgba(102, 126, 234, 0.1);
@@ -398,13 +396,13 @@ const handleFileSelect = async (e: Event) => {
   }
 
   &__menu-icon {
-    width: 52px;
-    height: 52px;
-    border-radius: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 20px;
 
     .chat-input__menu-item:nth-child(1) & {
       background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -421,7 +419,7 @@ const handleFileSelect = async (e: Event) => {
   }
 
   &__menu-label {
-    font-size: 12px;
+    font-size: 11px;
     color: #1a1a2e;
   }
 }
