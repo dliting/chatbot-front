@@ -8,8 +8,8 @@ import type { Session } from '@/types'
 
 describe('SessionListView', () => {
   const createMockSessions = (): Session[] => [
-    { id: '1', title: 'First Session', createdAt: Date.now() - 100000, updatedAt: Date.now() - 1000 },
-    { id: '2', title: 'Second Session', createdAt: Date.now() - 200000, updatedAt: Date.now() - 2000 },
+    { sessionId: '1', title: 'First Session', createdAt: Date.now() - 100000, updatedAt: Date.now() - 1000, messageCount: 5, unreadCount: 0 },
+    { sessionId: '2', title: 'Second Session', createdAt: Date.now() - 200000, updatedAt: Date.now() - 2000, messageCount: 10, unreadCount: 2 },
   ]
 
   describe('Component Rendering', () => {
