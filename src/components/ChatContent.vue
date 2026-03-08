@@ -64,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, h, onMounted } from 'vue'
+import { ref, watch, nextTick, h, onMounted, onUnmounted } from 'vue'
 import type { Message } from '@/types'
 import ChatInput from './ChatInput.vue'
 import { formatMarkdownContent } from '@/utils/helpers'
@@ -137,28 +137,37 @@ const handleMessageDblClick = (message: Message) => {
 const messagesRef = ref<HTMLElement | null>(null)
 
 // Handle copy button click in code blocks
+const handleCodeCopy = async (e: Event) => {
+  const target = e.target as HTMLElement
+  if (!target.classList.contains('code-copy-btn')) return
+
+  const wrapper = target.closest('.code-block-wrapper')
+  const pre = wrapper?.querySelector('pre')
+  if (!pre) return
+
+  const code = pre.textContent || ''
+  await navigator.clipboard.writeText(code)
+
+  target.textContent = '已复制'
+  target.classList.add('copied')
+  setTimeout(() => {
+    target.textContent = '复制'
+    target.classList.remove('copied')
+  }, 1000)
+}
+
 onMounted(() => {
   const container = messagesRef.value
   if (!container) return
 
-  container.addEventListener('click', async (e) => {
-    const target = e.target as HTMLElement
-    if (!target.classList.contains('code-copy-btn')) return
+  container.addEventListener('click', handleCodeCopy)
+})
 
-    const wrapper = target.closest('.code-block-wrapper')
-    const pre = wrapper?.querySelector('pre')
-    if (!pre) return
-
-    const code = pre.textContent || ''
-    await navigator.clipboard.writeText(code)
-
-    target.textContent = '已复制'
-    target.classList.add('copied')
-    setTimeout(() => {
-      target.textContent = '复制'
-      target.classList.remove('copied')
-    }, 1000)
-  })
+onUnmounted(() => {
+  const container = messagesRef.value
+  if (container) {
+    container.removeEventListener('click', handleCodeCopy)
+  }
 })
 
 const scrollToBottom = () => {
