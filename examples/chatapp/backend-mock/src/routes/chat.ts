@@ -16,7 +16,7 @@ const router = Router()
 // POST /chat/stream - Stream chat (mock)
 router.post('/chat/stream', async (req: Request, res: Response) => {
   try {
-    const { sessionId, content, images, stream = true } = req.body
+    const { sessionId, content, images, videos, audios, stream = true } = req.body
 
     if (!sessionId || !content) {
       res.status(400).json({ code: 400, message: 'Missing sessionId or content' })
@@ -24,7 +24,7 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
     }
 
     // Save user message
-    addMessage(sessionId, 'user', content, images)
+    addMessage(sessionId, 'user', content, images, videos, audios)
 
     // Get conversation history
     const messages = getMessages(sessionId)
@@ -82,14 +82,14 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
 // POST /chat/message - Non-streaming chat (mock)
 router.post('/chat/message', async (req: Request, res: Response) => {
   try {
-    const { sessionId, content, images } = req.body
+    const { sessionId, content, images, videos, audios } = req.body
 
     if (!sessionId || !content) {
       res.status(400).json({ code: 400, message: 'Missing sessionId or content' })
       return
     }
 
-    addMessage(sessionId, 'user', content, images)
+    addMessage(sessionId, 'user', content, images, videos, audios)
 
     const messages = getMessages(sessionId)
     const chatMessages = messages.map((m: any) => ({

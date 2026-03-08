@@ -39,6 +39,8 @@ export async function initDatabase(): Promise<void> {
       role TEXT NOT NULL,
       content TEXT NOT NULL,
       images TEXT,
+      videos TEXT,
+      audios TEXT,
       timestamp INTEGER NOT NULL,
       FOREIGN KEY (sessionId) REFERENCES sessions(sessionId) ON DELETE CASCADE
     )
@@ -131,7 +133,9 @@ export function addMessage(
   sessionId: string,
   role: 'user' | 'assistant',
   content: string,
-  images?: string[]
+  images?: string[],
+  videos?: string[],
+  audios?: string[]
 ): Message {
   if (!db) throw new Error('Database not initialized')
 
@@ -139,8 +143,17 @@ export function addMessage(
   const timestamp = Date.now()
 
   db.run(
-    'INSERT INTO messages (messageId, sessionId, role, content, images, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
-    [messageId, sessionId, role, content, images ? JSON.stringify(images) : null, timestamp]
+    'INSERT INTO messages (messageId, sessionId, role, content, images, videos, audios, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [
+      messageId,
+      sessionId,
+      role,
+      content,
+      images ? JSON.stringify(images) : null,
+      videos ? JSON.stringify(videos) : null,
+      audios ? JSON.stringify(audios) : null,
+      timestamp
+    ]
   )
 
   // Update session
@@ -164,6 +177,8 @@ export function addMessage(
     role,
     content,
     images,
+    videos,
+    audios,
     timestamp
   }
 }
@@ -182,7 +197,9 @@ export function getMessages(sessionId: string): Message[] {
     role: row[2] as 'user' | 'assistant',
     content: row[3] as string,
     images: row[4] ? JSON.parse(row[4] as string) : undefined,
-    timestamp: row[5] as number
+    videos: row[5] ? JSON.parse(row[5] as string) : undefined,
+    audios: row[6] ? JSON.parse(row[6] as string) : undefined,
+    timestamp: row[7] as number
   }))
 }
 

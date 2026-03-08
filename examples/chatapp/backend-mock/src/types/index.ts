@@ -17,6 +17,8 @@ export interface Message {
   type?: 'text' | 'image' | 'mixed'
   content: string
   images?: string[]
+  videos?: string[]
+  audios?: string[]
   timestamp: number
   status?: 'sending' | 'sent' | 'error'
 }
