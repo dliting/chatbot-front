@@ -2,6 +2,9 @@
  * Helper utility functions
  */
 
+import MarkdownIt from 'markdown-it'
+import hljs from 'highlight.js'
+
 /**
  * Generate a unique ID
  */
@@ -236,6 +239,44 @@ export function escapeHTML(str: string): string {
   const div = document.createElement('div')
   div.textContent = str
   return div.innerHTML
+}
+
+// Markdown-it instance with security options
+const markdownParser = new MarkdownIt({
+  html: false,        // Disable HTML tags
+  linkify: true,      // Convert URLs to links
+  typographer: true,  // Smart quotes and dashes
+  breaks: true,      // Convert \n to <br>
+})
+
+// Highlight code blocks with highlight.js
+function highlightCodeBlocks(html: string): string {
+  return html.replace(/<pre><code(?:\s+class="language-(\w+)")?>([\s\S]*?)<\/code><\/pre>/g, (match, lang, code) => {
+    const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
+    const highlighted = hljs.highlight(code.trim(), { language }).value
+    return `<div class="code-block-wrapper"><pre><code class="hljs language-${language}">${highlighted}</code></pre><button class="code-copy-btn" type="button">复制</button></div>`
+  })
+}
+
+/**
+ * Format markdown content with syntax highlighting
+ *预留 Mermaid 扩展接口
+ */
+export function formatMarkdownContent(content: string): string {
+  if (!content) return ''
+
+  // First escape HTML to prevent XSS
+  const escaped = escapeHTML(content)
+
+  // Parse markdown
+  let html = markdownParser.render(escaped)
+
+  // Highlight code blocks
+  html = highlightCodeBlocks(html)
+
+  // Future extension: renderMermaid(html)
+
+  return html
 }
 
 /**
