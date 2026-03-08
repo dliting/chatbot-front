@@ -12,19 +12,19 @@
     <div class="chatbot-sessions__list">
       <div
         v-for="session in sessions"
-        :key="session.id"
+        :key="session.sessionId"
         :class="sessionClasses(session)"
-        @click="$emit('switch-session', session.id)"
+        @click="$emit('switch-session', session.sessionId)"
       >
         <div class="chatbot-sessions__item-content" @dblclick.stop="startEditTitle(session)">
           <!-- Editing mode -->
           <input
-            v-if="editingSessionId === session.id"
+            v-if="editingSessionId === session.sessionId"
             ref="editInputRef"
             v-model="editingTitle"
             class="chatbot-sessions__item-title-input"
-            @blur="saveTitle(session.id)"
-            @keyup.enter="saveTitle(session.id)"
+            @blur="saveTitle(session.sessionId)"
+            @keyup.enter="saveTitle(session.sessionId)"
             @keyup.escape="cancelEdit"
             @click.stop
           />
@@ -49,7 +49,7 @@
         <button
           class="chatbot-sessions__item-delete"
           title="Delete session"
-          @click.stop="$emit('delete-session', session.id)"
+          @click.stop="$emit('delete-session', session.sessionId)"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
@@ -96,7 +96,7 @@ const editInputRef = ref<HTMLInputElement | null>(null)
 
 // Start editing title
 const startEditTitle = async (session: Session) => {
-  editingSessionId.value = session.id
+  editingSessionId.value = session.sessionId
   editingTitle.value = session.title
   await nextTick()
   // Handle focus in both browser and test environments
@@ -113,7 +113,7 @@ const startEditTitle = async (session: Session) => {
 // Save title
 const saveTitle = (sessionId: string) => {
   const trimmedTitle = editingTitle.value.trim()
-  const originalSession = props.sessions.find(s => s.id === sessionId)
+  const originalSession = props.sessions.find(s => s.sessionId === sessionId)
   if (trimmedTitle && originalSession && trimmedTitle !== originalSession.title) {
     emit('update-session-title', sessionId, trimmedTitle)
   }
@@ -130,7 +130,7 @@ const cancelEdit = () => {
 const sessionClasses = (session: Session) => [
   'chatbot-sessions__item',
   {
-    'chatbot-sessions__item--active': session.id === props.currentSessionId,
+    'chatbot-sessions__item--active': session.sessionId === props.currentSessionId,
   },
 ]
 

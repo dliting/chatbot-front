@@ -9,19 +9,28 @@ describe('SessionManager.vue', () => {
 
   const mockSessions: Session[] = [
     {
-      id: 'session_1',
+      sessionId: 'session_1',
       title: 'Chat about Vue',
-      timestamp: Date.now() - 3600000,
+      createdAt: Date.now() - 3600000,
+      updatedAt: Date.now() - 3600000,
+      messageCount: 10,
+      unreadCount: 0,
     },
     {
-      id: 'session_2',
+      sessionId: 'session_2',
       title: 'TypeScript help',
-      timestamp: Date.now() - 7200000,
+      createdAt: Date.now() - 7200000,
+      updatedAt: Date.now() - 7200000,
+      messageCount: 5,
+      unreadCount: 0,
     },
     {
-      id: 'session_3',
+      sessionId: 'session_3',
       title: 'API integration',
-      timestamp: Date.now() - 86400000,
+      createdAt: Date.now() - 86400000,
+      updatedAt: Date.now() - 86400000,
+      messageCount: 15,
+      unreadCount: 0,
     },
   ]
 
@@ -79,7 +88,7 @@ describe('SessionManager.vue', () => {
       await sessions[1].trigger('click')
 
       expect(wrapper.emitted('switch-session')).toBeTruthy()
-      expect(wrapper.emitted('switch-session')?.[0]).toEqual([mockSessions[1].id])
+      expect(wrapper.emitted('switch-session')?.[0]).toEqual([mockSessions[1].sessionId])
     })
 
     it('should update active session when currentSessionId changes', async () => {
@@ -107,7 +116,7 @@ describe('SessionManager.vue', () => {
       await deleteButtons[0].trigger('click')
 
       expect(wrapper.emitted('delete-session')).toBeTruthy()
-      expect(wrapper.emitted('delete-session')?.[0]).toEqual([mockSessions[0].id])
+      expect(wrapper.emitted('delete-session')?.[0]).toEqual([mockSessions[0].sessionId])
     })
   })
 
@@ -134,7 +143,7 @@ describe('SessionManager.vue', () => {
 
       const vm = wrapper.vm as unknown as { editingId: string | null }
       if (vm.editingId !== undefined) {
-        expect(vm.editingId).toBe(mockSessions[0].id)
+        expect(vm.editingId).toBe(mockSessions[0].sessionId)
       }
     })
 
