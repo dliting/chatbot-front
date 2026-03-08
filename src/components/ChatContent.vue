@@ -4,13 +4,6 @@
     <div ref="messagesRef" class="chat-content__messages">
       <!-- Welcome Section -->
       <div v-if="welcomeVisible" class="chat-content__welcome">
-        <div class="chat-content__avatar">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 17l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
         <h2 class="chat-content__welcome-title">智能助手</h2>
         <p class="chat-content__welcome-subtitle">有什么可以帮助您的吗？</p>
 
@@ -39,17 +32,6 @@
           :class="['chat-content__message', message.role]"
           @dblclick="handleMessageDblClick(message)"
         >
-          <div class="chat-content__avatar">
-            <svg v-if="message.role === 'assistant'" viewBox="0 0 24 24" fill="none" stroke-width="2">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M2 17l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
-              <path d="M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <svg v-else viewBox="0 0 24 24" fill="none" stroke-width="2">
-              <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="12" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
           <div class="chat-content__bubble">
             <!-- Images -->
             <div v-if="message.images && message.images.length > 0" class="chat-content__images">
