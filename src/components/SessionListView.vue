@@ -3,7 +3,7 @@
     <!-- Header with close button -->
     <header v-if="showCloseButton" class="chatbot-sessions__header session-list-view__header">
       <h1 class="chatbot-sessions__header-title session-list-view__title">{{ config.labels?.history || '历史对话' }}</h1>
-      <button class="chatbot-sessions__header-close session-list-view__close" @click="$emit('close')">
+      <button class="chatbot-sessions__header-close session-list-view__close" :aria-label="cancelLabel" @click="$emit('close')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -138,6 +138,7 @@
             v-if="!isBatchMode"
             class="chatbot-sessions__item-delete session-list-view__item-delete"
             :title="deleteLabel"
+            :aria-label="deleteLabel"
             @click.stop="handleDelete(session.sessionId)"
           >
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -173,6 +174,7 @@
       v-if="!isBatchMode && sessions.length > 0"
       class="chatbot-sessions__batch-mode-btn"
       :title="batchModeLabel"
+      :aria-label="batchModeLabel"
       @click="toggleBatchMode"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -189,7 +191,7 @@
 import { ref, computed, nextTick } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import type { Session } from '@/types'
-import { formatTime } from '@/utils/helpers'
+import { formatTime, escapeHTML } from '@/utils/helpers'
 import SessionSearch from './SessionSearch.vue'
 import SessionActionMenu from './SessionActionMenu.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
@@ -216,6 +218,7 @@ interface Props {
   deleteConfirmMessage?: string
   batchDeleteConfirmTitle?: string
   batchDeleteConfirmMessage?: string
+  selectedCountFormat?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -238,6 +241,7 @@ const props = withDefaults(defineProps<Props>(), {
   deleteConfirmMessage: '确定要删除此对话吗?',
   batchDeleteConfirmTitle: '删除对话?',
   batchDeleteConfirmMessage: '确定要删除选中的对话吗?',
+  selectedCountFormat: '已选择 {count} 个',
 })
 
 interface Emits {
@@ -306,7 +310,7 @@ const filteredSessions = computed(() => {
 // Selected count text
 const selectedCountText = computed(() => {
   const count = selectedSessionIds.value.length
-  return count === 1 ? '已选择 1 个' : `已选择 ${count} 个`
+  return props.selectedCountFormat.replace('{count}', String(count))
 })
 
 // Toggle batch mode
@@ -366,13 +370,17 @@ const confirmDelete = () => {
   isBatchMode.value = false
 }
 
-// Highlight text
+// Highlight text (with XSS protection)
 const highlightText = (text: string, query: string): string => {
   if (!query.trim()) {
-    return text
+    return escapeHTML(text)
   }
-  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-  return text.replace(regex, '<mark>$1</mark>')
+  // First escape HTML to prevent XSS
+  const escapedText = escapeHTML(text)
+  // Then escape special regex characters in the query
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${escapedQuery})`, 'gi')
+  return escapedText.replace(regex, '<mark>$1</mark>')
 }
 
 // Start editing title
@@ -420,7 +428,9 @@ const sessionClasses = (session: Session) => [
 
 // Format session metadata
 const formatSessionMeta = (session: Session): string => {
-  return formatTime(session.updatedAt)
+  const timeStr = formatTime(session.updatedAt)
+  const countStr = session.messageCount === 1 ? '1 条消息' : `${session.messageCount} 条消息`
+  return `${timeStr} • ${countStr}`
 }
 </script>
 
