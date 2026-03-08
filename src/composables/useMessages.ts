@@ -84,7 +84,99 @@ export function useMessages(options: UseMessagesOptions = {}) {
       userMessage.status = 'sent'
 
       // Get AI response
-      await getAIResponse(content || '[Images sent]', sessionId, images)
+      await getAIResponse(content || '[Images sent]', sessionId, [], [])
+    } catch (error) {
+      userMessage.status = 'error'
+      onMessageError?.(error as Error, userMessage)
+    } finally {
+      isSending.value = false
+    }
+  }
+
+  /**
+   * Send a message with videos
+   */
+  const sendVideoMessage = async (
+    content: string,
+    videos: string[],
+    sessionId: string,
+    images?: string[],
+    audios?: string[]
+  ) => {
+    if (videos.length === 0 || isSending.value) return
+
+    isSending.value = true
+
+    // Create user message with videos
+    const userMessage = createMessage('user', content, sessionId, {
+      type: 'video',
+      videos,
+      images,
+      audios,
+    })
+    messages.value.push(userMessage)
+
+    try {
+      // Call send handler
+      await onSendMessage?.({
+        type: 'video',
+        content,
+        videos,
+        images,
+        audios,
+      })
+
+      // Update status to sent
+      userMessage.status = 'sent'
+
+      // Get AI response
+      await getAIResponse(content || '[Videos sent]', sessionId, images || [], videos)
+    } catch (error) {
+      userMessage.status = 'error'
+      onMessageError?.(error as Error, userMessage)
+    } finally {
+      isSending.value = false
+    }
+  }
+
+  /**
+   * Send a message with audios
+   */
+  const sendAudioMessage = async (
+    content: string,
+    audios: string[],
+    sessionId: string,
+    images?: string[],
+    videos?: string[]
+  ) => {
+    if (audios.length === 0 || isSending.value) return
+
+    isSending.value = true
+
+    // Create user message with audios
+    const userMessage = createMessage('user', content, sessionId, {
+      type: 'audio',
+      audios,
+      images,
+      videos,
+    })
+    messages.value.push(userMessage)
+
+    try {
+      // Call send handler
+      await onSendMessage?.({
+        type: 'audio',
+        content,
+        audios,
+        images,
+        videos,
+      })
+
+      // Update status to sent
+      userMessage.status = 'sent'
+
+      // Get AI response
+      await getAIResponse(content || '[Audios sent]', sessionId, images || [], videos || [], audios)
     } catch (error) {
       userMessage.status = 'error'
       onMessageError?.(error as Error, userMessage)
@@ -99,7 +191,9 @@ export function useMessages(options: UseMessagesOptions = {}) {
   const getAIResponse = async (
     userContent: string,
     sessionId: string,
-    _images: string[]
+    _images: string[],
+    _videos: string[] = [],
+    _audios: string[] = []
   ) => {
     // Create AI message
     const aiMessage = createMessage('assistant', '', sessionId)
@@ -161,12 +255,30 @@ export function useMessages(options: UseMessagesOptions = {}) {
     if (index === -1) return
 
     const hasImages = message.images && message.images.length > 0
+    const hasVideos = message.videos && message.videos.length > 0
+    const hasAudios = message.audios && message.audios.length > 0
 
     // Remove messages
     messages.value = messages.value.slice(0, index)
 
-    // Resend
-    if (hasImages) {
+    // Resend based on message type
+    if (hasVideos) {
+      await sendVideoMessage(
+        message.content,
+        message.videos || [],
+        message.sessionId,
+        message.images,
+        message.audios
+      )
+    } else if (hasAudios) {
+      await sendAudioMessage(
+        message.content,
+        message.audios || [],
+        message.sessionId,
+        message.images,
+        message.videos
+      )
+    } else if (hasImages) {
       await sendImageMessage(message.content, message.images || [], message.sessionId)
     } else {
       await sendTextMessage(message.content, message.sessionId)
@@ -214,6 +326,8 @@ export function useMessages(options: UseMessagesOptions = {}) {
     // Methods
     sendTextMessage,
     sendImageMessage,
+    sendVideoMessage,
+    sendAudioMessage,
     resendMessage,
     deleteMessage,
     clearMessages,

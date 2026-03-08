@@ -82,6 +82,38 @@ describe('utils/message', () => {
       expect(msg.type).toBe('mixed')
     })
 
+    it('should create a video message', () => {
+      const videos = ['https://example.com/video.mp4']
+      const msg = createMessage('user', '', mockSessionId, { videos })
+
+      expect(msg.videos).toEqual(videos)
+      expect(msg.type).toBe('video')
+    })
+
+    it('should create an audio message', () => {
+      const audios = ['https://example.com/audio.mp3']
+      const msg = createMessage('user', '', mockSessionId, { audios })
+
+      expect(msg.audios).toEqual(audios)
+      expect(msg.type).toBe('audio')
+    })
+
+    it('should create message with multiple attachments', () => {
+      const videos = ['https://example.com/video.mp4']
+      const images = ['https://example.com/image.jpg']
+      const audios = ['https://example.com/audio.mp3']
+      const msg = createMessage('user', 'Check this', mockSessionId, {
+        videos,
+        images,
+        audios,
+      })
+
+      expect(msg.videos).toEqual(videos)
+      expect(msg.images).toEqual(images)
+      expect(msg.audios).toEqual(audios)
+      expect(msg.type).toBe('video') // video takes precedence
+    })
+
     it('should create assistant message with loading status', () => {
       const msg = createMessage('assistant', 'Response', mockSessionId)
 

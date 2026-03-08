@@ -218,6 +218,106 @@ describe('useMessages', () => {
     })
   })
 
+  describe('Send Video Message', () => {
+    it('should send video message', async () => {
+      const { messages, sendVideoMessage } = useMessages({
+        onSendMessage: mockSendMessage,
+        streamResponse: async function* () {
+          yield { content: 'Nice video!' }
+        },
+      })
+
+      const videos = ['https://example.com/video.mp4']
+
+      await sendVideoMessage('Check this', videos, 'session-1')
+
+      expect(messages.value.length).toBe(2)
+      expect(messages.value[0].role).toBe('user')
+      expect(messages.value[0].videos).toEqual(videos)
+      expect(messages.value[0].type).toBe('video')
+    })
+
+    it('should send video with images and audios', async () => {
+      const { messages, sendVideoMessage } = useMessages({
+        onSendMessage: mockSendMessage,
+        streamResponse: async function* () {
+          yield { content: 'Nice video!' }
+        },
+      })
+
+      const videos = ['https://example.com/video.mp4']
+      const images = ['https://example.com/image.jpg']
+      const audios = ['https://example.com/audio.mp3']
+
+      await sendVideoMessage('Check this', videos, 'session-1', images, audios)
+
+      expect(messages.value[0].videos).toEqual(videos)
+      expect(messages.value[0].images).toEqual(images)
+      expect(messages.value[0].audios).toEqual(audios)
+    })
+
+    it('should not send empty videos array', async () => {
+      const { messages, sendVideoMessage } = useMessages({
+        onSendMessage: mockSendMessage,
+      })
+
+      await sendVideoMessage('Hello', [], 'session-1')
+
+      expect(messages.value.length).toBe(0)
+      expect(mockSendMessage).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('Send Audio Message', () => {
+    it('should send audio message', async () => {
+      const { messages, sendAudioMessage } = useMessages({
+        onSendMessage: mockSendMessage,
+        streamResponse: async function* () {
+          yield { content: 'Nice audio!' }
+        },
+      })
+
+      const audios = ['https://example.com/audio.mp3']
+
+      await sendAudioMessage('Listen to this', audios, 'session-1')
+
+      expect(messages.value.length).toBe(2)
+      expect(messages.value[0].role).toBe('user')
+      expect(messages.value[0].audios).toEqual(audios)
+      expect(messages.value[0].type).toBe('audio')
+    })
+
+    it('should send audio with images and videos', async () => {
+      const { messages, sendAudioMessage } = useMessages({
+        onSendMessage: mockSendMessage,
+        streamResponse: async function* () {
+          yield { content: 'Nice audio!' }
+        },
+      })
+
+      const audios = ['https://example.com/audio.mp3']
+      const images = ['https://example.com/image.jpg']
+      const videos = ['https://example.com/video.mp4']
+
+      await sendAudioMessage('Listen to this', audios, 'session-1', images, videos)
+
+      expect(messages.value[0].audios).toEqual(audios)
+      expect(messages.value[0].images).toEqual(images)
+      expect(messages.value[0].videos).toEqual(videos)
+    })
+
+    it('should not send empty audios array', async () => {
+      const { messages, sendAudioMessage } = useMessages({
+        onSendMessage: mockSendMessage,
+      })
+
+      await sendAudioMessage('Hello', [], 'session-1')
+
+      expect(messages.value.length).toBe(0)
+      expect(mockSendMessage).not.toHaveBeenCalled()
+    })
+  })
+
   describe('Resend Message', () => {
     it('should resend user message', async () => {
       const { messages, sendTextMessage, resendMessage } = useMessages({
@@ -283,6 +383,46 @@ describe('useMessages', () => {
       await resendMessage(originalMessage)
 
       expect(messages.value[0].images).toEqual(images)
+    })
+
+    it('should resend message with videos', async () => {
+      const { messages, sendVideoMessage, resendMessage } = useMessages({
+        onSendMessage: mockSendMessage,
+        streamResponse: async function* () {
+          yield { content: 'Response' }
+        },
+      })
+
+      const sessionId = 'session-1'
+      const videos = ['https://example.com/video.mp4']
+      const images = ['https://example.com/image.jpg']
+
+      await sendVideoMessage('Check this', videos, sessionId, images)
+
+      const originalMessage = messages.value[0]
+      await resendMessage(originalMessage)
+
+      expect(messages.value[0].videos).toEqual(videos)
+    })
+
+    it('should resend message with audios', async () => {
+      const { messages, sendAudioMessage, resendMessage } = useMessages({
+        onSendMessage: mockSendMessage,
+        streamResponse: async function* () {
+          yield { content: 'Response' }
+        },
+      })
+
+      const sessionId = 'session-1'
+      const audios = ['https://example.com/audio.mp3']
+      const videos = ['https://example.com/video.mp4']
+
+      await sendAudioMessage('Listen to this', audios, sessionId, [], videos)
+
+      const originalMessage = messages.value[0]
+      await resendMessage(originalMessage)
+
+      expect(messages.value[0].audios).toEqual(audios)
     })
   })
 

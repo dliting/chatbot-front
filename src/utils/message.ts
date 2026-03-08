@@ -5,6 +5,22 @@ import type { Message, MessageType, MessageRole } from '@/types'
 import { generateId } from './helpers'
 
 /**
+ * Get message type based on content and attachments
+ */
+function getMessageType(
+  content: string,
+  images?: string[],
+  videos?: string[],
+  audios?: string[]
+): MessageType {
+  if (videos?.length) return 'video'
+  if (audios?.length) return 'audio'
+  if (images?.length && content) return 'mixed'
+  if (images?.length) return 'image'
+  return 'text'
+}
+
+/**
  * Create a new message object
  */
 export function createMessage(
@@ -14,16 +30,15 @@ export function createMessage(
   options: {
     type?: MessageType
     images?: string[]
+    videos?: string[]
+    audios?: string[]
     metadata?: Record<string, unknown>
   } = {}
 ): Message {
-  const { type = 'text', images, metadata } = options
+  const { type, images, videos, audios, metadata } = options
 
-  // Determine message type based on content
-  let messageType = type
-  if (images && images.length > 0) {
-    messageType = content ? 'mixed' : 'image'
-  }
+  // Determine message type based on content and attachments
+  const messageType = type || getMessageType(content, images, videos, audios)
 
   return {
     id: generateId('msg'),
@@ -32,6 +47,8 @@ export function createMessage(
     type: messageType,
     content,
     images,
+    videos,
+    audios,
     timestamp: Date.now(),
     status: role === 'user' ? 'sending' : 'loading',
     metadata,
