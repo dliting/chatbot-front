@@ -7,6 +7,7 @@ import 'element-plus/dist/index.css'
 import AIChatbot from './components/AIChatbot.vue'
 import { IframeMessenger } from './utils/postMessage'
 import type { ChatbotConfig } from './types/config'
+import type { PanelToggleData, SendMessageData, MessageSuccessData } from './types'
 import './styles/chatbot.scss'
 
 // Get config from URL params or use defaults
@@ -53,15 +54,15 @@ const app = createApp({
     })
 
     // Handle events from chatbot
-    const handleToggle = (data: any) => {
+    const handleToggle = (data: PanelToggleData) => {
       messenger.send('chatbot:toggle', data)
     }
 
-    const handleSendMessage = (data: any) => {
+    const handleSendMessage = (data: SendMessageData) => {
       messenger.send('chatbot:sendMessage', data)
     }
 
-    const handleMessageSuccess = (data: any) => {
+    const handleMessageSuccess = (data: MessageSuccessData) => {
       messenger.send('chatbot:messageReceived', data)
     }
 
@@ -70,12 +71,14 @@ const app = createApp({
     }
 
     // Listen for messages from parent
-    messenger.on('host:toggle', (data: any) => {
+    messenger.on('host:toggle', (data?: PanelToggleData) => {
       chatbotRef.value?.togglePanel(data?.isOpen)
     })
 
-    messenger.on('host:setConfig', (data: any) => {
-      Object.assign(chatbotConfig, data)
+    messenger.on('host:setConfig', (data?: ChatbotConfig) => {
+      if (data) {
+        Object.assign(chatbotConfig, data)
+      }
     })
 
     return {
@@ -103,7 +106,7 @@ app.use(ElementPlus)
 app.mount('#app')
 
 // Make chatbot methods available globally for parent page
-;(window as any).AIChatbot = {
+window.AIChatbot = {
   toggle: (_open?: boolean) => {
     // This will be called by parent page
   },

@@ -25,8 +25,10 @@ export function useResponsive(options: ResponsiveOptions = {}) {
 
   // Computed breakpoint
   const breakpoint = computed<Breakpoint>(() => {
-    if (screenWidth.value < breakpoints.mobile!) return 'mobile'
-    if (screenWidth.value < breakpoints.tablet!) return 'tablet'
+    const mobile = breakpoints.mobile ?? 768
+    const tablet = breakpoints.tablet ?? 1024
+    if (screenWidth.value < mobile) return 'mobile'
+    if (screenWidth.value < tablet) return 'tablet'
     return 'desktop'
   })
 

@@ -83,9 +83,10 @@ export async function uploadFiles(
   for (const file of files) {
     const validation = validateFile(file, options)
     if (!validation.valid) {
+      const errorMessage = validation.error ?? 'Unknown validation error'
       return {
         urls: [],
-        errors: [{ file: file.name, error: validation.error! }],
+        errors: [{ file: file.name, error: errorMessage }],
       }
     }
   }

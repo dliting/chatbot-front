@@ -98,11 +98,12 @@ export function groupMessagesByDate(messages: Message[]): Map<string, Message[]>
     const date = new Date(message.timestamp)
     const dateKey = date.toLocaleDateString()
 
-    if (!groups.has(dateKey)) {
-      groups.set(dateKey, [])
+    const existing = groups.get(dateKey)
+    if (existing) {
+      existing.push(message)
+    } else {
+      groups.set(dateKey, [message])
     }
-
-    groups.get(dateKey)!.push(message)
   }
 
   return groups

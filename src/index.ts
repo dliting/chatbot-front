@@ -37,12 +37,12 @@ export default AIChatbot
 
 // Vue plugin
 export const ChatbotPlugin = {
-  install: (app: any, _options?: ChatbotConfig) => {
+  install: (app: { component: (name: string, component: unknown) => void }, _options?: ChatbotConfig) => {
     app.component('AIChatbot', AIChatbot)
   },
 }
 
 // Auto-install when used via CDN
-if (typeof window !== 'undefined' && (window as any).Vue) {
-  ;(window as any).Vue.use(ChatbotPlugin)
+if (typeof window !== 'undefined' && window.Vue) {
+  window.Vue.use(ChatbotPlugin)
 }

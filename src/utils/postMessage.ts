@@ -78,11 +78,12 @@ export class IframeMessenger {
    * Register a handler for a specific message type
    */
   on(type: PostMessageType, handler: MessageHandler): () => void {
-    if (!this.handlers.has(type)) {
-      this.handlers.set(type, [])
+    const existing = this.handlers.get(type)
+    if (existing) {
+      existing.push(handler)
+    } else {
+      this.handlers.set(type, [handler])
     }
-
-    this.handlers.get(type)!.push(handler)
 
     // Return unregister function
     return () => {

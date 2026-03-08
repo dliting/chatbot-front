@@ -8,7 +8,8 @@ declare module '*.vue' {
 }
 
 declare module '@element-plus/icons-vue' {
-  export const install: (app: any) => void
+  import type { App } from 'vue'
+  export const install: (app: App) => void
 }
 
 declare global {
@@ -16,6 +17,9 @@ declare global {
     AIChatbot?: {
       toggle: (open?: boolean) => void
       setTheme: (theme: 'light' | 'dark' | 'system') => void
+    }
+    Vue?: {
+      use: (plugin: unknown) => void
     }
   }
 }
