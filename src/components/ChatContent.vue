@@ -75,7 +75,7 @@
 
     <!-- Input Area -->
     <div class="chat-content__input-area">
-      <ChatInput :disabled="isStreaming" @send="$emit('send-message', $event)" />
+      <ChatInput :disabled="isStreaming" @send="handleSend" />
     </div>
   </div>
 </template>
@@ -135,6 +135,11 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>()
+
+// Handle send event from ChatInput
+const handleSend = (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
+  emit('send-message', data)
+}
 
 // Handle message double-click for editing (only for user messages)
 const handleMessageDblClick = (message: Message) => {
