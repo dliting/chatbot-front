@@ -22,6 +22,7 @@
       <!-- Bubble -->
       <div :class="bubbleClasses" @dblclick="handleDoubleClick">
         <!-- Text content -->
+        <!-- eslint-disable-next-line vue/no-v-html -- Content is sanitized via DOMPurify in formatMessageContent -->
         <div v-if="hasText" class="chatbot-message__text" v-html="formattedContent"/>
 
         <!-- Image content -->

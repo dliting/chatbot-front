@@ -37,10 +37,12 @@ import { computed } from 'vue'
 import { useChatbotState } from '@/composables/useChatbotState'
 import SessionListView from '@/components/SessionListView.vue'
 import ChatArea from '@/components/ChatContent.vue'
+import { defaultChatbotConfig } from '@/types/config'
 
 type ViewType = 'sessions' | 'chat'
 
-const { state, setCurrentView } = useChatbotState({} as any)
+// SingleLayout is used internally and doesn't need custom config
+const { state, setCurrentView } = useChatbotState(defaultChatbotConfig)
 
 const currentView = computed(() => state.ui.currentView)
 
