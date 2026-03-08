@@ -19,7 +19,9 @@ export function useApiClient(options: ApiClientOptions) {
   async function* streamChat(
     sessionId: string,
     content: string,
-    images?: string[]
+    images?: string[],
+    videos?: string[],
+    audios?: string[]
   ): AsyncGenerator<{ type: string; messageId?: string; content?: string; fullContent?: string }> {
     const response = await fetch(`${baseUrl}/chat/stream`, {
       method: 'POST',
@@ -30,6 +32,8 @@ export function useApiClient(options: ApiClientOptions) {
         sessionId,
         content,
         images: images || [],
+        videos: videos || [],
+        audios: audios || [],
         stream: true,
       }),
     })
@@ -73,7 +77,13 @@ export function useApiClient(options: ApiClientOptions) {
   /**
    * Send message (non-streaming)
    */
-  async function sendMessage(sessionId: string, content: string, images?: string[]): Promise<Message> {
+  async function sendMessage(
+    sessionId: string,
+    content: string,
+    images?: string[],
+    videos?: string[],
+    audios?: string[]
+  ): Promise<Message> {
     isLoading.value = true
     error.value = null
 
@@ -87,6 +97,8 @@ export function useApiClient(options: ApiClientOptions) {
           sessionId,
           content,
           images: images || [],
+          videos: videos || [],
+          audios: audios || [],
         }),
       })
 
