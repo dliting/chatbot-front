@@ -2,16 +2,32 @@
   <div class="chat-input">
     <!-- File Previews -->
     <div v-if="selectedFiles.length > 0" class="chat-input__previews">
-      <div v-for="(file, idx) in selectedFiles" :key="idx" class="chat-input__preview">
+      <div
+        v-for="(file, idx) in selectedFiles"
+        :key="idx"
+        :class="['chat-input__preview', { 'chat-input__preview--error': file.error }]"
+      >
+        <!-- Error state -->
+        <div v-if="file.error" class="chat-input__preview-error">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="8" x2="12" y2="12" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="12" y1="16" x2="12.01" y2="16" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
         <!-- Image preview -->
-        <img v-if="file.type === 'image'" :src="file.preview" class="chat-input__preview-img" />
+        <img v-else-if="file.type === 'image'" :src="file.preview" class="chat-input__preview-img" />
+
         <!-- Video icon -->
         <div v-else-if="file.type === 'video'" class="chat-input__preview-media">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="23 7 16 12 23 17 23 7" stroke-linecap="round" stroke-linejoin="round"/>
             <rect x="1" y="5" width="15" height="14" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
+          <span v-if="file.size" class="chat-input__preview-size">{{ formatFileSize(file.size) }}</span>
         </div>
+
         <!-- Audio icon -->
         <div v-else-if="file.type === 'audio'" class="chat-input__preview-media">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -19,7 +35,10 @@
             <circle cx="6" cy="18" r="3" stroke-linecap="round" stroke-linejoin="round"/>
             <circle cx="18" cy="16" r="3" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
+          <span v-if="file.size" class="chat-input__preview-size">{{ formatFileSize(file.size) }}</span>
         </div>
+
+        <!-- Remove button (even for errors) -->
         <button class="chat-input__preview-remove" @click="removeFile(idx)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
@@ -86,6 +105,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { validateFileSize, formatFileSize, getMediaType as utilsGetMediaType, type MediaType } from '@/utils/fileValidation'
 
 interface Props {
   disabled?: boolean
@@ -96,10 +116,12 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 interface MediaFile {
-  type: 'image' | 'video' | 'audio'
+  type: MediaType
   data: string  // base64
   name: string
   preview?: string  // 预览URL
+  size?: number  // 文件大小
+  error?: string  // 错误信息
 }
 
 interface Emits {
@@ -117,12 +139,10 @@ const fileInputRef = ref<HTMLInputElement>()
 const inputText = ref('')
 const selectedFiles = ref<MediaFile[]>([])
 
-// Get media type from file
-const getMediaType = (file: File): 'image' | 'video' | 'audio' => {
-  if (file.type.startsWith('image/')) return 'image'
-  if (file.type.startsWith('video/')) return 'video'
-  if (file.type.startsWith('audio/')) return 'audio'
-  return 'image'  // 默认
+// Simple toast notification
+const showToast = (message: string) => {
+  // Simple alert for now - can be enhanced later
+  alert(message)
 }
 
 // Convert file to base64 for direct sending to backend
@@ -140,7 +160,11 @@ const convertFileToBase64 = (file: File): Promise<string> => {
 }
 
 // Computed
-const canSend = computed(() => inputText.value.trim() || selectedFiles.value.length > 0)
+const canSend = computed(() => {
+  const hasText = inputText.value.trim().length > 0
+  const hasValidFiles = selectedFiles.value.some(f => !f.error)
+  return hasText || hasValidFiles
+})
 
 // Methods
 const autoResize = () => {
@@ -160,16 +184,17 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 const handleSend = () => {
   if (props.disabled) return
-  if (!inputText.value.trim() && selectedFiles.value.length === 0) return
+  if (!inputText.value.trim() && !selectedFiles.value.some(f => !f.error)) return
 
   const content = inputText.value.trim()
-  const images = selectedFiles.value
+  const validFiles = selectedFiles.value.filter(f => !f.error)
+  const images = validFiles
     .filter(f => f.type === 'image')
     .map(f => f.data)
-  const videos = selectedFiles.value
+  const videos = validFiles
     .filter(f => f.type === 'video')
     .map(f => f.data)
-  const audios = selectedFiles.value
+  const audios = validFiles
     .filter(f => f.type === 'audio')
     .map(f => f.data)
 
@@ -203,19 +228,43 @@ const handleFileSelect = async (e: Event) => {
 
   try {
     for (const file of Array.from(files)) {
+      const mediaType = utilsGetMediaType(file)
+
+      // Validate file size
+      const validation = validateFileSize(file, mediaType)
+      if (!validation.valid) {
+        const error = `${file.name} exceeds ${validation.maxSize} limit`
+
+        // Add file with error state
+        selectedFiles.value.push({
+          type: mediaType,
+          data: '',
+          name: file.name,
+          size: file.size,
+          error
+        })
+
+        // Show toast notification
+        showToast(`File too large: ${error}`)
+        continue
+      }
+
+      // Convert to base64
       const base64 = await convertFileToBase64(file)
-      const mediaFile: MediaFile = {
-        type: getMediaType(file),
+
+      selectedFiles.value.push({
+        type: mediaType,
         data: base64,
         name: file.name,
+        size: file.size,
         preview: file.type.startsWith('image/')
           ? `data:${file.type};base64,${base64}`
           : undefined
-      }
-      selectedFiles.value.push(mediaFile)
+      })
     }
   } catch (error) {
     console.error('File processing failed:', error)
+    showToast('Failed to process files. Please try again.')
   }
 
   target.value = ''
@@ -240,6 +289,35 @@ const handleFileSelect = async (e: Event) => {
     position: relative;
     width: 60px;
     height: 60px;
+
+    &--error {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+  }
+
+  &__preview-error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #ef4444;
+
+    svg {
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  &__preview-size {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    font-size: 10px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 2px 4px;
+    border-radius: 4px;
   }
 
   &__preview-img {
