@@ -188,9 +188,10 @@ const handleSend = () => {
 
   const content = inputText.value.trim()
   const validFiles = selectedFiles.value.filter(f => !f.error)
+  // Use preview URL (with data URL prefix) for proper image display
   const images = validFiles
     .filter(f => f.type === 'image')
-    .map(f => f.data)
+    .map(f => f.preview || `data:image/png;base64,${f.data}`)
   const videos = validFiles
     .filter(f => f.type === 'video')
     .map(f => f.data)

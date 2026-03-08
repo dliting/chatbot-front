@@ -215,6 +215,30 @@ describe('utils/message', () => {
       expect(preview).toBe('Hello')
       expect(preview).not.toContain('...')
     })
+
+    it('should handle video messages', () => {
+      const videoMessage: Message = {
+        ...mockUserMessage,
+        content: 'This is a video message', // Video messages still have text
+        type: 'video',
+        videos: ['video.mp4'],
+      }
+
+      const preview = getMessagePreview(videoMessage, 50)
+      expect(preview).toBe('This is a video message')
+    })
+
+    it('should handle audio messages', () => {
+      const audioMessage: Message = {
+        ...mockUserMessage,
+        content: 'This is an audio message', // Audio messages still have text
+        type: 'audio',
+        audios: ['audio.mp3'],
+      }
+
+      const preview = getMessagePreview(audioMessage, 50)
+      expect(preview).toBe('This is an audio message')
+    })
   })
 
   describe('extractSessionTitle', () => {

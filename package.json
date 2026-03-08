@@ -35,7 +35,9 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:ui:mock": "tsx tests/ui/runner.ts mock",
-    "test:ui:real": "tsx tests/ui/runner.ts real"
+    "test:ui:real": "tsx tests/ui/runner.ts real",
+    "test:puppeteer": "tsx tests/ui/puppeteer-runner.ts mock",
+    "test:puppeteer:real": "tsx tests/ui/puppeteer-runner.ts real"
   },
   "dependencies": {
     "@types/dompurify": "3.0.5",
