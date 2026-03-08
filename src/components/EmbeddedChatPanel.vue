@@ -12,9 +12,14 @@
           :current-session-id="currentSessionId"
           :config="config"
           :is-embedded="true"
+          :layout="effectiveLayout"
+          :enable-close="true"
           @create-session="$emit('create-session')"
           @select-session="$emit('select-session', $event)"
           @delete-session="$emit('delete-session', $event)"
+          @delete-sessions="$emit('delete-sessions', $event)"
+          @update-session-title="$emit('update-session-title', $event[0], $event[1])"
+          @close="$emit('close')"
         />
       </aside>
 
@@ -66,10 +71,13 @@
         :sessions="sessions"
         :current-session-id="currentSessionId"
         :config="config"
+        :layout="effectiveLayout"
         @close="showChatView"
         @create-session="$emit('create-session')"
         @select-session="$emit('select-session', $event)"
         @delete-session="$emit('delete-session', $event)"
+        @delete-sessions="$emit('delete-sessions', $event)"
+        @update-session-title="$emit('update-session-title', $event[0], $event[1])"
       />
     </template>
   </div>
@@ -117,10 +125,13 @@ interface Emits {
   (e: 'create-session'): void
   (e: 'select-session', sessionId: string): void
   (e: 'delete-session', sessionId: string): void
+  (e: 'delete-sessions', sessionIds: string[]): void
+  (e: 'update-session-title', sessionId: string, title: string): void
   (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: import('@/types').Message): void
   (e: 'toggle-theme'): void
+  (e: 'close'): void
 }
 
 const emit = defineEmits<Emits>()
