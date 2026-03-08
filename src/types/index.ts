@@ -4,7 +4,7 @@
 
 // Message Types
 export type MessageRole = 'user' | 'assistant' | 'system'
-export type MessageType = 'text' | 'image' | 'mixed'
+export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'mixed'
 export type MessageStatus = 'sending' | 'sent' | 'error' | 'loading'
 
 export interface Message {
@@ -14,6 +14,8 @@ export interface Message {
   type: MessageType
   content: string
   images?: string[]
+  videos?: string[]
+  audios?: string[]
   timestamp: number
   status: MessageStatus
   metadata?: Record<string, unknown>
@@ -61,9 +63,11 @@ export interface Size {
 
 // Send message data
 export interface SendMessageData {
-  type: 'text' | 'image'
+  type: 'text' | 'image' | 'video' | 'audio'
   content: string
   images?: string[]
+  videos?: string[]
+  audios?: string[]
 }
 
 // Message success data
