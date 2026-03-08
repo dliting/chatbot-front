@@ -128,7 +128,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 interface Emits {
-  (e: 'send-message', data: { content: string; images?: string[] }): void
+  (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void
   (e: 'copy', message: Message): void

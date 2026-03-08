@@ -1,10 +1,26 @@
 <template>
   <div class="chat-input">
     <!-- File Previews -->
-    <div v-if="selectedImages.length > 0" class="chat-input__previews">
-      <div v-for="(img, idx) in selectedImages" :key="idx" class="chat-input__preview">
-        <img :src="img" class="chat-input__preview-img" />
-        <button class="chat-input__preview-remove" @click="removeImage(idx)">
+    <div v-if="selectedFiles.length > 0" class="chat-input__previews">
+      <div v-for="(file, idx) in selectedFiles" :key="idx" class="chat-input__preview">
+        <!-- Image preview -->
+        <img v-if="file.type === 'image'" :src="file.preview" class="chat-input__preview-img" />
+        <!-- Video icon -->
+        <div v-else-if="file.type === 'video'" class="chat-input__preview-media">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="23 7 16 12 23 17 23 7" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <!-- Audio icon -->
+        <div v-else-if="file.type === 'audio'" class="chat-input__preview-media">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 18V5l12-2v13" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="6" cy="18" r="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="18" cy="16" r="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <button class="chat-input__preview-remove" @click="removeFile(idx)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
             <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
@@ -60,7 +76,8 @@
     <input
       ref="fileInputRef"
       type="file"
-      accept="*"
+      accept="image/*,video/mp4,video/webm,audio/mp3,audio/wav,audio/ogg"
+      multiple
       style="display: none"
       @change="handleFileSelect"
     />
@@ -78,8 +95,15 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
 })
 
+interface MediaFile {
+  type: 'image' | 'video' | 'audio'
+  data: string  // base64
+  name: string
+  preview?: string  // 预览URL
+}
+
 interface Emits {
-  (e: 'send', data: { content: string; images?: string[] }): void
+  (e: 'send', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
   (e: 'toggle-voice'): void
 }
 
@@ -91,7 +115,15 @@ const fileInputRef = ref<HTMLInputElement>()
 
 // State
 const inputText = ref('')
-const selectedImages = ref<string[]>([])
+const selectedFiles = ref<MediaFile[]>([])
+
+// Get media type from file
+const getMediaType = (file: File): 'image' | 'video' | 'audio' => {
+  if (file.type.startsWith('image/')) return 'image'
+  if (file.type.startsWith('video/')) return 'video'
+  if (file.type.startsWith('audio/')) return 'audio'
+  return 'image'  // 默认
+}
 
 // Convert file to base64 for direct sending to backend
 const convertFileToBase64 = (file: File): Promise<string> => {
@@ -108,7 +140,7 @@ const convertFileToBase64 = (file: File): Promise<string> => {
 }
 
 // Computed
-const canSend = computed(() => inputText.value.trim() || selectedImages.value.length > 0)
+const canSend = computed(() => inputText.value.trim() || selectedFiles.value.length > 0)
 
 // Methods
 const autoResize = () => {
@@ -128,23 +160,36 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 const handleSend = () => {
   if (props.disabled) return
-  if (!inputText.value.trim() && selectedImages.value.length === 0) return
+  if (!inputText.value.trim() && selectedFiles.value.length === 0) return
 
   const content = inputText.value.trim()
-  const images = [...selectedImages.value]
+  const images = selectedFiles.value
+    .filter(f => f.type === 'image')
+    .map(f => f.data)
+  const videos = selectedFiles.value
+    .filter(f => f.type === 'video')
+    .map(f => f.data)
+  const audios = selectedFiles.value
+    .filter(f => f.type === 'audio')
+    .map(f => f.data)
 
   // Clear input
   inputText.value = ''
-  selectedImages.value = []
+  selectedFiles.value = []
   if (inputRef.value) {
     inputRef.value.style.height = 'auto'
   }
 
-  emit('send', { content, images: images.length > 0 ? images : undefined })
+  emit('send', {
+    content,
+    images: images.length > 0 ? images : undefined,
+    videos: videos.length > 0 ? videos : undefined,
+    audios: audios.length > 0 ? audios : undefined
+  })
 }
 
-const removeImage = (index: number) => {
-  selectedImages.value.splice(index, 1)
+const removeFile = (index: number) => {
+  selectedFiles.value.splice(index, 1)
 }
 
 const handleUploadClick = () => {
@@ -157,10 +202,17 @@ const handleFileSelect = async (e: Event) => {
   if (!files || files.length === 0) return
 
   try {
-    // Convert files to base64 directly
     for (const file of Array.from(files)) {
       const base64 = await convertFileToBase64(file)
-      selectedImages.value.push(base64)
+      const mediaFile: MediaFile = {
+        type: getMediaType(file),
+        data: base64,
+        name: file.name,
+        preview: file.type.startsWith('image/')
+          ? `data:${file.type};base64,${base64}`
+          : undefined
+      }
+      selectedFiles.value.push(mediaFile)
     }
   } catch (error) {
     console.error('File processing failed:', error)
@@ -195,6 +247,22 @@ const handleFileSelect = async (e: Event) => {
     height: 100%;
     object-fit: cover;
     border-radius: 8px;
+  }
+
+  &__preview-media {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    svg {
+      width: 28px;
+      height: 28px;
+      stroke: white;
+    }
   }
 
   &__preview-remove {

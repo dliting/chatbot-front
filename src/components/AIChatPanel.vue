@@ -77,7 +77,7 @@ interface Emits {
   (e: 'create-session'): void
   (e: 'select-session', sessionId: string): void
   (e: 'delete-session', sessionId: string): void
-  (e: 'send-message', data: { content: string; images?: string[] }): void
+  (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void
   (e: 'toggle-theme'): void
