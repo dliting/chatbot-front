@@ -251,7 +251,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
     if (message.role !== 'user') return
 
     // Find and remove the original message and any responses after it
-    const index = messages.value.findIndex(m => m.id === message.id)
+    const index = messages.value.findIndex(m => m.messageId === message.messageId)
     if (index === -1) return
 
     const hasImages = message.images && message.images.length > 0
@@ -289,7 +289,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
    * Delete a message
    */
   const deleteMessage = (messageId: string) => {
-    const index = messages.value.findIndex(m => m.id === messageId)
+    const index = messages.value.findIndex(m => m.messageId === messageId)
     if (index > -1) {
       messages.value.splice(index, 1)
     }

@@ -42,7 +42,7 @@ export function createMessage(
   const messageType = type || getMessageType(content, images, videos, audios)
 
   return {
-    id: generateId('msg'),
+    messageId: generateId('msg'),
     sessionId,
     role,
     type: messageType,
