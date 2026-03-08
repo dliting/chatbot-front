@@ -47,7 +47,7 @@ describe('composables/useSessions', () => {
 
       expect(sessions.value.length).toBe(initialLength + 1)
       expect(currentSessionId.value).toBe(newId)
-      expect(sessions.value[0].id).toBe(newId)
+      expect(sessions.value[0].sessionId).toBe(newId)
       expect(sessions.value[0].title).toBe('New Chat')
     })
 
@@ -57,7 +57,7 @@ describe('composables/useSessions', () => {
       })
 
       // init() is auto-called, session1 created
-      const session1 = sessions.value[0].id
+      const session1 = sessions.value[0].sessionId
       const session2 = createSession()
 
       expect(currentSessionId.value).toBe(session2)
@@ -73,15 +73,15 @@ describe('composables/useSessions', () => {
       })
 
       // init() is auto-called, so we have 1 session already
-      const session1 = sessions.value[0].id
+      const session1 = sessions.value[0].sessionId
       const session2 = createSession()
       const session3 = createSession()
 
-      expect(sessions.value[0].id).toBe(session3)
+      expect(sessions.value[0].sessionId).toBe(session3)
 
       switchSession(session1)
 
-      expect(sessions.value[0].id).toBe(session1)
+      expect(sessions.value[0].sessionId).toBe(session1)
     })
 
     it('should delete a session', () => {
@@ -90,7 +90,7 @@ describe('composables/useSessions', () => {
       })
 
       // init() is auto-called
-      const session1 = sessions.value[0].id
+      const session1 = sessions.value[0].sessionId
       const session2 = createSession()
       const session3 = createSession()
 
@@ -98,7 +98,7 @@ describe('composables/useSessions', () => {
       deleteSession(session2)
 
       expect(sessions.value.length).toBe(beforeLength - 1)
-      expect(sessions.value.find(s => s.id === session2)).toBeUndefined()
+      expect(sessions.value.find(s => s.sessionId === session2)).toBeUndefined()
     })
 
     it('should switch to another session when deleting current', () => {
@@ -107,7 +107,7 @@ describe('composables/useSessions', () => {
       })
 
       // init() is auto-called, session1 created
-      const session1 = sessions.value[0].id
+      const session1 = sessions.value[0].sessionId
       const session2 = createSession()
 
       expect(currentSessionId.value).toBe(session2)
@@ -126,7 +126,7 @@ describe('composables/useSessions', () => {
 
       // Delete all sessions except the init one
       while (sessions.value.length > 1) {
-        deleteSession(sessions.value[sessions.value.length - 1].id)
+        deleteSession(sessions.value[sessions.value.length - 1].sessionId)
       }
 
       const oldId = currentSessionId.value
@@ -157,7 +157,7 @@ describe('composables/useSessions', () => {
     it('should update session title from messages', () => {
       const messages: Message[] = [
         {
-          id: 'msg_1',
+          messageId: 'msg_1',
           sessionId: 'session_1',
           role: 'user',
           type: 'text',
@@ -166,7 +166,7 @@ describe('composables/useSessions', () => {
           status: 'sent',
         },
         {
-          id: 'msg_2',
+          messageId: 'msg_2',
           sessionId: 'session_1',
           role: 'assistant',
           type: 'text',
@@ -182,10 +182,10 @@ describe('composables/useSessions', () => {
       })
 
       // init() is auto-called
-      const sessionId = sessions.value[0].id
+      const sessionId = sessions.value[0].sessionId
       updateSessionTitle(sessionId, messages)
 
-      const session = sessions.value.find(s => s.id === sessionId)
+      const session = sessions.value.find(s => s.sessionId === sessionId)
       expect(session?.title).toBe('This is a custom title')
     })
 
@@ -211,11 +211,12 @@ describe('composables/useSessions', () => {
     it('should load sessions from storage on init', () => {
       const storedSessions: Session[] = [
         {
-          id: 'stored_session_1',
+          sessionId: 'stored_session_1',
           title: 'Stored Chat 1',
           createdAt: Date.now(),
           updatedAt: Date.now(),
           messageCount: 5,
+          unreadCount: 0,
         },
       ]
 
@@ -237,7 +238,7 @@ describe('composables/useSessions', () => {
 
       // init() is auto-called, so currentSession should be defined
       expect(currentSession.value).toBeDefined()
-      expect(currentSession.value?.id).toBe(sessions.value[0].id)
+      expect(currentSession.value?.sessionId).toBe(sessions.value[0].sessionId)
     })
 
     it('should return sorted sessions', () => {
