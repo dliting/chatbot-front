@@ -43,8 +43,9 @@
               />
             </div>
             <!-- Text -->
-            <div v-if="message.content" class="chat-content__text">
-              {{ message.content }}
+            <div v-if="message.content" class="chat-content__text" :class="{ 'markdown-content': message.role === 'assistant' }">
+              <span v-if="message.role === 'assistant'" v-html="formatMarkdownContent(message.content)" />
+              <span v-else>{{ message.content }}</span>
             </div>
             <!-- Typing indicator -->
             <div v-if="message.status === 'loading' && !message.content" class="chat-content__typing">
@@ -63,9 +64,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, h } from 'vue'
+import { ref, watch, nextTick, h, onMounted } from 'vue'
 import type { Message } from '@/types'
 import ChatInput from './ChatInput.vue'
+import { formatMarkdownContent } from '@/utils/helpers'
 
 // Quick action icons
 const WriteIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, [
@@ -132,7 +134,32 @@ const handleMessageDblClick = (message: Message) => {
 }
 
 // Auto-scroll to bottom when messages change
-const messagesRef = ref<HTMLElement>()
+const messagesRef = ref<HTMLElement | null>(null)
+
+// Handle copy button click in code blocks
+onMounted(() => {
+  const container = messagesRef.value
+  if (!container) return
+
+  container.addEventListener('click', async (e) => {
+    const target = e.target as HTMLElement
+    if (!target.classList.contains('code-copy-btn')) return
+
+    const wrapper = target.closest('.code-block-wrapper')
+    const pre = wrapper?.querySelector('pre')
+    if (!pre) return
+
+    const code = pre.textContent || ''
+    await navigator.clipboard.writeText(code)
+
+    target.textContent = '已复制'
+    target.classList.add('copied')
+    setTimeout(() => {
+      target.textContent = '复制'
+      target.classList.remove('copied')
+    }, 1000)
+  })
+})
 
 const scrollToBottom = () => {
   nextTick(() => {
