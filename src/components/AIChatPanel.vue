@@ -9,7 +9,7 @@
     :is-streaming="isStreaming"
     :hide-welcome="hideWelcome"
     :hide-quick-actions="hideQuickActions"
-    @send-message="$emit('send-message', $event)"
+    @send-message="handleSendMessage"
     @quick-action="$emit('quick-action', $event)"
     @create-session="$emit('create-session')"
     @select-session="$emit('select-session', $event)"
@@ -31,7 +31,7 @@
     :hide-welcome="hideWelcome"
     :hide-quick-actions="hideQuickActions"
     :hide-header="hideHeader"
-    @send-message="$emit('send-message', $event)"
+    @send-message="handleSendMessage"
     @quick-action="$emit('quick-action', $event)"
     @create-session="$emit('create-session')"
     @select-session="$emit('select-session', $event)"
@@ -86,5 +86,10 @@ interface Emits {
   (e: 'toggle-theme'): void
 }
 
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
+
+// Handle send message
+const handleSendMessage = (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
+  emit('send-message', data)
+}
 </script>

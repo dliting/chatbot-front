@@ -32,7 +32,7 @@
           :welcome-visible="!hideWelcome && messages.length === 0"
           :quick-actions-visible="!hideQuickActions"
           :is-streaming="isStreaming"
-          @send-message="$emit('send-message', $event)"
+          @send-message="handleSendMessage"
           @quick-action="$emit('quick-action', $event)"
           @edit="$emit('edit', $event)"
         />
@@ -57,7 +57,7 @@
         :welcome-visible="!hideWelcome && messages.length === 0"
         :quick-actions-visible="!hideQuickActions"
         :is-streaming="isStreaming"
-        @send-message="$emit('send-message', $event)"
+        @send-message="handleSendMessage"
         @quick-action="$emit('quick-action', $event)"
         @edit="$emit('edit', $event)"
       />
@@ -123,7 +123,12 @@ interface Emits {
   (e: 'toggle-theme'): void
 }
 
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
+
+// Handle send message
+const handleSendMessage = (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
+  emit('send-message', data)
+}
 
 // Merge config
 const configRef = computed(() => {

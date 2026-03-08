@@ -52,8 +52,21 @@
       :mode="chatMode"
       :layout="layout"
       :config="config"
+      :messages="currentMessages"
+      :sessions="state.sessions.list"
+      :current-session-id="state.sessions.currentId"
+      :is-streaming="false"
+      :hide-welcome="false"
+      :hide-quick-actions="false"
+      :hide-header="!showAIChatHeader"
       :api-client="apiClient"
       @send-message="handleSendMessage"
+      @quick-action="handleQuickAction"
+      @create-session="_handleCreateSession"
+      @select-session="_handleSwitchSession"
+      @delete-session="_handleDeleteSession"
+      @edit="handleEditMessage"
+      @toggle-theme="toggleTheme"
     />
   </div>
 </template>
@@ -187,6 +200,12 @@ const resolvedTheme = computed(() => {
   return config.value.theme
 })
 
+// Get current messages for the active session
+const currentMessages = computed(() => {
+  const sessionId = state.sessions.currentId
+  return state.messages.bySession[sessionId] || []
+})
+
 // Methods
 const toggleTheme = () => {
   // Toggle between light and dark (respecting system theme if set)
@@ -220,6 +239,11 @@ const handleEditMessage = (message: import('@/types').Message) => {
   emit('editMessage', message)
 }
 
+// Handle quick action - send predefined text as message
+const handleQuickAction = (text: string) => {
+  handleSendMessage({ content: text })
+}
+
 // Handle send message - use apiClient to send to backend
 const handleSendMessage = async (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
   const client = apiClient.value
@@ -235,6 +259,15 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
     return
   }
 
+  // Sync messages.currentSessionId with sessions.currentId to ensure consistency
+  state.messages.currentSessionId = sessionId
+
+  // Get or create messages array for current session
+  if (!state.messages.bySession[sessionId]) {
+    state.messages.bySession[sessionId] = []
+  }
+  const currentMessages = state.messages.bySession[sessionId]
+
   try {
     // Add user message to state
     const userMessage: import('@/types').Message = {
@@ -249,14 +282,14 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       timestamp: Date.now(),
       status: 'sending'
     }
-    state.messages.list.push(userMessage)
+    currentMessages.push(userMessage)
 
     // Get AI response using streaming
     let fullContent = ''
     const assistantMessageId = `msg-${Date.now() + 1}`
 
     // Add placeholder for AI response
-    state.messages.list.push({
+    currentMessages.push({
       messageId: assistantMessageId,
       sessionId,
       role: 'assistant',
@@ -279,17 +312,17 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       if (chunk.type === 'token' && chunk.content) {
         fullContent += chunk.content
         // Update assistant message content
-        const assistantMsg = state.messages.list.find(m => m.messageId === assistantMessageId)
+        const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
         if (assistantMsg) {
           assistantMsg.content = fullContent
         }
       } else if (chunk.type === 'end') {
         // Mark message as sent
-        const userMsg = state.messages.list.find(m => m.messageId === userMessage.messageId)
+        const userMsg = currentMessages.find(m => m.messageId === userMessage.messageId)
         if (userMsg) {
           userMsg.status = 'sent'
         }
-        const assistantMsg = state.messages.list.find(m => m.messageId === assistantMessageId)
+        const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
         if (assistantMsg) {
           assistantMsg.status = 'sent'
         }
@@ -298,7 +331,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
   } catch (error) {
     console.error('Failed to send message:', error)
     // Mark message as error
-    const userMsg = state.messages.list.find(m => m.role === 'user' && m.status === 'sending')
+    const userMsg = currentMessages.find(m => m.role === 'user' && m.status === 'sending')
     if (userMsg) {
       userMsg.status = 'error'
     }
