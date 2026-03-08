@@ -76,7 +76,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, toRef } from 'vue'
+import { computed } from 'vue'
 import type { ChatMode, Layout, ChatbotConfig } from '@/types'
 import { defaultChatbotConfig } from '@/types/config'
 import { useChatView } from '@/composables/useChatView'
@@ -121,7 +121,7 @@ interface Emits {
   (e: 'toggle-theme'): void
 }
 
-const emit = defineEmits<Emits>()
+defineEmits<Emits>()
 
 // Merge config
 const configRef = computed(() => {

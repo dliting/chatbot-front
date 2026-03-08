@@ -137,8 +137,8 @@ const closePanel = () => {
 }
 
 const toggleTheme = () => {
-  const newTheme = configRef.value.theme === 'light' ? 'dark' : 'light'
   // Note: theme is managed externally through config
+  emit('toggle-theme')
 }
 
 const handleSend = (data: { content: string; images?: string[] }) => {

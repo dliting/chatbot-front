@@ -42,7 +42,6 @@
 
 <script setup lang="ts">
 import type { ChatMode, Layout, ChatbotConfig, Message, Session } from '@/types'
-import { defaultChatbotConfig } from '@/types/config'
 
 // Components
 import FloatingChatPanel from './FloatingChatPanel.vue'
