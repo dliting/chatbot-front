@@ -2,7 +2,7 @@
  * Unit tests for stream utilities
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createMockStream, StreamAccumulator } from '@/utils/stream'
+import { createMockStream, StreamAccumulator, parseSSELine } from '@/utils/stream'
 
 describe('utils/stream', () => {
   describe('createMockStream', () => {
@@ -47,6 +47,46 @@ describe('utils/stream', () => {
           break
         }
       }
+    })
+  })
+
+  describe('parseSSELine', () => {
+    it('should return null for empty line', () => {
+      const result = parseSSELine('')
+      expect(result).toBeNull()
+    })
+
+    it('should return null for whitespace-only line', () => {
+      const result = parseSSELine('   ')
+      expect(result).toBeNull()
+    })
+
+    it('should return null for comment line', () => {
+      const result = parseSSELine(': this is a comment')
+      expect(result).toBeNull()
+    })
+
+    it('should handle data without colon', () => {
+      const result = parseSSELine('data')
+      expect(result).toBeNull()
+    })
+
+    it('should parse token event', () => {
+      const result = parseSSELine('data: {"type":"token","content":"test"}')
+      expect(result?.type).toBe('token')
+      expect(result?.content).toBe('test')
+    })
+
+    it('should parse start event', () => {
+      const result = parseSSELine('data: {"type":"start","messageId":"msg_123"}')
+      expect(result?.type).toBe('start')
+      expect(result?.messageId).toBe('msg_123')
+    })
+
+    it('should parse end event', () => {
+      const result = parseSSELine('data: {"type":"end","fullContent":"completed"}')
+      expect(result?.type).toBe('end')
+      expect(result?.fullContent).toBe('completed')
     })
   })
 

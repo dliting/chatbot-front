@@ -205,12 +205,12 @@ export function parseSSELine(line: string): StreamEvent | null {
     return null
   }
 
-  const parts = line.split(':', 2)
-  if (parts.length < 2) {
+  const colonIndex = line.indexOf(':')
+  if (colonIndex === -1) {
     return null
   }
 
-  const [, data] = parts
+  const data = line.substring(colonIndex + 1)
 
   try {
     return JSON.parse(data.trim()) as StreamEvent
