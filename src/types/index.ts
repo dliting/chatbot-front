@@ -8,7 +8,7 @@ export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'mixed'
 export type MessageStatus = 'sending' | 'sent' | 'error' | 'loading'
 
 export interface Message {
-  id: string
+  messageId: string
   sessionId: string
   role: MessageRole
   type: MessageType
@@ -23,7 +23,7 @@ export interface Message {
 
 // Session Types
 export interface Session {
-  id: string
+  sessionId: string
   title: string
   createdAt: number
   updatedAt: number

@@ -3,6 +3,7 @@
  */
 import type { Message, MessageType, MessageRole } from '@/types'
 import { generateId } from './helpers'
+import DOMPurify from 'dompurify'
 
 /**
  * Get message type based on content and attachments
@@ -41,7 +42,7 @@ export function createMessage(
   const messageType = type || getMessageType(content, images, videos, audios)
 
   return {
-    id: generateId('msg'),
+    messageId: generateId('msg'),
     sessionId,
     role,
     type: messageType,
@@ -207,12 +208,19 @@ export function getMessageStats(messages: Message[]): MessageStats {
  * Sanitize message content to prevent XSS
  */
 export function sanitizeMessageContent(content: string): string {
-  // Basic HTML escaping
-  const div = document.createElement('div')
-  div.textContent = content
-  return div.innerHTML
+  // DOMPurify requires browser environment
+  if (typeof window === 'undefined') {
+    return content
+  }
 
-  // For production, consider using a proper sanitization library like DOMPurify
+  if (!content) {
+    return ''
+  }
+
+  return DOMPurify.sanitize(content, {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'code', 'pre'],
+    ALLOWED_ATTR: []
+  })
 }
 
 /**

@@ -61,18 +61,20 @@ describe('useSessions', () => {
     it('should load sessions from storage on init', () => {
       const storedSessions: Session[] = [
         {
-          id: 'session-1',
+          sessionId: 'session-1',
           title: 'Chat 1',
           createdAt: Date.now() - 10000,
           updatedAt: Date.now() - 5000,
           messageCount: 5,
+          unreadCount: 0,
         },
         {
-          id: 'session-2',
+          sessionId: 'session-2',
           title: 'Chat 2',
           createdAt: Date.now() - 20000,
           updatedAt: Date.now() - 15000,
           messageCount: 3,
+          unreadCount: 0,
         },
       ]
 
@@ -85,7 +87,7 @@ describe('useSessions', () => {
 
       // init() is auto-called, loads from storage
       expect(sessions.value.length).toBe(2)
-      expect(sessions.value[0].id).toBe('session-1')
+      expect(sessions.value[0].sessionId).toBe('session-1')
       expect(currentSessionId.value).toBe('session-1')
     })
   })
@@ -102,7 +104,7 @@ describe('useSessions', () => {
 
       expect(sessions.value.length).toBe(initialLength + 1)
       expect(currentSessionId.value).toBe(sessionId)
-      expect(sessions.value[0].id).toBe(sessionId)
+      expect(sessions.value[0].sessionId).toBe(sessionId)
       expect(sessions.value[0].title).toBe('New Chat')
     })
 
@@ -112,12 +114,12 @@ describe('useSessions', () => {
       })
 
       // init() is auto-called
-      const firstId = sessions.value[0].id
+      const firstId = sessions.value[0].sessionId
       const secondId = createSession()
 
       expect(sessions.value.length).toBe(2)
-      expect(sessions.value[0].id).toBe(secondId)
-      expect(sessions.value[1].id).toBe(firstId)
+      expect(sessions.value[0].sessionId).toBe(secondId)
+      expect(sessions.value[1].sessionId).toBe(firstId)
     })
 
     it('should enforce max sessions limit', () => {
@@ -141,7 +143,7 @@ describe('useSessions', () => {
       })
 
       // init() is auto-called
-      const firstId = sessions.value[0].id
+      const firstId = sessions.value[0].sessionId
       expect(currentSessionId.value).toBe(firstId)
 
       const secondId = createSession()
@@ -195,14 +197,14 @@ describe('useSessions', () => {
       const secondId = createSession()
       const thirdId = createSession()
 
-      expect(sessions.value[0].id).toBe(thirdId)
+      expect(sessions.value[0].sessionId).toBe(thirdId)
 
       switchSession(firstId)
 
-      expect(sessions.value[0].id).toBe(firstId)
+      expect(sessions.value[0].sessionId).toBe(firstId)
       // After moving first to top, the order should be: [first, third, second]
-      expect(sessions.value[1].id).toBe(thirdId)
-      expect(sessions.value[2].id).toBe(secondId)
+      expect(sessions.value[1].sessionId).toBe(thirdId)
+      expect(sessions.value[2].sessionId).toBe(secondId)
     })
 
     it('should not switch to non-existent session', () => {
@@ -211,12 +213,12 @@ describe('useSessions', () => {
       })
 
       const firstId = createSession()
-      const originalOrder = [...sessions.value.map(s => s.id)]
+      const originalOrder = [...sessions.value.map(s => s.sessionId)]
 
       switchSession('non-existent')
 
       expect(currentSessionId.value).toBe(firstId)
-      expect(sessions.value.map(s => s.id)).toEqual(originalOrder)
+      expect(sessions.value.map(s => s.sessionId)).toEqual(originalOrder)
     })
 
     it('should save to storage after switch', () => {
@@ -236,7 +238,7 @@ describe('useSessions', () => {
 
       if (stored) {
         const sessions = JSON.parse(stored) as Session[]
-        expect(sessions[0].id).toBe(firstId)
+        expect(sessions[0].sessionId).toBe(firstId)
       }
     })
   })
@@ -252,7 +254,7 @@ describe('useSessions', () => {
       updateSession(sessionId, { title: 'Updated Title' })
 
       expect(sessions.value[0].title).toBe('Updated Title')
-      expect(sessions.value[0].id).toBe(sessionId)
+      expect(sessions.value[0].sessionId).toBe(sessionId)
     })
 
     it('should update updatedAt timestamp', () => {
@@ -313,7 +315,7 @@ describe('useSessions', () => {
 
       const messages = [
         {
-          id: 'msg-1',
+          messageId: 'msg-1',
           sessionId,
           role: 'user' as const,
           content: 'Hello world',
@@ -335,7 +337,7 @@ describe('useSessions', () => {
       })
 
       // init() is auto-called
-      const firstId = sessions.value[0].id
+      const firstId = sessions.value[0].sessionId
       const secondId = createSession()
 
       expect(sessions.value.length).toBe(2)
@@ -343,7 +345,7 @@ describe('useSessions', () => {
       deleteSession(firstId)
 
       expect(sessions.value.length).toBe(1)
-      expect(sessions.value[0].id).toBe(secondId)
+      expect(sessions.value[0].sessionId).toBe(secondId)
     })
 
     it('should switch to another session when deleting current session', () => {
@@ -352,7 +354,7 @@ describe('useSessions', () => {
       })
 
       // init() is auto-called
-      const firstId = sessions.value[0].id
+      const firstId = sessions.value[0].sessionId
       const secondId = createSession()
 
       expect(currentSessionId.value).toBe(secondId)
@@ -369,7 +371,7 @@ describe('useSessions', () => {
       })
 
       // init() is auto-called
-      const sessionId = sessions.value[0].id
+      const sessionId = sessions.value[0].sessionId
       expect(sessions.value.length).toBe(1)
 
       deleteSession(sessionId)
@@ -398,7 +400,7 @@ describe('useSessions', () => {
       })
 
       // init() is auto-called
-      const firstId = sessions.value[0].id
+      const firstId = sessions.value[0].sessionId
       const secondId = createSession()
 
       deleteSession(firstId)
@@ -409,7 +411,7 @@ describe('useSessions', () => {
       if (stored) {
         const sessions = JSON.parse(stored) as Session[]
         expect(sessions.length).toBe(1)
-        expect(sessions[0].id).toBe(secondId)
+        expect(sessions[0].sessionId).toBe(secondId)
       }
     })
   })
@@ -441,14 +443,14 @@ describe('useSessions', () => {
 
       // init() is auto-called, so currentSession is defined
       expect(currentSession.value).toBeDefined()
-      expect(currentSession.value?.id).toBe(sessions.value[0].id)
+      expect(currentSession.value?.sessionId).toBe(sessions.value[0].sessionId)
 
-      const firstId = sessions.value[0].id
+      const firstId = sessions.value[0].sessionId
       const secondId = createSession()
-      expect(currentSession.value?.id).toBe(secondId)
+      expect(currentSession.value?.sessionId).toBe(secondId)
 
       switchSession(firstId)
-      expect(currentSession.value?.id).toBe(firstId)
+      expect(currentSession.value?.sessionId).toBe(firstId)
     })
 
     it('should return sorted sessions', () => {

@@ -70,7 +70,7 @@ AIChat (根组件)
 │       ├── WelcomeScreen (欢迎界面)
 │       └── InputArea (输入区域)
 │
-├── ChatSidebar (边栏模式) ← 新增
+├── ChatSidebar (边栏模式) 
 │   ├── SidebarContainer (边栏容器)
 │   │   ├── TabView (Tab切换视图)
 │   │   │   ├── SessionTab (会话Tab)

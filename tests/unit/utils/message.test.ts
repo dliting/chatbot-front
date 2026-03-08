@@ -18,6 +18,7 @@ import {
   getLastMessage,
   getMessageStats,
   truncateMessage,
+  sanitizeMessageContent,
 } from '@/utils/message'
 import type { Message } from '@/types'
 
@@ -316,6 +317,70 @@ describe('utils/message', () => {
 
       const truncated = truncateMessage(msg, 100)
       expect(truncated.length).toBeLessThanOrEqual(103)
+    })
+  })
+
+  describe('sanitizeMessageContent', () => {
+    it('should sanitize malicious script tags', () => {
+      const malicious = '<script>alert("XSS")</script>Hello'
+      const result = sanitizeMessageContent(malicious)
+      expect(result).not.toContain('<script>')
+      expect(result).toContain('Hello')
+    })
+
+    it('should sanitize event handlers', () => {
+      const malicious = '<div onclick="alert(1)">Click</div>'
+      const result = sanitizeMessageContent(malicious)
+      expect(result).not.toContain('onclick')
+    })
+
+    it('should allow safe formatting tags', () => {
+      const safe = '<p>Hello <strong>world</strong></p>'
+      const result = sanitizeMessageContent(safe)
+      expect(result).toContain('<p>')
+      expect(result).toContain('<strong>')
+    })
+
+    it('should sanitize SVG-based XSS attacks', () => {
+      const malicious = '<svg onload="alert(1)">Text</svg>'
+      const result = sanitizeMessageContent(malicious)
+      expect(result).not.toContain('onload')
+      expect(result).not.toContain('<svg>')
+    })
+
+    it('should sanitize iframe tags', () => {
+      const malicious = '<iframe src="javascript:alert(1)"></iframe>Hello'
+      const result = sanitizeMessageContent(malicious)
+      expect(result).not.toContain('<iframe>')
+      expect(result).toContain('Hello')
+    })
+
+    it('should sanitize CSS-based attacks', () => {
+      const malicious = '<div style="background:url(javascript:alert(1))">Text</div>'
+      const result = sanitizeMessageContent(malicious)
+      expect(result).not.toContain('style=')
+    })
+
+    it('should sanitize javascript: protocol', () => {
+      const malicious = '<a href="javascript:alert(1)">Click</a>'
+      const result = sanitizeMessageContent(malicious)
+      expect(result).not.toContain('javascript:')
+    })
+
+    it('should sanitize data URLs with script content', () => {
+      const malicious = '<img src="data:text/html,<script>alert(1)</script>">'
+      const result = sanitizeMessageContent(malicious)
+      expect(result).not.toContain('data:text/html')
+    })
+
+    it('should handle empty string', () => {
+      const result = sanitizeMessageContent('')
+      expect(result).toBe('')
+    })
+
+    it('should handle string with only whitespace', () => {
+      const result = sanitizeMessageContent('   ')
+      expect(result).toBe('   ')
     })
   })
 })

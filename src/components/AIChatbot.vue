@@ -271,7 +271,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
   try {
     // Add user message to state
     const userMessage: import('@/types').Message = {
-      id: `msg-${Date.now()}`,
+      messageId: `msg-${Date.now()}`,
       sessionId,
       role: 'user',
       type: data.images?.length ? 'image' : data.videos?.length ? 'video' : data.audios?.length ? 'audio' : 'text',
@@ -290,7 +290,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
 
     // Add placeholder for AI response
     currentMessages.push({
-      id: assistantMessageId,
+      messageId: assistantMessageId,
       sessionId,
       role: 'assistant',
       type: 'text',
@@ -312,17 +312,17 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       if (chunk.type === 'token' && chunk.content) {
         fullContent += chunk.content
         // Update assistant message content
-        const assistantMsg = currentMessages.find(m => m.id === assistantMessageId)
+        const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
         if (assistantMsg) {
           assistantMsg.content = fullContent
         }
       } else if (chunk.type === 'end') {
         // Mark message as sent
-        const userMsg = currentMessages.find(m => m.id === userMessage.id)
+        const userMsg = currentMessages.find(m => m.messageId === userMessage.messageId)
         if (userMsg) {
           userMsg.status = 'sent'
         }
-        const assistantMsg = currentMessages.find(m => m.id === assistantMessageId)
+        const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
         if (assistantMsg) {
           assistantMsg.status = 'sent'
         }
@@ -331,7 +331,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
   } catch (error) {
     console.error('Failed to send message:', error)
     // Mark message as error
-    const userMsg = state.messages.list.find(m => m.role === 'user' && m.status === 'sending')
+    const userMsg = currentMessages.find(m => m.role === 'user' && m.status === 'sending')
     if (userMsg) {
       userMsg.status = 'error'
     }

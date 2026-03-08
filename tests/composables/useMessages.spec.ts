@@ -39,7 +39,7 @@ describe('useMessages', () => {
       expect(messageCount.value).toBe(0)
 
       messages.value.push({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: 'session-1',
         role: 'user',
         content: 'Hello',
@@ -56,7 +56,7 @@ describe('useMessages', () => {
       expect(lastMessage.value).toBeUndefined()
 
       messages.value.push({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: 'session-1',
         role: 'user',
         content: 'First',
@@ -65,7 +65,7 @@ describe('useMessages', () => {
       })
 
       messages.value.push({
-        id: 'msg-2',
+        messageId: 'msg-2',
         sessionId: 'session-1',
         role: 'assistant',
         content: 'Second',
@@ -82,7 +82,7 @@ describe('useMessages', () => {
       const { messages, sendTextMessage } = useMessages({
         onSendMessage: mockSendMessage,
         streamResponse: async function* () {
-          yield { id: 'msg-2', role: 'assistant', content: 'Hi', timestamp: Date.now(), status: 'sent' }
+          yield { messageId: 'msg-2', role: 'assistant', content: 'Hi', timestamp: Date.now(), status: 'sent' }
         },
       })
 
@@ -339,7 +339,7 @@ describe('useMessages', () => {
       await resendMessage(originalMessage)
 
       // Should have removed original and added new messages
-      expect(messages.value[0].id).not.toBe(originalMessage.id)
+      expect(messages.value[0].messageId).not.toBe(originalMessage.messageId)
       expect(messages.value[0].content).toBe('Hello')
     })
 
@@ -349,7 +349,7 @@ describe('useMessages', () => {
       })
 
       const assistantMessage: Message = {
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: 'session-1',
         role: 'assistant',
         content: 'Hello',
@@ -363,7 +363,7 @@ describe('useMessages', () => {
 
       // Should not have changed
       expect(messages.value.length).toBe(1)
-      expect(messages.value[0].id).toBe('msg-1')
+      expect(messages.value[0].messageId).toBe('msg-1')
     })
 
     it('should resend message with images', async () => {
@@ -431,7 +431,7 @@ describe('useMessages', () => {
       const { messages, deleteMessage } = useMessages()
 
       messages.value.push({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: 'session-1',
         role: 'user',
         content: 'Hello',
@@ -459,7 +459,7 @@ describe('useMessages', () => {
       const { messages, clearMessages } = useMessages()
 
       messages.value.push({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: 'session-1',
         role: 'user',
         content: 'Hello',
@@ -468,7 +468,7 @@ describe('useMessages', () => {
       })
 
       messages.value.push({
-        id: 'msg-2',
+        messageId: 'msg-2',
         sessionId: 'session-1',
         role: 'assistant',
         content: 'Hi there',
@@ -489,7 +489,7 @@ describe('useMessages', () => {
       const { messages, getSessionTitle } = useMessages()
 
       messages.value.push({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: 'session-1',
         role: 'user',
         content: 'How do I create a Vue component?',

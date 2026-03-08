@@ -24,10 +24,10 @@
     <div class="session-list-view__list">
       <div
         v-for="session in sortedSessions"
-        :key="session.id"
+        :key="session.sessionId"
         class="session-list-view__item"
-        :class="{ 'session-list-view__item--active': session.id === currentSessionId }"
-        @click="$emit('select-session', session.id)"
+        :class="{ 'session-list-view__item--active': session.sessionId === currentSessionId }"
+        @click="$emit('select-session', session.sessionId)"
       >
         <div class="session-list-view__item-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -39,9 +39,9 @@
           <div class="session-list-view__item-time">{{ formatTime(session.updatedAt) }}</div>
         </div>
         <button
-          v-if="session.id === currentSessionId || sessions.length > 1"
+          v-if="session.sessionId === currentSessionId || sessions.length > 1"
           class="session-list-view__item-delete"
-          @click.stop="$emit('delete-session', session.id)"
+          @click.stop="$emit('delete-session', session.sessionId)"
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"/>

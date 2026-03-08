@@ -54,7 +54,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
    */
   const createSession = (): string => {
     const newSession: Session = {
-      id: generateId('session'),
+      sessionId: generateId('session'),
       title: 'New Chat',
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -71,11 +71,11 @@ export function useSessions(options: UseSessionsOptions = {}) {
     }
 
     // Switch to new session
-    currentSessionId.value = newSession.id
+    currentSessionId.value = newSession.sessionId
 
     saveToStorage(sessions.value)
 
-    return newSession.id
+    return newSession.sessionId
   }
 
   /**
@@ -87,7 +87,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
 
     if (stored.length > 0) {
       // Use most recent session
-      currentSessionId.value = stored[0].id
+      currentSessionId.value = stored[0].sessionId
     } else {
       // Create new session
       createSession()
@@ -101,11 +101,11 @@ export function useSessions(options: UseSessionsOptions = {}) {
    * Switch to a different session
    */
   const switchSession = (sessionId: string): void => {
-    const session = sessions.value.find(s => s.id === sessionId)
+    const session = sessions.value.find(s => s.sessionId === sessionId)
     if (session) {
       currentSessionId.value = sessionId
       // Move to top
-      const index = sessions.value.findIndex(s => s.id === sessionId)
+      const index = sessions.value.findIndex(s => s.sessionId === sessionId)
       sessions.value.splice(index, 1)
       sessions.value.unshift(session)
       saveToStorage(sessions.value)
@@ -116,7 +116,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
    * Update a session
    */
   const updateSession = (sessionId: string, updates: Partial<Session>): void => {
-    const index = sessions.value.findIndex(s => s.id === sessionId)
+    const index = sessions.value.findIndex(s => s.sessionId === sessionId)
     if (index > -1) {
       Object.assign(sessions.value[index], updates, { updatedAt: Date.now() })
       saveToStorage(sessions.value)
@@ -127,7 +127,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
    * Update session title
    */
   const updateSessionTitle = (sessionId: string, messages: import('@/types').Message[]): void => {
-    const index = sessions.value.findIndex(s => s.id === sessionId)
+    const index = sessions.value.findIndex(s => s.sessionId === sessionId)
     if (index > -1) {
       const title = extractSessionTitle(messages)
       sessions.value[index].title = title
@@ -139,7 +139,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
    * Delete a session
    */
   const deleteSession = (sessionId: string): void => {
-    const index = sessions.value.findIndex(s => s.id === sessionId)
+    const index = sessions.value.findIndex(s => s.sessionId === sessionId)
     if (index === -1) return
 
     // Remove session
@@ -148,7 +148,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
     // If deleted session was current, switch to another
     if (sessionId === currentSessionId.value) {
       if (sessions.value.length > 0) {
-        currentSessionId.value = sessions.value[0].id
+        currentSessionId.value = sessions.value[0].sessionId
       } else {
         createSession()
       }
@@ -169,7 +169,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
    * Get current session
    */
   const getCurrentSession = computed((): Session | undefined => {
-    return sessions.value.find(s => s.id === currentSessionId.value)
+    return sessions.value.find(s => s.sessionId === currentSessionId.value)
   })
 
   /**
