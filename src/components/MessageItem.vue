@@ -36,6 +36,34 @@
           />
         </div>
 
+        <!-- Video content -->
+        <div v-if="hasVideos" class="chatbot-message__videos">
+          <div
+            v-for="(video, index) in message.videos"
+            :key="`video-${index}`"
+            class="chatbot-message__video"
+            @click="$emit('video-click', video)"
+          >
+            <video :src="`data:video/mp4;base64,${video}`" class="chatbot-message__video-player" preload="metadata" />
+            <div class="chatbot-message__video-overlay">
+              <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audio content -->
+        <div v-if="hasAudios" class="chatbot-message__audios">
+          <div
+            v-for="(audio, index) in message.audios"
+            :key="`audio-${index}`"
+            class="chatbot-message__audio"
+          >
+            <audio :src="`data:audio/mp3;base64,${audio}`" controls class="chatbot-message__audio-player" />
+          </div>
+        </div>
+
         <!-- Streaming indicator -->
         <span v-if="isStreaming" class="chatbot-message__cursor"/>
 
@@ -137,6 +165,8 @@ interface Emits {
   (e: 'delete'): void
   (e: 'resend'): void
   (e: 'image-click', url: string): void
+  (e: 'video-click', url: string): void
+  (e: 'audio-click', url: string): void
   (e: 'edit', message: Message): void
 }
 
@@ -147,6 +177,8 @@ const isUser = computed(() => props.message.role === 'user')
 const isError = computed(() => props.message.status === 'error')
 const hasText = computed(() => Boolean(props.message.content))
 const hasImages = computed(() => Boolean(props.message.images?.length))
+const hasVideos = computed(() => Boolean(props.message.videos?.length))
+const hasAudios = computed(() => Boolean(props.message.audios?.length))
 const canCopy = computed(() => hasText.value && !props.isStreaming)
 
 const label = computed(() => isUser.value ? 'You' : 'AI Assistant')
@@ -170,6 +202,8 @@ const bubbleClasses = computed(() => [
   {
     'chatbot-message__bubble--image': !hasText.value && hasImages.value,
     'chatbot-message__bubble--mixed': hasText.value && hasImages.value,
+    'chatbot-message__bubble--video': hasVideos.value,
+    'chatbot-message__bubble--audio': hasAudios.value,
   },
 ])
 
@@ -356,6 +390,60 @@ const handleDoubleClick = () => {
     &:hover {
       transform: scale(1.05);
     }
+  }
+
+  &__videos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  &__video {
+    position: relative;
+    width: 200px;
+    height: 150px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    background: #000;
+
+    &-player {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    &-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.3);
+
+      svg {
+        width: 48px;
+        height: 48px;
+        fill: white;
+      }
+    }
+  }
+
+  &__audios {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+    width: 250px;
+  }
+
+  &__audio-player {
+    width: 100%;
+    height: 40px;
   }
 
   &__cursor {
