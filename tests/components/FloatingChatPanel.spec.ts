@@ -417,4 +417,511 @@ describe('FloatingChatPanel Component', () => {
       expect(chatHeader.props('showCloseButton')).toBe(true)
     })
   })
+
+  describe('Event Emissions', () => {
+    it('should emit send-message event when ChatContent sends a message', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
+      await chatContent.vm.$emit('send-message', { content: 'Test message' })
+      await nextTick()
+
+      expect(wrapper.emitted('send-message')).toBeTruthy()
+      expect(wrapper.emitted('send-message')?.[0]).toEqual([{ content: 'Test message' }])
+    })
+
+    it('should emit send-message with images when ChatContent sends a message with images', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
+      await chatContent.vm.$emit('send-message', { content: 'Test', images: ['img1.jpg', 'img2.jpg'] })
+      await nextTick()
+
+      expect(wrapper.emitted('send-message')).toBeTruthy()
+      expect(wrapper.emitted('send-message')?.[0]).toEqual([{ content: 'Test', images: ['img1.jpg', 'img2.jpg'] }])
+    })
+
+    it('should emit quick-action event when quick action is clicked', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
+      await chatContent.vm.$emit('quick-action', 'What is AI?')
+      await nextTick()
+
+      expect(wrapper.emitted('quick-action')).toBeTruthy()
+      expect(wrapper.emitted('quick-action')?.[0]).toEqual(['What is AI?'])
+    })
+
+    it('should emit edit-message event when message is edited', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
+      const editedMessage = { ...mockMessages[0], content: 'Edited content' }
+      await chatContent.vm.$emit('edit', editedMessage)
+      await nextTick()
+
+      expect(wrapper.emitted('edit-message')).toBeTruthy()
+      expect(wrapper.emitted('edit-message')?.[0]).toEqual([editedMessage])
+    })
+
+    it('should emit toggle-theme event when theme toggle button is clicked', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Find the theme toggle button and click it
+      const themeBtn = wrapper.findAll('.chat-header__btn').at(1)
+      await themeBtn?.trigger('click')
+      await nextTick()
+
+      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
+    })
+
+    it('should emit create-session event when creating new session', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Go to sessions view
+      const sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await sessionsBtn.trigger('click')
+      await nextTick()
+
+      // Find SessionListView and emit create-session
+      const sessionListView = wrapper.findComponent({ name: 'SessionListView' })
+      await sessionListView.vm.$emit('create-session')
+      await nextTick()
+
+      expect(wrapper.emitted('create-session')).toBeTruthy()
+    })
+
+    it('should emit select-session event when selecting a session', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Go to sessions view
+      const sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await sessionsBtn.trigger('click')
+      await nextTick()
+
+      // Find SessionListView and emit select-session
+      const sessionListView = wrapper.findComponent({ name: 'SessionListView' })
+      await sessionListView.vm.$emit('select-session', 'session_2')
+      await nextTick()
+
+      expect(wrapper.emitted('select-session')).toBeTruthy()
+      expect(wrapper.emitted('select-session')?.[0]).toEqual(['session_2'])
+    })
+
+    it('should emit delete-session event when deleting a session', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Go to sessions view
+      const sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await sessionsBtn.trigger('click')
+      await nextTick()
+
+      // Find SessionListView and emit delete-session
+      const sessionListView = wrapper.findComponent({ name: 'SessionListView' })
+      await sessionListView.vm.$emit('delete-session', 'session_2')
+      await nextTick()
+
+      expect(wrapper.emitted('delete-session')).toBeTruthy()
+      expect(wrapper.emitted('delete-session')?.[0]).toEqual(['session_2'])
+    })
+
+    it('should switch to chat view after selecting session', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Go to sessions view
+      let sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await sessionsBtn.trigger('click')
+      await nextTick()
+
+      // Verify we're in sessions view
+      let sessionListView = wrapper.findComponent({ name: 'SessionListView' })
+      expect(sessionListView.exists()).toBe(true)
+
+      // Select a session
+      await sessionListView.vm.$emit('select-session', 'session_2')
+      await nextTick()
+
+      // Should be back to chat view
+      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
+      expect(chatContent.exists()).toBe(true)
+    })
+  })
+
+  describe('Boundary Cases', () => {
+    it('should render correctly with empty messages array', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: [],
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
+      expect(chatContent.exists()).toBe(true)
+      // welcomeVisible should be true when messages is empty
+      expect(chatContent.props('welcomeVisible')).toBe(true)
+    })
+
+    it('should render correctly with empty sessions array', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: [],
+          sessions: [],
+          currentSessionId: '',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Go to sessions view
+      const sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await sessionsBtn.trigger('click')
+      await nextTick()
+
+      const sessionListView = wrapper.findComponent({ name: 'SessionListView' })
+      expect(sessionListView.exists()).toBe(true)
+      expect(sessionListView.props('sessions')).toEqual([])
+    })
+
+    it('should use default config values when config is empty', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: {},
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Should render without errors
+      expect(wrapper.exists()).toBe(true)
+    })
+
+    it('should handle dark theme correctly', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true, theme: 'dark' },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const draggableWindow = wrapper.findComponent({ name: 'DraggableWindow' })
+      expect(draggableWindow.props('theme')).toBe('dark')
+
+      const chatHeader = wrapper.findComponent({ name: 'ChatHeader' })
+      expect(chatHeader.props('theme')).toBe('dark')
+    })
+
+    it('should pass position to SuspendedBall', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, position: 'top-left' },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const suspendedBall = wrapper.findComponent({ name: 'SuspendedBall' })
+      expect(suspendedBall.props('position')).toBe('top-left')
+    })
+
+    it('should handle bottom-left position', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { position: 'bottom-left' },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const suspendedBall = wrapper.findComponent({ name: 'SuspendedBall' })
+      expect(suspendedBall.props('position')).toBe('bottom-left')
+    })
+
+    it('should handle top-right position', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { position: 'top-right' },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const suspendedBall = wrapper.findComponent({ name: 'SuspendedBall' })
+      expect(suspendedBall.props('position')).toBe('top-right')
+    })
+
+    it('should start with panel open when defaultExpanded is true', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Panel should be open
+      const draggableWindow = wrapper.findComponent({ name: 'DraggableWindow' })
+      expect(draggableWindow.exists()).toBe(true)
+    })
+
+    it('should start with panel closed when defaultExpanded is false', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: false },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Panel should be closed, SuspendedBall should be visible
+      const draggableWindow = wrapper.findComponent({ name: 'DraggableWindow' })
+      expect(draggableWindow.exists()).toBe(false)
+
+      const suspendedBall = wrapper.findComponent({ name: 'SuspendedBall' })
+      expect(suspendedBall.exists()).toBe(true)
+    })
+
+    it('should pass primaryColor to SuspendedBall', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, primaryColor: '#ff0000' },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const suspendedBall = wrapper.findComponent({ name: 'SuspendedBall' })
+      expect(suspendedBall.props('backgroundColor')).toBe('#ff0000')
+    })
+  })
+
+  describe('Exposed Methods', () => {
+    it('should expose openPanel method', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Panel should be initially closed
+      const vm = wrapper.vm as unknown as { isPanelOpen: boolean }
+      expect(vm.isPanelOpen).toBe(false)
+
+      // Call openPanel
+      wrapper.vm.openPanel()
+      await nextTick()
+
+      expect(vm.isPanelOpen).toBe(true)
+    })
+
+    it('should expose closePanel method', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Panel should be initially open
+      const vm = wrapper.vm as unknown as { isPanelOpen: boolean }
+      expect(vm.isPanelOpen).toBe(true)
+
+      // Call closePanel
+      wrapper.vm.closePanel()
+      await nextTick()
+
+      expect(vm.isPanelOpen).toBe(false)
+    })
+
+    it('should expose toggleTheme method', async () => {
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: { ...mockConfig, defaultExpanded: true },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      // Call toggleTheme
+      wrapper.vm.toggleTheme()
+      await nextTick()
+
+      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
+    })
+  })
+
+  describe('Window State Calculations', () => {
+    it('should initialize window position based on config', async () => {
+      const customConfig: ChatbotConfig = {
+        ...mockConfig,
+        defaultExpanded: true,
+        panelWidth: 500,
+        panelHeight: 600,
+      }
+
+      const wrapper = mount(FloatingChatPanel, {
+        props: {
+          config: customConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          isStreaming: false,
+        },
+      })
+
+      await nextTick()
+
+      const vm = wrapper.vm as unknown as {
+        windowState: { x: number; y: number; width: number; height: number }
+      }
+
+      expect(vm.windowState.width).toBe(500)
+      expect(vm.windowState.height).toBe(600)
+    })
+  })
 })

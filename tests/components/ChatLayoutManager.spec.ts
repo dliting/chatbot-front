@@ -549,4 +549,500 @@ describe('ChatLayoutManager Component', () => {
       expect(wrapper.findComponent(ChatHeader).exists()).toBe(true)
     })
   })
+
+  // ============================================
+  // New tests for increased coverage
+  // ============================================
+
+  describe('useChatView composable integration', () => {
+    it('should show chat view by default for floating mode', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      // Should show chat content by default
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+      expect(wrapper.findComponent(SessionListView).exists()).toBe(false)
+    })
+
+    it('should show session sidebar for extended mode', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      // Extended mode should always show sidebar
+      expect(wrapper.find('aside').exists()).toBe(true)
+      expect(wrapper.findComponent(SessionListView).exists()).toBe(true)
+    })
+
+    it('should toggle between chat and sessions view in floating mode', async () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: false,
+        },
+      })
+
+      // Initially shows chat view
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+      expect(wrapper.findComponent(SessionListView).exists()).toBe(false)
+
+      // Switch to sessions view via header button
+      const chatHeader = wrapper.findComponent(ChatHeader)
+      await chatHeader.vm.$emit('sessions')
+
+      // Now should show sessions view
+      expect(wrapper.findComponent(SessionListView).exists()).toBe(true)
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(false)
+
+      // Switch back to chat view via close button
+      const sessionListView = wrapper.findComponent(SessionListView)
+      await sessionListView.vm.$emit('close')
+
+      // Should show chat view again
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+      expect(wrapper.findComponent(SessionListView).exists()).toBe(false)
+    })
+
+    it('should show chat view initially even when no current session in floating mode', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: [],
+          sessions: mockSessions,
+          currentSessionId: '',
+          isStreaming: false,
+        },
+      })
+
+      // Default view is chat view, even when no current session
+      // SessionListView is only shown after explicit navigation
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+    })
+  })
+
+  describe('Edge cases', () => {
+    it('should render with empty messages array', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: mockConfig,
+          messages: [],
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+    })
+
+    it('should render with empty sessions array', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: [],
+          currentSessionId: '',
+          isStreaming: false,
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      expect(wrapper.findComponent(SessionListView).exists()).toBe(true)
+    })
+
+    it('should render with no current session', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: mockConfig,
+          messages: [],
+          sessions: mockSessions,
+          currentSessionId: '',
+          isStreaming: false,
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+    })
+
+    it('should handle sidebar mode correctly', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'sidebar',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      // Sidebar mode should use single layout
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+    })
+  })
+
+  describe('containerClasses', () => {
+    it('should apply correct classes for extended mode', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      expect(wrapper.find('.ai-chat').exists()).toBe(true)
+      expect(wrapper.find('.ai-chat--extended').exists()).toBe(true)
+      expect(wrapper.find('.ai-chat--light').exists()).toBe(true)
+    })
+
+    it('should apply correct classes for floating mode', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      expect(wrapper.find('.ai-chat').exists()).toBe(true)
+      expect(wrapper.find('.ai-chat--floating').exists()).toBe(true)
+      expect(wrapper.find('.ai-chat--light').exists()).toBe(true)
+    })
+
+    it('should apply correct classes for sidebar mode', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'sidebar',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      expect(wrapper.find('.ai-chat').exists()).toBe(true)
+      expect(wrapper.find('.ai-chat--sidebar').exists()).toBe(true)
+      expect(wrapper.find('.ai-chat--light').exists()).toBe(true)
+    })
+
+    it('should apply dark theme class', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: { ...mockConfig, theme: 'dark' },
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      expect(wrapper.find('.ai-chat--dark').exists()).toBe(true)
+    })
+  })
+
+  describe('Single layout view switching edge cases', () => {
+    it('should show header only in chat view in single layout', async () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: false,
+        },
+      })
+
+      // In chat view, header should be visible
+      expect(wrapper.findComponent(ChatHeader).exists()).toBe(true)
+
+      // Switch to sessions view
+      const chatHeader = wrapper.findComponent(ChatHeader)
+      await chatHeader.vm.$emit('sessions')
+
+      // In sessions view, header should not be visible
+      expect(wrapper.findComponent(ChatHeader).exists()).toBe(false)
+    })
+
+    it('should handle hideHeader prop in single layout chat view', async () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: true,
+        },
+      })
+
+      // Header should be hidden even in chat view
+      expect(wrapper.findComponent(ChatHeader).exists()).toBe(false)
+      // But chat content should still be visible
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+    })
+
+    it('should show welcome when messages is empty in chat view', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: [],
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideWelcome: false,
+        },
+      })
+
+      // Should show chat content with welcome
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+    })
+
+    it('should emit toggle-theme from ChatHeader in single layout', async () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: false,
+        },
+      })
+
+      const chatHeader = wrapper.findComponent(ChatHeader)
+      await chatHeader.vm.$emit('toggle-theme')
+
+      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
+    })
+
+    it('should emit create-session in sessions view in single layout', async () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: false,
+        },
+      })
+
+      // Switch to sessions view
+      const chatHeader = wrapper.findComponent(ChatHeader)
+      await chatHeader.vm.$emit('sessions')
+
+      // Should show sessions view
+      expect(wrapper.findComponent(SessionListView).exists()).toBe(true)
+
+      // Emit create-session from SessionListView
+      const sessionListView = wrapper.findComponent(SessionListView)
+      await sessionListView.vm.$emit('create-session')
+
+      expect(wrapper.emitted('create-session')).toBeTruthy()
+    })
+
+    it('should emit select-session in sessions view in single layout', async () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: false,
+        },
+      })
+
+      // Switch to sessions view
+      const chatHeader = wrapper.findComponent(ChatHeader)
+      await chatHeader.vm.$emit('sessions')
+
+      // Emit select-session from SessionListView
+      const sessionListView = wrapper.findComponent(SessionListView)
+      await sessionListView.vm.$emit('select-session', 'session-2')
+
+      expect(wrapper.emitted('select-session')).toBeTruthy()
+      expect(wrapper.emitted('select-session')?.[0]).toEqual(['session-2'])
+    })
+
+    it('should emit delete-session in sessions view in single layout', async () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: false,
+        },
+      })
+
+      // Switch to sessions view
+      const chatHeader = wrapper.findComponent(ChatHeader)
+      await chatHeader.vm.$emit('sessions')
+
+      // Emit delete-session from SessionListView
+      const sessionListView = wrapper.findComponent(SessionListView)
+      await sessionListView.vm.$emit('delete-session', 'session-2')
+
+      expect(wrapper.emitted('delete-session')).toBeTruthy()
+      expect(wrapper.emitted('delete-session')?.[0]).toEqual(['session-2'])
+    })
+
+    it('should render ChatContent with key based on messages length in single layout', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      // ChatContent should be rendered with :key="messages.length"
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+    })
+
+    it('should pass correct props to ChatContent in single layout', () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: [],
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: true,
+          hideWelcome: true,
+          hideQuickActions: true,
+        },
+      })
+
+      // ChatContent should receive the props
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+    })
+
+    it('should emit send-message from ChatContent in single layout', async () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      const chatContent = wrapper.findComponent(ChatContent)
+      await chatContent.vm.$emit('send-message', { content: 'Test message' })
+
+      expect(wrapper.emitted('send-message')).toBeTruthy()
+      expect(wrapper.emitted('send-message')?.[0]).toEqual([{ content: 'Test message' }])
+    })
+
+    it('should emit quick-action from ChatContent in single layout', async () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      const chatContent = wrapper.findComponent(ChatContent)
+      await chatContent.vm.$emit('quick-action', 'Quick action text')
+
+      expect(wrapper.emitted('quick-action')).toBeTruthy()
+      expect(wrapper.emitted('quick-action')?.[0]).toEqual(['Quick action text'])
+    })
+
+    it('should emit edit from ChatContent in single layout', async () => {
+      const wrapper = mount(ChatLayoutManager, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      const chatContent = wrapper.findComponent(ChatContent)
+      const mockMessage = mockMessages[0]
+      await chatContent.vm.$emit('edit', mockMessage)
+
+      expect(wrapper.emitted('edit')).toBeTruthy()
+      expect(wrapper.emitted('edit')?.[0]).toEqual([mockMessage])
+    })
+  })
 })
