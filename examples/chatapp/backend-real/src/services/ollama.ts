@@ -8,29 +8,74 @@ export interface OllamaMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
   images?: string[]
+  videos?: string[]  // 新增
+  audios?: string[]  // 新增
 }
 
 // Convert OllamaMessage format to OpenAI format
-export function convertToOpenAIMessage(message: OllamaMessage): { role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string } }> } {
-  if (!message.images || message.images.length === 0) {
+export function convertToOpenAIMessage(message: OllamaMessage): {
+  role: string
+  content: string | Array<{
+    type: string
+    text?: string
+    image_url?: { url: string }
+    video_url?: { url: string }
+    audio_url?: { url: string }
+  }>
+} {
+  const hasMedia = (message.images?.length) || (message.videos?.length) || (message.audios?.length)
+
+  if (!hasMedia) {
     return {
       role: message.role,
       content: message.content
     }
   }
 
-  // Convert to OpenAI multimodal format
-  const content: Array<{ type: string; text?: string; image_url?: { url: string } }> = [
-    { type: 'text', text: message.content }
-  ]
+  const content: Array<{
+    type: string
+    text?: string
+    image_url?: { url: string }
+    video_url?: { url: string }
+    audio_url?: { url: string }
+  }> = []
 
-  for (const img of message.images) {
-    // Check if already has data URI prefix
-    const dataUrl = img.startsWith('data:') ? img : `data:image/png;base64,${img}`
-    content.push({
-      type: 'image_url',
-      image_url: { url: dataUrl }
-    })
+  // 添加文本
+  if (message.content) {
+    content.push({ type: 'text', text: message.content })
+  }
+
+  // 添加图片
+  if (message.images?.length) {
+    for (const img of message.images) {
+      const dataUrl = img.startsWith('data:') ? img : `data:image/png;base64,${img}`
+      content.push({
+        type: 'image_url',
+        image_url: { url: dataUrl }
+      })
+    }
+  }
+
+  // 添加视频
+  if (message.videos?.length) {
+    for (const video of message.videos) {
+      const dataUrl = video.startsWith('data:') ? video : `data:video/mp4;base64,${video}`
+      content.push({
+        type: 'video_url',
+        video_url: { url: dataUrl }
+      })
+    }
+  }
+
+  // 添加音频
+  if (message.audios?.length) {
+    for (const audio of message.audios) {
+      const dataUrl = audio.startsWith('data:') ? audio : `data:audio/mp3;base64,${audio}`
+      content.push({
+        type: 'audio_url',
+        audio_url: { url: dataUrl }
+      })
+    }
   }
 
   return {
