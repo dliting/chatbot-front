@@ -41,10 +41,13 @@
     "@types/dompurify": "3.0.5",
     "dompurify": "3.3.2",
     "element-plus": "^2.5.0",
+    "highlight.js": "11.11.1",
+    "markdown-it": "14.1.1",
     "vue": "^3.4.0"
   },
   "devDependencies": {
     "@testing-library/vue": "^8.1.0",
+    "@types/markdown-it": "14.1.2",
     "@types/node": "^20.10.0",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
