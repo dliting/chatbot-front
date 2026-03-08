@@ -35,6 +35,8 @@
           @send-message="handleSendMessage"
           @quick-action="$emit('quick-action', $event)"
           @edit="$emit('edit', $event)"
+          @image-click="handleImageClick"
+          @document-click="handleDocumentClick"
         />
       </main>
     </template>
@@ -60,6 +62,8 @@
         @send-message="handleSendMessage"
         @quick-action="$emit('quick-action', $event)"
         @edit="$emit('edit', $event)"
+        @image-click="handleImageClick"
+        @document-click="handleDocumentClick"
       />
       <SessionListView
         v-else
@@ -72,11 +76,26 @@
         @delete-session="$emit('delete-session', $event)"
       />
     </template>
+
+    <!-- Image Preview Modal -->
+    <ImagePreviewModal
+      v-if="previewImageUrl"
+      :url="previewImageUrl"
+      @close="previewImageUrl = ''"
+    />
+
+    <!-- Document Preview Modal -->
+    <FilePreviewModal
+      v-if="previewDocument"
+      :visible="!!previewDocument"
+      :file="previewDocument"
+      @close="previewDocument = null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { ChatMode, Layout, ChatbotConfig } from '@/types'
 import { defaultChatbotConfig } from '@/types/config'
 import { useChatView } from '@/composables/useChatView'
@@ -85,6 +104,8 @@ import { useChatView } from '@/composables/useChatView'
 import SessionListView from './SessionListView.vue'
 import ChatHeader from './ChatHeader.vue'
 import ChatContent from './ChatContent.vue'
+import ImagePreviewModal from './ImagePreviewModal.vue'
+import FilePreviewModal from './FilePreviewModal.vue'
 
 interface Props {
   mode?: ChatMode
@@ -124,6 +145,19 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>()
+
+// Preview state
+const previewImageUrl = ref('')
+const previewDocument = ref<{ name: string; url: string; type: string } | null>(null)
+
+// Preview handlers
+const handleImageClick = (url: string) => {
+  previewImageUrl.value = url
+}
+
+const handleDocumentClick = (doc: { name: string; url: string; type: string }) => {
+  previewDocument.value = doc
+}
 
 // Handle send message
 const handleSendMessage = (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {

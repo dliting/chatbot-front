@@ -58,6 +58,7 @@
                 :key="idx"
                 :src="img"
                 class="chat-content__image"
+                @click="$emit('image-click', img)"
               />
             </div>
             <!-- Text -->
@@ -132,6 +133,8 @@ interface Emits {
   (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void
   (e: 'copy', message: Message): void
+  (e: 'image-click', url: string): void
+  (e: 'document-click', doc: { name: string; url: string; type: string }): void
 }
 
 const emit = defineEmits<Emits>()

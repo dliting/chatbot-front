@@ -40,6 +40,8 @@
         @send-message="handleSend"
         @quick-action="handleQuickAction"
         @edit="handleMessageEdit"
+        @image-click="handleImageClick"
+        @document-click="handleDocumentClick"
       />
       <SessionListView
         v-else
@@ -52,6 +54,21 @@
         @delete-session="handleDeleteSession"
       />
     </div>
+
+    <!-- Image Preview Modal -->
+    <ImagePreviewModal
+      v-if="previewImageUrl"
+      :url="previewImageUrl"
+      @close="previewImageUrl = ''"
+    />
+
+    <!-- Document Preview Modal -->
+    <FilePreviewModal
+      v-if="previewDocument"
+      :visible="!!previewDocument"
+      :file="previewDocument"
+      @close="previewDocument = null"
+    />
   </DraggableWindow>
 
   <!-- Suspended Ball for floating mode (when closed) -->
@@ -78,6 +95,8 @@ import SuspendedBall from './SuspendedBall.vue'
 import SessionListView from './SessionListView.vue'
 import ChatHeader from './ChatHeader.vue'
 import ChatContent from './ChatContent.vue'
+import ImagePreviewModal from './ImagePreviewModal.vue'
+import FilePreviewModal from './FilePreviewModal.vue'
 
 interface Props {
   config?: ChatbotConfig
@@ -126,6 +145,19 @@ const windowState = ref({
   width: configRef.value.panelWidth || 400,
   height: configRef.value.panelHeight || 500,
 })
+
+// Preview state
+const previewImageUrl = ref('')
+const previewDocument = ref<{ name: string; url: string; type: string } | null>(null)
+
+// Preview handlers
+const handleImageClick = (url: string) => {
+  previewImageUrl.value = url
+}
+
+const handleDocumentClick = (doc: { name: string; url: string; type: string }) => {
+  previewDocument.value = doc
+}
 
 // Methods
 const openPanel = () => {
