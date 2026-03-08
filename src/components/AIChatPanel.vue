@@ -15,6 +15,7 @@
     @select-session="$emit('select-session', $event)"
     @delete-session="$emit('delete-session', $event)"
     @edit-message="$emit('edit', $event)"
+    @toggle-theme="$emit('toggle-theme')"
   />
 
   <!-- Non-Floating Modes (extended/sidebar) -->
