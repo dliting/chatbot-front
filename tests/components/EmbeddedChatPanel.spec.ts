@@ -16,6 +16,14 @@ vi.mock('@/components/SessionListView.vue', () => ({
   default: {
     name: 'SessionListView',
     template: '<div class="session-list-view-mock"></div>',
+    props: {
+      sessions: Array,
+      currentSessionId: String,
+      config: Object,
+      isEmbedded: Boolean,
+      layout: String,
+      enableClose: Boolean,
+    },
   },
 }))
 
@@ -136,6 +144,40 @@ describe('EmbeddedChatPanel Component', () => {
       expect(wrapper.find('.session-list-view-mock').exists()).toBe(true)
     })
 
+    it('should pass layout prop to SessionListView in dual layout', () => {
+      const wrapper = mount(EmbeddedChatPanel, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      const sessionListView = wrapper.findComponent(SessionListView)
+      expect(sessionListView.props('layout')).toBe('dual')
+    })
+
+    it('should pass enable-close prop as true to SessionListView in dual layout', () => {
+      const wrapper = mount(EmbeddedChatPanel, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      const sessionListView = wrapper.findComponent(SessionListView)
+      expect(sessionListView.props('enableClose')).toBe(true)
+    })
+
     it('should render ChatHeader in dual layout', () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
@@ -188,6 +230,51 @@ describe('EmbeddedChatPanel Component', () => {
       // In single layout with chat view, SessionListView is conditionally rendered
       // Need to check if viewState.currentView is 'chat' or 'sessions'
       expect(wrapper.find('.session-list-view-mock').exists() || wrapper.find('.chat-content-mock').exists()).toBe(true)
+    })
+
+    it('should pass layout prop to SessionListView in single layout', async () => {
+      const wrapper = mount(EmbeddedChatPanel, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: false,
+        },
+      })
+
+      // Switch to sessions view
+      const chatHeader = wrapper.findComponent(ChatHeader)
+      await chatHeader.vm.$emit('sessions')
+
+      const sessionListView = wrapper.findComponent(SessionListView)
+      expect(sessionListView.props('layout')).toBe('single')
+    })
+
+    it('should not pass enable-close prop in single layout (uses default false)', async () => {
+      const wrapper = mount(EmbeddedChatPanel, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: false,
+        },
+      })
+
+      // Switch to sessions view
+      const chatHeader = wrapper.findComponent(ChatHeader)
+      await chatHeader.vm.$emit('sessions')
+
+      const sessionListView = wrapper.findComponent(SessionListView)
+      // enableClose prop is not explicitly passed in single layout, so it defaults to false
+      expect(sessionListView.props('enableClose')).toBe(false)
     })
 
     it('should render ChatContent in single layout', () => {
@@ -315,6 +402,66 @@ describe('EmbeddedChatPanel Component', () => {
 
       expect(wrapper.emitted('delete-session')).toBeTruthy()
       expect(wrapper.emitted('delete-session')?.[0]).toEqual(['session-2'])
+    })
+
+    it('should emit delete-sessions event when SessionListView emits delete-sessions', async () => {
+      const wrapper = mount(EmbeddedChatPanel, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      const sessionListView = wrapper.findComponent(SessionListView)
+      const sessionIdsToDelete = ['session-1', 'session-2']
+      await sessionListView.vm.$emit('delete-sessions', sessionIdsToDelete)
+
+      expect(wrapper.emitted('delete-sessions')).toBeTruthy()
+      expect(wrapper.emitted('delete-sessions')?.[0]).toEqual([sessionIdsToDelete])
+    })
+
+    it('should emit update-session-title event when SessionListView emits update-session-title', async () => {
+      const wrapper = mount(EmbeddedChatPanel, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      const sessionListView = wrapper.findComponent(SessionListView)
+      await sessionListView.vm.$emit('update-session-title', ['session-1', 'Updated Title'])
+
+      expect(wrapper.emitted('update-session-title')).toBeTruthy()
+      expect(wrapper.emitted('update-session-title')?.[0]).toEqual(['session-1', 'Updated Title'])
+    })
+
+    it('should emit close event when SessionListView emits close in dual layout', async () => {
+      const wrapper = mount(EmbeddedChatPanel, {
+        props: {
+          mode: 'extended',
+          layout: 'dual',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+        },
+      })
+
+      const sessionListView = wrapper.findComponent(SessionListView)
+      await sessionListView.vm.$emit('close')
+
+      expect(wrapper.emitted('close')).toBeTruthy()
     })
 
     it('should emit send-message event when ChatContent emits send-message', async () => {
@@ -946,6 +1093,59 @@ describe('EmbeddedChatPanel Component', () => {
 
       expect(wrapper.emitted('delete-session')).toBeTruthy()
       expect(wrapper.emitted('delete-session')?.[0]).toEqual(['session-2'])
+    })
+
+    it('should emit delete-sessions in sessions view in single layout', async () => {
+      const wrapper = mount(EmbeddedChatPanel, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: false,
+        },
+      })
+
+      // Switch to sessions view
+      const chatHeader = wrapper.findComponent(ChatHeader)
+      await chatHeader.vm.$emit('sessions')
+
+      // Emit delete-sessions from SessionListView
+      const sessionListView = wrapper.findComponent(SessionListView)
+      const sessionIdsToDelete = ['session-1', 'session-2']
+      await sessionListView.vm.$emit('delete-sessions', sessionIdsToDelete)
+
+      expect(wrapper.emitted('delete-sessions')).toBeTruthy()
+      expect(wrapper.emitted('delete-sessions')?.[0]).toEqual([sessionIdsToDelete])
+    })
+
+    it('should emit update-session-title in sessions view in single layout', async () => {
+      const wrapper = mount(EmbeddedChatPanel, {
+        props: {
+          mode: 'floating',
+          layout: 'single',
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session-1',
+          isStreaming: false,
+          hideHeader: false,
+        },
+      })
+
+      // Switch to sessions view
+      const chatHeader = wrapper.findComponent(ChatHeader)
+      await chatHeader.vm.$emit('sessions')
+
+      // Emit update-session-title from SessionListView
+      const sessionListView = wrapper.findComponent(SessionListView)
+      await sessionListView.vm.$emit('update-session-title', ['session-1', 'New Title'])
+
+      expect(wrapper.emitted('update-session-title')).toBeTruthy()
+      expect(wrapper.emitted('update-session-title')?.[0]).toEqual(['session-1', 'New Title'])
     })
 
     it('should render ChatContent with key based on messages length in single layout', () => {
