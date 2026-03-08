@@ -17,6 +17,7 @@ The AI Chatbot Frontend is a Vue 3-based, layout-independent chatbot component t
 | Message Streaming | Implemented | [Source](../src/components/ChatContent.vue) |
 | Quick Actions | Implemented | [Source](../src/composables/useQuickActions.ts) |
 | Theme Toggle | Implemented | [Source](../src/composables/useTheme.ts) |
+| Markdown Rendering | Implemented | [Source](../src/utils/helpers.ts) |
 
 ### Layout Modes
 
