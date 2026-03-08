@@ -52,6 +52,7 @@ interface Props {
   mode?: ChatMode
   layout?: Layout
   config?: ChatbotConfig
+  apiClient?: ReturnType<typeof import('@/composables/useApiClient')['useApiClient']>
   messages?: Message[]
   sessions?: Session[]
   currentSessionId?: string

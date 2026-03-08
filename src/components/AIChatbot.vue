@@ -42,6 +42,7 @@
         :config="aiChatConfig"
         :api-client="apiClient"
         @edit-message="handleEditMessage"
+        @send-message="handleSendMessage"
       />
     </ChatPanel>
 
@@ -52,6 +53,7 @@
       :layout="layout"
       :config="config"
       :api-client="apiClient"
+      @send-message="handleSendMessage"
     />
   </div>
 </template>
@@ -216,6 +218,91 @@ const _handleUpdateSessionTitle = (sessionId: string, title: string) => {
 const handleEditMessage = (message: import('@/types').Message) => {
   // Emit edit event for parent components to handle (e.g., fill input with message content)
   emit('editMessage', message)
+}
+
+// Handle send message - use apiClient to send to backend
+const handleSendMessage = async (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
+  const client = apiClient.value
+  if (!client) {
+    console.error('API client not available')
+    return
+  }
+
+  // Get current session ID
+  const sessionId = state.sessions.currentId
+  if (!sessionId) {
+    console.error('No active session')
+    return
+  }
+
+  try {
+    // Add user message to state
+    const userMessage: import('@/types').Message = {
+      id: `msg-${Date.now()}`,
+      sessionId,
+      role: 'user',
+      type: data.images?.length ? 'image' : data.videos?.length ? 'video' : data.audios?.length ? 'audio' : 'text',
+      content: data.content,
+      images: data.images,
+      videos: data.videos,
+      audios: data.audios,
+      timestamp: Date.now(),
+      status: 'sending'
+    }
+    state.messages.list.push(userMessage)
+
+    // Get AI response using streaming
+    let fullContent = ''
+    const assistantMessageId = `msg-${Date.now() + 1}`
+
+    // Add placeholder for AI response
+    state.messages.list.push({
+      id: assistantMessageId,
+      sessionId,
+      role: 'assistant',
+      type: 'text',
+      content: '',
+      timestamp: Date.now(),
+      status: 'loading'
+    })
+
+    // Use streaming API
+    const stream = client.streamChat(
+      sessionId,
+      data.content,
+      data.images,
+      data.videos,
+      data.audios
+    )
+
+    for await (const chunk of stream) {
+      if (chunk.type === 'token' && chunk.content) {
+        fullContent += chunk.content
+        // Update assistant message content
+        const assistantMsg = state.messages.list.find(m => m.id === assistantMessageId)
+        if (assistantMsg) {
+          assistantMsg.content = fullContent
+        }
+      } else if (chunk.type === 'end') {
+        // Mark message as sent
+        const userMsg = state.messages.list.find(m => m.id === userMessage.id)
+        if (userMsg) {
+          userMsg.status = 'sent'
+        }
+        const assistantMsg = state.messages.list.find(m => m.id === assistantMessageId)
+        if (assistantMsg) {
+          assistantMsg.status = 'sent'
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Failed to send message:', error)
+    // Mark message as error
+    const userMsg = state.messages.list.find(m => m.role === 'user' && m.status === 'sending')
+    if (userMsg) {
+      userMsg.status = 'error'
+    }
+  }
 }
 
 // Emits

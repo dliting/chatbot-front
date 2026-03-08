@@ -141,7 +141,7 @@ const toggleTheme = () => {
   emit('toggle-theme')
 }
 
-const handleSend = (data: { content: string; images?: string[] }) => {
+const handleSend = (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
   emit('send-message', data)
 }
 
