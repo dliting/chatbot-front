@@ -1,5 +1,5 @@
 <template>
-  <!-- Non-Floating Modes: Main container -->
+  <!-- Embedded Modes: Main container -->
   <div
     :class="containerClasses"
   >

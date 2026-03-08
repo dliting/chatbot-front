@@ -1,59 +1,65 @@
 /**
  * Unit tests for AIChatPanel component
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, VueWrapper } from '@vue/test-utils'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import AIChatPanel from '@/components/AIChatPanel.vue'
-import type { ChatbotConfig } from '@/types'
-
-// Mock stream utility
-vi.mock('@/utils/stream', () => ({
-  createMockStream: vi.fn((content: string, delay: number) => {
-    return (async function* () {
-      for (let i = 0; i < content.length; i++) {
-        await new Promise(resolve => setTimeout(resolve, delay))
-        yield { type: 'token', content: content[i] }
-      }
-      yield { type: 'end' }
-    })()
-  }),
-}))
-
-// Mock upload utility
-vi.mock('@/utils/upload', () => ({
-  createMockUploadEndpoint: vi.fn(() => ({
-    upload: vi.fn(async (files: File[]) => {
-      await new Promise(resolve => setTimeout(resolve, 100))
-      return {
-        urls: files.map(() => `https://example.com/uploaded_${Date.now()}.jpg`),
-      }
-    }),
-  })),
-}))
+import type { ChatbotConfig, Message, Session } from '@/types'
 
 describe('AIChatPanel', () => {
-  let mockConfig: ChatbotConfig
+  // Mock data
+  const mockMessages: Message[] = [
+    {
+      id: 'msg_1',
+      sessionId: 'session_1',
+      role: 'user',
+      type: 'text',
+      content: 'Hello',
+      timestamp: Date.now() - 60000,
+      status: 'sent',
+    },
+    {
+      id: 'msg_2',
+      sessionId: 'session_1',
+      role: 'assistant',
+      type: 'text',
+      content: 'Hi there!',
+      timestamp: Date.now(),
+      status: 'sent',
+    },
+  ]
+
+  const mockSessions: Session[] = [
+    {
+      id: 'session_1',
+      title: 'Chat 1',
+      createdAt: Date.now() - 86400000,
+      updatedAt: Date.now() - 60000,
+      messageCount: 2,
+      unreadCount: 0,
+    },
+  ]
+
+  const mockConfig: ChatbotConfig = {
+    labels: {
+      title: '智能助手',
+      placeholder: '输入消息...',
+      send: '发送',
+      upload: '上传图片',
+      imageTooLarge: '图片大小超过限制',
+    },
+    theme: 'light',
+    enableImageUpload: true,
+    maxImageCount: 3,
+    maxImageSize: 5 * 1024 * 1024,
+    position: 'bottom-right',
+    panelWidth: 420,
+    defaultExpanded: true,
+    locale: 'zh-CN',
+  }
 
   beforeEach(() => {
-    mockConfig = {
-      labels: {
-        title: '智能助手',
-        placeholder: '输入消息...',
-        send: '发送',
-        upload: '上传图片',
-        imageTooLarge: '图片大小超过限制',
-      },
-      theme: 'light',
-      enableImageUpload: true,
-      maxImageCount: 3,
-      maxImageSize: 5 * 1024 * 1024,
-      position: 'bottom-right',
-      panelWidth: 420,
-      defaultExpanded: true,
-      locale: 'zh-CN',
-    }
-
     // Mock window.innerWidth
     Object.defineProperty(window, 'innerWidth', {
       writable: true,
@@ -62,75 +68,264 @@ describe('AIChatPanel', () => {
     })
   })
 
-  afterEach(() => {
-    vi.clearAllMocks()
-  })
-
   describe('Component Rendering', () => {
-    it('should render component in embedded mode', () => {
-      // AIChatPanel uses panelOpen prop to switch between embedded and standalone mode
+    it('should render FloatingChatPanel in floating mode', () => {
       const wrapper = mount(AIChatPanel, {
-        props: { config: mockConfig, panelOpen: true },
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
       })
 
       expect(wrapper.exists()).toBe(true)
-      expect(wrapper.find('.ai-chat__body').exists()).toBe(true)
+      // Should render FloatingChatPanel component
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      expect(floatingChatPanel.exists()).toBe(true)
     })
 
-    it('should render ChatContent in embedded mode', () => {
+    it('should render EmbeddedChatPanel in extended mode', () => {
       const wrapper = mount(AIChatPanel, {
-        props: { config: mockConfig, panelOpen: true },
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'extended',
+        },
       })
 
-      // Should render ChatContent component
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      expect(chatContent.exists()).toBe(true)
+      expect(wrapper.exists()).toBe(true)
+      // Should render EmbeddedChatPanel component
+      const embeddedChatPanel = wrapper.findComponent({ name: 'EmbeddedChatPanel' })
+      expect(embeddedChatPanel.exists()).toBe(true)
+    })
+
+    it('should render EmbeddedChatPanel in sidebar mode', () => {
+      const wrapper = mount(AIChatPanel, {
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'sidebar',
+        },
+      })
+
+      expect(wrapper.exists()).toBe(true)
+      const embeddedChatPanel = wrapper.findComponent({ name: 'EmbeddedChatPanel' })
+      expect(embeddedChatPanel.exists()).toBe(true)
     })
   })
 
-  describe('Standalone Mode', () => {
-    it('should render in floating mode without panelOpen prop', () => {
-      // When panelOpen is not provided, component uses internal state
+  describe('Props Passing', () => {
+    it('should pass config to FloatingChatPanel', async () => {
       const wrapper = mount(AIChatPanel, {
-        props: { config: mockConfig, mode: 'floating' },
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
       })
 
-      // Component should render
-      expect(wrapper.exists()).toBe(true)
+      await nextTick()
+
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      expect(floatingChatPanel.props('config')).toEqual(mockConfig)
     })
 
-    it('should render with default state', () => {
+    it('should pass messages to FloatingChatPanel', async () => {
       const wrapper = mount(AIChatPanel, {
-        props: { config: mockConfig },
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
       })
 
-      // Component should render with default mode (floating)
-      expect(wrapper.exists()).toBe(true)
+      await nextTick()
+
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      expect(floatingChatPanel.props('messages')).toEqual(mockMessages)
+    })
+
+    it('should pass sessions to FloatingChatPanel', async () => {
+      const wrapper = mount(AIChatPanel, {
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
+      })
+
+      await nextTick()
+
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      expect(floatingChatPanel.props('sessions')).toEqual(mockSessions)
+    })
+
+    it('should pass isStreaming to FloatingChatPanel', async () => {
+      const wrapper = mount(AIChatPanel, {
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+          isStreaming: true,
+        },
+      })
+
+      await nextTick()
+
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      expect(floatingChatPanel.props('isStreaming')).toBe(true)
     })
   })
 
-  describe('Config Props', () => {
-    it('should use custom title from config', () => {
-      const customConfig = {
-        ...mockConfig,
-        labels: { ...mockConfig.labels, title: '豆包助手' },
-      }
+  describe('Event Emission', () => {
+    it('should emit send-message event', async () => {
       const wrapper = mount(AIChatPanel, {
-        props: { config: customConfig, panelOpen: true },
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
       })
 
-      // Check that ChatContent receives the custom title
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      expect(chatContent.exists()).toBe(true)
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      await floatingChatPanel.vm.$emit('send-message', { content: 'test' })
+
+      expect(wrapper.emitted('send-message')).toBeTruthy()
     })
 
-    it('should respect maxImageCount config', () => {
-      const configWithLimit = { ...mockConfig, maxImageCount: 2 }
+    it('should emit quick-action event', async () => {
       const wrapper = mount(AIChatPanel, {
-        props: { config: configWithLimit, panelOpen: true },
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
       })
 
-      expect(wrapper.exists()).toBe(true)
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      await floatingChatPanel.vm.$emit('quick-action', 'test action')
+
+      expect(wrapper.emitted('quick-action')).toBeTruthy()
+    })
+
+    it('should emit create-session event', async () => {
+      const wrapper = mount(AIChatPanel, {
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
+      })
+
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      await floatingChatPanel.vm.$emit('create-session')
+
+      expect(wrapper.emitted('create-session')).toBeTruthy()
+    })
+
+    it('should emit select-session event', async () => {
+      const wrapper = mount(AIChatPanel, {
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
+      })
+
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      await floatingChatPanel.vm.$emit('select-session', 'session_2')
+
+      expect(wrapper.emitted('select-session')).toBeTruthy()
+    })
+
+    it('should emit delete-session event', async () => {
+      const wrapper = mount(AIChatPanel, {
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
+      })
+
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      await floatingChatPanel.vm.$emit('delete-session', 'session_2')
+
+      expect(wrapper.emitted('delete-session')).toBeTruthy()
+    })
+
+    it('should emit edit event', async () => {
+      const wrapper = mount(AIChatPanel, {
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
+      })
+
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      const mockMessage = mockMessages[0]
+      await floatingChatPanel.vm.$emit('edit-message', mockMessage)
+
+      expect(wrapper.emitted('edit')).toBeTruthy()
+    })
+
+    it('should emit toggle-theme event', async () => {
+      const wrapper = mount(AIChatPanel, {
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+          mode: 'floating',
+        },
+      })
+
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      await floatingChatPanel.vm.$emit('toggle-theme')
+
+      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
+    })
+  })
+
+  describe('Default Props', () => {
+    it('should use floating mode by default', () => {
+      const wrapper = mount(AIChatPanel, {
+        props: {
+          config: mockConfig,
+          messages: mockMessages,
+          sessions: mockSessions,
+          currentSessionId: 'session_1',
+        },
+      })
+
+      const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+      expect(floatingChatPanel.exists()).toBe(true)
     })
   })
 })

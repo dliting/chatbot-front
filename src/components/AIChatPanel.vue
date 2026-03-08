@@ -18,8 +18,8 @@
     @toggle-theme="$emit('toggle-theme')"
   />
 
-  <!-- Non-Floating Modes (extended/sidebar) -->
-  <ChatLayoutManager
+  <!-- Embedded Modes (extended/sidebar) -->
+  <EmbeddedChatPanel
     v-else
     :mode="mode"
     :layout="layout"
@@ -46,7 +46,7 @@ import type { ChatMode, Layout, ChatbotConfig, Message, Session } from '@/types'
 
 // Components
 import FloatingChatPanel from './FloatingChatPanel.vue'
-import ChatLayoutManager from './ChatLayoutManager.vue'
+import EmbeddedChatPanel from './EmbeddedChatPanel.vue'
 
 interface Props {
   mode?: ChatMode

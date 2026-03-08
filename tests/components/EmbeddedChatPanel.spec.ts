@@ -1,10 +1,10 @@
 /**
- * Unit tests for ChatLayoutManager component
+ * Unit tests for EmbeddedChatPanel component
  * Tests layout switching logic between dual and single layouts
  */
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
-import ChatLayoutManager from '@/components/ChatLayoutManager.vue'
+import EmbeddedChatPanel from '@/components/EmbeddedChatPanel.vue'
 import SessionListView from '@/components/SessionListView.vue'
 import ChatHeader from '@/components/ChatHeader.vue'
 import ChatContent from '@/components/ChatContent.vue'
@@ -33,7 +33,7 @@ vi.mock('@/components/ChatContent.vue', () => ({
   },
 }))
 
-describe('ChatLayoutManager Component', () => {
+describe('EmbeddedChatPanel Component', () => {
   // Mock data
   const mockSessions: Session[] = [
     {
@@ -85,7 +85,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('Props and Rendering', () => {
     it('should render with default props', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -101,7 +101,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should render ChatContent component', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -119,7 +119,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('Layout: Dual Layout', () => {
     it('should render SessionListView as sidebar in dual layout', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -137,7 +137,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should render ChatHeader in dual layout', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -154,7 +154,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should hide header when hideHeader prop is true', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -173,7 +173,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('Layout: Single Layout', () => {
     it('should render SessionListView as view in single layout', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -191,7 +191,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should render ChatContent in single layout', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -209,7 +209,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('Mode to Layout Derivation', () => {
     it('should use dual layout for extended mode when layout is not specified', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           config: mockConfig,
@@ -225,7 +225,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should use single layout for floating mode when layout is not specified', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           config: mockConfig,
@@ -241,7 +241,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should use single layout for sidebar mode when layout is not specified', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'sidebar',
           config: mockConfig,
@@ -259,7 +259,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('Event Handling', () => {
     it('should emit create-session event when SessionListView emits create-session', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -278,7 +278,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit select-session event when SessionListView emits select-session', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -298,7 +298,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit delete-session event when SessionListView emits delete-session', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -318,7 +318,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit send-message event when ChatContent emits send-message', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -338,7 +338,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit quick-action event when ChatContent emits quick-action', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -358,7 +358,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit edit event when ChatContent emits edit', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -379,7 +379,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit toggle-theme event when ChatHeader emits toggle-theme', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -401,7 +401,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('View Switching (Single Layout)', () => {
     it('should switch to sessions view when ChatHeader emits sessions event', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -427,7 +427,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should switch back to chat view when SessionListView emits close event', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -458,7 +458,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('Visibility Props', () => {
     it('should pass hideWelcome to ChatContent', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -476,7 +476,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should pass hideQuickActions to ChatContent', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -494,7 +494,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should pass isStreaming to ChatContent', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -513,7 +513,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('Config Props', () => {
     it('should pass theme to ChatHeader', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -532,7 +532,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should pass title to ChatHeader', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -556,7 +556,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('useChatView composable integration', () => {
     it('should show chat view by default for floating mode', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -574,7 +574,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should show session sidebar for extended mode', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -592,7 +592,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should toggle between chat and sessions view in floating mode', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -627,7 +627,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should show chat view initially even when no current session in floating mode', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -647,7 +647,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('Edge cases', () => {
     it('should render with empty messages array', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -664,7 +664,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should render with empty sessions array', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -681,7 +681,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should render with no current session', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -697,7 +697,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should handle sidebar mode correctly', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'sidebar',
           config: mockConfig,
@@ -715,7 +715,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('containerClasses', () => {
     it('should apply correct classes for extended mode', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -733,7 +733,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should apply correct classes for floating mode', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -751,7 +751,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should apply correct classes for sidebar mode', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'sidebar',
           config: mockConfig,
@@ -768,7 +768,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should apply dark theme class', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
@@ -786,7 +786,7 @@ describe('ChatLayoutManager Component', () => {
 
   describe('Single layout view switching edge cases', () => {
     it('should show header only in chat view in single layout', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -811,7 +811,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should handle hideHeader prop in single layout chat view', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -831,7 +831,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should show welcome when messages is empty in chat view', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -849,7 +849,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit toggle-theme from ChatHeader in single layout', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -869,7 +869,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit create-session in sessions view in single layout', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -897,7 +897,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit select-session in sessions view in single layout', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -923,7 +923,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit delete-session in sessions view in single layout', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -949,7 +949,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should render ChatContent with key based on messages length in single layout', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -966,7 +966,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should pass correct props to ChatContent in single layout', () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -985,7 +985,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit send-message from ChatContent in single layout', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -1005,7 +1005,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit quick-action from ChatContent in single layout', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
@@ -1025,7 +1025,7 @@ describe('ChatLayoutManager Component', () => {
     })
 
     it('should emit edit from ChatContent in single layout', async () => {
-      const wrapper = mount(ChatLayoutManager, {
+      const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
