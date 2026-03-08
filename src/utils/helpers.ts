@@ -4,6 +4,7 @@
 
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
+import DOMPurify from 'dompurify'
 
 /**
  * Generate a unique ID
@@ -252,8 +253,16 @@ const markdownParser = new MarkdownIt({
 // Highlight code blocks with highlight.js
 function highlightCodeBlocks(html: string): string {
   return html.replace(/<pre><code(?:\s+class="language-(\w+)")?>([\s\S]*?)<\/code><\/pre>/g, (match, lang, code) => {
+    // Decode HTML entities that markdown-it may have created
+    const decodedCode = code
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+
     const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
-    const highlighted = hljs.highlight(code.trim(), { language }).value
+    const highlighted = hljs.highlight(decodedCode.trim(), { language }).value
     return `<div class="code-block-wrapper"><pre><code class="hljs language-${language}">${highlighted}</code></pre><button class="code-copy-btn" type="button">复制</button></div>`
   })
 }
@@ -265,13 +274,13 @@ function highlightCodeBlocks(html: string): string {
 export function formatMarkdownContent(content: string): string {
   if (!content) return ''
 
-  // First escape HTML to prevent XSS
-  const escaped = escapeHTML(content)
+  // Parse markdown (markdown-it with html: false prevents raw HTML)
+  let html = markdownParser.render(content)
 
-  // Parse markdown
-  let html = markdownParser.render(escaped)
+  // Sanitize with DOMPurify for XSS protection
+  html = DOMPurify.sanitize(html)
 
-  // Highlight code blocks
+  // Highlight code blocks and decode HTML entities
   html = highlightCodeBlocks(html)
 
   // Future extension: renderMermaid(html)
