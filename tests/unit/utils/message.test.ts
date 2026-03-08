@@ -18,6 +18,7 @@ import {
   getLastMessage,
   getMessageStats,
   truncateMessage,
+  sanitizeMessageContent,
 } from '@/utils/message'
 import type { Message } from '@/types'
 
@@ -316,6 +317,28 @@ describe('utils/message', () => {
 
       const truncated = truncateMessage(msg, 100)
       expect(truncated.length).toBeLessThanOrEqual(103)
+    })
+  })
+
+  describe('sanitizeMessageContent', () => {
+    it('should sanitize malicious script tags', () => {
+      const malicious = '<script>alert("XSS")</script>Hello'
+      const result = sanitizeMessageContent(malicious)
+      expect(result).not.toContain('<script>')
+      expect(result).toContain('Hello')
+    })
+
+    it('should sanitize event handlers', () => {
+      const malicious = '<div onclick="alert(1)">Click</div>'
+      const result = sanitizeMessageContent(malicious)
+      expect(result).not.toContain('onclick')
+    })
+
+    it('should allow safe formatting tags', () => {
+      const safe = '<p>Hello <strong>world</strong></p>'
+      const result = sanitizeMessageContent(safe)
+      expect(result).toContain('<p>')
+      expect(result).toContain('<strong>')
     })
   })
 })
