@@ -208,6 +208,15 @@ export function getMessageStats(messages: Message[]): MessageStats {
  * Sanitize message content to prevent XSS
  */
 export function sanitizeMessageContent(content: string): string {
+  // DOMPurify requires browser environment
+  if (typeof window === 'undefined') {
+    return content
+  }
+
+  if (!content) {
+    return ''
+  }
+
   return DOMPurify.sanitize(content, {
     ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'code', 'pre'],
     ALLOWED_ATTR: []
