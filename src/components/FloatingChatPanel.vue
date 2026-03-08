@@ -46,6 +46,7 @@
         :sessions="sessions"
         :current-session-id="currentSessionId"
         :config="configRef"
+        :layout="'single'"
         @close="showChatView"
         @create-session="handleCreateSession"
         @select-session="handleSelectSession"
