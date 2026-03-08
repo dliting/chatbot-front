@@ -21,6 +21,7 @@
           @delete="$emit('delete', message)"
           @resend="$emit('resend', message)"
           @image-click="$emit('image-click', $event)"
+          @document-click="$emit('document-click', $event)"
         />
       </div>
 
@@ -91,6 +92,7 @@ interface Emits {
   (e: 'delete', message: Message): void
   (e: 'resend', message: Message): void
   (e: 'image-click', url: string): void
+  (e: 'document-click', doc: { name: string; url: string; type: string }): void
   (e: 'scroll-to-top'): void
   (e: 'scroll-to-bottom'): void
 }

@@ -38,6 +38,17 @@
           <span v-if="file.size" class="chat-input__preview-size">{{ formatFileSize(file.size) }}</span>
         </div>
 
+        <!-- Document icon -->
+        <div v-else-if="file.type === 'document'" class="chat-input__preview-document" :title="file.name">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="16" y1="13" x2="8" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="16" y1="17" x2="8" y2="17" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="chat-input__preview-docname">{{ file.name }}</span>
+        </div>
+
         <!-- Remove button (even for errors) -->
         <button class="chat-input__preview-remove" @click="removeFile(idx)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -95,7 +106,7 @@
     <input
       ref="fileInputRef"
       type="file"
-      accept="image/*,video/mp4,video/webm,audio/mp3,audio/wav,audio/ogg"
+      accept="image/*,video/mp4,video/webm,audio/mp3,audio/wav,audio/ogg,.pdf,.doc,.docx,.xls,.xlsx,.txt,.md"
       multiple
       style="display: none"
       @change="handleFileSelect"
@@ -106,6 +117,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { validateFileSize, formatFileSize, getMediaType as utilsGetMediaType, type MediaType } from '@/utils/fileValidation'
+import { getPreviewType } from '@/utils/fileType'
 
 interface Props {
   disabled?: boolean
@@ -115,8 +127,10 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
 })
 
+type FileType = MediaType | 'document'
+
 interface MediaFile {
-  type: MediaType
+  type: FileType
   data: string  // base64
   name: string
   preview?: string  // 预览URL
@@ -125,7 +139,7 @@ interface MediaFile {
 }
 
 interface Emits {
-  (e: 'send', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
+  (e: 'send', data: { content: string; images?: string[]; videos?: string[]; audios?: string[]; documents?: Array<{ name: string; url: string; type: string }> }): void
   (e: 'toggle-voice'): void
 }
 
@@ -198,6 +212,13 @@ const handleSend = () => {
   const audios = validFiles
     .filter(f => f.type === 'audio')
     .map(f => f.data)
+  const documents = validFiles
+    .filter(f => f.type === 'document')
+    .map(f => ({
+      name: f.name,
+      url: f.preview || `data:application/octet-stream;base64,${f.data}`,
+      type: f.name.split('.').pop() || 'unknown'
+    }))
 
   // Clear input
   inputText.value = ''
@@ -210,7 +231,8 @@ const handleSend = () => {
     content,
     images: images.length > 0 ? images : undefined,
     videos: videos.length > 0 ? videos : undefined,
-    audios: audios.length > 0 ? audios : undefined
+    audios: audios.length > 0 ? audios : undefined,
+    documents: documents.length > 0 ? documents : undefined
   })
 }
 
@@ -229,39 +251,70 @@ const handleFileSelect = async (e: Event) => {
 
   try {
     for (const file of Array.from(files)) {
-      const mediaType = utilsGetMediaType(file)
+      // Check if it's a document type (PDF, Word, Excel, Text)
+      const previewType = getPreviewType(file.name)
+      const isDocument = ['pdf', 'word', 'excel', 'text'].includes(previewType)
 
-      // Validate file size
-      const validation = validateFileSize(file, mediaType)
-      if (!validation.valid) {
-        const error = `${file.name} exceeds ${validation.maxSize} limit`
+      if (isDocument) {
+        // Handle document files
+        const validation = validateFileSize(file, 'image') // Use image limit for documents
+        if (!validation.valid) {
+          const error = `${file.name} exceeds ${validation.maxSize} limit`
+          selectedFiles.value.push({
+            type: 'document',
+            data: '',
+            name: file.name,
+            size: file.size,
+            error
+          })
+          showToast(`File too large: ${error}`)
+          continue
+        }
 
-        // Add file with error state
+        const base64 = await convertFileToBase64(file)
         selectedFiles.value.push({
-          type: mediaType,
-          data: '',
+          type: 'document',
+          data: base64,
           name: file.name,
           size: file.size,
-          error
+          preview: `data:${file.type};base64,${base64}`
         })
+      } else {
+        // Handle media files
+        const mediaType = utilsGetMediaType(file)
 
-        // Show toast notification
-        showToast(`File too large: ${error}`)
-        continue
+        // Validate file size
+        const validation = validateFileSize(file, mediaType)
+        if (!validation.valid) {
+          const error = `${file.name} exceeds ${validation.maxSize} limit`
+
+          // Add file with error state
+          selectedFiles.value.push({
+            type: mediaType,
+            data: '',
+            name: file.name,
+            size: file.size,
+            error
+          })
+
+          // Show toast notification
+          showToast(`File too large: ${error}`)
+          continue
+        }
+
+        // Convert to base64
+        const base64 = await convertFileToBase64(file)
+
+        selectedFiles.value.push({
+          type: mediaType,
+          data: base64,
+          name: file.name,
+          size: file.size,
+          preview: file.type.startsWith('image/')
+            ? `data:${file.type};base64,${base64}`
+            : undefined
+        })
       }
-
-      // Convert to base64
-      const base64 = await convertFileToBase64(file)
-
-      selectedFiles.value.push({
-        type: mediaType,
-        data: base64,
-        name: file.name,
-        size: file.size,
-        preview: file.type.startsWith('image/')
-          ? `data:${file.type};base64,${base64}`
-          : undefined
-      })
     }
   } catch (error) {
     console.error('File processing failed:', error)
@@ -342,6 +395,34 @@ const handleFileSelect = async (e: Event) => {
       height: 28px;
       stroke: white;
     }
+  }
+
+  &__preview-document {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8e8ec 100%);
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+
+    svg {
+      width: 24px;
+      height: 24px;
+      stroke: #606266;
+    }
+  }
+
+  &__preview-docname {
+    font-size: 8px;
+    color: #606266;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
   }
 
   &__preview-remove {
