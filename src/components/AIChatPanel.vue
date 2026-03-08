@@ -52,8 +52,8 @@ interface Props {
   mode?: ChatMode
   layout?: Layout
   config?: ChatbotConfig
-  messages: Message[]
-  sessions: Session[]
+  messages?: Message[]
+  sessions?: Session[]
   currentSessionId?: string
   isStreaming?: boolean
   hideWelcome?: boolean
@@ -65,6 +65,8 @@ withDefaults(defineProps<Props>(), {
   mode: 'floating',
   layout: undefined,
   config: () => ({}),
+  messages: () => [],
+  sessions: () => [],
   currentSessionId: '',
   isStreaming: false,
   hideWelcome: false,

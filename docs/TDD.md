@@ -799,7 +799,6 @@ npm run build:iframe
 
 # 生成产物
 dist-iframe/
-├── index.html
 ├── chatbot-iframe.js
 └── assets/
 ```
