@@ -658,6 +658,16 @@ const formatSessionMeta = (session: Session): string => {
       }
     }
 
+    &:focus {
+      outline: none;
+      background: var(--chatbot-primary-color-light, #ecf5ff);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--chatbot-primary-color, #409eff);
+      outline-offset: 2px;
+    }
+
     &--active {
       background: var(--chatbot-primary-color-light, #ecf5ff);
 
@@ -711,6 +721,18 @@ const formatSessionMeta = (session: Session): string => {
     border-radius: 4px;
     flex-shrink: 0;
     transition: all 0.2s;
+    cursor: pointer;
+
+    &:focus {
+      outline: none;
+      border-color: var(--chatbot-primary-color, #409eff);
+      box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.3);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--chatbot-primary-color, #409eff);
+      outline-offset: 2px;
+    }
 
     svg {
       width: 14px;

@@ -45,7 +45,7 @@ describe('EmbeddedChatPanel Component', () => {
   // Mock data
   const mockSessions: Session[] = [
     {
-      id: 'session-1',
+      sessionId: 'session-1',
       title: 'Session 1',
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -53,7 +53,7 @@ describe('EmbeddedChatPanel Component', () => {
       unreadCount: 0,
     },
     {
-      id: 'session-2',
+      sessionId: 'session-2',
       title: 'Session 2',
       createdAt: Date.now() - 10000,
       updatedAt: Date.now() - 10000,
