@@ -58,7 +58,7 @@
                 :key="idx"
                 :src="img"
                 class="chat-content__image"
-                @click="$emit('image-click', img)"
+                @click="$emit('file-click', { type: 'image', url: img })"
               />
             </div>
             <!-- Text -->
@@ -76,7 +76,7 @@
 
     <!-- Input Area -->
     <div class="chat-content__input-area">
-      <ChatInput :disabled="isStreaming" @send="handleSend" />
+      <ChatInput :disabled="isStreaming" @send="handleSend" @file-click="$emit('file-click', $event)" />
     </div>
   </div>
 </template>
@@ -133,8 +133,7 @@ interface Emits {
   (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void
   (e: 'copy', message: Message): void
-  (e: 'image-click', url: string): void
-  (e: 'document-click', doc: { name: string; url: string; type: string }): void
+  (e: 'file-click', file: { type: string; url: string; name?: string }): void
 }
 
 const emit = defineEmits<Emits>()

@@ -17,10 +17,19 @@
         </div>
 
         <!-- Image preview -->
-        <img v-else-if="file.type === 'image'" :src="file.preview" class="chat-input__preview-img" />
+        <img
+          v-else-if="file.type === 'image'"
+          :src="file.preview"
+          class="chat-input__preview-img"
+          @click="$emit('file-click', { type: 'image', url: file.preview, name: file.name })"
+        />
 
         <!-- Video icon -->
-        <div v-else-if="file.type === 'video'" class="chat-input__preview-media">
+        <div
+          v-else-if="file.type === 'video'"
+          class="chat-input__preview-media"
+          @click="$emit('file-click', { type: 'video', url: file.preview, name: file.name })"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="23 7 16 12 23 17 23 7" stroke-linecap="round" stroke-linejoin="round"/>
             <rect x="1" y="5" width="15" height="14" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -29,7 +38,11 @@
         </div>
 
         <!-- Audio icon -->
-        <div v-else-if="file.type === 'audio'" class="chat-input__preview-media">
+        <div
+          v-else-if="file.type === 'audio'"
+          class="chat-input__preview-media"
+          @click="$emit('file-click', { type: 'audio', url: file.preview, name: file.name })"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 18V5l12-2v13" stroke-linecap="round" stroke-linejoin="round"/>
             <circle cx="6" cy="18" r="3" stroke-linecap="round" stroke-linejoin="round"/>
@@ -39,7 +52,12 @@
         </div>
 
         <!-- Document icon -->
-        <div v-else-if="file.type === 'document'" class="chat-input__preview-document" :title="file.name">
+        <div
+          v-else-if="file.type === 'document'"
+          class="chat-input__preview-document"
+          :title="file.name"
+          @click="$emit('file-click', { type: file.name.split('.').pop() || 'unknown', url: file.preview, name: file.name })"
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linecap="round" stroke-linejoin="round"/>
             <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round"/>
@@ -141,6 +159,7 @@ interface MediaFile {
 interface Emits {
   (e: 'send', data: { content: string; images?: string[]; videos?: string[]; audios?: string[]; documents?: Array<{ name: string; url: string; type: string }> }): void
   (e: 'toggle-voice'): void
+  (e: 'file-click', file: { type: string; url: string; name?: string }): void
 }
 
 const emit = defineEmits<Emits>()

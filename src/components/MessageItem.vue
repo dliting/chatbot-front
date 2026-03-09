@@ -33,7 +33,7 @@
             :src="image"
             :alt="`Image ${index + 1}`"
             class="chatbot-message__image"
-            @click="$emit('image-click', image)"
+            @click="$emit('file-click', { type: 'image', url: image })"
           />
         </div>
 
@@ -43,7 +43,7 @@
             v-for="(video, index) in message.videos"
             :key="`video-${index}`"
             class="chatbot-message__video"
-            @click="$emit('video-click', video)"
+            @click="$emit('file-click', { type: 'video', url: `data:video/mp4;base64,${video}` })"
           >
             <video :src="`data:video/mp4;base64,${video}`" class="chatbot-message__video-player" preload="metadata" />
             <div class="chatbot-message__video-overlay">
@@ -60,6 +60,7 @@
             v-for="(audio, index) in message.audios"
             :key="`audio-${index}`"
             class="chatbot-message__audio"
+            @click="$emit('file-click', { type: 'audio', url: `data:audio/mp3;base64,${audio}` })"
           >
             <audio :src="`data:audio/mp3;base64,${audio}`" controls class="chatbot-message__audio-player" />
           </div>
@@ -71,7 +72,7 @@
             v-for="(doc, index) in message.documents"
             :key="`doc-${index}`"
             class="chatbot-message__document"
-            @click="$emit('document-click', doc)"
+            @click="$emit('file-click', { type: doc.type, url: doc.url, name: doc.name })"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -183,10 +184,7 @@ interface Emits {
   (e: 'copy'): void
   (e: 'delete'): void
   (e: 'resend'): void
-  (e: 'image-click', url: string): void
-  (e: 'video-click', url: string): void
-  (e: 'audio-click', url: string): void
-  (e: 'document-click', doc: { name: string; url: string; type: string }): void
+  (e: 'file-click', file: { type: string; url: string; name?: string }): void
   (e: 'edit', message: Message): void
 }
 

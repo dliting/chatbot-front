@@ -40,8 +40,7 @@
         @send-message="handleSend"
         @quick-action="handleQuickAction"
         @edit="handleMessageEdit"
-        @image-click="handleImageClick"
-        @document-click="handleDocumentClick"
+        @file-click="handleFileClick"
       />
       <SessionListView
         v-else
@@ -55,19 +54,12 @@
       />
     </div>
 
-    <!-- Image Preview Modal -->
-    <ImagePreviewModal
-      v-if="previewImageUrl"
-      :url="previewImageUrl"
-      @close="previewImageUrl = ''"
-    />
-
-    <!-- Document Preview Modal -->
+    <!-- File Preview Modal (unified for all file types) -->
     <FilePreviewModal
-      v-if="previewDocument"
-      :visible="!!previewDocument"
-      :file="previewDocument"
-      @close="previewDocument = null"
+      v-if="previewFile"
+      :visible="!!previewFile"
+      :file="previewFile"
+      @close="previewFile = null"
     />
   </DraggableWindow>
 
@@ -95,7 +87,6 @@ import SuspendedBall from './SuspendedBall.vue'
 import SessionListView from './SessionListView.vue'
 import ChatHeader from './ChatHeader.vue'
 import ChatContent from './ChatContent.vue'
-import ImagePreviewModal from './ImagePreviewModal.vue'
 import FilePreviewModal from './FilePreviewModal.vue'
 
 interface Props {
@@ -147,16 +138,11 @@ const windowState = ref({
 })
 
 // Preview state
-const previewImageUrl = ref('')
-const previewDocument = ref<{ name: string; url: string; type: string } | null>(null)
+const previewFile = ref<{ type: string; url: string; name?: string } | null>(null)
 
-// Preview handlers
-const handleImageClick = (url: string) => {
-  previewImageUrl.value = url
-}
-
-const handleDocumentClick = (doc: { name: string; url: string; type: string }) => {
-  previewDocument.value = doc
+// Unified file click handler for all file types
+const handleFileClick = (file: { type: string; url: string; name?: string }) => {
+  previewFile.value = file
 }
 
 // Methods

@@ -9,7 +9,7 @@ vi.mock('@/components/MessageItem.vue', () => ({
   default: {
     name: 'MessageItem',
     props: ['message', 'theme', 'isStreaming'],
-    emits: ['copy', 'delete', 'resend', 'image-click'],
+    emits: ['copy', 'delete', 'resend', 'file-click'],
     template: `
       <div class="chatbot-messages__item" :class="'chatbot-messages__item--' + message.role" data-testid="message-item">
         <span class="chatbot-messages__item-content">{{ message.content }}</span>
@@ -257,7 +257,7 @@ describe('MessageList.vue', () => {
       }
     })
 
-    it('should emit image-click event when image is clicked', async () => {
+    it('should emit file-click event when image is clicked', async () => {
       const messages = [
         {
           id: 'msg_1',
@@ -273,11 +273,11 @@ describe('MessageList.vue', () => {
 
       await wrapper.setProps({ messages })
 
-      // Simulate image click event
-      wrapper.vm.$emit('image-click', 'https://example.com/image.jpg')
+      // Simulate file click event
+      wrapper.vm.$emit('file-click', { type: 'image', url: 'https://example.com/image.jpg' })
 
-      expect(wrapper.emitted('image-click')).toBeTruthy()
-      expect(wrapper.emitted('image-click')?.[0]).toEqual(['https://example.com/image.jpg'])
+      expect(wrapper.emitted('file-click')).toBeTruthy()
+      expect(wrapper.emitted('file-click')?.[0]).toEqual([{ type: 'image', url: 'https://example.com/image.jpg' }])
     })
   })
 
