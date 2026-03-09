@@ -40,6 +40,7 @@
         @send-message="handleSend"
         @quick-action="handleQuickAction"
         @edit="handleMessageEdit"
+        @file-click="handleFileClick"
       />
       <SessionListView
         v-else
@@ -53,6 +54,14 @@
         @delete-session="handleDeleteSession"
       />
     </div>
+
+    <!-- File Preview Modal (unified for all file types) -->
+    <FilePreviewModal
+      v-if="previewFile"
+      :visible="!!previewFile"
+      :file="previewFile"
+      @close="previewFile = null"
+    />
   </DraggableWindow>
 
   <!-- Suspended Ball for floating mode (when closed) -->
@@ -79,6 +88,7 @@ import SuspendedBall from './SuspendedBall.vue'
 import SessionListView from './SessionListView.vue'
 import ChatHeader from './ChatHeader.vue'
 import ChatContent from './ChatContent.vue'
+import FilePreviewModal from './FilePreviewModal.vue'
 
 interface Props {
   config?: ChatbotConfig
@@ -127,6 +137,14 @@ const windowState = ref({
   width: configRef.value.panelWidth || 400,
   height: configRef.value.panelHeight || 500,
 })
+
+// Preview state
+const previewFile = ref<{ type: string; url: string; name?: string } | null>(null)
+
+// Unified file click handler for all file types
+const handleFileClick = (file: { type: string; url: string; name?: string }) => {
+  previewFile.value = file
+}
 
 // Methods
 const openPanel = () => {

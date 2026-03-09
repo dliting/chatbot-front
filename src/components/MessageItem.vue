@@ -33,7 +33,7 @@
             :src="image"
             :alt="`Image ${index + 1}`"
             class="chatbot-message__image"
-            @click="$emit('image-click', image)"
+            @click="$emit('file-click', { type: 'image', url: image })"
           />
         </div>
 
@@ -43,7 +43,7 @@
             v-for="(video, index) in message.videos"
             :key="`video-${index}`"
             class="chatbot-message__video"
-            @click="$emit('video-click', video)"
+            @click="$emit('file-click', { type: 'video', url: `data:video/mp4;base64,${video}` })"
           >
             <video :src="`data:video/mp4;base64,${video}`" class="chatbot-message__video-player" preload="metadata" />
             <div class="chatbot-message__video-overlay">
@@ -60,8 +60,27 @@
             v-for="(audio, index) in message.audios"
             :key="`audio-${index}`"
             class="chatbot-message__audio"
+            @click="$emit('file-click', { type: 'audio', url: `data:audio/mp3;base64,${audio}` })"
           >
             <audio :src="`data:audio/mp3;base64,${audio}`" controls class="chatbot-message__audio-player" />
+          </div>
+        </div>
+
+        <!-- Document content -->
+        <div v-if="hasDocuments" class="chatbot-message__documents">
+          <div
+            v-for="(doc, index) in message.documents"
+            :key="`doc-${index}`"
+            class="chatbot-message__document"
+            @click="$emit('file-click', { type: doc.type, url: doc.url, name: doc.name })"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="16" y1="13" x2="8" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
+              <line x1="16" y1="17" x2="8" y2="17" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="chatbot-message__document-name">{{ doc.name }}</span>
           </div>
         </div>
 
@@ -165,9 +184,7 @@ interface Emits {
   (e: 'copy'): void
   (e: 'delete'): void
   (e: 'resend'): void
-  (e: 'image-click', url: string): void
-  (e: 'video-click', url: string): void
-  (e: 'audio-click', url: string): void
+  (e: 'file-click', file: { type: string; url: string; name?: string }): void
   (e: 'edit', message: Message): void
 }
 
@@ -180,6 +197,7 @@ const hasText = computed(() => Boolean(props.message.content))
 const hasImages = computed(() => Boolean(props.message.images?.length))
 const hasVideos = computed(() => Boolean(props.message.videos?.length))
 const hasAudios = computed(() => Boolean(props.message.audios?.length))
+const hasDocuments = computed(() => Boolean(props.message.documents?.length))
 const canCopy = computed(() => hasText.value && !props.isStreaming)
 
 const label = computed(() => isUser.value ? 'You' : 'AI Assistant')
@@ -205,6 +223,7 @@ const bubbleClasses = computed(() => [
     'chatbot-message__bubble--mixed': hasText.value && hasImages.value,
     'chatbot-message__bubble--video': hasVideos.value,
     'chatbot-message__bubble--audio': hasAudios.value,
+    'chatbot-message__bubble--document': hasDocuments.value,
   },
 ])
 
@@ -445,6 +464,43 @@ const handleDoubleClick = () => {
   &__audio-player {
     width: 100%;
     height: 40px;
+  }
+
+  &__documents {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  &__document {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s;
+
+    svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+      stroke: #606266;
+    }
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    &-name {
+      font-size: 13px;
+      color: #303133;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 
   &__cursor {

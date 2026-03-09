@@ -20,7 +20,7 @@
           @copy="$emit('copy', message)"
           @delete="$emit('delete', message)"
           @resend="$emit('resend', message)"
-          @image-click="$emit('image-click', $event)"
+          @file-click="$emit('file-click', $event)"
         />
       </div>
 
@@ -90,7 +90,7 @@ interface Emits {
   (e: 'copy', message: Message): void
   (e: 'delete', message: Message): void
   (e: 'resend', message: Message): void
-  (e: 'image-click', url: string): void
+  (e: 'file-click', file: { type: string; url: string; name?: string }): void
   (e: 'scroll-to-top'): void
   (e: 'scroll-to-bottom'): void
 }

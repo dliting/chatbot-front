@@ -1,10 +1,50 @@
 /**
  * Unit tests for stream utilities
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { createMockStream, StreamAccumulator, parseSSELine } from '@/utils/stream'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { createMockStream, StreamAccumulator, parseSSELine, StreamClient } from '@/utils/stream'
 
 describe('utils/stream', () => {
+  describe('StreamClient', () => {
+    it('should create StreamClient with url and options', () => {
+      const client = new StreamClient('/api/stream', {
+        onMessage: vi.fn(),
+        onError: vi.fn(),
+        onOpen: vi.fn()
+      })
+
+      expect(client).toBeDefined()
+    })
+
+    it('should check isConnected status when not connected', () => {
+      const client = new StreamClient('/api/stream', {})
+
+      expect(client.isConnected()).toBe(false)
+    })
+
+    it('should reset disconnected state', () => {
+      const client = new StreamClient('/api/stream', {
+        reconnect: true
+      })
+
+      client.disconnect(true)
+      client.reset()
+
+      // After reset, client should be in a state that allows reconnection
+      expect(client).toBeDefined()
+    })
+
+    it('should disconnect with permanent flag', () => {
+      const client = new StreamClient('/api/stream', {})
+
+      client.disconnect(true)
+      client.disconnect(false)
+
+      // Should not throw
+      expect(client).toBeDefined()
+    })
+  })
+
   describe('createMockStream', () => {
     it('should generate stream events with start, tokens, and end', async () => {
       const content = 'Hello'

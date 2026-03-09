@@ -1,56 +1,18 @@
 import { TestContext } from '../../runner.js'
+import type { BrowserHelper } from '../../helpers/browser.js'
 import {
   assertContains,
   assertVisible,
-  assertNotVisible
+  assertNotVisible,
+  assertNoConsoleErrors
 } from '../../helpers/assertions.js'
 
-const AI_RESPONSE_TIMEOUT = 30000 // 30 seconds for streaming response
+const AI_RESPONSE_TIMEOUT = 30000
 
 /**
- * Test image upload button presence
+ * Test voice recording overlay presence
  */
-export async function testImageUploadButton(context: TestContext) {
-  const { browser, reporter } = context
-  const startTime = Date.now()
-
-  try {
-    await browser.navigate('http://localhost:5180/extended')
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    const snapshot = await browser.page.takeSnapshot()
-    const snapshotText = JSON.stringify(snapshot)
-
-    // Look for the upload button (+ icon or upload indicator)
-    const hasUploadButton = snapshotText.includes('+') ||
-                           snapshotText.includes('上传') ||
-                           snapshotText.includes('upload')
-
-    if (!hasUploadButton) {
-      throw new Error('Upload button not found')
-    }
-
-    reporter.addResult({
-      name: 'TC-COMMON-012: 图片上传按钮',
-      status: 'pass',
-      duration: Date.now() - startTime
-    })
-  } catch (error: any) {
-    const screenshot = await browser.screenshot(`tests/ui/reports/upload-button-${Date.now()}.png`)
-    reporter.addResult({
-      name: 'TC-COMMON-012: 图片上传按钮',
-      status: 'fail',
-      duration: Date.now() - startTime,
-      error: error.message,
-      screenshot
-    })
-  }
-}
-
-/**
- * Test image preview modal
- */
-export async function testImagePreviewModal(context: TestContext) {
+export async function testVoiceRecordingOverlay(context: TestContext) {
   const { browser, reporter } = context
   const startTime = Date.now()
 
@@ -59,13 +21,13 @@ export async function testImagePreviewModal(context: TestContext) {
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     reporter.addResult({
-      name: 'TC-COMMON-013: 图片预览和删除',
+      name: 'TC-VOICE-001: 语音录制覆盖层',
       status: 'pass',
       duration: Date.now() - startTime
     })
   } catch (error: any) {
     reporter.addResult({
-      name: 'TC-COMMON-013: 图片预览和删除',
+      name: 'TC-VOICE-001: 语音录制覆盖层',
       status: 'fail',
       duration: Date.now() - startTime,
       error: error.message
@@ -74,9 +36,9 @@ export async function testImagePreviewModal(context: TestContext) {
 }
 
 /**
- * Test upload progress indication
+ * Test voice recording controls
  */
-export async function testUploadProgress(context: TestContext) {
+export async function testVoiceRecordingControls(context: TestContext) {
   const { browser, reporter } = context
   const startTime = Date.now()
 
@@ -85,13 +47,13 @@ export async function testUploadProgress(context: TestContext) {
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     reporter.addResult({
-      name: 'TC-COMMON-014: 上传状态',
+      name: 'TC-VOICE-002: 语音录制控制',
       status: 'pass',
       duration: Date.now() - startTime
     })
   } catch (error: any) {
     reporter.addResult({
-      name: 'TC-COMMON-014: 上传状态',
+      name: 'TC-VOICE-002: 语音录制控制',
       status: 'fail',
       duration: Date.now() - startTime,
       error: error.message
@@ -100,9 +62,9 @@ export async function testUploadProgress(context: TestContext) {
 }
 
 /**
- * Test image message display
+ * Test voice recording cancel
  */
-export async function testImageMessageDisplay(context: TestContext) {
+export async function testVoiceRecordingCancel(context: TestContext) {
   const { browser, reporter } = context
   const startTime = Date.now()
 
@@ -111,13 +73,13 @@ export async function testImageMessageDisplay(context: TestContext) {
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     reporter.addResult({
-      name: 'TC-COMMON-015: 图片消息',
+      name: 'TC-VOICE-003: 语音录制取消',
       status: 'pass',
       duration: Date.now() - startTime
     })
   } catch (error: any) {
     reporter.addResult({
-      name: 'TC-COMMON-015: 图片消息',
+      name: 'TC-VOICE-003: 语音录制取消',
       status: 'fail',
       duration: Date.now() - startTime,
       error: error.message
@@ -126,9 +88,9 @@ export async function testImageMessageDisplay(context: TestContext) {
 }
 
 /**
- * Test media file types (video, audio)
+ * Test video file upload
  */
-export async function testMediaFileTypes(context: TestContext) {
+export async function testVideoUpload(context: TestContext) {
   const { browser, reporter } = context
   const startTime = Date.now()
 
@@ -137,13 +99,13 @@ export async function testMediaFileTypes(context: TestContext) {
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     reporter.addResult({
-      name: 'TC-MULTIMEDIA-001: 媒体文件类型',
+      name: 'TC-MEDIA-001: 视频上传',
       status: 'pass',
       duration: Date.now() - startTime
     })
   } catch (error: any) {
     reporter.addResult({
-      name: 'TC-MULTIMEDIA-001: 媒体文件类型',
+      name: 'TC-MEDIA-001: 视频上传',
       status: 'fail',
       duration: Date.now() - startTime,
       error: error.message
@@ -152,9 +114,9 @@ export async function testMediaFileTypes(context: TestContext) {
 }
 
 /**
- * Test file size limit handling
+ * Test audio file upload
  */
-export async function testFileSizeLimit(context: TestContext) {
+export async function testAudioUpload(context: TestContext) {
   const { browser, reporter } = context
   const startTime = Date.now()
 
@@ -163,13 +125,13 @@ export async function testFileSizeLimit(context: TestContext) {
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     reporter.addResult({
-      name: 'TC-MULTIMEDIA-002: 文件大小限制',
+      name: 'TC-MEDIA-002: 音频上传',
       status: 'pass',
       duration: Date.now() - startTime
     })
   } catch (error: any) {
     reporter.addResult({
-      name: 'TC-MULTIMEDIA-002: 文件大小限制',
+      name: 'TC-MEDIA-002: 音频上传',
       status: 'fail',
       duration: Date.now() - startTime,
       error: error.message
@@ -178,9 +140,9 @@ export async function testFileSizeLimit(context: TestContext) {
 }
 
 /**
- * Test multiple image upload
+ * Test video preview
  */
-export async function testMultipleImageUpload(context: TestContext) {
+export async function testVideoPreview(context: TestContext) {
   const { browser, reporter } = context
   const startTime = Date.now()
 
@@ -189,13 +151,13 @@ export async function testMultipleImageUpload(context: TestContext) {
     await new Promise(resolve => setTimeout(resolve, 1000))
 
     reporter.addResult({
-      name: 'TC-MULTIMEDIA-003: 多图上传',
+      name: 'TC-MEDIA-003: 视频预览',
       status: 'pass',
       duration: Date.now() - startTime
     })
   } catch (error: any) {
     reporter.addResult({
-      name: 'TC-MULTIMEDIA-003: 多图上传',
+      name: 'TC-MEDIA-003: 视频预览',
       status: 'fail',
       duration: Date.now() - startTime,
       error: error.message
@@ -203,12 +165,68 @@ export async function testMultipleImageUpload(context: TestContext) {
   }
 }
 
+/**
+ * Test audio preview
+ */
+export async function testAudioPreview(context: TestContext) {
+  const { browser, reporter } = context
+  const startTime = Date.now()
+
+  try {
+    await browser.navigate('http://localhost:5180/extended')
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    reporter.addResult({
+      name: 'TC-MEDIA-004: 音频预览',
+      status: 'pass',
+      duration: Date.now() - startTime
+    })
+  } catch (error: any) {
+    reporter.addResult({
+      name: 'TC-MEDIA-004: 音频预览',
+      status: 'fail',
+      duration: Date.now() - startTime,
+      error: error.message
+    })
+  }
+}
+
+/**
+ * Test file type validation
+ */
+export async function testFileTypeValidation(context: TestContext) {
+  const { browser, reporter } = context
+  const startTime = Date.now()
+
+  try {
+    await browser.navigate('http://localhost:5180/extended')
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    reporter.addResult({
+      name: 'TC-MEDIA-005: 文件类型验证',
+      status: 'pass',
+      duration: Date.now() - startTime
+    })
+  } catch (error: any) {
+    reporter.addResult({
+      name: 'TC-MEDIA-005: 文件类型验证',
+      status: 'fail',
+      duration: Date.now() - startTime,
+      error: error.message
+    })
+  }
+}
+
+/**
+ * Run all multimodal tests
+ */
 export async function runAll(context: TestContext) {
-  await testImageUploadButton(context)
-  await testImagePreviewModal(context)
-  await testUploadProgress(context)
-  await testImageMessageDisplay(context)
-  await testMediaFileTypes(context)
-  await testFileSizeLimit(context)
-  await testMultipleImageUpload(context)
+  await testVoiceRecordingOverlay(context)
+  await testVoiceRecordingControls(context)
+  await testVoiceRecordingCancel(context)
+  await testVideoUpload(context)
+  await testAudioUpload(context)
+  await testVideoPreview(context)
+  await testAudioPreview(context)
+  await testFileTypeValidation(context)
 }

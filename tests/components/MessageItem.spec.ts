@@ -163,7 +163,7 @@ describe('MessageItem Component', () => {
       expect(wrapper.find('.chatbot-message__bubble--mixed').exists()).toBe(true)
     })
 
-    it('should emit image-click event when image is clicked', async () => {
+    it('should emit file-click event when image is clicked', async () => {
       const message = createUserMessage({
         content: '',
         images: ['https://example.com/image.jpg'],
@@ -173,8 +173,8 @@ describe('MessageItem Component', () => {
       const image = wrapper.find('.chatbot-message__image')
       await image.trigger('click')
 
-      expect(wrapper.emitted('image-click')).toBeTruthy()
-      expect(wrapper.emitted('image-click')?.[0]).toEqual(['https://example.com/image.jpg'])
+      expect(wrapper.emitted('file-click')).toBeTruthy()
+      expect(wrapper.emitted('file-click')?.[0]).toEqual([{ type: 'image', url: 'https://example.com/image.jpg' }])
     })
 
     it('should apply image-only class when message has only images', () => {

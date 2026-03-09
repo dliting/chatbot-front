@@ -40,6 +40,7 @@
           @send-message="handleSendMessage"
           @quick-action="$emit('quick-action', $event)"
           @edit="$emit('edit', $event)"
+          @file-click="handleFileClick"
         />
       </main>
     </template>
@@ -65,6 +66,7 @@
         @send-message="handleSendMessage"
         @quick-action="$emit('quick-action', $event)"
         @edit="$emit('edit', $event)"
+        @file-click="handleFileClick"
       />
       <SessionListView
         v-else
@@ -80,11 +82,19 @@
         @update-session-title="$emit('update-session-title', $event[0], $event[1])"
       />
     </template>
+
+    <!-- File Preview Modal (unified for all file types) -->
+    <FilePreviewModal
+      v-if="previewFile"
+      :visible="!!previewFile"
+      :file="previewFile"
+      @close="previewFile = null"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { ChatMode, Layout, ChatbotConfig } from '@/types'
 import { defaultChatbotConfig } from '@/types/config'
 import { useChatView } from '@/composables/useChatView'
@@ -93,6 +103,7 @@ import { useChatView } from '@/composables/useChatView'
 import SessionListView from './SessionListView.vue'
 import ChatHeader from './ChatHeader.vue'
 import ChatContent from './ChatContent.vue'
+import FilePreviewModal from './FilePreviewModal.vue'
 
 interface Props {
   mode?: ChatMode
@@ -135,6 +146,14 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>()
+
+// Preview state
+const previewFile = ref<{ type: string; url: string; name?: string } | null>(null)
+
+// Unified file click handler for all file types
+const handleFileClick = (file: { type: string; url: string; name?: string }) => {
+  previewFile.value = file
+}
 
 // Handle send message
 const handleSendMessage = (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
