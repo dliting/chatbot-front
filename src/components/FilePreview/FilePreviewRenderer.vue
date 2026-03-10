@@ -1,5 +1,5 @@
 <template>
-  <component :is="previewComponent" v-bind="$attrs" />
+  <component :is="previewComponent" :file="file" />
 </template>
 
 <script setup lang="ts">

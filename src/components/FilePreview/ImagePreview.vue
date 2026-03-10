@@ -1,25 +1,24 @@
 <template>
-  <div ref="containerRef" class="image-preview">
+  <div class="image-preview">
     <img
-      v-if="previewUrl"
-      :src="previewUrl"
+      v-if="imageSrc"
+      :src="imageSrc"
       :alt="filename"
       class="image-preview__img"
       @load="handleLoad"
+      @error="handleError"
     />
-    <div v-else-if="loading" class="image-preview__loading">
+    <div v-if="!loaded && !hasError" class="image-preview__loading">
       <span>Loading...</span>
     </div>
-    <div v-else class="image-preview__error">
+    <div v-if="hasError" class="image-preview__error">
       <span>Failed to load image</span>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import Viewer from 'viewerjs'
-import 'viewerjs/dist/viewer.css'
+import { ref, computed } from 'vue'
 
 interface Props {
   file?: File | { name: string; url: string; data?: string }
@@ -27,10 +26,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const containerRef = ref<HTMLElement>()
-const loading = ref(true)
-const error = ref(false)
-const viewerInstance = ref<Viewer | null>(null)
+const loaded = ref(false)
+const hasError = ref(false)
 
 // Get filename from props
 const filename = computed(() => {
@@ -38,69 +35,38 @@ const filename = computed(() => {
   return 'name' in props.file ? props.file.name : (props.file as File).name
 })
 
-// Get preview URL
-const previewUrl = computed(() => {
+// Get preview URL - handle different input formats
+const imageSrc = computed(() => {
   if (!props.file) return ''
-  if ('url' in props.file && props.file.url) return props.file.url
-  if ('data' in props.file && props.file.data) return props.file.data
-  if ('name' in props.file && props.file.name) {
-    // For File object
-    const file = props.file as File
-    return URL.createObjectURL(file)
+
+  const file = props.file as { name?: string; url?: string; data?: string }
+
+  // Has url property
+  if (file.url) {
+    return file.url
   }
+
+  // Has data property
+  if (file.data) {
+    return file.data
+  }
+
+  // Is a File object
+  if (props.file instanceof File) {
+    return URL.createObjectURL(props.file)
+  }
+
   return ''
 })
 
-// Initialize viewer on mount
-const initViewer = () => {
-  if (!containerRef.value) return
-
-  viewerInstance.value = new Viewer(containerRef.value, {
-    inline: false,
-    button: true,
-    navbar: true,
-    title: true,
-    toolbar: true,
-    tooltip: true,
-    movable: true,
-    zoomable: true,
-    rotatable: true,
-    scalable: true,
-    fullscreen: true,
-    keyboard: true,
-    url: 'src'
-  })
-}
-
+// Simple image display without viewerjs for now
 const handleLoad = () => {
-  loading.value = false
+  loaded.value = true
 }
 
-// Cleanup viewer on unmount
-onMounted(() => {
-  if (previewUrl.value) {
-    // Preload image
-    const img = new Image()
-    img.onload = () => {
-      loading.value = false
-      initViewer()
-    }
-    img.onerror = () => {
-      loading.value = false
-      error.value = true
-    }
-    img.src = previewUrl.value
-  } else {
-    loading.value = false
-    error.value = true
-  }
-})
-
-onUnmounted(() => {
-  if (viewerInstance.value) {
-    viewerInstance.value.destroy()
-  }
-})
+const handleError = () => {
+  hasError.value = true
+}
 </script>
 
 <style scoped lang="scss">
