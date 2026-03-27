@@ -439,7 +439,7 @@ describe('EmbeddedChatPanel Component', () => {
       })
 
       const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('update-session-title', ['session-1', 'Updated Title'])
+      await sessionListView.vm.$emit('update-session-title', 'session-1', 'Updated Title')
 
       expect(wrapper.emitted('update-session-title')).toBeTruthy()
       expect(wrapper.emitted('update-session-title')?.[0]).toEqual(['session-1', 'Updated Title'])
@@ -1142,7 +1142,7 @@ describe('EmbeddedChatPanel Component', () => {
 
       // Emit update-session-title from SessionListView
       const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('update-session-title', ['session-1', 'New Title'])
+      await sessionListView.vm.$emit('update-session-title', 'session-1', 'New Title')
 
       expect(wrapper.emitted('update-session-title')).toBeTruthy()
       expect(wrapper.emitted('update-session-title')?.[0]).toEqual(['session-1', 'New Title'])

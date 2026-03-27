@@ -51,7 +51,7 @@
       v-else
       :mode="chatMode"
       :layout="layout"
-      :config="config"
+      :config="themedConfig"
       :messages="currentMessages"
       :sessions="state.sessions.list"
       :current-session-id="state.sessions.currentId"
@@ -104,9 +104,10 @@ const config = computed((): Required<ChatbotConfig> => {
   return merged
 })
 
-// AIChat config (internal mode)
+// AIChat config (internal mode for floating/sidebar)
 const aiChatConfig = computed(() => ({
   labels: config.value.labels,
+  theme: resolvedTheme.value,
   enableImageUpload: config.value.enableImageUpload,
   maxImageCount: config.value.maxImageCount,
   maxImageSize: config.value.maxImageSize,
@@ -147,7 +148,7 @@ const ballSize = computed(() => (state.ui.isMobile ? 48 : 56))
 // Get unread count from current session
 const unreadCount = computed(() => {
   const currentSession = state.sessions.list.find(
-    s => s.id === state.sessions.currentId
+    s => s.sessionId === state.sessions.currentId
   )
   return currentSession?.unreadCount ?? 0
 })
@@ -192,13 +193,17 @@ const effectivePanelMode = computed(() => {
   return mode
 })
 
-// Resolve theme for data-theme attribute (supports 'system' theme)
+// Resolve theme for data-theme attribute
+// Always use state.ui.theme since toggleTheme() updates it
 const resolvedTheme = computed(() => {
-  if (config.value.theme === 'system') {
-    return state.ui.theme
-  }
-  return config.value.theme
+  return state.ui.theme
 })
+
+// Config with resolved theme for passing to child components
+const themedConfig = computed(() => ({
+  ...config.value,
+  theme: resolvedTheme.value,
+}))
 
 // Get current messages for the active session
 const currentMessages = computed(() => {
@@ -215,13 +220,30 @@ const toggleTheme = () => {
 }
 
 const _handleCreateSession = () => {
-  const newId = createSession()
-  emit('sessionCreate', newId)
+  // Reuse current session if it's empty (avoid duplicate empty sessions)
+  const currentMsgs = state.messages.bySession[state.sessions.currentId]
+  if (currentMsgs && currentMsgs.length > 0) {
+    // Current session has messages, create a new session
+    const newId = createSession()
+    emit('sessionCreate', newId)
+  }
+  // If current session is empty, do nothing (user stays on the empty session)
 }
 
-const _handleSwitchSession = (sessionId: string) => {
+const _handleSwitchSession = async (sessionId: string) => {
   switchSession(sessionId)
   emit('sessionChange', sessionId)
+
+  // Load messages from backend for the selected session
+  const client = apiClient.value
+  if (client && !state.messages.bySession[sessionId]?.length) {
+    try {
+      const messages = await client.getSessionMessages(sessionId)
+      state.messages.bySession[sessionId] = messages
+    } catch (error) {
+      console.error('Failed to load session messages:', error)
+    }
+  }
 }
 
 const _handleDeleteSession = (sessionId: string) => {
@@ -408,6 +430,15 @@ defineExpose({
   --chatbot-panel-text: #303133;
   --chatbot-panel-subtext: #909399;
 
+  /* Content background gradient - light */
+  --chatbot-content-bg-1: #f0f4ff;
+  --chatbot-content-bg-2: #e8f0ff;
+  --chatbot-content-bg-3: #f5f3ff;
+
+  /* Quick action - light */
+  --chatbot-quick-action-bg: rgba(255, 255, 255, 0.7);
+  --chatbot-quick-action-border: rgba(255, 255, 255, 0.5);
+
   --chatbot-border-radius: 12px;
 }
 
@@ -427,5 +458,14 @@ defineExpose({
   --chatbot-panel-border: #4c4d4f;
   --chatbot-panel-text: #e5e5e5;
   --chatbot-panel-subtext: #a3a3a3;
+
+  /* Content background gradient - dark */
+  --chatbot-content-bg-1: #1a1a2e;
+  --chatbot-content-bg-2: #16213e;
+  --chatbot-content-bg-3: #1a1a2e;
+
+  /* Quick action - dark */
+  --chatbot-quick-action-bg: rgba(44, 44, 44, 0.7);
+  --chatbot-quick-action-border: rgba(76, 77, 79, 0.5);
 }
 </style>

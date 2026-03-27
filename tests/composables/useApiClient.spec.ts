@@ -224,7 +224,7 @@ describe('composables/useApiClient', () => {
           method: 'POST',
         })
       )
-      expect(result.id).toBe('session_new')
+      expect(result.sessionId).toBe('session_new')
       expect(result.title).toBe('New Session')
     })
   })

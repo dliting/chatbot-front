@@ -10,6 +10,9 @@ describe('useChatbotState', () => {
   let mockConfig: Required<ChatbotConfig>
 
   beforeEach(() => {
+    // Clear localStorage to avoid session leakage between tests
+    localStorage.clear()
+
     // Mock window.innerWidth
     Object.defineProperty(window, 'innerWidth', {
       writable: true,
@@ -95,7 +98,7 @@ describe('useChatbotState', () => {
       expect(currentMessages.value).toEqual([])
 
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: state.messages.currentSessionId,
         role: 'user',
         content: 'Hello',
@@ -114,7 +117,7 @@ describe('useChatbotState', () => {
       expect(currentSession.value).toBeDefined()
 
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: state.messages.currentSessionId,
         role: 'user',
         content: 'Hello',
@@ -123,7 +126,7 @@ describe('useChatbotState', () => {
       })
 
       expect(currentSession.value).toBeDefined()
-      expect(currentSession.value?.id).toBe(state.messages.currentSessionId)
+      expect(currentSession.value?.sessionId).toBe(state.messages.currentSessionId)
     })
 
     it('should return isStreaming based on streamingMessageId', () => {
@@ -260,7 +263,7 @@ describe('useChatbotState', () => {
       const { state, addMessage, currentMessages } = useChatbotState(mockConfig)
 
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: state.messages.currentSessionId,
         role: 'user',
         content: 'Hello',
@@ -277,7 +280,7 @@ describe('useChatbotState', () => {
 
       const newSessionId = 'new-session-123'
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: newSessionId,
         role: 'user',
         content: 'Hello',
@@ -293,7 +296,7 @@ describe('useChatbotState', () => {
       const { state, addMessage, updateMessage } = useChatbotState(mockConfig)
 
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: state.messages.currentSessionId,
         role: 'user',
         content: 'Hello',
@@ -311,7 +314,7 @@ describe('useChatbotState', () => {
       const { state, addMessage, clearCurrentMessages } = useChatbotState(mockConfig)
 
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: state.messages.currentSessionId,
         role: 'user',
         content: 'Hello',
@@ -345,7 +348,7 @@ describe('useChatbotState', () => {
 
       // Add message to create session
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: originalSessionId,
         role: 'user',
         content: 'Hello',
@@ -356,7 +359,7 @@ describe('useChatbotState', () => {
       // Create another session
       const newSessionId = 'session-456'
       addMessage({
-        id: 'msg-2',
+        messageId: 'msg-2',
         sessionId: newSessionId,
         role: 'user',
         content: 'New session',
@@ -368,7 +371,7 @@ describe('useChatbotState', () => {
 
       expect(state.messages.currentSessionId).toBe(newSessionId)
       expect(state.sessions.currentId).toBe(newSessionId)
-      expect(currentSession.value?.id).toBe(newSessionId)
+      expect(currentSession.value?.sessionId).toBe(newSessionId)
     })
 
     it('should create new session', () => {
@@ -395,7 +398,7 @@ describe('useChatbotState', () => {
       // Create two sessions
       const session1Id = state.messages.currentSessionId
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: session1Id,
         role: 'user',
         content: 'Session 1',
@@ -405,7 +408,7 @@ describe('useChatbotState', () => {
 
       const session2Id = 'session-2'
       addMessage({
-        id: 'msg-2',
+        messageId: 'msg-2',
         sessionId: session2Id,
         role: 'user',
         content: 'Session 2',
@@ -432,7 +435,7 @@ describe('useChatbotState', () => {
 
       const currentSessionId = state.messages.currentSessionId
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: currentSessionId,
         role: 'user',
         content: 'Hello',
@@ -460,7 +463,7 @@ describe('useChatbotState', () => {
       expect(state.sessions.list.length).toBe(1)
 
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: state.messages.currentSessionId,
         role: 'user',
         content: 'Hello',
@@ -469,14 +472,14 @@ describe('useChatbotState', () => {
       })
 
       expect(state.sessions.list.length).toBe(1)
-      expect(state.sessions.list[0].id).toBe(state.messages.currentSessionId)
+      expect(state.sessions.list[0].sessionId).toBe(state.messages.currentSessionId)
     })
 
     it('should update existing session when adding message', () => {
       const { state, addMessage } = useChatbotState(mockConfig)
 
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: state.messages.currentSessionId,
         role: 'user',
         content: 'First message',
@@ -488,7 +491,7 @@ describe('useChatbotState', () => {
 
       // Add another message with a later timestamp
       addMessage({
-        id: 'msg-2',
+        messageId: 'msg-2',
         sessionId: state.messages.currentSessionId,
         role: 'assistant',
         content: 'Response',
@@ -506,7 +509,7 @@ describe('useChatbotState', () => {
       // Create two sessions
       const session1Id = state.messages.currentSessionId
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: session1Id,
         role: 'user',
         content: 'Session 1',
@@ -516,7 +519,7 @@ describe('useChatbotState', () => {
 
       const session2Id = 'session-2'
       addMessage({
-        id: 'msg-2',
+        messageId: 'msg-2',
         sessionId: session2Id,
         role: 'user',
         content: 'Session 2',
@@ -524,11 +527,11 @@ describe('useChatbotState', () => {
         status: 'sent',
       })
 
-      expect(state.sessions.list[0].id).toBe(session2Id)
+      expect(state.sessions.list[0].sessionId).toBe(session2Id)
 
       // Add message to first session
       addMessage({
-        id: 'msg-3',
+        messageId: 'msg-3',
         sessionId: session1Id,
         role: 'user',
         content: 'New message in session 1',
@@ -536,7 +539,7 @@ describe('useChatbotState', () => {
         status: 'sent',
       })
 
-      expect(state.sessions.list[0].id).toBe(session1Id)
+      expect(state.sessions.list[0].sessionId).toBe(session1Id)
     })
   })
 
@@ -644,7 +647,7 @@ describe('useChatbotState', () => {
       const session2Id = 'session-2'
 
       addMessage({
-        id: 'msg-1',
+        messageId: 'msg-1',
         sessionId: session1Id,
         role: 'user',
         content: 'Session 1 message',
@@ -653,7 +656,7 @@ describe('useChatbotState', () => {
       })
 
       addMessage({
-        id: 'msg-2',
+        messageId: 'msg-2',
         sessionId: session2Id,
         role: 'user',
         content: 'Session 2 message',

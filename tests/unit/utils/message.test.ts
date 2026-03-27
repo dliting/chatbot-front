@@ -26,7 +26,7 @@ describe('utils/message', () => {
   const mockSessionId = 'session_123'
 
   const mockUserMessage: Message = {
-    id: 'msg_1',
+    messageId: 'msg_1',
     sessionId: mockSessionId,
     role: 'user',
     type: 'text',
@@ -36,7 +36,7 @@ describe('utils/message', () => {
   }
 
   const mockAssistantMessage: Message = {
-    id: 'msg_2',
+    messageId: 'msg_2',
     sessionId: mockSessionId,
     role: 'assistant',
     type: 'text',
@@ -127,7 +127,7 @@ describe('utils/message', () => {
       const updated = updateMessageStatus(mockUserMessage, 'error')
 
       expect(updated.status).toBe('error')
-      expect(updated.id).toBe(mockUserMessage.id)
+      expect(updated.messageId).toBe(mockUserMessage.messageId)
     })
   })
 
@@ -136,7 +136,7 @@ describe('utils/message', () => {
       const updated = updateMessageContent(mockAssistantMessage, 'New content')
 
       expect(updated.content).toBe('New content')
-      expect(updated.id).toBe(mockAssistantMessage.id)
+      expect(updated.messageId).toBe(mockAssistantMessage.messageId)
     })
   })
 

@@ -23,7 +23,7 @@ describe('FloatingChatPanel Component', () => {
 
   const mockMessages: Message[] = [
     {
-      id: 'msg_1',
+      messageId: 'msg_1',
       sessionId: 'session_1',
       role: 'user',
       type: 'text',
@@ -32,7 +32,7 @@ describe('FloatingChatPanel Component', () => {
       status: 'sent',
     },
     {
-      id: 'msg_2',
+      messageId: 'msg_2',
       sessionId: 'session_1',
       role: 'assistant',
       type: 'text',
@@ -44,7 +44,7 @@ describe('FloatingChatPanel Component', () => {
 
   const mockSessions: Session[] = [
     {
-      id: 'session_1',
+      sessionId: 'session_1',
       title: 'Chat 1',
       createdAt: Date.now() - 86400000,
       updatedAt: Date.now() - 60000,
@@ -52,7 +52,7 @@ describe('FloatingChatPanel Component', () => {
       unreadCount: 0,
     },
     {
-      id: 'session_2',
+      sessionId: 'session_2',
       title: 'Chat 2',
       createdAt: Date.now() - 172800000,
       updatedAt: Date.now() - 3600000,
@@ -887,8 +887,8 @@ describe('FloatingChatPanel Component', () => {
 
       await nextTick()
 
-      // Call toggleTheme
-      wrapper.vm.toggleTheme()
+      // Call handleToggleTheme
+      wrapper.vm.handleToggleTheme()
       await nextTick()
 
       expect(wrapper.emitted('toggle-theme')).toBeTruthy()

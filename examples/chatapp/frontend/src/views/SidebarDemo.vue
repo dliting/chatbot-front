@@ -6,8 +6,7 @@ import { AIChatbot } from 'chatbot'
 const router = useRouter()
 
 const config = computed(() => ({
-  mode: 'sidebar', // 边栏模式
-  layout: 'compact', // 紧凑布局（Tab切换会话/聊天）
+  mode: 'sidebar', // 边栏模式，内部使用单栏布局（Tab切换会话/聊天）
   panelWidth: 400,
   defaultExpanded: true,
   apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/api',

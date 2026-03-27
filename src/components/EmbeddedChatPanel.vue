@@ -18,7 +18,7 @@
           @select-session="$emit('select-session', $event)"
           @delete-session="$emit('delete-session', $event)"
           @delete-sessions="$emit('delete-sessions', $event)"
-          @update-session-title="$emit('update-session-title', $event[0], $event[1])"
+          @update-session-title="(sessionId, title) => $emit('update-session-title', sessionId, title)"
           @close="$emit('close')"
         />
       </aside>
@@ -79,7 +79,7 @@
         @select-session="$emit('select-session', $event)"
         @delete-session="$emit('delete-session', $event)"
         @delete-sessions="$emit('delete-sessions', $event)"
-        @update-session-title="$emit('update-session-title', $event[0], $event[1])"
+        @update-session-title="(sessionId, title) => $emit('update-session-title', sessionId, title)"
       />
     </template>
 
@@ -238,6 +238,13 @@ const containerClasses = computed(() => [
     flex-shrink: 0;
     border-right: 1px solid var(--chatbot-border-color, #e4e7ed);
     overflow: hidden;
+
+    // Mobile: collapse sidebar to full-width
+    @media (max-width: 768px) {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid var(--chatbot-border-color, #e4e7ed);
+    }
   }
 
   &__main {

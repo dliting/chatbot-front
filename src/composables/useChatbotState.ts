@@ -129,11 +129,11 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
 
   // Sessions State - load from localStorage or create new
   const storedSessions = loadSessionsFromStorage()
-  const initialSessionId = storedSessions.length > 0 ? storedSessions[0].id : `session_${Date.now()}`
+  const initialSessionId = storedSessions.length > 0 ? storedSessions[0].sessionId : `session_${Date.now()}`
 
   const sessions = reactive<SessionsState>({
     list: storedSessions.length > 0 ? storedSessions : [{
-      id: initialSessionId,
+      sessionId: initialSessionId,
       title: 'New Chat',
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -155,7 +155,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   })
 
   const currentSession = computed(() => {
-    return sessions.list.find(s => s.id === sessions.currentId)
+    return sessions.list.find(s => s.sessionId === sessions.currentId)
   })
 
   const isStreaming = computed(() => {
@@ -218,7 +218,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     const sessionMessages = messages.bySession[messages.currentSessionId]
     if (!sessionMessages) return
 
-    const index = sessionMessages.findIndex(m => m.id === messageId)
+    const index = sessionMessages.findIndex(m => m.messageId === messageId)
     if (index > -1) {
       // Use splice to replace the message to ensure Vue 3 reactivity
       sessionMessages.splice(index, 1, { ...sessionMessages[index], ...updates })
@@ -229,12 +229,12 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     const sessionMessages = messages.bySession[sessionId]
     if (!sessionMessages) return
 
-    const sessionIndex = sessions.list.findIndex(s => s.id === sessionId)
+    const sessionIndex = sessions.list.findIndex(s => s.sessionId === sessionId)
 
     if (sessionIndex === -1) {
       // Create new session
       const newSession: import('@/types').Session = {
-        id: sessionId,
+        sessionId: sessionId,
         title: 'New Chat',
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -258,7 +258,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     messages.currentSessionId = sessionId
     sessions.currentId = sessionId
     // Move session to top of list
-    const index = sessions.list.findIndex(s => s.id === sessionId)
+    const index = sessions.list.findIndex(s => s.sessionId === sessionId)
     if (index > 0) {
       const session = sessions.list.splice(index, 1)[0]
       sessions.list.unshift(session)
@@ -267,7 +267,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   }
 
   const updateSessionTitle = (sessionId: string, title: string) => {
-    const session = sessions.list.find(s => s.id === sessionId)
+    const session = sessions.list.find(s => s.sessionId === sessionId)
     if (session) {
       session.title = title
       session.updatedAt = Date.now()
@@ -276,8 +276,9 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   }
 
   const createSession = () => {
+
     const newSession: Session = {
-      id: `session_${Date.now()}`,
+      sessionId: `session_${Date.now()}`,
       title: 'New Chat',
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -287,11 +288,11 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     // Add to beginning of list
     sessions.list.unshift(newSession)
     // Switch to new session
-    sessions.currentId = newSession.id
-    messages.currentSessionId = newSession.id
+    sessions.currentId = newSession.sessionId
+    messages.currentSessionId = newSession.sessionId
     // Save to localStorage
     saveSessionsToStorage(sessions.list)
-    return newSession.id
+    return newSession.sessionId
   }
 
   const deleteSession = (sessionId: string) => {
@@ -299,7 +300,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     delete messages.bySession[sessionId]
 
     // Remove from list
-    const index = sessions.list.findIndex(s => s.id === sessionId)
+    const index = sessions.list.findIndex(s => s.sessionId === sessionId)
     if (index > -1) {
       sessions.list.splice(index, 1)
       // Save to localStorage
@@ -310,7 +311,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     if (sessionId === sessions.currentId) {
       const nextSession = sessions.list[0]
       if (nextSession) {
-        switchSession(nextSession.id)
+        switchSession(nextSession.sessionId)
       } else {
         createSession()
       }

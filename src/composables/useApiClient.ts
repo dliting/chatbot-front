@@ -193,7 +193,7 @@ export function useApiClient(options: ApiClientOptions) {
       }
 
       return {
-        id: result.data.sessionId,
+        sessionId: result.data.sessionId,
         title: result.data.title,
         createdAt: result.data.createdAt,
         updatedAt: result.data.createdAt,

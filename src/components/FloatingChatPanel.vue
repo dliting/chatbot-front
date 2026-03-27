@@ -25,7 +25,7 @@
         :show-close-button="true"
         :unread-count="0"
         @sessions="showSessionsView"
-        @toggle-theme="toggleTheme"
+        @toggle-theme="handleToggleTheme"
         @close="closePanel"
       />
     </template>
@@ -114,6 +114,7 @@ interface Emits {
   (e: 'select-session', sessionId: string): void
   (e: 'delete-session', sessionId: string): void
   (e: 'edit-message', message: Message): void
+  (e: 'toggle-theme'): void
 }
 
 const emit = defineEmits<Emits>()
@@ -155,7 +156,7 @@ const closePanel = () => {
   isPanelOpen.value = false
 }
 
-const toggleTheme = () => {
+const handleToggleTheme = () => {
   // Note: theme is managed externally through config
   emit('toggle-theme')
 }
@@ -201,7 +202,7 @@ onMounted(() => {
 defineExpose({
   openPanel,
   closePanel,
-  toggleTheme,
+  handleToggleTheme,
 })
 </script>
 

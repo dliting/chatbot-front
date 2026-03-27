@@ -268,7 +268,7 @@ const containerClasses = computed(() => [
 // Show close button when layout is dual AND enableClose is true, OR when not embedded (for backward compatibility)
 const showCloseButton = computed(() => !props.isEmbedded || (props.layout === 'dual' && props.enableClose))
 
-// Search state
+// Search state - synced with v-model from SessionSearch
 const searchQuery = ref('')
 
 // Batch mode state

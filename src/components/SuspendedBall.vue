@@ -33,7 +33,7 @@ interface Props {
   size?: number
   iconColor?: string
   backgroundColor?: string
-  badge?: number | null
+  badge?: string | number | null
   unreadCount?: number
   visible?: boolean
   draggable?: boolean

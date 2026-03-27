@@ -33,6 +33,13 @@ import ChatArea from '@/components/ChatArea.vue'
     flex-shrink: 0;
     border-right: 1px solid var(--chatbot-border-color, #e4e7ed);
     overflow: hidden;
+
+    // Mobile: collapse sidebar (full-width single column on mobile)
+    @media (max-width: 768px) {
+      width: 100%;
+      border-right: none;
+      border-bottom: 1px solid var(--chatbot-border-color, #e4e7ed);
+    }
   }
 
   &__main {
@@ -40,6 +47,11 @@ import ChatArea from '@/components/ChatArea.vue'
     display: flex;
     flex-direction: column;
     overflow: hidden;
+
+    // On mobile, main content takes full width
+    @media (max-width: 768px) {
+      width: 100%;
+    }
   }
 }
 </style>

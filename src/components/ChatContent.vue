@@ -28,7 +28,7 @@
       <div class="chat-content__message-list">
         <div
           v-for="message in messages"
-          :key="message.id"
+          :key="message.messageId"
           :class="['chat-content__message', message.role]"
           @dblclick="handleMessageDblClick(message)"
         >
@@ -191,7 +191,7 @@ watch(() => props.messages, () => {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: linear-gradient(180deg, #f0f4ff 0%, #e8f0ff 50%, #f5f3ff 100%);
+  background: linear-gradient(180deg, var(--chatbot-content-bg-1, #f0f4ff) 0%, var(--chatbot-content-bg-2, #e8f0ff) 50%, var(--chatbot-content-bg-3, #f5f3ff) 100%);
 
   &__messages {
     flex: 1;
@@ -221,7 +221,7 @@ watch(() => props.messages, () => {
     width: 80px;
     height: 80px;
     margin: 0 auto 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--chatbot-primary-gradient);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -239,12 +239,12 @@ watch(() => props.messages, () => {
     font-size: 24px;
     font-weight: 600;
     margin-bottom: 8px;
-    color: #1a1a2e;
+    color: var(--chatbot-text-color, #1a1a2e);
   }
 
   &__welcome-subtitle {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--chatbot-subtext-color, #6b7280);
     font-weight: 300;
     margin-bottom: 24px;
   }
@@ -258,9 +258,9 @@ watch(() => props.messages, () => {
   }
 
   &__quick-action {
-    background: rgba(255, 255, 255, 0.7);
+    background: var(--chatbot-quick-action-bg, rgba(255, 255, 255, 0.7));
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid var(--chatbot-quick-action-border, rgba(255, 255, 255, 0.5));
     border-radius: 16px;
     padding: 16px;
     text-align: center;
@@ -276,7 +276,7 @@ watch(() => props.messages, () => {
   &__quick-action-icon {
     width: 36px;
     height: 36px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--chatbot-primary-gradient);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -293,13 +293,13 @@ watch(() => props.messages, () => {
   &__quick-action-title {
     font-size: 14px;
     font-weight: 500;
-    color: #1a1a2e;
+    color: var(--chatbot-text-color, #1a1a2e);
     margin-bottom: 4px;
   }
 
   &__quick-action-desc {
     font-size: 12px;
-    color: #6b7280;
+    color: var(--chatbot-subtext-color, #6b7280);
   }
 
   &__message-list {
@@ -321,7 +321,7 @@ watch(() => props.messages, () => {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--chatbot-primary-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -349,15 +349,15 @@ watch(() => props.messages, () => {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     .user & {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--chatbot-primary-gradient);
       color: white;
       border-bottom-right-radius: 6px;
     }
 
     .assistant & {
-      background: rgba(255, 255, 255, 0.9);
+      background: var(--chatbot-assistant-bubble-bg, rgba(255, 255, 255, 0.9));
       backdrop-filter: blur(10px);
-      color: #1a1a2e;
+      color: var(--chatbot-assistant-bubble-text, #1a1a2e);
       border-bottom-left-radius: 6px;
     }
   }
