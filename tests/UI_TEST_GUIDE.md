@@ -3,27 +3,27 @@
 ## 概述
 
 - 本指南基于产品需求文档（PRD）制定，涵盖所有核心功能、重要功能和扩展功能的UI交互测试。
-- 主要测试通过和“examples/ChatApp”这个应用的前端页面交互来进行。
+- 主要测试通过和"examples/ChatApp"这个应用的前端页面交互来进行。
 - 有可能同时运行多个测试，因此请确保每个测试的浏览器窗口是独立的。
 
 **测试原则**:
 - 这类交互测试不仅仅是判断页面中某个ui元素是否存在，而是模拟人和浏览器交互操作来测试。
-- 使用 "chrome-devtools-mcp" 等工具来和浏览器交互进行测试。
-- 使用“Puppeteer”来检查浏览器控制台输出，加快调试解决前端网页交互问题的速度。
+- 使用 **Playwright** 进行自动化浏览器交互测试（CI集成）。
+- 使用 **Playwright MCP** 工具进行交互式开发验证（手动调试）。
 - 每个操作超过3分钟还没响应，相关测试就应该记录为失败，不要长时间的等待。
-- 测试覆盖共用功能、扩展模式、紧凑模式、悬浮模式。
+- 测试覆盖共用功能、扩展模式、边栏模式、悬浮模式。
 
 ## 强制验证检查（每次测试后必查）
 
-> ⚠️ **重要**：每次页面加载或操作后，**必须**执行以下验证检查。这是确保测试有效性的关键步骤。
+> **重要**：每次页面加载或操作后，**必须**执行以下验证检查。这是确保测试有效性的关键步骤。
 
-| 检查项 | 操作命令 | 通过标准 |
-|--------|----------|----------|
-| **控制台错误** | `list_console_messages()` | 无 error 级别消息 |
-| **Vue 挂载警告** | 检查 Vue warn | 无 "Failed to mount app" 警告 |
-| **资源加载** | `list_network_requests()` | 无 404/500 状态码（除 favicon.ico） |
-| **关键元素存在** | `take_snapshot()` + 目视检查 | 预期的 UI 元素都存在 |
-| **元素非空验证** | 检查容器元素内容 | 应该包含内容的容器不为空 |
+| 检查项 | Playwright API | 通过标准 |
+|--------|---------------|----------|
+| **控制台错误** | `page.on('console', ...)` | 无 error 级别消息 |
+| **Vue 挂载警告** | 检查 console messages | 无 "Failed to mount app" 警告 |
+| **资源加载** | `page.on('response', ...)` | 无 404/500 状态码（除 favicon.ico） |
+| **关键元素存在** | `page.locator().isVisible()` | 预期的 UI 元素都存在 |
+| **元素非空验证** | `element.innerHTML.trim().length > 0` | 应该包含内容的容器不为空 |
 
 
 **常见错误信号**：
@@ -43,59 +43,87 @@
 | **边栏模式** | 边栏模式（单栏布局+Tab切换） | 四、边栏模式测试 | `/sidebar` |
 | **悬浮模式** | 悬浮模式（单栏布局+Tab切换） | 五、悬浮模式测试 | `/floating` |
 
-
 ## 测试环境
 
 - **测试工具**:
-  - **chrome-devtools MCP**: 主要工具，通过 MCP 服务与浏览器交互
-  - **Puppeteer**: 备用工具，用于自动化测试脚本和浏览器控制台输出捕获
-- **测试入口**: [ChatApp根url]/
-- **测试浏览器**: Chrome (支持无头模式)
+  - **Playwright** (`@playwright/test`): 主要自动化测试框架，用于CI集成和本地自动化测试
+  - **Playwright MCP**: 交互式开发验证工具，通过MCP服务与浏览器交互
+- **测试入口**: ChatApp `http://localhost:5180/`
+- **组件库入口**: `http://localhost:5173/`（需 `npx vite --host` 启动）
+- **测试浏览器**: Chromium（Playwright内置），支持Firefox/WebKit扩展
 - **路由模式**: SPA导航，无页面刷新
 
-### Puppeteer 使用说明
+### Playwright 使用说明
 
-项目中已安装 Puppeteer (`puppeteer@24.38.0`)，可用于：
-
-1. **自动化测试脚本**: 创建可重复运行的测试用例
-2. **控制台输出捕获**: 监控和分析浏览器控制台消息
-3. **网络请求监控**: 跟踪请求/响应状态
-
-#### 基本使用示例
-
-```javascript
-import puppeteer from 'puppeteer'
-
-// 启动浏览器
-const browser = await puppeteer.launch({
-  headless: false,  // 显示浏览器窗口
-  devtools: true    // 打开开发者工具
-})
-
-const page = await browser.newPage()
-
-// 捕获控制台消息
-page.on('console', (msg) => {
-  console.log(`[${msg.type()}]`, msg.text())
-})
-
-// 捕获网络请求
-page.on('request', (request) => {
-  console.log('Request:', request.url())
-})
-
-// 导航到页面
-await page.goto('http://localhost:5180/extended')
-
-// 关闭浏览器
-await browser.close()
-```
-
-#### 运行测试脚本
+#### 运行E2E测试
 
 ```bash
-# 在项目根目录运行
-node your-test-script.js
+# 运行所有E2E测试
+npm run test:e2e
+
+# 仅运行ChatApp完整应用测试（需先启动mock后端port 3001 + 前端port 5180）
+npm run test:e2e:chatapp
+
+# 仅运行组件库独立入口测试（需先启动 `npx vite --host` on port 5173）
+npm run test:e2e:lib
+
+# 可视化调试模式
+npm run test:e2e:ui
+```
+
+#### Windows注意事项
+Vite默认仅绑定IPv6，Playwright的Chromium使用IPv4连接。运行E2E测试前需手动启动dev server：
+```bash
+# 组件库
+npx vite --host
+
+# ChatApp后端
+cd examples/chatapp/backend-mock && npx vite --port 3001
+cd examples/chatapp/frontend && npx vite --port 5180
+```
+
+#### Playwright MCP 交互式验证
+
+开发过程中，可通过已启用的 Playwright MCP 工具进行交互式浏览器验证：
+
+| MCP工具 | 用途 | 等价Playwright API |
+|---------|------|-------------------|
+| `browser_navigate` | 导航到页面 | `page.goto()` |
+| `browser_snapshot` | 获取页面无障碍树 | `page.locator().locator()` |
+| `browser_click` | 点击元素 | `page.locator().click()` |
+| `browser_take_screenshot` | 截图 | `page.screenshot()` |
+| `browser_console_messages` | 获取控制台消息 | `page.on('console', ...)` |
+| `browser_network_requests` | 获取网络请求 | `page.on('response', ...)` |
+
+#### 基本测试示例
+
+```typescript
+import { test, expect } from '@playwright/test'
+
+test('示例：悬浮球可见且可点击', async ({ page }) => {
+  await page.goto('/floating')
+
+  // 验证元素可见
+  const ball = page.locator('.chatbot-ball')
+  await expect(ball).toBeVisible()
+
+  // 点击并验证面板打开
+  await ball.click()
+  await expect(page.locator('.draggable-window')).toBeVisible()
+
+  // 验证内容非空
+  const content = page.locator('.chat-content')
+  await expect(content).toBeVisible()
+  await expect(content.locator('textarea')).toBeVisible()
+
+  // 检查控制台错误
+  const errors: string[] = []
+  page.on('console', (msg) => {
+    if (msg.type() === 'error') errors.push(msg.text())
+  })
+  // ...交互操作后
+  expect(errors.filter(e => !e.includes('favicon'))).toEqual([])
+})
 ```
 
 ---
@@ -139,7 +167,7 @@ node your-test-script.js
 
 | 测试项 | 操作步骤 | 预期结果 |
 |--------|----------|----------|
-| 主页访问 | 导航到 `[ChatApp根url]/` | 页面正常加载，显示标题 "AI Chatbot" |
+| 主页访问 | 导航到 `/` | 页面正常加载，显示标题 "AI Chatbot" |
 | 副标题显示 | 检查页面内容 | 显示 "Vue 3 + TypeScript 通用聊天组件" |
 | 版本号显示 | 检查版本标签 | 显示 "v1.0.0" |
 | 无控制台错误 | 检查 console messages | 无 error 级别消息 |
@@ -172,13 +200,12 @@ node your-test-script.js
 | 3 | 检查Landing页面 | 显示四个模式卡片 |
 | 4 | 检查浏览器历史 | 可以使用浏览器后退按钮 |
 
-**chrome-devtools命令参考：**
-```javascript
-// 点击返回链接
-click('返回首页的uid')
-
-// 验证导航
-take_snapshot()  // 检查url变为 http://localhost:5180/
+**Playwright测试参考：**
+```typescript
+await page.goto('/extended')
+await page.getByRole('button', { name: '返回首页' }).click()
+await expect(page).toHaveURL('/')
+await expect(page.locator('h1')).toContainText('AI Chatbot')
 ```
 
 ### 2.1 聊天交互测试
@@ -506,7 +533,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 | 步骤 | 操作 | 预期结果 |
 |------|------|----------|
-| 1 | 发送带 Excel 的消息 | Excel 以附件形式显示 |
+| 1 | 发送带 Excel 的消息 | Excel 以附件显示 |
 | 2 | 点击 Excel 附件 | 显示 Excel 预览模态框 |
 | 3 | 检查表格渲染 | Excel 表格正确显示 |
 | 4 | 关闭预览 | 点击关闭按钮关闭模态框 |
@@ -703,7 +730,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ## 三、扩展模式测试
 
-> 测试入口: `[ChatApp根url]/extended`
+> 测试入口: `/extended`
 >
 > **布局形式**: 双栏布局 (dual layout) - 会话列表和聊天窗口同时可见，左右分栏
 
@@ -792,7 +819,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ## 四、边栏模式测试
 
-> 测试入口: `[ChatApp根url]/sidebar`
+> 测试入口: `/sidebar`
 >
 > **布局形式**: 单栏布局 (single layout) - 会话列表和聊天窗口通过Tab切换显示
 
@@ -853,7 +880,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ## 五、悬浮模式测试
 
-> 测试入口: `[ChatApp根url]/floating`
+> 测试入口: `/floating`
 >
 > **布局形式**: 单栏布局 (single layout) - 悬浮面板内通过Tab切换会话/聊天
 
@@ -996,9 +1023,9 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ---
 
-## 八、性能测试
+## 七、性能测试
 
-### 6.1 加载性能测试
+### 7.1 加载性能测试
 
 **测试用例 TC-PERF-001: 首次加载**
 
@@ -1023,7 +1050,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 | 2 | 快速滚动 | 滚动流畅 |
 | 3 | 检查帧率 | 保持 60fps |
 
-### 6.2 长列表测试
+### 7.2 长列表测试
 
 **测试用例 TC-PERF-004: 长列表**
 
@@ -1036,9 +1063,9 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ---
 
-## 九、可访问性测试
+## 八、可访问性测试
 
-### 7.1 键盘导航测试
+### 8.1 键盘导航测试
 
 **测试用例 TC-A11Y-001: 键盘导航**
 
@@ -1049,7 +1076,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 | 3 | 在输入框按 Shift+Enter | 插入换行 |
 | 4 | 按 Escape 键 | 关闭模态框/面板 |
 
-### 7.2 屏幕阅读器测试
+### 8.2 屏幕阅读器测试
 
 **测试用例 TC-A11Y-002: 屏幕阅读器**
 
@@ -1060,9 +1087,9 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ---
 
-## 十、错误处理测试
+## 九、错误处理测试
 
-### 8.1 网络错误测试
+### 9.1 网络错误测试
 
 **测试用例 TC-ERR-001: 网络错误**
 
@@ -1072,7 +1099,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 | 2 | 点击重试按钮 | 重新发送消息 |
 | 3 | 模拟连接断开 | 显示连接状态提示 |
 
-### 8.2 输入验证测试
+### 9.2 输入验证测试
 
 **测试用例 TC-ERR-002: 输入验证**
 
@@ -1083,9 +1110,9 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ---
 
-## 十一、跨浏览器兼容性测试
+## 十、跨浏览器兼容性测试
 
-### 9.1 浏览器测试矩阵
+### 10.1 浏览器测试矩阵
 
 | 浏览器 | 版本 | 测试重点 | 测试用例 |
 |--------|------|----------|----------|
@@ -1141,7 +1168,7 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 **执行时间**: YYYY-MM-DD HH:mm:ss
 **测试环境**: [浏览器版本]
-**执行结果**: ✅ 通过 / ❌ 失败
+**执行结果**: 通过 / 失败
 **截图**: [截图路径]
 **问题描述**: [如果失败]
 **修复建议**: [如果失败]
@@ -1198,46 +1225,55 @@ take_snapshot()  // 检查url变为 http://localhost:5180/
 
 ---
 
-## 十二、自动化测试执行
+## 十一、自动化测试执行
 
-### 12.1 运行自动化测试
+### 11.1 运行Playwright E2E测试
 
 **前提条件:**
 - 已安装项目依赖: `npm install`
-- ChatApp 测试服务器正在运行:
-  - Mock模式: `scripts/start-chatapp.bat mock`
-  - Real模式: `scripts/start-chatapp.bat real`
-- chrome-devtools-mcp 已连接
+- 已安装Playwright浏览器: `npx playwright install chromium`
 
-**Mock后端模式:**
+**运行所有E2E测试:**
 ```bash
-npm run test:ui:mock
+npm run test:e2e
 ```
 
-**Real后端模式:**
+**仅运行ChatApp测试（需先启动mock后端 + 前端）:**
 ```bash
-npm run test:ui:real
+cd examples/chatapp/backend-mock && npx vite --port 3001 &
+cd examples/chatapp/frontend && npx vite --port 5180 &
+npm run test:e2e:chatapp
 ```
 
-### 12.2 测试报告
+**仅运行组件库测试（需先启动dev server）:**
+```bash
+npx vite --host &
+npm run test:e2e:lib
+```
 
-测试完成后，HTML报告会生成在 `tests/ui/reports/` 目录，包含：
-- 测试摘要（总数、通过、失败、耗时）
-- 每个测试的详细结果
-- 失败测试的截图
-- 控制台错误日志
+### 11.2 交互式开发验证
 
-### 12.3 测试场景
+开发过程中使用已启用的 **Playwright MCP** 工具进行手动验证：
+1. `browser_navigate` — 导航到目标页面
+2. `browser_snapshot` — 获取页面无障碍树检查元素
+3. `browser_click` — 点击元素进行交互
+4. `browser_take_screenshot` — 截图保存证据
+5. `browser_console_messages` — 检查控制台错误
 
-当前实现的测试场景：
+### 11.3 测试报告
 
-| 场景 | 测试用例 | 描述 |
-|------|---------|------|
-| 聊天功能 | TC-COMMON-001, TC-COMMON-003, TC-COMMON-004 | 文本输入、发送按钮状态、消息发送和接收 |
-| 快捷操作 | TC-COMMON-022, TC-COMMON-023 | 快捷操作显示、点击填充 |
-| 上传功能 | TC-COMMON-012 ~ TC-COMMON-015 | 图片上传、预览、进度、消息显示 |
-| 语音功能 | TC-VOICE-001 ~ TC-VOICE-003 | 语音录制覆盖层、录制控制、取消 |
-| 视频功能 | TC-MEDIA-001, TC-MEDIA-003 | 视频上传、预览 |
-| 音频功能 | TC-MEDIA-002, TC-MEDIA-004 | 音频上传、预览 |
-| 文件验证 | TC-MEDIA-005 | 文件类型验证 |
-| 多模态问答 | TC-MULTIMEDIA-010 ~ TC-MULTIMEDIA-017 | 图片问答、视频问答、音频问答、图文组合、多模态AI响应等 |
+Playwright 自动生成HTML报告：
+- 位置: `tests/e2e/results/report/`
+- 包含: 测试摘要、详细结果、失败截图、trace文件
+- 查看: `npx playwright show-report tests/e2e/results/report`
+
+### 11.4 当前已实现的E2E测试
+
+| 测试文件 | 测试数量 | 覆盖内容 |
+|---------|---------|---------|
+| `tests/e2e/lib/floating.spec.ts` | 6 | SuspendedBall显示、面板打开、内容非空、单窗口、关闭、console错误 |
+| `tests/e2e/chatapp/floating.spec.ts` | 5 | 导航、SuspendedBall、面板内容、单窗口、console错误 |
+| `tests/e2e/chatapp/extended.spec.ts` | 4 | 导航、双栏布局、ChatInput、console错误 |
+| `tests/e2e/chatapp/sidebar.spec.ts` | 5 | 导航、边栏面板布局、ChatInput、消息发送、console错误 |
+| `tests/e2e/chatapp/chat-interaction.spec.ts` | 8 | 文本输入(TC-COMMON-001)、发送按钮状态(TC-COMMON-003)、消息收发(TC-COMMON-004)、Enter发送、Shift+Enter换行、快捷操作(TC-COMMON-022)、上传按钮(TC-COMMON-012)、悬浮面板交互 |
+| `tests/e2e/chatapp/media-upload.spec.ts` | 6 | 图片上传+缩略图(TC-COMMON-012/013)、文件移除(TC-COMMON-013)、预览弹窗(TC-COMMON-013B)、文件发送、多文件上传、悬浮面板上传 |

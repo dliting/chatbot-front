@@ -1,19 +1,31 @@
 <template>
   <div class="ai-chatbot" :data-theme="resolvedTheme">
-    <!-- Suspended Ball (only for floating mode) -->
-    <SuspendedBall
-      v-if="chatMode === 'floating' && !state.ui.isPanelOpen"
-      :position="config.position"
-      :size="ballSize"
-      :icon-color="state.ui.theme === 'dark' ? '#ffffff' : '#ffffff'"
-      :background-color="config.primaryColor"
-      :badge="unreadCount"
-      @click="togglePanel"
+    <!-- Self-contained modes (floating/extended): AIChatPanel manages its own layout/window -->
+    <AIChatPanel
+      v-if="chatMode === 'floating' || chatMode === 'extended'"
+      :mode="chatMode"
+      :layout="layout"
+      :config="themedConfig"
+      :messages="currentMessages"
+      :sessions="state.sessions.list"
+      :current-session-id="state.sessions.currentId"
+      :is-streaming="false"
+      :hide-welcome="false"
+      :hide-quick-actions="false"
+      :hide-header="!showAIChatHeader"
+      :api-client="apiClient"
+      @send-message="handleSendMessage"
+      @quick-action="handleQuickAction"
+      @create-session="_handleCreateSession"
+      @select-session="_handleSwitchSession"
+      @delete-session="_handleDeleteSession"
+      @edit="handleEditMessage"
+      @toggle-theme="toggleTheme"
     />
 
-    <!-- Chat Panel (for sidebar and floating modes) -->
+    <!-- Sidebar/Dialog modes: wrapped in ChatPanel for window management -->
     <ChatPanel
-      v-if="chatMode !== 'extended'"
+      v-else
       :is-open="state.ui.isPanelOpen"
       :mode="effectivePanelMode"
       :position="config.position"
@@ -35,39 +47,25 @@
         :mode="chatMode"
         :layout="layout"
         :panel-open="state.ui.isPanelOpen"
+        :messages="currentMessages"
+        :sessions="state.sessions.list"
+        :current-session-id="state.sessions.currentId"
+        :is-streaming="false"
         :hide-header="!showAIChatHeader"
         :hide-welcome="state.ui.panelMode === 'dialog'"
         :hide-quick-actions="state.ui.panelMode === 'dialog'"
         :hide-input-area="false"
         :config="aiChatConfig"
         :api-client="apiClient"
-        @edit-message="handleEditMessage"
         @send-message="handleSendMessage"
+        @quick-action="handleQuickAction"
+        @create-session="_handleCreateSession"
+        @select-session="_handleSwitchSession"
+        @delete-session="_handleDeleteSession"
+        @edit="handleEditMessage"
+        @toggle-theme="toggleTheme"
       />
     </ChatPanel>
-
-    <!-- Extended Mode: AIChatPanel renders its own layout directly -->
-    <AIChatPanel
-      v-else
-      :mode="chatMode"
-      :layout="layout"
-      :config="themedConfig"
-      :messages="currentMessages"
-      :sessions="state.sessions.list"
-      :current-session-id="state.sessions.currentId"
-      :is-streaming="false"
-      :hide-welcome="false"
-      :hide-quick-actions="false"
-      :hide-header="!showAIChatHeader"
-      :api-client="apiClient"
-      @send-message="handleSendMessage"
-      @quick-action="handleQuickAction"
-      @create-session="_handleCreateSession"
-      @select-session="_handleSwitchSession"
-      @delete-session="_handleDeleteSession"
-      @edit="handleEditMessage"
-      @toggle-theme="toggleTheme"
-    />
   </div>
 </template>
 
@@ -81,7 +79,6 @@ import { useChatbotState } from '@/composables/useChatbotState'
 import { useApiClient } from '@/composables/useApiClient'
 
 // Components
-import SuspendedBall from './SuspendedBall.vue'
 import ChatPanel from './ChatPanel.vue'
 import AIChatPanel from './AIChatPanel.vue'
 
@@ -144,15 +141,6 @@ const {
 } = useChatbotState(config.value)
 
 // Computed
-const ballSize = computed(() => (state.ui.isMobile ? 48 : 56))
-// Get unread count from current session
-const unreadCount = computed(() => {
-  const currentSession = state.sessions.list.find(
-    s => s.sessionId === state.sessions.currentId
-  )
-  return currentSession?.unreadCount ?? 0
-})
-
 // Determine the chat mode based on interaction mode (new dual-dimension architecture)
 // - 'extended' mode uses 'dual' layout (split layout)
 // - 'sidebar' mode uses 'single' layout (tab switching)
