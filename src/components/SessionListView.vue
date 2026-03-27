@@ -555,7 +555,7 @@ const formatSessionMeta = (session: Session): string => {
     margin: 0 16px;
     border: none;
     border-radius: 12px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--chatbot-primary-gradient);
     color: white;
     font-size: 15px;
     font-weight: 500;

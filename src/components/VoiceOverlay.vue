@@ -35,7 +35,7 @@ defineEmits<Emits>()
   &__animation {
     width: 120px;
     height: 120px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--chatbot-primary-gradient);
     border-radius: 50%;
     display: flex;
     align-items: center;
