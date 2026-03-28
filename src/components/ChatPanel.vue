@@ -20,7 +20,7 @@
       :rounded="true"
     >
       <template #header>
-        <div class="chatbot-panel__header">
+        <div v-if="showHeader" class="chatbot-panel__header">
           <div class="chatbot-panel__title">
             <slot name="title">{{ title }}</slot>
           </div>
@@ -71,7 +71,7 @@
       @touchend="handleTouchEnd"
     >
       <!-- Header -->
-      <div class="chatbot-panel__header">
+      <div v-if="showHeader" class="chatbot-panel__header">
         <div class="chatbot-panel__title">
           <slot name="title">{{ title }}</slot>
         </div>
@@ -133,6 +133,7 @@ interface Props {
   width?: number
   height?: number
   showThemeToggle?: boolean
+  showHeader?: boolean
   draggable?: boolean
   resizable?: boolean
   minWidth?: number
@@ -149,6 +150,7 @@ const props = withDefaults(defineProps<Props>(), {
   width: 400,
   height: 600,
   showThemeToggle: true,
+  showHeader: true,
   draggable: true,
   resizable: true,
   minWidth: 300,

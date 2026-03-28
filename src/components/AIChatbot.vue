@@ -28,6 +28,7 @@
       v-else
       :is-open="state.ui.isPanelOpen"
       :mode="effectivePanelMode"
+      :show-header="!showAIChatHeader"
       :position="config.position"
       :theme="state.ui.theme"
       :title="config.labels?.title"
@@ -169,9 +170,11 @@ const layout = computed(() => {
 
 // Determine if AIChat should show its own header
 // Extended mode: yes (has its own sidebar)
-// Sidebar/Floating modes: no (ChatPanel already has a header)
+// Sidebar mode: yes (needs sessions button for view switching)
+// Floating mode: no (FloatingChatPanel has its own header)
 const showAIChatHeader = computed(() => {
-  return chatMode.value === 'extended'
+  const mode = config.value.mode || config.value.chatMode
+  return mode === 'extended' || mode === 'sidebar'
 })
 
 // Map chatMode to effective panelMode for ChatPanel
