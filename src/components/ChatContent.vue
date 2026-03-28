@@ -402,6 +402,9 @@ watch(() => props.messages, () => {
     display: flex;
     flex-direction: column;
     gap: 20px;
+    max-width: var(--chatbot-message-max-width, 800px);
+    margin: 0 auto;
+    width: 100%;
   }
 
   &__message {
@@ -411,6 +414,11 @@ watch(() => props.messages, () => {
 
     &.user {
       align-items: flex-end;
+
+      .chat-content__bubble {
+        max-width: var(--chatbot-user-bubble-max-width, 70%);
+        align-self: flex-end;
+      }
     }
   }
 
@@ -437,7 +445,6 @@ watch(() => props.messages, () => {
   }
 
   &__bubble {
-    max-width: 70%;
     min-width: 0;
     padding: 14px 16px;
     border-radius: 20px;
