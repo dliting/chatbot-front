@@ -88,6 +88,36 @@ describe('utils/stream', () => {
         }
       }
     })
+
+    it('should yield reasoning events when thinkingContent param provided', async () => {
+      const stream = createMockStream('Answer', 0, 'Let me think')
+
+      const events: any[] = []
+      for await (const event of stream) {
+        events.push(event)
+      }
+
+      const reasoningEvents = events.filter(e => e.type === 'reasoning')
+      expect(reasoningEvents.length).toBe(1)
+      expect(reasoningEvents[0].reasoningContent).toBe('Let me think')
+
+      // Verify ordering: start -> reasoning -> tokens -> end
+      expect(events[0].type).toBe('start')
+      expect(events[1].type).toBe('reasoning')
+      expect(events[events.length - 1].type).toBe('end')
+    })
+
+    it('should not yield reasoning events when thinkingContent param omitted', async () => {
+      const stream = createMockStream('Answer', 0)
+
+      const events: any[] = []
+      for await (const event of stream) {
+        events.push(event)
+      }
+
+      const reasoningEvents = events.filter(e => e.type === 'reasoning')
+      expect(reasoningEvents.length).toBe(0)
+    })
   })
 
   describe('parseSSELine', () => {
@@ -198,6 +228,31 @@ describe('utils/stream', () => {
 
       // Error should not affect content
       expect(accumulator.getContent()).toBe('')
+    })
+
+    it('should accumulate reasoning content separately', () => {
+      accumulator.add({ type: 'start', messageId: 'msg_1' })
+      accumulator.add({ type: 'reasoning', reasoningContent: 'Let me think' })
+      accumulator.add({ type: 'reasoning', reasoningContent: ' about this' })
+
+      expect(accumulator.getThinkingContent()).toBe('Let me think about this')
+      expect(accumulator.getContent()).toBe('')
+    })
+
+    it('should reset thinking content on start event', () => {
+      accumulator.add({ type: 'start', messageId: 'msg_1' })
+      accumulator.add({ type: 'reasoning', reasoningContent: 'Old thinking' })
+
+      accumulator.add({ type: 'start', messageId: 'msg_2' })
+      expect(accumulator.getThinkingContent()).toBe('')
+    })
+
+    it('should reset thinking content on reset()', () => {
+      accumulator.add({ type: 'start', messageId: 'msg_1' })
+      accumulator.add({ type: 'reasoning', reasoningContent: 'Some thinking' })
+
+      accumulator.reset()
+      expect(accumulator.getThinkingContent()).toBe('')
     })
   })
 })

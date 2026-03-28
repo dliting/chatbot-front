@@ -17,6 +17,8 @@ export function useStream(options: UseStreamOptions = {}) {
 
   const isStreaming = ref(false)
   const streamedContent = ref('')
+  const streamedThinkingContent = ref('')
+  const isThinking = ref(false)
   const accumulator = new StreamAccumulator()
 
   /**
@@ -27,6 +29,8 @@ export function useStream(options: UseStreamOptions = {}) {
 
     isStreaming.value = true
     streamedContent.value = ''
+    streamedThinkingContent.value = ''
+    isThinking.value = false
     accumulator.reset()
 
     const client = new StreamClient(url, {
@@ -35,15 +39,23 @@ export function useStream(options: UseStreamOptions = {}) {
 
         if (event.type === 'start') {
           streamedContent.value = ''
+          streamedThinkingContent.value = ''
+          isThinking.value = false
+        } else if (event.type === 'reasoning' && event.reasoningContent) {
+          isThinking.value = true
+          streamedThinkingContent.value += event.reasoningContent
         } else if (event.type === 'token' && event.content) {
+          isThinking.value = false
           streamedContent.value += event.content
           onChunk?.(event.content)
         } else if (event.type === 'end') {
+          isThinking.value = false
           isStreaming.value = false
           onComplete?.(accumulator.getContent())
         }
       },
       onError: (error: Error) => {
+        isThinking.value = false
         isStreaming.value = false
         onError?.(error)
       },
@@ -63,6 +75,8 @@ export function useStream(options: UseStreamOptions = {}) {
 
     isStreaming.value = true
     streamedContent.value = ''
+    streamedThinkingContent.value = ''
+    isThinking.value = false
     accumulator.reset()
 
     await fetchStream(
@@ -73,10 +87,12 @@ export function useStream(options: UseStreamOptions = {}) {
         onChunk?.(chunk)
       },
       (content: string) => {
+        isThinking.value = false
         isStreaming.value = false
         onComplete?.(content)
       },
       (error: Error) => {
+        isThinking.value = false
         isStreaming.value = false
         onError?.(error)
       }
@@ -93,6 +109,8 @@ export function useStream(options: UseStreamOptions = {}) {
 
     isStreaming.value = true
     streamedContent.value = ''
+    streamedThinkingContent.value = ''
+    isThinking.value = false
     accumulator.reset()
 
     try {
@@ -101,17 +119,26 @@ export function useStream(options: UseStreamOptions = {}) {
 
         if (event.type === 'start') {
           streamedContent.value = ''
+          streamedThinkingContent.value = ''
+          isThinking.value = false
+        } else if (event.type === 'reasoning' && event.reasoningContent) {
+          isThinking.value = true
+          streamedThinkingContent.value += event.reasoningContent
         } else if (event.type === 'token' && event.content) {
+          isThinking.value = false
           streamedContent.value += event.content
           onChunk?.(event.content)
         } else if (event.type === 'end') {
+          isThinking.value = false
           isStreaming.value = false
           onComplete?.(accumulator.getContent())
         } else if (event.type === 'error') {
+          isThinking.value = false
           throw new Error(event.error || 'Stream error')
         }
       }
     } catch (error) {
+      isThinking.value = false
       isStreaming.value = false
       onError?.(error as Error)
     }
@@ -130,6 +157,8 @@ export function useStream(options: UseStreamOptions = {}) {
   const reset = (): void => {
     isStreaming.value = false
     streamedContent.value = ''
+    streamedThinkingContent.value = ''
+    isThinking.value = false
     accumulator.reset()
   }
 
@@ -137,6 +166,8 @@ export function useStream(options: UseStreamOptions = {}) {
     // State
     isStreaming,
     streamedContent,
+    streamedThinkingContent,
+    isThinking,
 
     // Methods
     streamFromSSE,

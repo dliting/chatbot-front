@@ -21,8 +21,9 @@ export function useApiClient(options: ApiClientOptions) {
     content: string,
     images?: string[],
     videos?: string[],
-    audios?: string[]
-  ): AsyncGenerator<{ type: string; messageId?: string; content?: string; fullContent?: string }> {
+    audios?: string[],
+    options?: { thinking?: { enabled?: boolean } }
+  ): AsyncGenerator<{ type: string; messageId?: string; content?: string; fullContent?: string; reasoningContent?: string }> {
     const response = await fetch(`${baseUrl}/chat/stream`, {
       method: 'POST',
       headers: {
@@ -35,6 +36,7 @@ export function useApiClient(options: ApiClientOptions) {
         videos: videos || [],
         audios: audios || [],
         stream: true,
+        ...(options ? { options } : {}),
       }),
     })
 
@@ -63,7 +65,11 @@ export function useApiClient(options: ApiClientOptions) {
           if (!line.trim() || !line.startsWith('data: ')) continue
           try {
             const data = JSON.parse(line.slice(6))
-            yield data
+            if (data.reasoning_content) {
+              yield { type: 'reasoning', reasoningContent: data.reasoning_content }
+            } else {
+              yield data
+            }
           } catch (e) {
             // Skip invalid JSON lines in SSE stream
           }
