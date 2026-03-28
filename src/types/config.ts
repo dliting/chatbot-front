@@ -84,6 +84,25 @@ export interface ChatbotLabels {
   close: string
   expand: string
   collapse: string
+  // Welcome screen labels
+  welcomeTitle?: string
+  welcomeSubtitle?: string
+  // Quick action labels (4 actions)
+  quickAction1Title?: string
+  quickAction1Desc?: string
+  quickAction1Text?: string
+  quickAction2Title?: string
+  quickAction2Desc?: string
+  quickAction2Text?: string
+  quickAction3Title?: string
+  quickAction3Desc?: string
+  quickAction3Text?: string
+  quickAction4Title?: string
+  quickAction4Desc?: string
+  quickAction4Text?: string
+  // Copy button labels
+  copied?: string
+  copy?: string
 }
 
 export const defaultChatbotLabels: ChatbotLabels = {
@@ -102,6 +121,24 @@ export const defaultChatbotLabels: ChatbotLabels = {
   close: 'Close',
   expand: 'Expand',
   collapse: 'Collapse',
+  // Default welcome screen labels (Chinese as default since original was Chinese)
+  welcomeTitle: '智能助手',
+  welcomeSubtitle: '有什么可以帮助您的吗？',
+  quickAction1Title: '写邮件',
+  quickAction1Desc: '帮我撰写邮件',
+  quickAction1Text: '帮我写一封邮件',
+  quickAction2Title: '总结文章',
+  quickAction2Desc: '提取关键信息',
+  quickAction2Text: '帮我总结这篇文章',
+  quickAction3Title: '翻译',
+  quickAction3Desc: '多语言翻译',
+  quickAction3Text: '帮我翻译这段文字',
+  quickAction4Title: '数据分析',
+  quickAction4Desc: '智能分析数据',
+  quickAction4Text: '帮我分析数据',
+  // Copy button labels
+  copied: '已复制',
+  copy: '复制',
 }
 
 export const defaultChatbotConfig: Required<ChatbotConfig> = {

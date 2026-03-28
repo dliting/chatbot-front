@@ -75,7 +75,7 @@ export const mockAPI = {
       code: 0,
       message: 'success',
       data: {
-        id: generateId('msg'),
+        messageId: generateId('msg'),
         sessionId: generateId('session'),
         role: 'assistant',
         type: 'text',
@@ -110,7 +110,7 @@ export const mockAPI = {
 
     const sessions: Session[] = [
       {
-        id: generateId('session'),
+        sessionId: generateId('session'),
         title: 'How to use the chatbot',
         createdAt: Date.now() - 3600000,
         updatedAt: Date.now() - 3600000,
@@ -118,7 +118,7 @@ export const mockAPI = {
         unreadCount: 0,
       },
       {
-        id: generateId('session'),
+        sessionId: generateId('session'),
         title: 'Technical questions',
         createdAt: Date.now() - 86400000,
         updatedAt: Date.now() - 86400000,
@@ -142,7 +142,7 @@ export const mockAPI = {
 
     const messages: Message[] = [
       {
-        id: generateId('msg'),
+        messageId: generateId('msg'),
         sessionId,
         role: 'user',
         type: 'text',
@@ -151,7 +151,7 @@ export const mockAPI = {
         status: 'sent',
       },
       {
-        id: generateId('msg'),
+        messageId: generateId('msg'),
         sessionId,
         role: 'assistant',
         type: 'text',
@@ -178,7 +178,7 @@ export const mockAPI = {
       code: 0,
       message: 'success',
       data: {
-        id: generateId('session'),
+        sessionId: generateId('session'),
         title: 'New Chat',
         createdAt: Date.now(),
         updatedAt: Date.now(),

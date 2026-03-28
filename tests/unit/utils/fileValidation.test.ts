@@ -65,15 +65,19 @@ describe('fileValidation', () => {
     })
 
     it('should format kilobytes', () => {
-      expect(formatFileSize(2048)).toBe('2.0 KB')
+      expect(formatFileSize(2048)).toBe('2 KB')
     })
 
     it('should format megabytes', () => {
-      expect(formatFileSize(3 * 1024 * 1024)).toBe('3.0 MB')
+      expect(formatFileSize(3 * 1024 * 1024)).toBe('3 MB')
     })
 
     it('should handle zero bytes', () => {
       expect(formatFileSize(0)).toBe('0 B')
+    })
+
+    it('should handle gigabytes', () => {
+      expect(formatFileSize(1073741824)).toBe('1 GB')
     })
   })
 

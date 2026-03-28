@@ -64,8 +64,8 @@ export function useApiClient(options: ApiClientOptions) {
           try {
             const data = JSON.parse(line.slice(6))
             yield data
-          } catch {
-            // Skip invalid JSON
+          } catch (e) {
+            // Skip invalid JSON lines in SSE stream
           }
         }
       }

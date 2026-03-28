@@ -4,8 +4,8 @@
     <div ref="messagesRef" class="chat-content__messages">
       <!-- Welcome Section -->
       <div v-if="welcomeVisible" class="chat-content__welcome">
-        <h2 class="chat-content__welcome-title">智能助手</h2>
-        <p class="chat-content__welcome-subtitle">有什么可以帮助您的吗？</p>
+        <h2 class="chat-content__welcome-title">{{ mergedLabels.welcomeTitle }}</h2>
+        <p class="chat-content__welcome-subtitle">{{ mergedLabels.welcomeSubtitle }}</p>
 
         <!-- Quick Actions -->
         <div v-if="quickActionsVisible" class="chat-content__quick-actions">
@@ -65,8 +65,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, h, onMounted, onUnmounted } from 'vue'
+import { ref, watch, nextTick, h, onMounted, onUnmounted, computed } from 'vue'
 import type { Message } from '@/types'
+import type { ChatbotLabels } from '@/types/config'
+import { defaultChatbotLabels } from '@/types/config'
 import ChatInput from './ChatInput.vue'
 import { formatMarkdownContent } from '@/utils/helpers'
 
@@ -92,25 +94,34 @@ const CubeIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'c
   h('line', { x1: 12, y1: 22.08, x2: 12, y2: 12 })
 ])
 
-const quickActions = [
-  { id: 1, title: '写邮件', desc: '帮我撰写邮件', text: '帮我写一封邮件', icon: WriteIcon },
-  { id: 2, title: '总结文章', desc: '提取关键信息', text: '帮我总结这篇文章', icon: DocIcon },
-  { id: 3, title: '翻译', desc: '多语言翻译', text: '帮我翻译这段文字', icon: GlobeIcon },
-  { id: 4, title: '数据分析', desc: '智能分析数据', text: '帮我分析数据', icon: CubeIcon },
-]
-
 interface Props {
   messages: Message[]
   welcomeVisible?: boolean
   quickActionsVisible?: boolean
   isStreaming?: boolean
+  labels?: Partial<ChatbotLabels>
 }
 
 const props = withDefaults(defineProps<Props>(), {
   welcomeVisible: true,
   quickActionsVisible: true,
   isStreaming: false,
+  labels: () => ({}),
 })
+
+// Merge default labels with prop labels
+const mergedLabels = computed(() => ({
+  ...defaultChatbotLabels,
+  ...props.labels,
+}))
+
+// Build quick actions from labels
+const quickActions = computed(() => [
+  { id: 1, title: mergedLabels.value.quickAction1Title, desc: mergedLabels.value.quickAction1Desc, text: mergedLabels.value.quickAction1Text, icon: WriteIcon },
+  { id: 2, title: mergedLabels.value.quickAction2Title, desc: mergedLabels.value.quickAction2Desc, text: mergedLabels.value.quickAction2Text, icon: DocIcon },
+  { id: 3, title: mergedLabels.value.quickAction3Title, desc: mergedLabels.value.quickAction3Desc, text: mergedLabels.value.quickAction3Text, icon: GlobeIcon },
+  { id: 4, title: mergedLabels.value.quickAction4Title, desc: mergedLabels.value.quickAction4Desc, text: mergedLabels.value.quickAction4Text, icon: CubeIcon },
+])
 
 interface Emits {
   (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
@@ -150,10 +161,10 @@ const handleCodeCopy = async (e: Event) => {
   const code = pre.textContent || ''
   await navigator.clipboard.writeText(code)
 
-  target.textContent = '已复制'
+  target.textContent = mergedLabels.value.copied || '已复制'
   target.classList.add('copied')
   setTimeout(() => {
-    target.textContent = '复制'
+    target.textContent = mergedLabels.value.copy || '复制'
     target.classList.remove('copied')
   }, 1000)
 }

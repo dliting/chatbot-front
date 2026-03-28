@@ -36,12 +36,9 @@ export function validateFileSize(file: File, mediaType: MediaType): ValidationRe
 
 /**
  * Format file size for display
+ * Re-exported from helpers for backward compatibility
  */
-export function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-}
+export { formatFileSize } from './helpers'
 
 /**
  * Get media type from File object
