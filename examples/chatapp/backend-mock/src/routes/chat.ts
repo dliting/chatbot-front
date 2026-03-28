@@ -16,7 +16,7 @@ const router = Router()
 // POST /chat/stream - Stream chat (mock)
 router.post('/chat/stream', async (req: Request, res: Response) => {
   try {
-    const { sessionId, content, images, videos, audios, stream = true } = req.body
+    const { sessionId, content, images, videos, audios, stream = true, options } = req.body
 
     if (!sessionId || !content) {
       res.status(400).json({ code: 400, message: 'Missing sessionId or content' })
@@ -45,8 +45,10 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
       res.write(`data: ${JSON.stringify({ type: 'start', messageId })}\n\n`)
 
       let fullContent = ''
-      for await (const chunk of streamMockChat(chatMessages)) {
-        if (chunk.type === 'token' && chunk.content) {
+      for await (const chunk of streamMockChat(chatMessages, options)) {
+        if (chunk.type === 'reasoning' && chunk.reasoningContent) {
+          res.write(`data: ${JSON.stringify({ type: 'reasoning', reasoningContent: chunk.reasoningContent })}\n\n`)
+        } else if (chunk.type === 'token' && chunk.content) {
           fullContent += chunk.content
           res.write(`data: ${JSON.stringify({ type: 'token', content: chunk.content })}\n\n`)
         } else if (chunk.type === 'end') {
@@ -57,7 +59,7 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
         }
       }
     } else {
-      const response = await mockChat(chatMessages)
+      const response = await mockChat(chatMessages, options)
       const assistantMessage = addMessage(sessionId, 'assistant', response)
 
       const apiResponse: ApiResponse = {
@@ -82,7 +84,7 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
 // POST /chat/message - Non-streaming chat (mock)
 router.post('/chat/message', async (req: Request, res: Response) => {
   try {
-    const { sessionId, content, images, videos, audios } = req.body
+    const { sessionId, content, images, videos, audios, options } = req.body
 
     if (!sessionId || !content) {
       res.status(400).json({ code: 400, message: 'Missing sessionId or content' })
@@ -98,7 +100,7 @@ router.post('/chat/message', async (req: Request, res: Response) => {
     }))
     chatMessages.push({ role: 'user', content })
 
-    const response = await mockChat(chatMessages)
+    const response = await mockChat(chatMessages, options)
     const assistantMessage = addMessage(sessionId, 'assistant', response)
 
     const apiResponse: ApiResponse = {

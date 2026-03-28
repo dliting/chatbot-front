@@ -29,8 +29,9 @@ export interface ApiResponse<T = unknown> {
 }
 
 export interface ChatMessage {
-  type: 'start' | 'token' | 'end'
+  type: 'start' | 'token' | 'reasoning' | 'end'
   messageId?: string
   content?: string
   fullContent?: string
+  reasoningContent?: string
 }

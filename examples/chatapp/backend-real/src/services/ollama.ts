@@ -84,24 +84,34 @@ export function convertToOpenAIMessage(message: OllamaMessage): {
   }
 }
 
+export interface OllamaChatOptions {
+  thinking?: { enabled?: boolean }
+}
+
 export async function* streamChat(
-  messages: OllamaMessage[]
+  messages: OllamaMessage[],
+  options?: OllamaChatOptions
 ): AsyncGenerator<ChatMessage, void, unknown> {
   const url = `${OLLAMA_BASE_URL}/v1/chat/completions`
 
   // Convert messages to OpenAI format
   const openAIMessages = messages.map(convertToOpenAIMessage)
 
+  const requestBody: Record<string, unknown> = {
+    model: OLLAMA_MODEL,
+    messages: openAIMessages,
+    stream: true,
+  }
+  if (options?.thinking?.enabled !== false && OLLAMA_THINKING_ENABLED) {
+    requestBody.enable_thinking = true
+  }
+
   const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      messages: openAIMessages,
-      stream: true
-    })
+    body: JSON.stringify(requestBody)
   })
 
   if (!response.ok) {
@@ -134,6 +144,9 @@ export async function* streamChat(
           const jsonStr = line.replace(/^data: /, '').trim()
           if (jsonStr === '[DONE]') continue
           const data = JSON.parse(jsonStr)
+          if (data.choices?.[0]?.delta?.reasoning_content) {
+            yield { type: 'reasoning', reasoningContent: data.choices[0].delta.reasoning_content }
+          }
           if (data.choices?.[0]?.delta?.content) {
             yield { type: 'token', content: data.choices[0].delta.content }
           }
