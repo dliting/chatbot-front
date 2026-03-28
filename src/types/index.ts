@@ -28,6 +28,8 @@ export interface Message {
   timestamp: number
   status: MessageStatus
   metadata?: Record<string, unknown>
+  thinkingContent?: string    // Thinking/reasoning process text
+  thinkingTime?: number       // Thinking elapsed time in ms
 }
 
 // Session Types
@@ -94,13 +96,15 @@ export interface PanelToggleData {
 }
 
 // Stream event types
-export type StreamEventType = 'start' | 'token' | 'end' | 'error'
+export type StreamEventType = 'start' | 'token' | 'reasoning' | 'end' | 'error'
 
 export interface StreamEvent {
   type: StreamEventType
   messageId?: string
   content?: string
   fullContent?: string
+  reasoningContent?: string   // Thinking content fragment (for reasoning events)
+  thinkingTime?: number       // Cumulative thinking time in ms (for reasoning events)
   error?: string
 }
 

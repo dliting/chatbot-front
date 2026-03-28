@@ -38,6 +38,11 @@ export interface ChatbotConfig {
   enableResend?: boolean
   enableClearAll?: boolean
 
+  // Thinking / Chain-of-Thought
+  enableThinking?: boolean
+  thinkingDefaultEnabled?: boolean
+  thinkingAutoCollapse?: boolean
+
   // Upload limits
   maxImageCount?: number
   maxImageSize?: number // in bytes
@@ -103,6 +108,14 @@ export interface ChatbotLabels {
   quickAction4Text?: string
   // Copy button labels
   copied?: string
+  // Thinking labels
+  thinking?: {
+    toggle?: string
+    thinking?: string
+    deeplyThought?: string
+    showThinking?: string
+    hideThinking?: string
+  }
 }
 
 export const defaultChatbotLabels: ChatbotLabels = {
@@ -139,6 +152,14 @@ export const defaultChatbotLabels: ChatbotLabels = {
   quickAction4Text: '帮我分析数据',
   // Copy button labels
   copied: '已复制',
+  // Thinking labels
+  thinking: {
+    toggle: '思考',
+    thinking: '思考中...',
+    deeplyThought: '已深度思考 {seconds}s',
+    showThinking: '查看思考过程',
+    hideThinking: '收起思考过程',
+  },
 }
 
 export const defaultChatbotConfig: Required<ChatbotConfig> = {
@@ -173,6 +194,11 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   enableDeleteMessage: true,
   enableResend: true,
   enableClearAll: true,
+
+  // Thinking
+  enableThinking: false,
+  thinkingDefaultEnabled: true,
+  thinkingAutoCollapse: true,
 
   // Upload limits
   maxImageCount: 8,
