@@ -37,6 +37,9 @@
           :welcome-visible="!hideWelcome && messages.length === 0"
           :quick-actions-visible="!hideQuickActions"
           :is-streaming="isStreaming"
+          :enable-thinking="enableThinking"
+          :thinking-enabled="thinkingEnabled"
+          :is-thinking="isThinking"
           @send-message="handleSendMessage"
           @quick-action="$emit('quick-action', $event)"
           @edit="$emit('edit', $event)"
@@ -44,6 +47,7 @@
           @refresh="$emit('refresh', $event)"
           @delete="$emit('delete', $event)"
           @file-click="handleFileClick"
+          @thinking-toggle="$emit('thinking-toggle', $event)"
         />
       </main>
     </template>
@@ -66,6 +70,9 @@
         :welcome-visible="!hideWelcome && messages.length === 0"
         :quick-actions-visible="!hideQuickActions"
         :is-streaming="isStreaming"
+        :enable-thinking="enableThinking"
+        :thinking-enabled="thinkingEnabled"
+        :is-thinking="isThinking"
         @send-message="handleSendMessage"
         @quick-action="$emit('quick-action', $event)"
         @edit="$emit('edit', $event)"
@@ -73,6 +80,7 @@
         @refresh="$emit('refresh', $event)"
         @delete="$emit('delete', $event)"
         @file-click="handleFileClick"
+        @thinking-toggle="$emit('thinking-toggle', $event)"
       />
       <SessionListView
         v-else
@@ -122,6 +130,9 @@ interface Props {
   hideWelcome?: boolean
   hideQuickActions?: boolean
   hideHeader?: boolean
+  enableThinking?: boolean
+  thinkingEnabled?: boolean
+  isThinking?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -152,6 +163,7 @@ interface Emits {
   (e: 'delete', message: import('@/types').Message): void
   (e: 'toggle-theme'): void
   (e: 'close'): void
+  (e: 'thinking-toggle', enabled: boolean): void
 }
 
 const emit = defineEmits<Emits>()

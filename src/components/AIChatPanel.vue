@@ -9,6 +9,9 @@
     :is-streaming="isStreaming"
     :hide-welcome="hideWelcome"
     :hide-quick-actions="hideQuickActions"
+    :enable-thinking="enableThinking"
+    :thinking-enabled="thinkingEnabled"
+    :is-thinking="isThinking"
     @send-message="handleSendMessage"
     @quick-action="$emit('quick-action', $event)"
     @create-session="$emit('create-session')"
@@ -19,6 +22,7 @@
     @refresh-message="$emit('refresh', $event)"
     @delete-message="$emit('delete', $event)"
     @toggle-theme="$emit('toggle-theme')"
+    @thinking-toggle="$emit('thinking-toggle', $event)"
   />
 
   <!-- Embedded Modes (extended/sidebar) -->
@@ -34,6 +38,9 @@
     :hide-welcome="hideWelcome"
     :hide-quick-actions="hideQuickActions"
     :hide-header="hideHeader"
+    :enable-thinking="enableThinking"
+    :thinking-enabled="thinkingEnabled"
+    :is-thinking="isThinking"
     @send-message="handleSendMessage"
     @quick-action="$emit('quick-action', $event)"
     @create-session="$emit('create-session')"
@@ -44,6 +51,7 @@
     @refresh="$emit('refresh', $event)"
     @delete="$emit('delete', $event)"
     @toggle-theme="$emit('toggle-theme')"
+    @thinking-toggle="$emit('thinking-toggle', $event)"
   />
 </template>
 
@@ -66,6 +74,9 @@ interface Props {
   hideWelcome?: boolean
   hideQuickActions?: boolean
   hideHeader?: boolean
+  enableThinking?: boolean
+  thinkingEnabled?: boolean
+  isThinking?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
@@ -93,6 +104,7 @@ interface Emits {
   (e: 'refresh', message: Message): void
   (e: 'delete', message: Message): void
   (e: 'toggle-theme'): void
+  (e: 'thinking-toggle', enabled: boolean): void
 }
 
 const emit = defineEmits<Emits>()

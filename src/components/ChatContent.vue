@@ -32,6 +32,14 @@
           :class="['chat-content__message', message.role, { 'chat-content__message--last-ai': lastAiMessageIds.has(message.messageId) }]"
           @dblclick="handleMessageDblClick(message)"
         >
+          <!-- Thinking Block -->
+          <ThinkingBlock
+            v-if="message.role === 'assistant' && message.thinkingContent"
+            :content="message.thinkingContent"
+            :thinking-time="message.thinkingTime || 0"
+            :is-thinking="isThinking && lastAiMessageIds.has(message.messageId)"
+            @copy="(content) => handleCopyThinking(content)"
+          />
           <div class="chat-content__bubble">
             <!-- Images -->
             <div v-if="message.images && message.images.length > 0" class="chat-content__images">
@@ -85,7 +93,14 @@
 
     <!-- Input Area -->
     <div class="chat-content__input-area">
-      <ChatInput :disabled="isStreaming" @send="handleSend" @file-click="$emit('file-click', $event)" />
+      <ChatInput
+        :disabled="isStreaming"
+        :enable-thinking="enableThinking"
+        :thinking-enabled="thinkingEnabled"
+        @send="handleSend"
+        @file-click="$emit('file-click', $event)"
+        @update:thinking-enabled="$emit('thinking-toggle', $event)"
+      />
     </div>
   </div>
 </template>
@@ -98,6 +113,7 @@ import type { Message } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
 import { defaultChatbotLabels } from '@/types/config'
 import ChatInput from './ChatInput.vue'
+import ThinkingBlock from './ThinkingBlock.vue'
 import { formatMarkdownContent, copyToClipboard } from '@/utils/helpers'
 
 // Quick action icons
@@ -128,6 +144,9 @@ interface Props {
   quickActionsVisible?: boolean
   isStreaming?: boolean
   labels?: Partial<ChatbotLabels>
+  enableThinking?: boolean
+  thinkingEnabled?: boolean
+  isThinking?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -159,6 +178,7 @@ interface Emits {
   (e: 'refresh', message: Message): void
   (e: 'delete', message: Message): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
+  (e: 'thinking-toggle', enabled: boolean): void
 }
 
 const emit = defineEmits<Emits>()
@@ -190,6 +210,13 @@ const handleCopyMessage = async (message: Message) => {
     setTimeout(() => {
       copyFeedbackMap[message.messageId] = false
     }, 2000)
+  }
+}
+
+const handleCopyThinking = async (content: string) => {
+  const success = await copyToClipboard(content)
+  if (success) {
+    ElMessage.success(mergedLabels.value.copied || '已复制')
   }
 }
 

@@ -14,6 +14,9 @@
       :hide-quick-actions="false"
       :hide-header="!showAIChatHeader"
       :api-client="apiClient"
+      :enable-thinking="config.enableThinking"
+      :thinking-enabled="thinkingEnabled"
+      :is-thinking="isThinkingActive"
       @send-message="handleSendMessage"
       @quick-action="handleQuickAction"
       @create-session="_handleCreateSession"
@@ -24,6 +27,7 @@
       @refresh="handleRefreshMessage"
       @delete="handleDeleteMessage"
       @toggle-theme="toggleTheme"
+      @thinking-toggle="thinkingEnabled = $event"
     />
 
     <!-- Sidebar/Dialog modes: wrapped in ChatPanel for window management -->
@@ -61,6 +65,9 @@
         :hide-input-area="false"
         :config="aiChatConfig"
         :api-client="apiClient"
+        :enable-thinking="config.enableThinking"
+        :thinking-enabled="thinkingEnabled"
+        :is-thinking="isThinkingActive"
         @send-message="handleSendMessage"
         @quick-action="handleQuickAction"
         @create-session="_handleCreateSession"
@@ -71,6 +78,7 @@
         @refresh="handleRefreshMessage"
         @delete="handleDeleteMessage"
         @toggle-theme="toggleTheme"
+        @thinking-toggle="thinkingEnabled = $event"
       />
     </ChatPanel>
   </div>
@@ -146,6 +154,10 @@ const {
   updateSessionTitle,
   cleanup,
 } = useChatbotState(config.value)
+
+// Thinking state
+const thinkingEnabled = ref(config.value.thinkingDefaultEnabled ?? defaultChatbotConfig.thinkingDefaultEnabled)
+const isThinkingActive = ref(false)
 
 // Computed
 // Determine the chat mode based on interaction mode (new dual-dimension architecture)
@@ -356,18 +368,35 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       data.content,
       data.images,
       data.videos,
-      data.audios
+      data.audios,
+      { thinking: { enabled: thinkingEnabled.value } }
     )
 
+    let fullThinkingContent = ''
+    let thinkingStartTime = 0
+
     for await (const chunk of stream) {
-      if (chunk.type === 'token' && chunk.content) {
+      if (chunk.type === 'reasoning' && chunk.reasoningContent) {
+        if (!thinkingStartTime) thinkingStartTime = Date.now()
+        isThinkingActive.value = true
+        fullThinkingContent += chunk.reasoningContent
+        const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
+        if (assistantMsg) {
+          assistantMsg.thinkingContent = fullThinkingContent
+          assistantMsg.thinkingTime = Date.now() - thinkingStartTime
+        }
+      } else if (chunk.type === 'token' && chunk.content) {
+        isThinkingActive.value = false
         fullContent += chunk.content
-        // Update assistant message content
         const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
         if (assistantMsg) {
           assistantMsg.content = fullContent
+          if (thinkingStartTime) {
+            assistantMsg.thinkingTime = Date.now() - thinkingStartTime
+          }
         }
       } else if (chunk.type === 'end') {
+        isThinkingActive.value = false
         // Mark message as sent
         const userMsg = currentMessages.find(m => m.messageId === userMessage.messageId)
         if (userMsg) {

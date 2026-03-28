@@ -85,6 +85,13 @@
         </svg>
       </button>
 
+      <ThinkingToggle
+        v-if="enableThinking"
+        :enabled="thinkingEnabled"
+        :disabled="disabled"
+        @update:enabled="(val) => emit('update:thinkingEnabled', val)"
+      />
+
       <textarea
         ref="inputRef"
         v-model="inputText"
@@ -135,10 +142,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { validateFileSize, formatFileSize, getMediaType as utilsGetMediaType, type MediaType } from '@/utils/fileValidation'
+import ThinkingToggle from './ThinkingToggle.vue'
 import { getPreviewType } from '@/utils/fileType'
 
 interface Props {
   disabled?: boolean
+  enableThinking?: boolean
+  thinkingEnabled?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -160,6 +170,7 @@ interface Emits {
   (e: 'send', data: { content: string; images?: string[]; videos?: string[]; audios?: string[]; documents?: Array<{ name: string; url: string; type: string }> }): void
   (e: 'toggle-voice'): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
+  (e: 'update:thinkingEnabled', value: boolean): void
 }
 
 const emit = defineEmits<Emits>()
