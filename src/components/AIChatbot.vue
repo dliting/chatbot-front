@@ -20,6 +20,9 @@
       @select-session="_handleSwitchSession"
       @delete-session="_handleDeleteSession"
       @edit="handleEditMessage"
+      @copy="() => {}"
+      @refresh="handleRefreshMessage"
+      @delete="handleDeleteMessage"
       @toggle-theme="toggleTheme"
     />
 
@@ -64,6 +67,9 @@
         @select-session="_handleSwitchSession"
         @delete-session="_handleDeleteSession"
         @edit="handleEditMessage"
+        @copy="() => {}"
+        @refresh="handleRefreshMessage"
+        @delete="handleDeleteMessage"
         @toggle-theme="toggleTheme"
       />
     </ChatPanel>
@@ -250,6 +256,38 @@ const _handleUpdateSessionTitle = (sessionId: string, title: string) => {
 const handleEditMessage = (message: import('@/types').Message) => {
   // Emit edit event for parent components to handle (e.g., fill input with message content)
   emit('editMessage', message)
+}
+
+const handleRefreshMessage = (message: import('@/types').Message) => {
+  // Refresh: remove the assistant message and resend the preceding user message
+  const sessionId = state.sessions.currentId
+  const msgs = state.messages.bySession[sessionId]
+  if (!msgs) return
+
+  // Find the assistant message and remove it
+  const index = msgs.findIndex(m => m.messageId === message.messageId)
+  if (index !== -1) {
+    msgs.splice(index, 1)
+  }
+
+  // Find the preceding user message
+  for (let i = index - 1; i >= 0; i--) {
+    if (msgs[i].role === 'user') {
+      handleSendMessage({ content: msgs[i].content })
+      break
+    }
+  }
+}
+
+const handleDeleteMessage = (message: import('@/types').Message) => {
+  const sessionId = state.sessions.currentId
+  const msgs = state.messages.bySession[sessionId]
+  if (!msgs) return
+
+  const index = msgs.findIndex(m => m.messageId === message.messageId)
+  if (index !== -1) {
+    msgs.splice(index, 1)
+  }
 }
 
 // Handle quick action - send predefined text as message
@@ -441,6 +479,8 @@ defineExpose({
   --chatbot-subtext-color: #a3a3a3;
 
   /* Bubble colors - dark */
+  --chatbot-user-bubble-bg: #5a6fd6;
+  --chatbot-user-bubble-text: #ffffff;
   --chatbot-assistant-bubble-bg: #2c2c2c;
   --chatbot-assistant-bubble-text: #e5e5e5;
 

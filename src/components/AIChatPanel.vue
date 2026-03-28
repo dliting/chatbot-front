@@ -15,6 +15,9 @@
     @select-session="$emit('select-session', $event)"
     @delete-session="$emit('delete-session', $event)"
     @edit-message="$emit('edit', $event)"
+    @copy-message="$emit('copy', $event)"
+    @refresh-message="$emit('refresh', $event)"
+    @delete-message="$emit('delete', $event)"
     @toggle-theme="$emit('toggle-theme')"
   />
 
@@ -37,6 +40,9 @@
     @select-session="$emit('select-session', $event)"
     @delete-session="$emit('delete-session', $event)"
     @edit="$emit('edit', $event)"
+    @copy="$emit('copy', $event)"
+    @refresh="$emit('refresh', $event)"
+    @delete="$emit('delete', $event)"
     @toggle-theme="$emit('toggle-theme')"
   />
 </template>
@@ -83,6 +89,9 @@ interface Emits {
   (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void
+  (e: 'copy', message: Message): void
+  (e: 'refresh', message: Message): void
+  (e: 'delete', message: Message): void
   (e: 'toggle-theme'): void
 }
 

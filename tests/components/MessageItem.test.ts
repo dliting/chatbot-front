@@ -1,12 +1,47 @@
 /**
  * Unit tests for MessageItem component
  */
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MessageItem from '@/components/MessageItem.vue'
 import type { Message } from '@/types'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+// Mock element-plus
+vi.mock('element-plus', async () => {
+  const actual = await vi.importActual('element-plus')
+  return {
+    ...actual,
+    ElMessage: vi.fn(),
+    ElMessageBox: {
+      confirm: vi.fn().mockResolvedValue(true),
+    },
+  }
+})
+
+// Mock the utility functions
+vi.mock('@/utils/helpers', () => ({
+  formatTime: (timestamp: number) => {
+    const date = new Date(timestamp)
+    return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+  },
+  copyToClipboard: vi.fn().mockResolvedValue(true),
+}))
+
+vi.mock('@/utils/message', () => ({
+  formatMessageContent: (content: string) => {
+    return content
+      .replace(/\n/g, '<br>')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+  },
+}))
 
 describe('MessageItem', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   const mockUserMessage: Message = {
     id: 'msg_1',
     sessionId: 'session_1',
@@ -144,7 +179,7 @@ describe('MessageItem', () => {
       },
     })
 
-    await wrapper.find('.chatbot-message__action-btn').trigger('click')
+    await wrapper.find('.chatbot-message__action-btn[title="复制"]').trigger('click')
     await wrapper.vm.$nextTick()
 
     expect(wrapper.emitted('copy')).toBeTruthy()
@@ -159,9 +194,8 @@ describe('MessageItem', () => {
       },
     })
 
-    // Find delete button (last action button)
-    const buttons = wrapper.findAll('.chatbot-message__action-btn')
-    const deleteBtn = buttons[buttons.length - 1]
+    // Find delete button
+    const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="删除"]')
 
     await deleteBtn.trigger('click')
     await wrapper.vm.$nextTick()

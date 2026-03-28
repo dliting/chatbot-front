@@ -40,6 +40,9 @@
           @send-message="handleSendMessage"
           @quick-action="$emit('quick-action', $event)"
           @edit="$emit('edit', $event)"
+          @copy="$emit('copy', $event)"
+          @refresh="$emit('refresh', $event)"
+          @delete="$emit('delete', $event)"
           @file-click="handleFileClick"
         />
       </main>
@@ -66,6 +69,9 @@
         @send-message="handleSendMessage"
         @quick-action="$emit('quick-action', $event)"
         @edit="$emit('edit', $event)"
+        @copy="$emit('copy', $event)"
+        @refresh="$emit('refresh', $event)"
+        @delete="$emit('delete', $event)"
         @file-click="handleFileClick"
       />
       <SessionListView
@@ -141,6 +147,9 @@ interface Emits {
   (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: import('@/types').Message): void
+  (e: 'copy', message: import('@/types').Message): void
+  (e: 'refresh', message: import('@/types').Message): void
+  (e: 'delete', message: import('@/types').Message): void
   (e: 'toggle-theme'): void
   (e: 'close'): void
 }

@@ -3,7 +3,7 @@
     <!-- Messages -->
     <div class="chatbot-messages__list">
       <div
-        v-for="message in messages"
+        v-for="(message, index) in messages"
         :key="message.messageId"
         class="chatbot-messages__item"
       >
@@ -17,6 +17,7 @@
           :enable-delete="enableDelete"
           :enable-resend="enableResend"
           :is-streaming="isStreaming && message.messageId === streamingMessageId"
+          :is-last-message="index === messages.length - 1"
           @copy="$emit('copy', message)"
           @delete="$emit('delete', message)"
           @resend="$emit('resend', message)"

@@ -6,6 +6,19 @@ import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import MessageItem from '@/components/MessageItem.vue'
 import type { Message, Theme } from '@/types'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+// Mock element-plus
+vi.mock('element-plus', async () => {
+  const actual = await vi.importActual('element-plus')
+  return {
+    ...actual,
+    ElMessage: vi.fn(),
+    ElMessageBox: {
+      confirm: vi.fn().mockResolvedValue(true),
+    },
+  }
+})
 
 // Mock the utility functions
 vi.mock('@/utils/helpers', () => ({
@@ -27,6 +40,10 @@ vi.mock('@/utils/message', () => ({
 }))
 
 describe('MessageItem Component', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   const createUserMessage = (overrides = {}): Message => ({
     id: 'msg-1',
     role: 'user',
@@ -260,7 +277,7 @@ describe('MessageItem Component', () => {
       const wrapper = createWrapper(message, { isStreaming: true })
 
       // Copy button should not be visible during streaming
-      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Copy')
+      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '复制')
       expect(copyBtn).toBeUndefined()
     })
 
@@ -268,7 +285,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message, { enableCopy: false })
 
-      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Copy')
+      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '复制')
       expect(copyBtn).toBeUndefined()
     })
 
@@ -276,7 +293,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message)
 
-      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Delete')
+      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '删除')
       expect(deleteBtn).toBeTruthy()
     })
 
@@ -284,7 +301,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message, { enableDelete: false })
 
-      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Delete')
+      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '删除')
       expect(deleteBtn).toBeUndefined()
     })
 
@@ -292,7 +309,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage({ status: 'error' })
       const wrapper = createWrapper(message, { enableResend: true })
 
-      const resendBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Resend')
+      const resendBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '重新发送')
       expect(resendBtn).toBeTruthy()
     })
   })
@@ -302,7 +319,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message)
 
-      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Copy')
+      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '复制')
       if (copyBtn) {
         await copyBtn.trigger('click')
         expect(wrapper.emitted('copy')).toBeTruthy()
@@ -313,7 +330,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message)
 
-      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Delete')
+      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '删除')
       if (deleteBtn) {
         await deleteBtn.trigger('click')
         expect(wrapper.emitted('delete')).toBeTruthy()
@@ -324,7 +341,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage({ status: 'error' })
       const wrapper = createWrapper(message, { enableResend: true })
 
-      const resendBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Resend')
+      const resendBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '重新发送')
       if (resendBtn) {
         await resendBtn.trigger('click')
         expect(wrapper.emitted('resend')).toBeTruthy()

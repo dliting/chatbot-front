@@ -102,30 +102,23 @@
       </div>
 
       <!-- Actions -->
-      <div v-if="showActions" class="chatbot-message__actions">
-        <!-- Copy feedback -->
-        <Transition name="fade">
-          <span v-if="showCopyFeedback" class="chatbot-message__copy-feedback">
-            Copied!
-          </span>
-        </Transition>
+      <div v-if="showActions" :class="actionsClasses">
         <!-- Copy button -->
         <button
           v-if="enableCopy && canCopy"
-          class="chatbot-message__action-btn"
-          title="Copy"
+          :class="['chatbot-message__action-btn', { 'chatbot-message__action-btn--copied': isCopied }]"
+          title="复制"
           @click="handleCopy"
         >
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/>
-          </svg>
+          <Check v-if="isCopied" :size="14" />
+          <Copy v-else :size="14" />
         </button>
 
         <!-- Resend button (for error messages) -->
         <button
           v-if="isError && enableResend"
           class="chatbot-message__action-btn chatbot-message__action-btn--danger"
-          title="Resend"
+          title="重新发送"
           @click="$emit('resend')"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -137,12 +130,10 @@
         <button
           v-if="enableDelete"
           class="chatbot-message__action-btn chatbot-message__action-btn--danger"
-          title="Delete"
-          @click="$emit('delete')"
+          title="删除"
+          @click="handleDelete"
         >
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
-          </svg>
+          <Trash2 :size="14" />
         </button>
       </div>
     </div>
@@ -151,6 +142,8 @@
 
 <script setup lang="ts">
 import { computed, ref, onUnmounted } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Copy, Check, Trash2 } from 'lucide-vue-next'
 import type { Message } from '@/types'
 import { formatTime, copyToClipboard } from '@/utils/helpers'
 import { formatMessageContent } from '@/utils/message'
@@ -166,6 +159,8 @@ interface Props {
   enableDelete?: boolean
   enableResend?: boolean
   isStreaming?: boolean
+  copyTimeout?: number
+  isLastMessage?: boolean  // AI 最后一条消息时，默认显示操作按钮
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -178,6 +173,8 @@ const props = withDefaults(defineProps<Props>(), {
   enableDelete: true,
   enableResend: true,
   isStreaming: false,
+  copyTimeout: 2000,
+  isLastMessage: false,
 })
 
 interface Emits {
@@ -212,6 +209,15 @@ const classes = computed(() => [
   `chatbot-message--${props.theme}`,
   {
     'chatbot-message--streaming': props.isStreaming,
+    'chatbot-message--last': props.isLastMessage,
+  },
+])
+
+// Actions visibility: AI last message shows by default, others require hover
+const actionsClasses = computed(() => [
+  'chatbot-message__actions',
+  {
+    'chatbot-message__actions--visible': props.isLastMessage && !isUser.value,
   },
 ])
 
@@ -227,39 +233,55 @@ const bubbleClasses = computed(() => [
   },
 ])
 
-// Copy feedback
-const showCopyFeedback = ref(false)
-let copyFeedbackTimer: ReturnType<typeof setTimeout> | null = null
+// Copy state - icon switching
+const isCopied = ref(false)
+let copyTimer: ReturnType<typeof setTimeout> | null = null
 
 // Cleanup timer on component unmount
 onUnmounted(() => {
-  if (copyFeedbackTimer) {
-    clearTimeout(copyFeedbackTimer)
-    copyFeedbackTimer = null
+  if (copyTimer) {
+    clearTimeout(copyTimer)
+    copyTimer = null
   }
 })
 
 const handleCopy = async () => {
-  if (!props.message.content || props.isStreaming) return
-
-  const success = await copyToClipboard(props.message.content)
-  if (success) {
-    // Clear existing timer if any
-    if (copyFeedbackTimer) {
-      clearTimeout(copyFeedbackTimer)
-    }
-
-    showCopyFeedback.value = true
-
-    // Hide feedback after 2000ms
-    copyFeedbackTimer = setTimeout(() => {
-      showCopyFeedback.value = false
-      copyFeedbackTimer = null
-    }, 2000)
-
-    // Emit copy event for parent components
-    emit('copy')
+  if (!props.message.content || props.isStreaming) {
+    ElMessage({ message: '无内容可复制', type: 'error', duration: 3000 })
+    return
   }
+
+  try {
+    await copyToClipboard(props.message.content)
+    ElMessage({ message: '已复制到剪贴板', type: 'success', duration: 3000 })
+    isCopied.value = true
+
+    // Reset icon after timeout
+    if (copyTimer) {
+      clearTimeout(copyTimer)
+    }
+    copyTimer = setTimeout(() => {
+      isCopied.value = false
+      copyTimer = null
+    }, props.copyTimeout)
+
+    emit('copy')
+  } catch {
+    ElMessage({ message: '复制失败', type: 'error', duration: 3000 })
+  }
+}
+
+const handleDelete = () => {
+  ElMessageBox.confirm('确定要删除这条消息吗？', '删除消息', {
+    confirmButtonText: '删除',
+    cancelButtonText: '取消',
+    type: 'warning'
+  }).then(() => {
+    emit('delete')
+    ElMessage({ message: '消息已删除', type: 'success', duration: 3000 })
+  }).catch(() => {
+    // User cancelled, do nothing
+  })
 }
 
 const handleDoubleClick = () => {
@@ -543,17 +565,10 @@ const handleDoubleClick = () => {
     .chatbot-message:hover & {
       opacity: 1;
     }
-  }
 
-  &__copy-feedback {
-    display: flex;
-    align-items: center;
-    padding: 2px 8px;
-    font-size: 12px;
-    color: var(--chatbot-success-color, #67c23a);
-    background-color: rgba(103, 194, 58, 0.1);
-    border-radius: 4px;
-    white-space: nowrap;
+    &--visible {
+      opacity: 1;
+    }
   }
 
   &__action-btn {
@@ -566,17 +581,21 @@ const handleDoubleClick = () => {
     background: transparent;
     border-radius: 4px;
     cursor: pointer;
-    color: var(--chatbot-panel-subtext, #909399);
+    color: var(--chatbot-action-icon-color, #8c8c8c);
     transition: all 0.2s;
 
-    svg {
+    svg, :deep(svg) {
       width: 14px;
       height: 14px;
     }
 
     &:hover {
-      background-color: rgba(0, 0, 0, 0.1);
-      color: var(--chatbot-panel-text, #303133);
+      background-color: var(--chatbot-action-hover-bg, rgba(0, 0, 0, 0.1));
+      color: var(--chatbot-action-icon-hover-color, #4a4a4a);
+    }
+
+    &--copied {
+      color: var(--chatbot-color-success, #67c23a);
     }
 
     &--danger:hover {
@@ -593,15 +612,5 @@ const handleDoubleClick = () => {
   51%, 100% {
     opacity: 0;
   }
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
 }
 </style>

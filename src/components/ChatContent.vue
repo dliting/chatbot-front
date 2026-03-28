@@ -29,7 +29,7 @@
         <div
           v-for="message in messages"
           :key="message.messageId"
-          :class="['chat-content__message', message.role]"
+          :class="['chat-content__message', message.role, { 'chat-content__message--last-ai': lastAiMessageIds.has(message.messageId) }]"
           @dblclick="handleMessageDblClick(message)"
         >
           <div class="chat-content__bubble">
@@ -53,6 +53,32 @@
               <span/><span/><span/>
             </div>
           </div>
+          <!-- Message Actions (hover to show, Cherry Studio style) -->
+          <div v-if="message.status !== 'loading' && message.content" :class="['chat-content__message-actions', { 'chat-content__message-actions--visible': lastAiMessageIds.has(message.messageId) }]">
+            <button
+              :class="['chat-content__action-btn', { 'chat-content__action-btn--copied': copyFeedbackMap[message.messageId] }]"
+              :title="mergedLabels.copy || '复制'"
+              @click.stop="handleCopyMessage(message)"
+            >
+              <Check v-if="copyFeedbackMap[message.messageId]" :size="14" class="chat-content__action-icon--copied" />
+              <Copy v-else :size="14" />
+            </button>
+            <button
+              v-if="message.role === 'assistant'"
+              class="chat-content__action-btn"
+              :title="mergedLabels.refresh || '重新生成'"
+              @click.stop="handleRefreshMessage(message)"
+            >
+              <RefreshCw :size="14" />
+            </button>
+            <button
+              class="chat-content__action-btn chat-content__action-btn--danger"
+              :title="mergedLabels.delete || '删除'"
+              @click.stop="handleDeleteMessage(message)"
+            >
+              <Trash2 :size="14" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -65,12 +91,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, h, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, watch, nextTick, h, onMounted, onUnmounted, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Copy, Check, RefreshCw, Trash2 } from 'lucide-vue-next'
 import type { Message } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
 import { defaultChatbotLabels } from '@/types/config'
 import ChatInput from './ChatInput.vue'
-import { formatMarkdownContent } from '@/utils/helpers'
+import { formatMarkdownContent, copyToClipboard } from '@/utils/helpers'
 
 // Quick action icons
 const WriteIcon = () => h('svg', { viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2 }, [
@@ -128,6 +156,8 @@ interface Emits {
   (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void
   (e: 'copy', message: Message): void
+  (e: 'refresh', message: Message): void
+  (e: 'delete', message: Message): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
 }
 
@@ -145,6 +175,61 @@ const handleMessageDblClick = (message: Message) => {
     emit('edit', message)
   }
 }
+
+// Copy feedback state (track per message ID)
+const copyFeedbackMap = reactive<Record<string, boolean>>({})
+
+const handleCopyMessage = async (message: Message) => {
+  if (!message.content || message.status === 'loading') return
+
+  const success = await copyToClipboard(message.content)
+  if (success) {
+    copyFeedbackMap[message.messageId] = true
+    ElMessage.success(mergedLabels.value.copied || '已复制')
+    emit('copy', message)
+    setTimeout(() => {
+      copyFeedbackMap[message.messageId] = false
+    }, 2000)
+  }
+}
+
+const handleRefreshMessage = (message: Message) => {
+  emit('refresh', message)
+}
+
+const handleDeleteMessage = async (message: Message) => {
+  try {
+    await ElMessageBox.confirm(
+      mergedLabels.value.deleteConfirm || '确定要删除这条消息吗？',
+      mergedLabels.value.deleteTitle || '删除确认',
+      {
+        confirmButtonText: mergedLabels.value.confirm || '确定',
+        cancelButtonText: mergedLabels.value.cancel || '取消',
+        type: 'warning',
+      }
+    )
+    emit('delete', message)
+    ElMessage.success(mergedLabels.value.deleted || '已删除')
+  } catch {
+    // User cancelled
+  }
+}
+
+// Pre-compute the set of last AI message IDs (optimized: computed once, not per-message)
+const lastAiMessageIds = computed(() => {
+  const ids = new Set<string>()
+  let lastAssistantIdx = -1
+  for (let i = props.messages.length - 1; i >= 0; i--) {
+    if (props.messages[i].role === 'assistant') {
+      lastAssistantIdx = i
+      break
+    }
+  }
+  if (lastAssistantIdx >= 0) {
+    ids.add(props.messages[lastAssistantIdx].messageId)
+  }
+  return ids
+})
 
 // Auto-scroll to bottom when messages change
 const messagesRef = ref<HTMLElement | null>(null)
@@ -321,10 +406,11 @@ watch(() => props.messages, () => {
 
   &__message {
     display: flex;
-    gap: 10px;
+    flex-direction: column;
+    min-width: 0;
 
     &.user {
-      flex-direction: row-reverse;
+      align-items: flex-end;
     }
   }
 
@@ -352,16 +438,19 @@ watch(() => props.messages, () => {
 
   &__bubble {
     max-width: 70%;
+    min-width: 0;
     padding: 14px 16px;
     border-radius: 20px;
     font-size: 15px;
     line-height: 1.5;
     word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow: hidden;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     .user & {
-      background: var(--chatbot-primary-gradient);
-      color: white;
+      background: var(--chatbot-user-bubble-bg, #409eff);
+      color: var(--chatbot-user-bubble-text, #ffffff);
       border-bottom-right-radius: 6px;
     }
 
@@ -390,6 +479,24 @@ watch(() => props.messages, () => {
 
   &__text {
     white-space: pre-wrap;
+    min-width: 0;
+
+    :deep(pre) {
+      max-width: 100%;
+      overflow-x: auto;
+    }
+
+    :deep(code) {
+      max-width: 100%;
+      overflow-x: auto;
+      display: inline-block;
+    }
+
+    :deep(table) {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
   }
 
   &__typing {
@@ -409,6 +516,75 @@ watch(() => props.messages, () => {
     }
   }
 
+  &__message-actions {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+    .chat-content__message:hover & {
+      opacity: 1;
+    }
+
+    .chat-content__message.user & {
+      flex-direction: row-reverse;
+    }
+
+    &--visible {
+      opacity: 1;
+    }
+  }
+
+  &__action-feedback {
+    display: flex;
+    align-items: center;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: var(--chatbot-success-color, #67c23a);
+    background-color: rgba(103, 194, 58, 0.1);
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  &__action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--chatbot-subtext-color, #909399);
+    transition: all 0.2s ease;
+
+    svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    &:hover {
+      background-color: var(--chatbot-border-color, rgba(0, 0, 0, 0.08));
+      color: var(--chatbot-text-color, #303133);
+    }
+
+    &--danger:hover {
+      background-color: rgba(245, 108, 108, 0.1);
+      color: var(--chatbot-danger-color, #f56c6c);
+    }
+
+    &--copied {
+      color: var(--chatbot-success-color, #67c23a);
+    }
+  }
+
+  &__action-icon--copied {
+    color: inherit;
+  }
+
   &__input-area {
     flex-shrink: 0;
   }
@@ -417,5 +593,15 @@ watch(() => props.messages, () => {
 @keyframes typing {
   0%, 60%, 100% { transform: translateY(0); }
   30% { transform: translateY(-8px); }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

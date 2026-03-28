@@ -45,6 +45,7 @@
     "@vue-office/pdf": "1.6.5",
     "element-plus": "^2.5.0",
     "file-type": "16.5.4",
+    "lucide-vue-next": "1.0.0",
     "viewerjs": "1.11.7",
     "vue": "^3.4.0"
   },

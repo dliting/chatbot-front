@@ -40,6 +40,9 @@
         @send-message="handleSend"
         @quick-action="handleQuickAction"
         @edit="handleMessageEdit"
+        @copy="handleMessageCopy"
+        @refresh="handleMessageRefresh"
+        @delete="handleMessageDelete"
         @file-click="handleFileClick"
       />
       <SessionListView
@@ -114,6 +117,9 @@ interface Emits {
   (e: 'select-session', sessionId: string): void
   (e: 'delete-session', sessionId: string): void
   (e: 'edit-message', message: Message): void
+  (e: 'copy-message', message: Message): void
+  (e: 'refresh-message', message: Message): void
+  (e: 'delete-message', message: Message): void
   (e: 'toggle-theme'): void
 }
 
@@ -184,6 +190,18 @@ const handleDeleteSession = (sessionId: string) => {
 
 const handleMessageEdit = (message: Message) => {
   emit('edit-message', message)
+}
+
+const handleMessageCopy = (message: Message) => {
+  emit('copy-message', message)
+}
+
+const handleMessageRefresh = (message: Message) => {
+  emit('refresh-message', message)
+}
+
+const handleMessageDelete = (message: Message) => {
+  emit('delete-message', message)
 }
 
 // Initialize floating window position on mount

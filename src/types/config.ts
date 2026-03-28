@@ -77,6 +77,7 @@ export interface ChatbotLabels {
   clearAll: string
   delete: string
   copy: string
+  refresh: string
   resend: string
   uploading: string
   uploadFailed: string
@@ -102,7 +103,6 @@ export interface ChatbotLabels {
   quickAction4Text?: string
   // Copy button labels
   copied?: string
-  copy?: string
 }
 
 export const defaultChatbotLabels: ChatbotLabels = {
@@ -114,6 +114,7 @@ export const defaultChatbotLabels: ChatbotLabels = {
   clearAll: 'Clear All',
   delete: 'Delete',
   copy: 'Copy',
+  refresh: 'Regenerate',
   resend: 'Resend',
   uploading: 'Uploading...',
   uploadFailed: 'Upload Failed',
@@ -138,7 +139,6 @@ export const defaultChatbotLabels: ChatbotLabels = {
   quickAction4Text: '帮我分析数据',
   // Copy button labels
   copied: '已复制',
-  copy: '复制',
 }
 
 export const defaultChatbotConfig: Required<ChatbotConfig> = {
