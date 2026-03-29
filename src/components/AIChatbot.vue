@@ -9,7 +9,7 @@
       :messages="currentMessages"
       :sessions="state.sessions.list"
       :current-session-id="state.sessions.currentId"
-      :is-streaming="false"
+      :is-streaming="isGenerating"
       :hide-welcome="false"
       :hide-quick-actions="false"
       :hide-header="!showAIChatHeader"
@@ -28,6 +28,7 @@
       @delete="handleDeleteMessage"
       @toggle-theme="toggleTheme"
       @thinking-toggle="thinkingEnabled = $event"
+      @stop-generating="handleStopGenerating"
     />
 
     <!-- Sidebar/Dialog modes: wrapped in ChatPanel for window management -->
@@ -58,7 +59,7 @@
         :messages="currentMessages"
         :sessions="state.sessions.list"
         :current-session-id="state.sessions.currentId"
-        :is-streaming="false"
+        :is-streaming="isGenerating"
         :hide-header="!showAIChatHeader"
         :hide-welcome="state.ui.panelMode === 'dialog'"
         :hide-quick-actions="state.ui.panelMode === 'dialog'"
@@ -79,6 +80,7 @@
         @delete="handleDeleteMessage"
         @toggle-theme="toggleTheme"
         @thinking-toggle="thinkingEnabled = $event"
+        @stop-generating="handleStopGenerating"
       />
     </ChatPanel>
   </div>
@@ -159,6 +161,8 @@ const {
 // Thinking state
 const thinkingEnabled = ref(config.value.thinkingDefaultEnabled ?? defaultChatbotConfig.thinkingDefaultEnabled)
 const isThinkingActive = ref(false)
+const isGenerating = ref(false)
+const abortController = ref<AbortController | null>(null)
 
 // Computed
 // Determine the chat mode based on interaction mode (new dual-dimension architecture)
@@ -316,6 +320,9 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
     return
   }
 
+  // Prevent sending while generating
+  if (isGenerating.value) return
+
   // Get current session ID
   const sessionId = state.sessions.currentId
   if (!sessionId) {
@@ -332,6 +339,14 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
   }
   const currentMessages = state.messages.bySession[sessionId]
 
+  isGenerating.value = true
+  const controller = new AbortController()
+  abortController.value = controller
+
+  // Hoist IDs so they're accessible in catch block
+  let userMessageId = ''
+  let assistantMessageId = ''
+
   try {
     // Add user message to state
     const userMessage: import('@/types').Message = {
@@ -346,11 +361,12 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       timestamp: Date.now(),
       status: 'sending'
     }
+    userMessageId = userMessage.messageId
     currentMessages.push(userMessage)
 
     // Get AI response using streaming
     let fullContent = ''
-    const assistantMessageId = generateId('msg')
+    assistantMessageId = generateId('msg')
 
     // Add placeholder for AI response
     currentMessages.push({
@@ -363,14 +379,14 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       status: 'loading'
     })
 
-    // Use streaming API
+    // Use streaming API with abort signal
     const stream = client.streamChat(
       sessionId,
       data.content,
       data.images,
       data.videos,
       data.audios,
-      { thinking: { enabled: thinkingEnabled.value } }
+      { thinking: { enabled: thinkingEnabled.value }, signal: controller.signal }
     )
 
     let fullThinkingContent = ''
@@ -410,12 +426,38 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       }
     }
   } catch (error) {
-    console.error('Failed to send message:', error)
-    // Mark message as error
-    const userMsg = currentMessages.find(m => m.role === 'user' && m.status === 'sending')
-    if (userMsg) {
-      userMsg.status = 'error'
+    if ((error as Error).name === 'AbortError') {
+      // User intentionally stopped generation — keep received content, mark as sent
+      isThinkingActive.value = false
+      const userMsg = currentMessages.find(m => m.messageId === userMessageId)
+      if (userMsg) {
+        userMsg.status = 'sent'
+      }
+      const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
+      if (assistantMsg) {
+        assistantMsg.status = 'sent'
+      }
+    } else {
+      console.error('Failed to send message:', error)
+      const userMsg = currentMessages.find(m => m.messageId === userMessageId)
+      if (userMsg) {
+        userMsg.status = 'error'
+      }
+      const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
+      if (assistantMsg) {
+        assistantMsg.status = 'error'
+      }
     }
+  } finally {
+    isGenerating.value = false
+    abortController.value = null
+  }
+}
+
+// Handle stop generating
+const handleStopGenerating = () => {
+  if (abortController.value) {
+    abortController.value.abort()
   }
 }
 

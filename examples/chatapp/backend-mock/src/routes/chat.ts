@@ -41,11 +41,16 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
       res.setHeader('Cache-Control', 'no-cache')
       res.setHeader('Connection', 'keep-alive')
 
+      let clientClosed = false
+      res.on('close', () => { clientClosed = true })
+
       const messageId = uuidv4()
       res.write(`data: ${JSON.stringify({ type: 'start', messageId })}\n\n`)
 
       let fullContent = ''
       for await (const chunk of streamMockChat(chatMessages, options)) {
+        if (clientClosed) break
+
         if (chunk.type === 'reasoning' && chunk.reasoningContent) {
           res.write(`data: ${JSON.stringify({ type: 'reasoning', reasoningContent: chunk.reasoningContent })}\n\n`)
         } else if (chunk.type === 'token' && chunk.content) {
@@ -57,6 +62,11 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
             `data: ${JSON.stringify({ type: 'end', fullContent, messageId: assistantMessage.messageId })}\n\n`
           )
         }
+      }
+
+      // If client disconnected mid-stream, save partial content
+      if (clientClosed && fullContent) {
+        addMessage(sessionId, 'assistant', fullContent)
       }
     } else {
       const response = await mockChat(chatMessages, options)

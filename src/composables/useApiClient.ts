@@ -22,37 +22,40 @@ export function useApiClient(options: ApiClientOptions) {
     images?: string[],
     videos?: string[],
     audios?: string[],
-    options?: { thinking?: { enabled?: boolean } }
+    options?: { thinking?: { enabled?: boolean }; signal?: AbortSignal }
   ): AsyncGenerator<{ type: string; messageId?: string; content?: string; fullContent?: string; reasoningContent?: string }> {
-    const response = await fetch(`${baseUrl}/chat/stream`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sessionId,
-        content,
-        images: images || [],
-        videos: videos || [],
-        audios: audios || [],
-        stream: true,
-        ...(options ? { options } : {}),
-      }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`)
-    }
-
-    if (!response.body) {
-      throw new Error('No response body')
-    }
-
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
+    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
 
     try {
+      const response = await fetch(`${baseUrl}/chat/stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sessionId,
+          content,
+          images: images || [],
+          videos: videos || [],
+          audios: audios || [],
+          stream: true,
+          ...(options ? { options } : {}),
+        }),
+        signal: options?.signal,
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      if (!response.body) {
+        throw new Error('No response body')
+      }
+
+      reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
@@ -75,8 +78,15 @@ export function useApiClient(options: ApiClientOptions) {
           }
         }
       }
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        throw error
+      }
+      // AbortError: client intentionally stopped generation, exit gracefully
     } finally {
-      reader.releaseLock()
+      if (reader) {
+        reader.releaseLock()
+      }
     }
   }
 

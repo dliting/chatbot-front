@@ -278,4 +278,108 @@ describe('composables/useApiClient', () => {
       expect(result).toEqual(mockUrls)
     })
   })
+
+  describe('streamChat abort', () => {
+    it('should pass AbortSignal to fetch', async () => {
+      const controller = new AbortController()
+      const signal = controller.signal
+
+      // Abort immediately so the fetch throws AbortError
+      controller.abort()
+
+      mockFetch.mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'))
+
+      const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+      const gen = client.streamChat('s1', 'hello', undefined, undefined, undefined, { signal })
+
+      // Consume generator (should exit gracefully)
+      const chunks: unknown[] = []
+      try {
+        for await (const chunk of gen) {
+          chunks.push(chunk)
+        }
+      } catch {
+        expect.unreachable('streamChat should not throw on AbortError')
+      }
+
+      // Verify signal was passed to fetch
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({ signal })
+      )
+      expect(chunks).toEqual([])
+    })
+
+    it('should exit gracefully when aborted before fetch response', async () => {
+      const controller = new AbortController()
+
+      // Simulate fetch being aborted before response arrives
+      const abortError = new DOMException('The operation was aborted.', 'AbortError')
+      mockFetch.mockRejectedValueOnce(abortError)
+
+      const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+      const gen = client.streamChat(
+        's1', 'hello', undefined, undefined, undefined,
+        { signal: controller.signal }
+      )
+
+      // Should not throw, just exit gracefully
+      const chunks: unknown[] = []
+      try {
+        for await (const chunk of gen) {
+          chunks.push(chunk)
+        }
+      } catch {
+        // Should not throw
+        expect.unreachable('streamChat should not throw on AbortError')
+      }
+
+      expect(chunks).toEqual([])
+    })
+
+    it('should exit gracefully when aborted during streaming', async () => {
+      const controller = new AbortController()
+
+      // Create a reader that throws AbortError on second read
+      let readCount = 0
+      const mockReader = {
+        read: vi.fn().mockImplementation(async () => {
+          readCount++
+          if (readCount === 1) {
+            return { done: false, value: new TextEncoder().encode('data: {"type":"token","content":"Hi"}\n\n') }
+          }
+          const err = new DOMException('Aborted', 'AbortError')
+          throw err
+        }),
+        releaseLock: vi.fn(),
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        body: { getReader: () => mockReader },
+      })
+
+      const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+      const gen = client.streamChat(
+        's1', 'hello', undefined, undefined, undefined,
+        { signal: controller.signal }
+      )
+
+      const chunks: unknown[] = []
+      try {
+        for await (const chunk of gen) {
+          chunks.push(chunk)
+        }
+      } catch {
+        // Should not throw on AbortError
+        expect.unreachable('streamChat should not throw on AbortError')
+      }
+
+      // Should have received the first token before abort
+      expect(chunks.length).toBe(1)
+      expect(chunks[0]).toEqual({ type: 'token', content: 'Hi' })
+      // Reader should be released
+      expect(mockReader.releaseLock).toHaveBeenCalled()
+    })
+  })
 })

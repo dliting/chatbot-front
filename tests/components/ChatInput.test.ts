@@ -55,8 +55,38 @@ describe('ChatInput', () => {
       const wrapper = mount(ChatInput, {
         props: { disabled: true },
       })
+      // When disabled, send button is replaced by stop button
+      const stopBtn = wrapper.find('.chat-input__stop-btn')
+      expect(stopBtn.exists()).toBe(true)
       const sendBtn = wrapper.find('.chat-input__send-btn')
-      expect(sendBtn.attributes('disabled')).toBeDefined()
+      expect(sendBtn.exists()).toBe(false)
+    })
+  })
+
+  describe('Stop Button', () => {
+    it('should show stop button when disabled (generating)', () => {
+      const wrapper = mount(ChatInput, {
+        props: { disabled: true },
+      })
+      const stopBtn = wrapper.find('.chat-input__stop-btn')
+      expect(stopBtn.exists()).toBe(true)
+    })
+
+    it('should hide stop button when not disabled (idle)', () => {
+      const wrapper = mount(ChatInput, {
+        props: { disabled: false },
+      })
+      const stopBtn = wrapper.find('.chat-input__stop-btn')
+      expect(stopBtn.exists()).toBe(false)
+    })
+
+    it('should emit stop event when stop button is clicked', async () => {
+      const wrapper = mount(ChatInput, {
+        props: { disabled: true },
+      })
+      const stopBtn = wrapper.find('.chat-input__stop-btn')
+      await stopBtn.trigger('click')
+      expect(wrapper.emitted('stop')).toBeTruthy()
     })
   })
 

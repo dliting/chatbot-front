@@ -103,14 +103,25 @@
         @keydown="handleKeydown"
       />
 
+      <!-- Send / Stop button -->
       <button
+        v-if="!disabled"
         class="chat-input__send-btn"
-        :disabled="disabled || !canSend"
+        :disabled="!canSend"
         @click="handleSend"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="22" y1="2" x2="11" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
           <polygon points="22 2 15 22 11 13 2 9 22 2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <button
+        v-else
+        class="chat-input__stop-btn"
+        @click="emit('stop')"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="6" width="12" height="12" rx="2"/>
         </svg>
       </button>
 
@@ -168,6 +179,7 @@ interface MediaFile {
 
 interface Emits {
   (e: 'send', data: { content: string; images?: string[]; videos?: string[]; audios?: string[]; documents?: Array<{ name: string; url: string; type: string }> }): void
+  (e: 'stop'): void
   (e: 'toggle-voice'): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
   (e: 'update:thinkingEnabled', value: boolean): void
@@ -530,6 +542,31 @@ const handleFileSelect = async (e: Event) => {
     &:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+  }
+
+  &__stop-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    background: var(--chatbot-danger-color, #f56c6c);
+
+    svg {
+      width: 16px;
+      height: 16px;
+      fill: white;
+    }
+
+    &:hover {
+      transform: scale(1.05);
+      opacity: 0.85;
     }
   }
 

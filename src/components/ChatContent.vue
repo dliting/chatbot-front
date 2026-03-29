@@ -98,6 +98,7 @@
         :enable-thinking="enableThinking"
         :thinking-enabled="thinkingEnabled"
         @send="handleSend"
+        @stop="$emit('stop-generating')"
         @file-click="$emit('file-click', $event)"
         @update:thinking-enabled="$emit('thinking-toggle', $event)"
       />
@@ -193,6 +194,7 @@ interface Emits {
   (e: 'delete', message: Message): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
   (e: 'thinking-toggle', enabled: boolean): void
+  (e: 'stop-generating'): void
 }
 
 const emit = defineEmits<Emits>()
@@ -249,7 +251,6 @@ const handleDeleteMessage = (message: Message) => {
 const confirmDeleteMessage = () => {
   if (pendingDeleteMessage.value) {
     emit('delete', pendingDeleteMessage.value)
-    ElMessage.success(mergedLabels.value.deleted || '已删除')
     pendingDeleteMessage.value = null
   }
   showDeleteDialog.value = false

@@ -48,6 +48,7 @@
         @delete="handleMessageDelete"
         @file-click="handleFileClick"
         @thinking-toggle="$emit('thinking-toggle', $event)"
+        @stop-generating="$emit('stop-generating')"
       />
       <SessionListView
         v-else
@@ -129,6 +130,7 @@ interface Emits {
   (e: 'delete-message', message: Message): void
   (e: 'toggle-theme'): void
   (e: 'thinking-toggle', enabled: boolean): void
+  (e: 'stop-generating'): void
 }
 
 const emit = defineEmits<Emits>()

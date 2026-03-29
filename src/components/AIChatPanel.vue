@@ -23,6 +23,7 @@
     @delete-message="$emit('delete', $event)"
     @toggle-theme="$emit('toggle-theme')"
     @thinking-toggle="$emit('thinking-toggle', $event)"
+    @stop-generating="$emit('stop-generating')"
   />
 
   <!-- Embedded Modes (extended/sidebar) -->
@@ -52,6 +53,7 @@
     @delete="$emit('delete', $event)"
     @toggle-theme="$emit('toggle-theme')"
     @thinking-toggle="$emit('thinking-toggle', $event)"
+    @stop-generating="$emit('stop-generating')"
   />
 </template>
 
@@ -105,6 +107,7 @@ interface Emits {
   (e: 'delete', message: Message): void
   (e: 'toggle-theme'): void
   (e: 'thinking-toggle', enabled: boolean): void
+  (e: 'stop-generating'): void
 }
 
 const emit = defineEmits<Emits>()
