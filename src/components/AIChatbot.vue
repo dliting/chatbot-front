@@ -508,10 +508,18 @@ defineExpose({
 <style>
 /* Global styles for chatbot */
 .ai-chatbot {
+  /* Primary colors */
   --chatbot-primary-color: #409eff;
+  --chatbot-primary-color-light: #ecf5ff;
+  --chatbot-primary-color-dark: #337ecc;
+  --chatbot-primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* Status colors */
   --chatbot-success-color: #67c23a;
   --chatbot-warning-color: #e6a23c;
   --chatbot-danger-color: #f56c6c;
+  --chatbot-danger-color-strong: #ef4444;
+  --chatbot-info-color: #909399;
 
   /* Light theme */
   --chatbot-bg-color: #ffffff;
@@ -540,7 +548,11 @@ defineExpose({
   --chatbot-quick-action-bg: rgba(255, 255, 255, 0.7);
   --chatbot-quick-action-border: rgba(255, 255, 255, 0.5);
 
+  /* Sizes */
   --chatbot-border-radius: 12px;
+  --chatbot-ball-size: 56px;
+  --chatbot-message-max-width: 800px;
+  --chatbot-user-bubble-max-width: 70%;
 }
 
 .ai-chatbot[data-theme='dark'] {
@@ -570,5 +582,10 @@ defineExpose({
   /* Quick action - dark */
   --chatbot-quick-action-bg: rgba(44, 44, 44, 0.7);
   --chatbot-quick-action-border: rgba(76, 77, 79, 0.5);
+
+  /* Primary color light variant for dark theme */
+  --chatbot-primary-color-light: #1a3a5c;
+  --chatbot-danger-color-dark: #c45656;
+  --chatbot-primary-gradient: linear-gradient(135deg, #5a6fd6 0%, #6a5bb5 100%);
 }
 </style>

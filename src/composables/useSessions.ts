@@ -55,7 +55,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
   const createSession = (): string => {
     const newSession: Session = {
       sessionId: generateId('session'),
-      title: 'New Chat',
+      title: '新对话',
       createdAt: Date.now(),
       updatedAt: Date.now(),
       messageCount: 0,

@@ -147,7 +147,7 @@ export function extractSessionTitle(messages: Message[]): string {
   const firstAIMessage = messages.find(m => m.role === 'assistant')
 
   if (!firstAIMessage || !firstAIMessage.content) {
-    return 'New Chat'
+    return '新对话'
   }
 
   // Get first line or up to 30 characters

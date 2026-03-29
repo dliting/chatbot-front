@@ -44,7 +44,7 @@ describe('useSessions', () => {
       // init() is auto-called, creates initial session
       expect(sessions.value.length).toBe(1)
       expect(currentSessionId.value).toBeTruthy()
-      expect(sessions.value[0].title).toBe('New Chat')
+      expect(sessions.value[0].title).toBe('新对话')
     })
 
     it('should initialize and create first session when init is called', () => {
@@ -55,7 +55,7 @@ describe('useSessions', () => {
       // init() is auto-called, so no need to call again
       expect(sessions.value.length).toBe(1)
       expect(currentSessionId.value).toBeTruthy()
-      expect(sessions.value[0].title).toBe('New Chat')
+      expect(sessions.value[0].title).toBe('新对话')
     })
 
     it('should load sessions from storage on init', () => {
@@ -105,7 +105,7 @@ describe('useSessions', () => {
       expect(sessions.value.length).toBe(initialLength + 1)
       expect(currentSessionId.value).toBe(sessionId)
       expect(sessions.value[0].sessionId).toBe(sessionId)
-      expect(sessions.value[0].title).toBe('New Chat')
+      expect(sessions.value[0].title).toBe('新对话')
     })
 
     it('should add new session to beginning of list', () => {

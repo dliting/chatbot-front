@@ -192,7 +192,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  newChatLabel: 'New Chat',
+  newChatLabel: '新对话',
   searchPlaceholder: 'Search sessions...',
   editLabel: 'Rename',
   deleteLabel: 'Delete',

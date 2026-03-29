@@ -122,7 +122,7 @@ export const defaultChatbotLabels: ChatbotLabels = {
   title: 'AI Assistant',
   placeholder: 'Type your message...',
   send: 'Send',
-  newChat: 'New Chat',
+  newChat: '新对话',
   history: 'History',
   clearAll: 'Clear All',
   delete: 'Delete',

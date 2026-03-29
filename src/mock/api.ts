@@ -179,7 +179,7 @@ export const mockAPI = {
       message: 'success',
       data: {
         sessionId: generateId('session'),
-        title: 'New Chat',
+        title: '新对话',
         createdAt: Date.now(),
         updatedAt: Date.now(),
         messageCount: 0,

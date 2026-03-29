@@ -34,7 +34,7 @@ const filename = computed(() => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #f5f7fa;
+  background: var(--chatbot-assistant-bubble-bg, #f5f7fa);
   border-radius: 8px;
   padding: 20px;
 
@@ -42,7 +42,7 @@ const filename = computed(() => {
     width: 64px;
     height: 64px;
     margin-bottom: 16px;
-    color: #909399;
+    color: var(--chatbot-subtext-color, #909399);
 
     svg {
       width: 100%;
@@ -52,7 +52,7 @@ const filename = computed(() => {
 
   &__filename {
     font-size: 14px;
-    color: #303133;
+    color: var(--chatbot-text-color, #303133);
     margin-bottom: 8px;
     text-align: center;
     word-break: break-all;
@@ -60,7 +60,7 @@ const filename = computed(() => {
 
   &__hint {
     font-size: 12px;
-    color: #909399;
+    color: var(--chatbot-subtext-color, #909399);
   }
 }
 </style>

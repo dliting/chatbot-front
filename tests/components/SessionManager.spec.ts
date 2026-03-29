@@ -37,7 +37,7 @@ describe('SessionManager.vue', () => {
   const defaultProps = {
     sessions: mockSessions,
     currentSessionId: 'session_1',
-    newChatLabel: 'New Chat',
+    newChatLabel: '新对话',
   }
 
   const createWrapper = (props = {}) => {

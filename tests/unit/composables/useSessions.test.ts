@@ -48,7 +48,7 @@ describe('composables/useSessions', () => {
       expect(sessions.value.length).toBe(initialLength + 1)
       expect(currentSessionId.value).toBe(newId)
       expect(sessions.value[0].sessionId).toBe(newId)
-      expect(sessions.value[0].title).toBe('New Chat')
+      expect(sessions.value[0].title).toBe('新对话')
     })
 
     it('should switch to existing session', () => {

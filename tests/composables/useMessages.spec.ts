@@ -509,7 +509,7 @@ describe('useMessages', () => {
 
       const title = getSessionTitle()
 
-      expect(title).toBe('New Chat')
+      expect(title).toBe('新对话')
     })
   })
 

@@ -555,7 +555,7 @@ watch(() => props.messages, () => {
     span {
       width: 8px;
       height: 8px;
-      background: #6b7280;
+      background: var(--chatbot-subtext-color, #6b7280);
       border-radius: 50%;
       animation: typing 1.4s infinite;
 

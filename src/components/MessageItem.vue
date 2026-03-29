@@ -509,7 +509,7 @@ const handleDoubleClick = () => {
       width: 20px;
       height: 20px;
       flex-shrink: 0;
-      stroke: #606266;
+      stroke: var(--chatbot-text-color, #606266);
     }
 
     &:hover {
@@ -518,7 +518,7 @@ const handleDoubleClick = () => {
 
     &-name {
       font-size: 13px;
-      color: #303133;
+      color: var(--chatbot-text-color, #303133);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;

@@ -46,7 +46,7 @@ export function useSessionsState() {
   const sessions = reactive<SessionsState>({
     list: storedSessions.length > 0 ? storedSessions : [{
       sessionId: initialSessionId,
-      title: 'New Chat',
+      title: '新对话',
       createdAt: Date.now(),
       updatedAt: Date.now(),
       messageCount: 0,
@@ -66,7 +66,7 @@ export function useSessionsState() {
       // Create new session
       const newSession: Session = {
         sessionId,
-        title: 'New Chat',
+        title: '新对话',
         createdAt: Date.now(),
         updatedAt: Date.now(),
         messageCount,
@@ -99,7 +99,7 @@ export function useSessionsState() {
   const createSession = (): string => {
     const newSession: Session = {
       sessionId: `session_${Date.now()}`,
-      title: 'New Chat',
+      title: '新对话',
       createdAt: Date.now(),
       updatedAt: Date.now(),
       messageCount: 0,

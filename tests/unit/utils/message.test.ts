@@ -254,12 +254,12 @@ describe('utils/message', () => {
 
     it('should return default for empty messages', () => {
       const title = extractSessionTitle([])
-      expect(title).toBe('New Chat')
+      expect(title).toBe('新对话')
     })
 
     it('should return default for user-only messages', () => {
       const title = extractSessionTitle([mockUserMessage])
-      expect(title).toBe('New Chat')
+      expect(title).toBe('新对话')
     })
 
     it('should truncate long AI responses', () => {

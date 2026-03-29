@@ -27,6 +27,7 @@ export function useApiClient(options: ApiClientOptions) {
     let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
 
     try {
+      const { signal, ...chatOptions } = options ?? {} as { signal?: AbortSignal; thinking?: { enabled?: boolean } }
       const response = await fetch(`${baseUrl}/chat/stream`, {
         method: 'POST',
         headers: {
@@ -39,9 +40,9 @@ export function useApiClient(options: ApiClientOptions) {
           videos: videos || [],
           audios: audios || [],
           stream: true,
-          ...(options ? { options } : {}),
+          ...(Object.keys(chatOptions).length > 0 ? { options: chatOptions } : {}),
         }),
-        signal: options?.signal,
+        signal,
       })
 
       if (!response.ok) {
