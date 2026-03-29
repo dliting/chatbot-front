@@ -167,7 +167,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
 import type { Session } from '@/types'
-import { formatTime } from '@/utils/helpers'
+import { formatTime, escapeHTML } from '@/utils/helpers'
 import SessionSearch from './SessionSearch.vue'
 import SessionActionMenu from './SessionActionMenu.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
@@ -320,13 +320,15 @@ const confirmDelete = () => {
   isBatchMode.value = false
 }
 
-// Highlight text
+// Highlight text (with XSS protection)
 const highlightText = (text: string, query: string): string => {
   if (!query.trim()) {
-    return text
+    return escapeHTML(text)
   }
-  const regex = new RegExp(`(${query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
-  return text.replace(regex, '<mark>$1</mark>')
+  const escapedText = escapeHTML(text)
+  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const regex = new RegExp(`(${escapedQuery})`, 'gi')
+  return escapedText.replace(regex, '<mark>$1</mark>')
 }
 
 // Start editing title

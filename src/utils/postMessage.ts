@@ -12,26 +12,34 @@ export class IframeMessenger {
   private handlers: Map<string, MessageHandler[]> = new Map()
   private targetWindow: Window | null = null
   private targetOrigin: string = '*'
+  private allowedOrigins: string[]
+  private boundHandleMessage: (event: MessageEvent) => void
 
   constructor(options: {
     allowedOrigins?: string[]
     targetWindow?: Window | null
     targetOrigin?: string
   } = {}) {
-    const { targetWindow = null, targetOrigin = '*' } = options
+    const { targetWindow = null, targetOrigin = '*', allowedOrigins = [] } = options
 
     this.targetWindow = targetWindow
     this.targetOrigin = targetOrigin
+    this.allowedOrigins = allowedOrigins
 
-    // Listen for messages
-    window.addEventListener('message', this.handleMessage.bind(this))
+    // Store bound handler to enable proper cleanup (C-01 fix)
+    this.boundHandleMessage = this.handleMessage.bind(this)
+    window.addEventListener('message', this.boundHandleMessage)
   }
 
   /**
    * Handle incoming messages
    */
   private handleMessage(event: MessageEvent): void {
-    // Check origin if allowedOrigins is specified
+    // Check origin against allowedOrigins list (C-02 fix)
+    if (this.allowedOrigins.length > 0 && !this.allowedOrigins.includes(event.origin)) {
+      return
+    }
+    // Also check targetOrigin if explicitly set (not wildcard)
     if (this.targetOrigin !== '*' && event.origin !== this.targetOrigin) {
       return
     }
@@ -108,7 +116,7 @@ export class IframeMessenger {
    * Unregister all handlers
    */
   destroy(): void {
-    window.removeEventListener('message', this.handleMessage.bind(this))
+    window.removeEventListener('message', this.boundHandleMessage)
     this.handlers.clear()
   }
 

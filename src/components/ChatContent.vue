@@ -102,18 +102,32 @@
         @update:thinking-enabled="$emit('thinking-toggle', $event)"
       />
     </div>
+
+    <!-- Delete Confirmation Dialog -->
+    <ConfirmDialog
+      :show="showDeleteDialog"
+      :title="mergedLabels.deleteTitle || '删除确认'"
+      :message="mergedLabels.deleteConfirm || '确定要删除这条消息吗？'"
+      :confirm-text="mergedLabels.confirm || '确定'"
+      :cancel-text="mergedLabels.cancel || '取消'"
+      type="danger"
+      @confirm="confirmDeleteMessage"
+      @cancel="showDeleteDialog = false"
+      @update:show="showDeleteDialog = $event"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, watch, nextTick, h, onMounted, onUnmounted, computed } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { Copy, Check, RefreshCw, Trash2 } from 'lucide-vue-next'
 import type { Message } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
 import { defaultChatbotLabels } from '@/types/config'
 import ChatInput from './ChatInput.vue'
 import ThinkingBlock from './ThinkingBlock.vue'
+import ConfirmDialog from './ConfirmDialog.vue'
 import { formatMarkdownContent, copyToClipboard } from '@/utils/helpers'
 
 // Quick action icons
@@ -224,22 +238,21 @@ const handleRefreshMessage = (message: Message) => {
   emit('refresh', message)
 }
 
-const handleDeleteMessage = async (message: Message) => {
-  try {
-    await ElMessageBox.confirm(
-      mergedLabels.value.deleteConfirm || '确定要删除这条消息吗？',
-      mergedLabels.value.deleteTitle || '删除确认',
-      {
-        confirmButtonText: mergedLabels.value.confirm || '确定',
-        cancelButtonText: mergedLabels.value.cancel || '取消',
-        type: 'warning',
-      }
-    )
-    emit('delete', message)
+const showDeleteDialog = ref(false)
+const pendingDeleteMessage = ref<Message | null>(null)
+
+const handleDeleteMessage = (message: Message) => {
+  pendingDeleteMessage.value = message
+  showDeleteDialog.value = true
+}
+
+const confirmDeleteMessage = () => {
+  if (pendingDeleteMessage.value) {
+    emit('delete', pendingDeleteMessage.value)
     ElMessage.success(mergedLabels.value.deleted || '已删除')
-  } catch {
-    // User cancelled
+    pendingDeleteMessage.value = null
   }
+  showDeleteDialog.value = false
 }
 
 // Pre-compute the set of last AI message IDs (optimized: computed once, not per-message)

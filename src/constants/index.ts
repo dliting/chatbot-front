@@ -1,61 +1,6 @@
 /**
- * Default configuration constants for the ChatBot component
+ * Constants for the ChatBot component
  */
-
-/**
- * Default chatbot configuration values
- */
-export const DEFAULT_CONFIG = {
-  // API Configuration
-  apiUrl: '',
-  apiToken: '',
-  streamEnabled: true,
-
-  // UI Configuration
-  title: 'AI Assistant',
-  placeholder: 'Type your message...',
-  welcomeMessage: 'Hello! How can I help you today?',
-
-  // Display Configuration
-  showSuspendedBall: true,
-  position: 'right' as const,
-  width: 380,
-  height: 600,
-  maxWidth: '100vw',
-  maxHeight: '100vh',
-
-  // Theme Configuration
-  theme: 'light' as const,
-  primaryColor: '#667eea',
-
-  // Feature Configuration
-  enableFileUpload: true,
-  enableVoiceInput: false,
-  enableHistory: true,
-  maxHistoryLength: 50,
-
-  // Message Configuration
-  maxMessageLength: 5000,
-  typingIndicatorDelay: 300,
-  streamingDelay: 50,
-
-  // Session Configuration
-  sessionStorageEnabled: true,
-  sessionId: '',
-  autoSaveSession: true,
-
-  // Animation Configuration
-  animationEnabled: true,
-  animationDuration: 300,
-
-  // Accessibility
-  ariaLabels: {
-    chatButton: 'Open chat',
-    closeButton: 'Close chat',
-    sendButton: 'Send message',
-    inputField: 'Type your message',
-  },
-} as const
 
 /**
  * Message types enumeration

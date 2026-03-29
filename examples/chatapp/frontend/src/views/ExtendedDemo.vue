@@ -14,6 +14,7 @@ const config = computed(() => ({
   enableImageUpload: true,
   maxImageCount: 3,
   enableSessionManager: true,
+  enableThinking: true,
   labels: {
     title: '智能助手',
     placeholder: '输入消息...',

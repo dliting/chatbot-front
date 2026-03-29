@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { nextTick } from 'vue'
 import ChatContent from '@/components/ChatContent.vue'
 
 // Mock ChatInput to avoid complex dependencies
@@ -19,7 +20,6 @@ vi.mock('@/components/ChatInput.vue', () => ({
 // Mock element-plus
 vi.mock('element-plus', () => ({
   ElMessage: { success: vi.fn(), error: vi.fn() },
-  ElMessageBox: { confirm: vi.fn().mockResolvedValue(true) },
 }))
 
 const mockMessages = [
@@ -172,11 +172,20 @@ describe('ChatContent', () => {
       expect(wrapper.emitted('copy')![0][0]).toEqual(mockMessages[0])
     })
 
-    it('should emit delete event when delete button is clicked', async () => {
+    it('should show confirm dialog and emit delete event when confirmed', async () => {
       const wrapper = createWrapper()
       const userMessage = wrapper.findAll('.chat-content__message')[0]
       const deleteBtn = userMessage.findAll('.chat-content__action-btn')[1]
       await deleteBtn.trigger('click')
+
+      // ConfirmDialog should be visible
+      const dialog = wrapper.findComponent({ name: 'ConfirmDialog' })
+      expect(dialog.exists()).toBe(true)
+      expect(dialog.props('show')).toBe(true)
+
+      // Confirm deletion
+      await dialog.vm.$emit('confirm')
+      await nextTick()
       expect(wrapper.emitted('delete')).toBeTruthy()
       expect(wrapper.emitted('delete')![0][0]).toEqual(mockMessages[0])
     })

@@ -92,6 +92,7 @@ import type { InteractionMode } from '@/types'
 import { modeToLayoutMap } from '@/types'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useApiClient } from '@/composables/useApiClient'
+import { generateId } from '@/utils/helpers'
 
 // Components
 import ChatPanel from './ChatPanel.vue'
@@ -334,7 +335,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
   try {
     // Add user message to state
     const userMessage: import('@/types').Message = {
-      messageId: `msg-${Date.now()}`,
+      messageId: generateId('msg'),
       sessionId,
       role: 'user',
       type: data.images?.length ? 'image' : data.videos?.length ? 'video' : data.audios?.length ? 'audio' : 'text',
@@ -349,7 +350,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
 
     // Get AI response using streaming
     let fullContent = ''
-    const assistantMessageId = `msg-${Date.now() + 1}`
+    const assistantMessageId = generateId('msg')
 
     // Add placeholder for AI response
     currentMessages.push({
