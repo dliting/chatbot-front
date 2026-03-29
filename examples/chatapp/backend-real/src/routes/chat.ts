@@ -70,6 +70,9 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
       if (clientClosed && fullContent) {
         addMessage(sessionId, 'assistant', fullContent)
       }
+
+      // End SSE response to signal stream completion
+      res.end()
     } else {
       // Non-streaming
       const response = await chat(ollamaMessages)

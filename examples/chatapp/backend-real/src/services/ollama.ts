@@ -102,9 +102,9 @@ export async function* streamChat(
     messages: openAIMessages,
     stream: true,
   }
-  if (options?.thinking?.enabled !== false && OLLAMA_THINKING_ENABLED) {
-    requestBody.enable_thinking = true
-  }
+  // Explicitly set enable_thinking: Ollama models may default to producing
+  // reasoning content when the parameter is omitted
+  requestBody.enable_thinking = options?.thinking?.enabled !== false && OLLAMA_THINKING_ENABLED
 
   const response = await fetch(url, {
     method: 'POST',
@@ -144,8 +144,9 @@ export async function* streamChat(
           const jsonStr = line.replace(/^data: /, '').trim()
           if (jsonStr === '[DONE]') continue
           const data = JSON.parse(jsonStr)
-          if (data.choices?.[0]?.delta?.reasoning_content) {
-            yield { type: 'reasoning', reasoningContent: data.choices[0].delta.reasoning_content }
+          const reasoning = data.choices?.[0]?.delta?.reasoning ?? data.choices?.[0]?.delta?.reasoning_content
+          if (reasoning) {
+            yield { type: 'reasoning', reasoningContent: reasoning }
           }
           if (data.choices?.[0]?.delta?.content) {
             yield { type: 'token', content: data.choices[0].delta.content }

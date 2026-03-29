@@ -68,8 +68,9 @@ export function useApiClient(options: ApiClientOptions) {
           if (!line.trim() || !line.startsWith('data: ')) continue
           try {
             const data = JSON.parse(line.slice(6))
-            if (data.reasoning_content) {
-              yield { type: 'reasoning', reasoningContent: data.reasoning_content }
+            // Support both camelCase (our backend) and snake_case (OpenAI) field names
+            if (data.reasoningContent || data.reasoning_content) {
+              yield { type: 'reasoning', reasoningContent: data.reasoningContent || data.reasoning_content }
             } else {
               yield data
             }

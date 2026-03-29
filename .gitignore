@@ -56,5 +56,10 @@ examples/chatapp/backend-real/
 # Mock database
 examples/chatapp/backend-mock/data/*.db
 
-# Test screenshots
-tests/screenshots/*.png
+# Test screenshots and artifacts
+tests/screenshots/
+tests/e2e/results/screenshots/
+tests/e2e/results/artifacts/
+
+# playwright-mcp tests
+.playwright-mcp/
