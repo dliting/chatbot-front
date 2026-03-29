@@ -52,6 +52,7 @@ export type PreviewType = 'image' | 'pdf' | 'word' | 'excel' | 'video' | 'audio'
  * Get file extension from filename
  */
 export function getFileExtension(filename: string): string {
+  if (!filename) return ''
   const parts = filename.split('.')
   return parts.length > 1 ? parts.pop()?.toLowerCase() || '' : ''
 }

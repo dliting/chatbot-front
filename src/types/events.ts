@@ -13,10 +13,10 @@ export interface ChatbotEmits {
   panelToggle: (data: PanelToggleData) => void
   panelResize: (width: number) => void
 
-  // Session events
-  sessionChange: (sessionId: string) => void
-  sessionCreate: (sessionId: string) => void
-  sessionDelete: (sessionId: string) => void
+  // Topic events
+  topicChange: (topicId: string) => void
+  topicCreate: (topicId: string) => void
+  topicDelete: (topicId: string) => void
 
   // UI events
   themeChange: (theme: 'light' | 'dark') => void
@@ -37,6 +37,7 @@ export type PostMessageType =
   | 'chatbot:toggle'
   | 'chatbot:sendMessage'
   | 'chatbot:messageReceived'
+  | 'chatbot:topicChange'
   | 'host:toggle'
   | 'host:sendMessage'
   | 'host:setConfig'

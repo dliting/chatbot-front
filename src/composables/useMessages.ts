@@ -4,7 +4,7 @@
 import { ref, computed } from 'vue'
 import type { Message } from '@/types'
 import type { SendMessageData } from '@/types'
-import { createMessage, extractSessionTitle } from '@/utils/message'
+import { createMessage, extractTopicTitle } from '@/utils/message'
 
 export interface UseMessagesOptions {
   onSendMessage?: (data: SendMessageData) => Promise<void>
@@ -28,13 +28,13 @@ export function useMessages(options: UseMessagesOptions = {}) {
   /**
    * Send a text message
    */
-  const sendTextMessage = async (content: string, sessionId: string) => {
+  const sendTextMessage = async (content: string, topicId: string) => {
     if (!content.trim() || isSending.value) return
 
     isSending.value = true
 
     // Create user message
-    const userMessage = createMessage('user', content, sessionId)
+    const userMessage = createMessage('user', content, topicId)
     messages.value.push(userMessage)
 
     try {
@@ -48,7 +48,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
       userMessage.status = 'sent'
 
       // Get AI response
-      await getAIResponse(content, sessionId, [])
+      await getAIResponse(content, topicId, [])
     } catch (error) {
       userMessage.status = 'error'
       onMessageError?.(error as Error, userMessage)
@@ -60,13 +60,13 @@ export function useMessages(options: UseMessagesOptions = {}) {
   /**
    * Send a message with images
    */
-  const sendImageMessage = async (content: string, images: string[], sessionId: string) => {
+  const sendImageMessage = async (content: string, images: string[], topicId: string) => {
     if (images.length === 0 || isSending.value) return
 
     isSending.value = true
 
     // Create user message with images
-    const userMessage = createMessage('user', content, sessionId, {
+    const userMessage = createMessage('user', content, topicId, {
       type: content ? 'mixed' : 'image',
       images,
     })
@@ -84,7 +84,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
       userMessage.status = 'sent'
 
       // Get AI response
-      await getAIResponse(content || '[Images sent]', sessionId, [], [])
+      await getAIResponse(content || '[Images sent]', topicId, [], [])
     } catch (error) {
       userMessage.status = 'error'
       onMessageError?.(error as Error, userMessage)
@@ -99,7 +99,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
   const sendVideoMessage = async (
     content: string,
     videos: string[],
-    sessionId: string,
+    topicId: string,
     images?: string[],
     audios?: string[]
   ) => {
@@ -108,7 +108,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
     isSending.value = true
 
     // Create user message with videos
-    const userMessage = createMessage('user', content, sessionId, {
+    const userMessage = createMessage('user', content, topicId, {
       type: 'video',
       videos,
       images,
@@ -130,7 +130,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
       userMessage.status = 'sent'
 
       // Get AI response
-      await getAIResponse(content || '[Videos sent]', sessionId, images || [], videos)
+      await getAIResponse(content || '[Videos sent]', topicId, images || [], videos)
     } catch (error) {
       userMessage.status = 'error'
       onMessageError?.(error as Error, userMessage)
@@ -145,7 +145,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
   const sendAudioMessage = async (
     content: string,
     audios: string[],
-    sessionId: string,
+    topicId: string,
     images?: string[],
     videos?: string[]
   ) => {
@@ -154,7 +154,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
     isSending.value = true
 
     // Create user message with audios
-    const userMessage = createMessage('user', content, sessionId, {
+    const userMessage = createMessage('user', content, topicId, {
       type: 'audio',
       audios,
       images,
@@ -176,7 +176,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
       userMessage.status = 'sent'
 
       // Get AI response
-      await getAIResponse(content || '[Audios sent]', sessionId, images || [], videos || [], audios)
+      await getAIResponse(content || '[Audios sent]', topicId, images || [], videos || [], audios)
     } catch (error) {
       userMessage.status = 'error'
       onMessageError?.(error as Error, userMessage)
@@ -190,13 +190,13 @@ export function useMessages(options: UseMessagesOptions = {}) {
    */
   const getAIResponse = async (
     userContent: string,
-    sessionId: string,
+    topicId: string,
     _images: string[],
     _videos: string[] = [],
     _audios: string[] = []
   ) => {
     // Create AI message
-    const aiMessage = createMessage('assistant', '', sessionId)
+    const aiMessage = createMessage('assistant', '', topicId)
     messages.value.push(aiMessage)
     currentStreamingMessage.value = aiMessage
 
@@ -266,7 +266,7 @@ export function useMessages(options: UseMessagesOptions = {}) {
       await sendVideoMessage(
         message.content,
         message.videos || [],
-        message.sessionId,
+        message.topicId,
         message.images,
         message.audios
       )
@@ -274,14 +274,14 @@ export function useMessages(options: UseMessagesOptions = {}) {
       await sendAudioMessage(
         message.content,
         message.audios || [],
-        message.sessionId,
+        message.topicId,
         message.images,
         message.videos
       )
     } else if (hasImages) {
-      await sendImageMessage(message.content, message.images || [], message.sessionId)
+      await sendImageMessage(message.content, message.images || [], message.topicId)
     } else {
-      await sendTextMessage(message.content, message.sessionId)
+      await sendTextMessage(message.content, message.topicId)
     }
   }
 
@@ -303,10 +303,10 @@ export function useMessages(options: UseMessagesOptions = {}) {
   }
 
   /**
-   * Get session title from messages
+   * Get topic title from messages
    */
-  const getSessionTitle = (): string => {
-    return extractSessionTitle(messages.value)
+  const getTopicTitle = (): string => {
+    return extractTopicTitle(messages.value)
   }
 
   // Computed
@@ -331,6 +331,6 @@ export function useMessages(options: UseMessagesOptions = {}) {
     resendMessage,
     deleteMessage,
     clearMessages,
-    getSessionTitle,
+    getTopicTitle,
   }
 }

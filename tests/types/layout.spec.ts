@@ -47,13 +47,13 @@ describe('Layout Type', () => {
   describe('Layout Characteristics', () => {
     it('dual layout should represent side-by-side panels', () => {
       const layout: Layout = 'dual'
-      // In dual layout, session list and chat area are visible simultaneously
+      // In dual layout, topic list and chat area are visible simultaneously
       expect(layout).toBe('dual')
     })
 
     it('single layout should represent tab-based switching', () => {
       const layout: Layout = 'single'
-      // In single layout, session list and chat area switch via tabs
+      // In single layout, topic list and chat area switch via tabs
       expect(layout).toBe('single')
     })
   })

@@ -39,10 +39,10 @@ export const DEFAULT_CONFIG = {
   typingIndicatorDelay: 300,
   streamingDelay: 50,
 
-  // Session Configuration
-  sessionStorageEnabled: true,
-  sessionId: '',
-  autoSaveSession: true,
+  // Topic Configuration
+  topicStorageEnabled: true,
+  topicId: '',
+  autoSaveTopic: true,
 
   // Animation Configuration
   animationEnabled: true,
@@ -98,10 +98,10 @@ export const EVENT_NAMES = {
   MESSAGE_RECEIVED: 'message:received',
   MESSAGE_ERROR: 'message:error',
 
-  // Session events
-  SESSION_START: 'session:start',
-  SESSION_END: 'session:end',
-  SESSION_SAVE: 'session:save',
+  // Topic events
+  TOPIC_START: 'topic:start',
+  TOPIC_END: 'topic:end',
+  TOPIC_SAVE: 'topic:save',
 
   // Lifecycle events
   MOUNT: 'chat:mount',
@@ -159,7 +159,7 @@ export const BREAKPOINTS = {
  * Storage keys
  */
 export const STORAGE_KEYS = {
-  SESSION: 'chatbot_session',
+  TOPIC: 'chatbot_topic',
   HISTORY: 'chatbot_history',
   SETTINGS: 'chatbot_settings',
   THEME: 'chatbot_theme',
@@ -189,5 +189,5 @@ export const ERROR_MESSAGES = {
   FILE_TOO_LARGE: 'File size exceeds maximum allowed size.',
   INVALID_FILE_TYPE: 'Invalid file type.',
   MESSAGE_TOO_LONG: 'Message exceeds maximum length.',
-  SESSION_EXPIRED: 'Session expired. Please refresh.',
+  TOPIC_EXPIRED: 'Topic expired. Please refresh.',
 } as const

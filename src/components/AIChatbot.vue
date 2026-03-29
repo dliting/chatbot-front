@@ -7,8 +7,8 @@
       :layout="layout"
       :config="themedConfig"
       :messages="currentMessages"
-      :sessions="state.sessions.list"
-      :current-session-id="state.sessions.currentId"
+      :topics="state.topics.list"
+      :current-topic-id="state.topics.currentId"
       :is-streaming="false"
       :hide-welcome="false"
       :hide-quick-actions="false"
@@ -16,9 +16,9 @@
       :api-client="apiClient"
       @send-message="handleSendMessage"
       @quick-action="handleQuickAction"
-      @create-session="_handleCreateSession"
-      @select-session="_handleSwitchSession"
-      @delete-session="_handleDeleteSession"
+      @create-topic="_handleCreateTopic"
+      @select-topic="_handleSwitchTopic"
+      @delete-topic="_handleDeleteTopic"
       @edit="handleEditMessage"
       @copy="() => {}"
       @refresh="handleRefreshMessage"
@@ -52,8 +52,8 @@
         :layout="layout"
         :panel-open="state.ui.isPanelOpen"
         :messages="currentMessages"
-        :sessions="state.sessions.list"
-        :current-session-id="state.sessions.currentId"
+        :topics="state.topics.list"
+        :current-topic-id="state.topics.currentId"
         :is-streaming="false"
         :hide-header="!showAIChatHeader"
         :hide-welcome="state.ui.panelMode === 'dialog'"
@@ -63,9 +63,9 @@
         :api-client="apiClient"
         @send-message="handleSendMessage"
         @quick-action="handleQuickAction"
-        @create-session="_handleCreateSession"
-        @select-session="_handleSwitchSession"
-        @delete-session="_handleDeleteSession"
+        @create-topic="_handleCreateTopic"
+        @select-topic="_handleSwitchTopic"
+        @delete-topic="_handleDeleteTopic"
         @edit="handleEditMessage"
         @copy="() => {}"
         @refresh="handleRefreshMessage"
@@ -140,10 +140,10 @@ const {
   state,
   togglePanel,
   setTheme,
-  switchSession,
-  createSession,
-  deleteSession,
-  updateSessionTitle,
+  switchTopic,
+  createTopic,
+  deleteTopic,
+  updateTopicTitle,
   cleanup,
 } = useChatbotState(config.value)
 
@@ -176,7 +176,7 @@ const layout = computed(() => {
 
 // Determine if AIChat should show its own header
 // Extended mode: yes (has its own sidebar)
-// Sidebar mode: yes (needs sessions button for view switching)
+// Sidebar mode: yes (needs topics button for view switching)
 // Floating mode: no (FloatingChatPanel has its own header)
 const showAIChatHeader = computed(() => {
   const mode = config.value.mode || config.value.chatMode
@@ -202,10 +202,10 @@ const themedConfig = computed(() => ({
   theme: resolvedTheme.value,
 }))
 
-// Get current messages for the active session
+// Get current messages for the active topic
 const currentMessages = computed(() => {
-  const sessionId = state.sessions.currentId
-  return state.messages.bySession[sessionId] || []
+  const topicId = state.topics.currentId
+  return state.messages.byTopic[topicId] || []
 })
 
 // Methods
@@ -216,41 +216,41 @@ const toggleTheme = () => {
   setTheme(newTheme)
 }
 
-const _handleCreateSession = () => {
-  // Reuse current session if it's empty (avoid duplicate empty sessions)
-  const currentMsgs = state.messages.bySession[state.sessions.currentId]
+const _handleCreateTopic = () => {
+  // Reuse current topic if it's empty (avoid duplicate empty topics)
+  const currentMsgs = state.messages.byTopic[state.topics.currentId]
   if (currentMsgs && currentMsgs.length > 0) {
-    // Current session has messages, create a new session
-    const newId = createSession()
-    emit('sessionCreate', newId)
+    // Current topic has messages, create a new topic
+    const newId = createTopic()
+    emit('topicCreate', newId)
   }
-  // If current session is empty, do nothing (user stays on the empty session)
+  // If current topic is empty, do nothing (user stays on the empty topic)
 }
 
-const _handleSwitchSession = async (sessionId: string) => {
-  switchSession(sessionId)
-  emit('sessionChange', sessionId)
+const _handleSwitchTopic = async (topicId: string) => {
+  switchTopic(topicId)
+  emit('topicChange', topicId)
 
-  // Load messages from backend for the selected session
+  // Load messages from backend for the selected topic
   const client = apiClient.value
-  if (client && !state.messages.bySession[sessionId]?.length) {
+  if (client && !state.messages.byTopic[topicId]?.length) {
     try {
-      const messages = await client.getSessionMessages(sessionId)
-      state.messages.bySession[sessionId] = messages
+      const messages = await client.getTopicMessages(topicId)
+      state.messages.byTopic[topicId] = messages
     } catch (error) {
-      console.error('Failed to load session messages:', error)
+      console.error('Failed to load topic messages:', error)
     }
   }
 }
 
-const _handleDeleteSession = (sessionId: string) => {
-  deleteSession(sessionId)
-  emit('sessionDelete', sessionId)
+const _handleDeleteTopic = (topicId: string) => {
+  deleteTopic(topicId)
+  emit('topicDelete', topicId)
 }
 
-const _handleUpdateSessionTitle = (sessionId: string, title: string) => {
-  updateSessionTitle(sessionId, title)
-  emit('sessionTitleUpdate', sessionId, title)
+const _handleUpdateTopicTitle = (topicId: string, title: string) => {
+  updateTopicTitle(topicId, title)
+  emit('topicTitleUpdate', topicId, title)
 }
 
 const handleEditMessage = (message: import('@/types').Message) => {
@@ -260,8 +260,8 @@ const handleEditMessage = (message: import('@/types').Message) => {
 
 const handleRefreshMessage = (message: import('@/types').Message) => {
   // Refresh: remove the assistant message and resend the preceding user message
-  const sessionId = state.sessions.currentId
-  const msgs = state.messages.bySession[sessionId]
+  const topicId = state.topics.currentId
+  const msgs = state.messages.byTopic[topicId]
   if (!msgs) return
 
   // Find the assistant message and remove it
@@ -280,8 +280,8 @@ const handleRefreshMessage = (message: import('@/types').Message) => {
 }
 
 const handleDeleteMessage = (message: import('@/types').Message) => {
-  const sessionId = state.sessions.currentId
-  const msgs = state.messages.bySession[sessionId]
+  const topicId = state.topics.currentId
+  const msgs = state.messages.byTopic[topicId]
   if (!msgs) return
 
   const index = msgs.findIndex(m => m.messageId === message.messageId)
@@ -303,27 +303,27 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
     return
   }
 
-  // Get current session ID
-  const sessionId = state.sessions.currentId
-  if (!sessionId) {
-    console.error('No active session')
+  // Get current topic ID
+  const topicId = state.topics.currentId
+  if (!topicId) {
+    console.error('No active topic')
     return
   }
 
-  // Sync messages.currentSessionId with sessions.currentId to ensure consistency
-  state.messages.currentSessionId = sessionId
+  // Sync messages.currentTopicId with topics.currentId to ensure consistency
+  state.messages.currentTopicId = topicId
 
-  // Get or create messages array for current session
-  if (!state.messages.bySession[sessionId]) {
-    state.messages.bySession[sessionId] = []
+  // Get or create messages array for current topic
+  if (!state.messages.byTopic[topicId]) {
+    state.messages.byTopic[topicId] = []
   }
-  const currentMessages = state.messages.bySession[sessionId]
+  const currentMessages = state.messages.byTopic[topicId]
 
   try {
     // Add user message to state
     const userMessage: import('@/types').Message = {
       messageId: `msg-${Date.now()}`,
-      sessionId,
+      topicId,
       role: 'user',
       type: data.images?.length ? 'image' : data.videos?.length ? 'video' : data.audios?.length ? 'audio' : 'text',
       content: data.content,
@@ -342,7 +342,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
     // Add placeholder for AI response
     currentMessages.push({
       messageId: assistantMessageId,
-      sessionId,
+      topicId,
       role: 'assistant',
       type: 'text',
       content: '',
@@ -352,7 +352,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
 
     // Use streaming API
     const stream = client.streamChat(
-      sessionId,
+      topicId,
       data.content,
       data.images,
       data.videos,
@@ -392,10 +392,10 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
 // Emits
 interface Emits {
   (e: 'panelToggle', data: { isOpen: boolean; mode: string }): void
-  (e: 'sessionChange', sessionId: string): void
-  (e: 'sessionCreate', sessionId: string): void
-  (e: 'sessionDelete', sessionId: string): void
-  (e: 'sessionTitleUpdate', sessionId: string, title: string): void
+  (e: 'topicChange', topicId: string): void
+  (e: 'topicCreate', topicId: string): void
+  (e: 'topicDelete', topicId: string): void
+  (e: 'topicTitleUpdate', topicId: string, title: string): void
   (e: 'editMessage', message: import('@/types').Message): void
 }
 

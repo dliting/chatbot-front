@@ -28,7 +28,7 @@ const app = createApp(AIChatbot, {
       title: '智能助手',
       placeholder: '输入消息...',
       newChat: '新建对话',
-      history: '历史对话',
+      history: '历史话题',
     },
   },
 })

@@ -44,7 +44,7 @@ describe('MessageItem', () => {
 
   const mockUserMessage: Message = {
     id: 'msg_1',
-    sessionId: 'session_1',
+    topicId: 'session_1',
     role: 'user',
     type: 'text',
     content: 'Hello, how are you?',
@@ -54,7 +54,7 @@ describe('MessageItem', () => {
 
   const mockAssistantMessage: Message = {
     id: 'msg_2',
-    sessionId: 'session_1',
+    topicId: 'session_1',
     role: 'assistant',
     type: 'text',
     content: 'I am doing well, thank you!',
@@ -64,7 +64,7 @@ describe('MessageItem', () => {
 
   const mockImageMessage: Message = {
     id: 'msg_3',
-    sessionId: 'session_1',
+    topicId: 'session_1',
     role: 'user',
     type: 'image',
     content: '',
@@ -75,7 +75,7 @@ describe('MessageItem', () => {
 
   const mockErrorMessage: Message = {
     id: 'msg_4',
-    sessionId: 'session_1',
+    topicId: 'session_1',
     role: 'user',
     type: 'text',
     content: 'Failed message',

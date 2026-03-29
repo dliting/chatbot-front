@@ -1,6 +1,6 @@
 <template>
   <header class="chat-header" :class="`chat-header--${theme}`">
-    <!-- Back button (in sessions view) -->
+    <!-- Back button (in topics view) -->
     <button
       v-if="showBackButton"
       class="chat-header__back"
@@ -18,10 +18,10 @@
     <div class="chat-header__actions">
       <!-- Sessions button -->
       <button
-        v-if="showSessionsButton"
+        v-if="showTopicsButton"
         class="chat-header__btn"
-        title="历史对话"
-        @click="$emit('sessions')"
+        title="历史话题"
+        @click="$emit('topics')"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -65,7 +65,7 @@ interface Props {
   title?: string
   theme?: Theme
   showBackButton?: boolean
-  showSessionsButton?: boolean
+  showTopicsButton?: boolean
   showThemeToggle?: boolean
   showCloseButton?: boolean
   unreadCount?: number
@@ -75,7 +75,7 @@ withDefaults(defineProps<Props>(), {
   title: 'AI Assistant',
   theme: 'light',
   showBackButton: false,
-  showSessionsButton: false,
+  showTopicsButton: false,
   showThemeToggle: false,
   showCloseButton: false,
   unreadCount: 0,
@@ -83,7 +83,7 @@ withDefaults(defineProps<Props>(), {
 
 interface Emits {
   (e: 'back'): void
-  (e: 'sessions'): void
+  (e: 'topics'): void
   (e: 'toggle-theme'): void
   (e: 'close'): void
 }

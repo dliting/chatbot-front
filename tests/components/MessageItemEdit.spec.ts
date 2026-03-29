@@ -8,7 +8,7 @@ describe('MessageItem Double Click Edit', () => {
       props: {
         message: {
           id: '1',
-          sessionId: 's1',
+          topicId: 's1',
           role: 'user',
           type: 'text',
           content: 'Test message',
@@ -28,7 +28,7 @@ describe('MessageItem Double Click Edit', () => {
       props: {
         message: {
           id: '1',
-          sessionId: 's1',
+          topicId: 's1',
           role: 'assistant',
           type: 'text',
           content: 'AI response',
@@ -48,7 +48,7 @@ describe('MessageItem Double Click Edit', () => {
       props: {
         message: {
           id: '1',
-          sessionId: 's1',
+          topicId: 's1',
           role: 'user',
           type: 'text',
           content: 'Test message',

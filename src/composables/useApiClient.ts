@@ -2,7 +2,7 @@
  * API client composable for connecting to backend
  */
 import { ref } from 'vue'
-import type { Message, Session } from '@/types'
+import type { Message, Topic } from '@/types'
 
 export interface ApiClientOptions {
   baseUrl: string
@@ -17,7 +17,7 @@ export function useApiClient(options: ApiClientOptions) {
    * Create streaming response generator
    */
   async function* streamChat(
-    sessionId: string,
+    topicId: string,
     content: string,
     images?: string[],
     videos?: string[],
@@ -29,7 +29,7 @@ export function useApiClient(options: ApiClientOptions) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        sessionId,
+        topicId,
         content,
         images: images || [],
         videos: videos || [],
@@ -78,7 +78,7 @@ export function useApiClient(options: ApiClientOptions) {
    * Send message (non-streaming)
    */
   async function sendMessage(
-    sessionId: string,
+    topicId: string,
     content: string,
     images?: string[],
     videos?: string[],
@@ -94,7 +94,7 @@ export function useApiClient(options: ApiClientOptions) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sessionId,
+          topicId,
           content,
           images: images || [],
           videos: videos || [],
@@ -118,14 +118,14 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
-   * Get sessions
+   * Get topics
    */
-  async function getSessions(): Promise<Session[]> {
+  async function getTopics(): Promise<Topic[]> {
     isLoading.value = true
     error.value = null
 
     try {
-      const response = await fetch(`${baseUrl}/sessions`)
+      const response = await fetch(`${baseUrl}/topics`)
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`)
@@ -136,21 +136,21 @@ export function useApiClient(options: ApiClientOptions) {
         throw new Error(result.message || 'API error')
       }
 
-      return result.data.sessions
+      return result.data.topics
     } finally {
       isLoading.value = false
     }
   }
 
   /**
-   * Get session messages
+   * Get topic messages
    */
-  async function getSessionMessages(sessionId: string): Promise<Message[]> {
+  async function getTopicMessages(topicId: string): Promise<Message[]> {
     isLoading.value = true
     error.value = null
 
     try {
-      const response = await fetch(`${baseUrl}/sessions/${sessionId}/messages`)
+      const response = await fetch(`${baseUrl}/topics/${topicId}/messages`)
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`)
@@ -168,14 +168,14 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
-   * Create session
+   * Create topic
    */
-  async function createSession(title?: string): Promise<Session> {
+  async function createTopic(title?: string): Promise<Topic> {
     isLoading.value = true
     error.value = null
 
     try {
-      const response = await fetch(`${baseUrl}/sessions`, {
+      const response = await fetch(`${baseUrl}/topics`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -193,7 +193,7 @@ export function useApiClient(options: ApiClientOptions) {
       }
 
       return {
-        sessionId: result.data.sessionId,
+        topicId: result.data.topicId,
         title: result.data.title,
         createdAt: result.data.createdAt,
         updatedAt: result.data.createdAt,
@@ -206,14 +206,14 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
-   * Delete session
+   * Delete topic
    */
-  async function deleteSession(sessionId: string): Promise<void> {
+  async function deleteTopic(topicId: string): Promise<void> {
     isLoading.value = true
     error.value = null
 
     try {
-      const response = await fetch(`${baseUrl}/sessions/${sessionId}`, {
+      const response = await fetch(`${baseUrl}/topics/${topicId}`, {
         method: 'DELETE',
       })
 
@@ -266,10 +266,10 @@ export function useApiClient(options: ApiClientOptions) {
     // Methods
     streamChat,
     sendMessage,
-    getSessions,
-    getSessionMessages,
-    createSession,
-    deleteSession,
+    getTopics,
+    getTopicMessages,
+    createTopic,
+    deleteTopic,
     uploadImages,
   }
 }

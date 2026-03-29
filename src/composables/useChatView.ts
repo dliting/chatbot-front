@@ -2,7 +2,7 @@ import { ref, computed } from 'vue'
 import type { ChatMode } from '@/types'
 
 export interface ChatViewState {
-  currentView: 'chat' | 'sessions'
+  currentView: 'chat' | 'topics'
 }
 
 export function useChatView(mode: ChatMode) {
@@ -11,8 +11,8 @@ export function useChatView(mode: ChatMode) {
     currentView: 'chat',
   })
 
-  // Computed: whether session list should be shown as sidebar (extended mode only)
-  const showSessionSidebar = computed(() => mode === 'extended')
+  // Computed: whether topic list should be shown as sidebar (extended mode only)
+  const showTopicSidebar = computed(() => mode === 'extended')
 
   // Computed: whether we should use view-based navigation (non-extended modes)
   const useViewNavigation = computed(() => mode !== 'extended')
@@ -24,25 +24,25 @@ export function useChatView(mode: ChatMode) {
     }
   }
 
-  const showSessionsView = () => {
+  const showTopicsView = () => {
     if (useViewNavigation.value) {
-      viewState.value.currentView = 'sessions'
+      viewState.value.currentView = 'topics'
     }
   }
 
   const toggleView = () => {
     if (useViewNavigation.value) {
       viewState.value.currentView =
-        viewState.value.currentView === 'chat' ? 'sessions' : 'chat'
+        viewState.value.currentView === 'chat' ? 'topics' : 'chat'
     }
   }
 
   return {
     viewState,
-    showSessionSidebar,
+    showTopicSidebar,
     useViewNavigation,
     showChatView,
-    showSessionsView,
+    showTopicsView,
     toggleView,
   }
 }

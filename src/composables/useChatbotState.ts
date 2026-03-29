@@ -5,7 +5,7 @@ import { computed } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { useUIState } from './useUIState'
 import { useMessagesState } from './useMessagesState'
-import { useSessionsState } from './useSessionsState'
+import { useTopicsState } from './useTopicsState'
 import { useInteractionState } from './useInteractionState'
 
 export function useChatbotState(config: Required<ChatbotConfig>) {
@@ -18,21 +18,21 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   })
 
   const messagesState = useMessagesState()
-  const sessionsState = useSessionsState()
+  const topicsState = useTopicsState()
   const interactionState = useInteractionState({
     maxImageCount: config.maxImageCount,
   })
 
-  // Set initial session ID in messages state
-  messagesState.messages.currentSessionId = sessionsState.sessions.currentId
+  // Set initial topic ID in messages state
+  messagesState.messages.currentTopicId = topicsState.topics.currentId
 
   // Computed properties
   const currentMessages = computed(() => {
-    return messagesState.messages.bySession[messagesState.messages.currentSessionId] || []
+    return messagesState.messages.byTopic[messagesState.messages.currentTopicId] || []
   })
 
-  const currentSession = computed(() => {
-    return sessionsState.sessions.list.find(s => s.sessionId === sessionsState.sessions.currentId)
+  const currentTopic = computed(() => {
+    return topicsState.topics.list.find(t => t.topicId === topicsState.topics.currentId)
   })
 
   const isStreaming = computed(() => {
@@ -41,50 +41,50 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
 
   // Wrapped actions that coordinate between sub-composables
   const addMessage = (message: import('@/types').Message) => {
-    const { sessionId } = message
+    const { topicId } = message
 
     messagesState.addMessage(message)
-    sessionsState.updateSessionAfterMessage(
-      sessionId,
-      messagesState.messages.bySession[sessionId]?.length || 0
+    topicsState.updateTopicAfterMessage(
+      topicId,
+      messagesState.messages.byTopic[topicId]?.length || 0
     )
   }
 
   const updateMessage = (messageId: string, updates: Partial<import('@/types').Message>) => {
-    messagesState.updateMessage(messageId, messagesState.messages.currentSessionId, updates)
+    messagesState.updateMessage(messageId, messagesState.messages.currentTopicId, updates)
   }
 
   const clearCurrentMessages = () => {
-    const sessionId = messagesState.messages.currentSessionId
-    messagesState.clearCurrentMessages(sessionId)
-    sessionsState.updateSessionAfterMessage(sessionId, 0)
+    const topicId = messagesState.messages.currentTopicId
+    messagesState.clearCurrentMessages(topicId)
+    topicsState.updateTopicAfterMessage(topicId, 0)
   }
 
-  const switchSession = (sessionId: string) => {
-    sessionsState.switchSession(sessionId)
-    messagesState.messages.currentSessionId = sessionId
+  const switchTopic = (topicId: string) => {
+    topicsState.switchTopic(topicId)
+    messagesState.messages.currentTopicId = topicId
   }
 
-  const createSession = () => {
-    const newSessionId = sessionsState.createSession()
-    messagesState.messages.currentSessionId = newSessionId
-    return newSessionId
+  const createTopic = () => {
+    const newTopicId = topicsState.createTopic()
+    messagesState.messages.currentTopicId = newTopicId
+    return newTopicId
   }
 
-  const deleteSession = (sessionId: string) => {
-    // Remove messages for this session
-    messagesState.deleteMessagesForSession(sessionId)
+  const deleteTopic = (topicId: string) => {
+    // Remove messages for this topic
+    messagesState.deleteMessagesForTopic(topicId)
 
-    // Remove session
-    sessionsState.deleteSession(sessionId)
+    // Remove topic
+    topicsState.deleteTopic(topicId)
 
-    // If deleted session was current, switch to another
-    if (sessionId === sessionsState.sessions.currentId) {
-      const nextSession = sessionsState.sessions.list[0]
-      if (nextSession) {
-        switchSession(nextSession.sessionId)
+    // If deleted topic was current, switch to another
+    if (topicId === topicsState.topics.currentId) {
+      const nextTopic = topicsState.topics.list[0]
+      if (nextTopic) {
+        switchTopic(nextTopic.topicId)
       } else {
-        createSession()
+        createTopic()
       }
     }
   }
@@ -104,13 +104,13 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     state: {
       ui: uiState.ui,
       messages: messagesState.messages,
-      sessions: sessionsState.sessions,
+      topics: topicsState.topics,
       interaction: interactionState.interaction,
     },
 
     // Computed
     currentMessages,
-    currentSession,
+    currentTopic,
     isStreaming,
 
     // UI Actions
@@ -126,11 +126,11 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     clearCurrentMessages,
     setStreamingMessage: messagesState.setStreamingMessage,
 
-    // Session Actions
-    switchSession,
-    createSession,
-    deleteSession,
-    updateSessionTitle: sessionsState.updateSessionTitle,
+    // Topic Actions
+    switchTopic,
+    createTopic,
+    deleteTopic,
+    updateTopicTitle: topicsState.updateTopicTitle,
 
     // Interaction Actions
     setSelectedImages: interactionState.setSelectedImages,

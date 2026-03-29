@@ -40,7 +40,7 @@ describe('useMessages', () => {
 
       messages.value.push({
         messageId: 'msg-1',
-        sessionId: 'session-1',
+        topicId: 'topic-1',
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
@@ -57,7 +57,7 @@ describe('useMessages', () => {
 
       messages.value.push({
         messageId: 'msg-1',
-        sessionId: 'session-1',
+        topicId: 'topic-1',
         role: 'user',
         content: 'First',
         timestamp: Date.now(),
@@ -66,7 +66,7 @@ describe('useMessages', () => {
 
       messages.value.push({
         messageId: 'msg-2',
-        sessionId: 'session-1',
+        topicId: 'topic-1',
         role: 'assistant',
         content: 'Second',
         timestamp: Date.now(),
@@ -86,7 +86,7 @@ describe('useMessages', () => {
         },
       })
 
-      await sendTextMessage('Hello', 'session-1')
+      await sendTextMessage('Hello', 'topic-1')
 
       expect(messages.value.length).toBe(2) // User + AI message
       expect(messages.value[0].role).toBe('user')
@@ -99,8 +99,8 @@ describe('useMessages', () => {
         onSendMessage: mockSendMessage,
       })
 
-      await sendTextMessage('   ', 'session-1')
-      await sendTextMessage('', 'session-1')
+      await sendTextMessage('   ', 'topic-1')
+      await sendTextMessage('', 'topic-1')
 
       expect(messages.value.length).toBe(0)
       expect(mockSendMessage).not.toHaveBeenCalled()
@@ -122,12 +122,12 @@ describe('useMessages', () => {
       })
 
       // Start first send (it won't complete because slowSend never resolves)
-      void sendTextMessage('Hello', 'session-1')
+      void sendTextMessage('Hello', 'topic-1')
       await nextTick() // Wait for state to update
       expect(isSending.value).toBe(true)
 
       // Try to send second message while first is sending
-      await sendTextMessage('Second message', 'session-1')
+      await sendTextMessage('Second message', 'topic-1')
 
       // Only first message should be added (second blocked by isSending check)
       expect(messages.value.length).toBe(1)
@@ -145,7 +145,7 @@ describe('useMessages', () => {
         },
       })
 
-      const sendPromise = sendTextMessage('Hello', 'session-1')
+      const sendPromise = sendTextMessage('Hello', 'topic-1')
 
       expect(isSending.value).toBe(true)
 
@@ -164,7 +164,7 @@ describe('useMessages', () => {
         onMessageError: mockMessageError,
       })
 
-      await sendTextMessage('Hello', 'session-1')
+      await sendTextMessage('Hello', 'topic-1')
 
       expect(messages.value[0].status).toBe('error')
       expect(mockMessageError).toHaveBeenCalledWith(error, messages.value[0])
@@ -182,7 +182,7 @@ describe('useMessages', () => {
 
       const images = ['https://example.com/image.jpg']
 
-      await sendImageMessage('Check this', images, 'session-1')
+      await sendImageMessage('Check this', images, 'topic-1')
 
       expect(messages.value.length).toBe(2)
       expect(messages.value[0].role).toBe('user')
@@ -200,7 +200,7 @@ describe('useMessages', () => {
 
       const images = ['https://example.com/image.jpg']
 
-      await sendImageMessage('', images, 'session-1')
+      await sendImageMessage('', images, 'topic-1')
 
       expect(messages.value[0].type).toBe('image')
       expect(messages.value[0].content).toBe('')
@@ -211,7 +211,7 @@ describe('useMessages', () => {
         onSendMessage: mockSendMessage,
       })
 
-      await sendImageMessage('Hello', [], 'session-1')
+      await sendImageMessage('Hello', [], 'topic-1')
 
       expect(messages.value.length).toBe(0)
       expect(mockSendMessage).not.toHaveBeenCalled()
@@ -229,7 +229,7 @@ describe('useMessages', () => {
 
       const videos = ['https://example.com/video.mp4']
 
-      await sendVideoMessage('Check this', videos, 'session-1')
+      await sendVideoMessage('Check this', videos, 'topic-1')
 
       expect(messages.value.length).toBe(2)
       expect(messages.value[0].role).toBe('user')
@@ -249,7 +249,7 @@ describe('useMessages', () => {
       const images = ['https://example.com/image.jpg']
       const audios = ['https://example.com/audio.mp3']
 
-      await sendVideoMessage('Check this', videos, 'session-1', images, audios)
+      await sendVideoMessage('Check this', videos, 'topic-1', images, audios)
 
       expect(messages.value[0].videos).toEqual(videos)
       expect(messages.value[0].images).toEqual(images)
@@ -261,7 +261,7 @@ describe('useMessages', () => {
         onSendMessage: mockSendMessage,
       })
 
-      await sendVideoMessage('Hello', [], 'session-1')
+      await sendVideoMessage('Hello', [], 'topic-1')
 
       expect(messages.value.length).toBe(0)
       expect(mockSendMessage).not.toHaveBeenCalled()
@@ -279,7 +279,7 @@ describe('useMessages', () => {
 
       const audios = ['https://example.com/audio.mp3']
 
-      await sendAudioMessage('Listen to this', audios, 'session-1')
+      await sendAudioMessage('Listen to this', audios, 'topic-1')
 
       expect(messages.value.length).toBe(2)
       expect(messages.value[0].role).toBe('user')
@@ -299,7 +299,7 @@ describe('useMessages', () => {
       const images = ['https://example.com/image.jpg']
       const videos = ['https://example.com/video.mp4']
 
-      await sendAudioMessage('Listen to this', audios, 'session-1', images, videos)
+      await sendAudioMessage('Listen to this', audios, 'topic-1', images, videos)
 
       expect(messages.value[0].audios).toEqual(audios)
       expect(messages.value[0].images).toEqual(images)
@@ -311,7 +311,7 @@ describe('useMessages', () => {
         onSendMessage: mockSendMessage,
       })
 
-      await sendAudioMessage('Hello', [], 'session-1')
+      await sendAudioMessage('Hello', [], 'topic-1')
 
       expect(messages.value.length).toBe(0)
       expect(mockSendMessage).not.toHaveBeenCalled()
@@ -327,10 +327,10 @@ describe('useMessages', () => {
         },
       })
 
-      const sessionId = 'session-1'
+      const topicId = 'topic-1'
 
       // Send original message
-      await sendTextMessage('Hello', sessionId)
+      await sendTextMessage('Hello', topicId)
 
       const originalMessage = messages.value[0]
       expect(originalMessage.status).toBe('sent')
@@ -350,7 +350,7 @@ describe('useMessages', () => {
 
       const assistantMessage: Message = {
         messageId: 'msg-1',
-        sessionId: 'session-1',
+        topicId: 'topic-1',
         role: 'assistant',
         content: 'Hello',
         timestamp: Date.now(),
@@ -374,10 +374,10 @@ describe('useMessages', () => {
         },
       })
 
-      const sessionId = 'session-1'
+      const topicId = 'topic-1'
       const images = ['https://example.com/image.jpg']
 
-      await sendImageMessage('Check this', images, sessionId)
+      await sendImageMessage('Check this', images, topicId)
 
       const originalMessage = messages.value[0]
       await resendMessage(originalMessage)
@@ -393,11 +393,11 @@ describe('useMessages', () => {
         },
       })
 
-      const sessionId = 'session-1'
+      const topicId = 'topic-1'
       const videos = ['https://example.com/video.mp4']
       const images = ['https://example.com/image.jpg']
 
-      await sendVideoMessage('Check this', videos, sessionId, images)
+      await sendVideoMessage('Check this', videos, topicId, images)
 
       const originalMessage = messages.value[0]
       await resendMessage(originalMessage)
@@ -413,11 +413,11 @@ describe('useMessages', () => {
         },
       })
 
-      const sessionId = 'session-1'
+      const topicId = 'topic-1'
       const audios = ['https://example.com/audio.mp3']
       const videos = ['https://example.com/video.mp4']
 
-      await sendAudioMessage('Listen to this', audios, sessionId, [], videos)
+      await sendAudioMessage('Listen to this', audios, topicId, [], videos)
 
       const originalMessage = messages.value[0]
       await resendMessage(originalMessage)
@@ -432,7 +432,7 @@ describe('useMessages', () => {
 
       messages.value.push({
         messageId: 'msg-1',
-        sessionId: 'session-1',
+        topicId: 'topic-1',
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
@@ -460,7 +460,7 @@ describe('useMessages', () => {
 
       messages.value.push({
         messageId: 'msg-1',
-        sessionId: 'session-1',
+        topicId: 'topic-1',
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
@@ -469,7 +469,7 @@ describe('useMessages', () => {
 
       messages.value.push({
         messageId: 'msg-2',
-        sessionId: 'session-1',
+        topicId: 'topic-1',
         role: 'assistant',
         content: 'Hi there',
         timestamp: Date.now(),
@@ -484,32 +484,32 @@ describe('useMessages', () => {
     })
   })
 
-  describe('Get Session Title', () => {
+  describe('Get Topic Title', () => {
     it('should extract title from messages', () => {
-      const { messages, getSessionTitle } = useMessages()
+      const { messages, getTopicTitle } = useMessages()
 
       messages.value.push({
         messageId: 'msg-1',
-        sessionId: 'session-1',
+        topicId: 'topic-1',
         role: 'user',
         content: 'How do I create a Vue component?',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      const title = getSessionTitle()
+      const title = getTopicTitle()
 
       // Just verify that a title is returned
       expect(title).toBeTruthy()
-      // The actual title format depends on the extractSessionTitle implementation
+      // The actual title format depends on the extractTopicTitle implementation
     })
 
     it('should return default title when no messages', () => {
-      const { getSessionTitle } = useMessages()
+      const { getTopicTitle } = useMessages()
 
-      const title = getSessionTitle()
+      const title = getTopicTitle()
 
-      expect(title).toBe('New Chat')
+      expect(title).toBe('New Topic')
     })
   })
 
@@ -527,7 +527,7 @@ describe('useMessages', () => {
         },
       })
 
-      await sendTextMessage('Hi', 'session-1')
+      await sendTextMessage('Hi', 'topic-1')
 
       // Should have user message + streaming AI message
       expect(messages.value.length).toBe(2)
@@ -546,7 +546,7 @@ describe('useMessages', () => {
 
       expect(currentStreamingMessage.value).toBe(null)
 
-      const sendPromise = sendTextMessage('Hi', 'session-1')
+      const sendPromise = sendTextMessage('Hi', 'topic-1')
 
       // During stream, should have streaming message
       // Note: This depends on async timing, so we just verify it doesn't error
@@ -569,7 +569,7 @@ describe('useMessages', () => {
         },
       })
 
-      await sendTextMessage('Hello', 'session-1')
+      await sendTextMessage('Hello', 'topic-1')
 
       expect(messages.value[0].status).toBe('sent')
       expect(mockMessageSuccess).toHaveBeenCalled()
@@ -587,7 +587,7 @@ describe('useMessages', () => {
         },
       })
 
-      await sendTextMessage('Hello', 'session-1')
+      await sendTextMessage('Hello', 'topic-1')
 
       expect(messages.value[0].status).toBe('error')
     })
@@ -602,7 +602,7 @@ describe('useMessages', () => {
         },
       })
 
-      await sendTextMessage('Hello', 'session-1')
+      await sendTextMessage('Hello', 'topic-1')
 
       expect(mockSendMessage).toHaveBeenCalledWith({
         type: 'text',
@@ -619,7 +619,7 @@ describe('useMessages', () => {
         },
       })
 
-      await sendTextMessage('Hello', 'session-1')
+      await sendTextMessage('Hello', 'topic-1')
 
       expect(mockMessageSuccess).toHaveBeenCalled()
     })
@@ -634,7 +634,7 @@ describe('useMessages', () => {
         onMessageError: mockMessageError,
       })
 
-      await sendTextMessage('Hello', 'session-1')
+      await sendTextMessage('Hello', 'topic-1')
 
       expect(mockMessageError).toHaveBeenCalledWith(error, expect.any(Object))
     })
@@ -654,7 +654,7 @@ describe('useMessages', () => {
         onSendMessage: mockSendMessage,
       })
 
-      await sendTextMessage('Hello', 'session-1')
+      await sendTextMessage('Hello', 'topic-1')
 
       // Wait for mock stream to complete (30ms per char, ~150 chars = ~4.5s)
       await new Promise(resolve => setTimeout(resolve, 5000))
@@ -676,7 +676,7 @@ describe('useMessages', () => {
         },
       })
 
-      await sendTextMessage(longContent, 'session-1')
+      await sendTextMessage(longContent, 'topic-1')
 
       expect(messages.value[0].content).toBe(longContent)
     })
@@ -691,7 +691,7 @@ describe('useMessages', () => {
         },
       })
 
-      await sendTextMessage(specialContent, 'session-1')
+      await sendTextMessage(specialContent, 'topic-1')
 
       expect(messages.value[0].content).toBe(specialContent)
     })
@@ -709,9 +709,9 @@ describe('useMessages', () => {
 
       // Try to send multiple messages rapidly
       const promises = [
-        sendTextMessage('Message 1', 'session-1'),
-        sendTextMessage('Message 2', 'session-1'),
-        sendTextMessage('Message 3', 'session-1'),
+        sendTextMessage('Message 1', 'topic-1'),
+        sendTextMessage('Message 2', 'topic-1'),
+        sendTextMessage('Message 3', 'topic-1'),
       ]
 
       await Promise.all(promises)

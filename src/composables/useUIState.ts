@@ -11,7 +11,7 @@ export interface UIState {
   locale: Locale
   screenWidth: number
   isMobile: boolean
-  currentView: 'sessions' | 'chat'
+  currentView: 'topics' | 'chat'
 }
 
 interface UseUIStateOptions {
@@ -93,12 +93,12 @@ export function useUIState(options: Required<UseUIStateOptions>) {
     document.documentElement.setAttribute('data-theme', resolvedTheme)
   }
 
-  const setCurrentView = (view: 'sessions' | 'chat') => {
+  const setCurrentView = (view: 'topics' | 'chat') => {
     ui.currentView = view
   }
 
   const toggleView = () => {
-    ui.currentView = ui.currentView === 'sessions' ? 'chat' : 'sessions'
+    ui.currentView = ui.currentView === 'topics' ? 'chat' : 'topics'
   }
 
   const updateScreenSize = () => {

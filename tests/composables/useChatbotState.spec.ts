@@ -10,7 +10,7 @@ describe('useChatbotState', () => {
   let mockConfig: Required<ChatbotConfig>
 
   beforeEach(() => {
-    // Clear localStorage to avoid session leakage between tests
+    // Clear localStorage to avoid topic leakage between tests
     localStorage.clear()
 
     // Mock window.innerWidth
@@ -70,17 +70,17 @@ describe('useChatbotState', () => {
     it('should initialize messages state with empty data', () => {
       const { state } = useChatbotState(mockConfig)
 
-      expect(state.messages.bySession).toEqual({})
-      expect(state.messages.currentSessionId).toBeTruthy()
+      expect(state.messages.byTopic).toEqual({})
+      expect(state.messages.currentTopicId).toBeTruthy()
       expect(state.messages.streamingMessageId).toBe(null)
     })
 
-    it('should initialize sessions state with one session (auto-init)', () => {
+    it('should initialize topics state with one topic (auto-init)', () => {
       const { state } = useChatbotState(mockConfig)
 
-      // useSessions auto-init creates one session
-      expect(state.sessions.list.length).toBe(1)
-      expect(state.sessions.currentId).toBeTruthy()
+      // useTopics auto-init creates one topic
+      expect(state.topics.list.length).toBe(1)
+      expect(state.topics.currentId).toBeTruthy()
     })
 
     it('should initialize interaction state', () => {
@@ -92,14 +92,14 @@ describe('useChatbotState', () => {
   })
 
   describe('Computed Properties', () => {
-    it('should return current messages for current session', () => {
+    it('should return current messages for current topic', () => {
       const { state, currentMessages, addMessage } = useChatbotState(mockConfig)
 
       expect(currentMessages.value).toEqual([])
 
       addMessage({
         messageId: 'msg-1',
-        sessionId: state.messages.currentSessionId,
+        topicId: state.messages.currentTopicId,
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
@@ -110,23 +110,23 @@ describe('useChatbotState', () => {
       expect(currentMessages.value[0].content).toBe('Hello')
     })
 
-    it('should return current session object', () => {
-      const { state, currentSession, addMessage } = useChatbotState(mockConfig)
+    it('should return current topic object', () => {
+      const { state, currentTopic, addMessage } = useChatbotState(mockConfig)
 
-      // useSessions auto-init creates session, so currentSession is defined
-      expect(currentSession.value).toBeDefined()
+      // useTopics auto-init creates topic, so currentTopic is defined
+      expect(currentTopic.value).toBeDefined()
 
       addMessage({
         messageId: 'msg-1',
-        sessionId: state.messages.currentSessionId,
+        topicId: state.messages.currentTopicId,
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      expect(currentSession.value).toBeDefined()
-      expect(currentSession.value?.sessionId).toBe(state.messages.currentSessionId)
+      expect(currentTopic.value).toBeDefined()
+      expect(currentTopic.value?.topicId).toBe(state.messages.currentTopicId)
     })
 
     it('should return isStreaming based on streamingMessageId', () => {
@@ -259,12 +259,12 @@ describe('useChatbotState', () => {
   })
 
   describe('Message Actions', () => {
-    it('should add message to session', () => {
+    it('should add message to topic', () => {
       const { state, addMessage, currentMessages } = useChatbotState(mockConfig)
 
       addMessage({
         messageId: 'msg-1',
-        sessionId: state.messages.currentSessionId,
+        topicId: state.messages.currentTopicId,
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
@@ -272,24 +272,24 @@ describe('useChatbotState', () => {
       })
 
       expect(currentMessages.value.length).toBe(1)
-      expect(state.sessions.list.length).toBe(1)
+      expect(state.topics.list.length).toBe(1)
     })
 
-    it('should create new session if adding message to non-existent session', () => {
+    it('should create new topic if adding message to non-existent topic', () => {
       const { state, addMessage } = useChatbotState(mockConfig)
 
-      const newSessionId = 'new-session-123'
+      const newTopicId = 'new-topic-123'
       addMessage({
         messageId: 'msg-1',
-        sessionId: newSessionId,
+        topicId: newTopicId,
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      expect(state.messages.bySession[newSessionId]).toBeDefined()
-      expect(state.messages.bySession[newSessionId].length).toBe(1)
+      expect(state.messages.byTopic[newTopicId]).toBeDefined()
+      expect(state.messages.byTopic[newTopicId].length).toBe(1)
     })
 
     it('should update existing message', () => {
@@ -297,7 +297,7 @@ describe('useChatbotState', () => {
 
       addMessage({
         messageId: 'msg-1',
-        sessionId: state.messages.currentSessionId,
+        topicId: state.messages.currentTopicId,
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
@@ -306,8 +306,8 @@ describe('useChatbotState', () => {
 
       updateMessage('msg-1', { status: 'sent', content: 'Hello!' })
 
-      expect(state.messages.bySession[state.messages.currentSessionId][0].status).toBe('sent')
-      expect(state.messages.bySession[state.messages.currentSessionId][0].content).toBe('Hello!')
+      expect(state.messages.byTopic[state.messages.currentTopicId][0].status).toBe('sent')
+      expect(state.messages.byTopic[state.messages.currentTopicId][0].content).toBe('Hello!')
     })
 
     it('should clear current messages', () => {
@@ -315,18 +315,18 @@ describe('useChatbotState', () => {
 
       addMessage({
         messageId: 'msg-1',
-        sessionId: state.messages.currentSessionId,
+        topicId: state.messages.currentTopicId,
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      expect(state.messages.bySession[state.messages.currentSessionId].length).toBe(1)
+      expect(state.messages.byTopic[state.messages.currentTopicId].length).toBe(1)
 
       clearCurrentMessages()
 
-      expect(state.messages.bySession[state.messages.currentSessionId]).toEqual([])
+      expect(state.messages.byTopic[state.messages.currentTopicId]).toEqual([])
     })
 
     it('should set streaming message ID', () => {
@@ -340,206 +340,206 @@ describe('useChatbotState', () => {
     })
   })
 
-  describe('Session Actions', () => {
-    it('should switch to existing session', () => {
-      const { state, addMessage, switchSession, currentSession } = useChatbotState(mockConfig)
+  describe('Topic Actions', () => {
+    it('should switch to existing topic', () => {
+      const { state, addMessage, switchTopic, currentTopic } = useChatbotState(mockConfig)
 
-      const originalSessionId = state.messages.currentSessionId
+      const originalTopicId = state.messages.currentTopicId
 
-      // Add message to create session
+      // Add message to create topic
       addMessage({
         messageId: 'msg-1',
-        sessionId: originalSessionId,
+        topicId: originalTopicId,
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      // Create another session
-      const newSessionId = 'session-456'
+      // Create another topic
+      const newTopicId = 'topic-456'
       addMessage({
         messageId: 'msg-2',
-        sessionId: newSessionId,
+        topicId: newTopicId,
         role: 'user',
-        content: 'New session',
+        content: 'New topic',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      switchSession(newSessionId)
+      switchTopic(newTopicId)
 
-      expect(state.messages.currentSessionId).toBe(newSessionId)
-      expect(state.sessions.currentId).toBe(newSessionId)
-      expect(currentSession.value?.sessionId).toBe(newSessionId)
+      expect(state.messages.currentTopicId).toBe(newTopicId)
+      expect(state.topics.currentId).toBe(newTopicId)
+      expect(currentTopic.value?.topicId).toBe(newTopicId)
     })
 
-    it('should create new session', () => {
-      const { state, createSession } = useChatbotState(mockConfig)
+    it('should create new topic', () => {
+      const { state, createTopic } = useChatbotState(mockConfig)
 
-      const originalSessionId = state.messages.currentSessionId
+      const originalTopicId = state.messages.currentTopicId
 
-      // createSession creates a new session with a different timestamp
+      // createTopic creates a new topic with a different timestamp
       // The IDs might be the same if called at the same time, but the state is updated
-      const newSessionId = createSession()
+      const newTopicId = createTopic()
 
-      // Verify that the session IDs are updated (even if timestamps might be the same)
-      expect(state.messages.currentSessionId).toBe(newSessionId)
-      expect(state.sessions.currentId).toBe(newSessionId)
+      // Verify that the topic IDs are updated (even if timestamps might be the same)
+      expect(state.messages.currentTopicId).toBe(newTopicId)
+      expect(state.topics.currentId).toBe(newTopicId)
 
-      // IDs are created with session_${Date.now()}, so they should typically be different
+      // IDs are created with topic_${Date.now()}, so they should typically be different
       // but in fast tests, we just verify the state was updated
-      expect(state.messages.currentSessionId).toBeTruthy()
+      expect(state.messages.currentTopicId).toBeTruthy()
     })
 
-    it('should delete session', () => {
-      const { state, addMessage, deleteSession } = useChatbotState(mockConfig)
+    it('should delete topic', () => {
+      const { state, addMessage, deleteTopic } = useChatbotState(mockConfig)
 
-      // Create two sessions
-      const session1Id = state.messages.currentSessionId
+      // Create two topics
+      const topic1Id = state.messages.currentTopicId
       addMessage({
         messageId: 'msg-1',
-        sessionId: session1Id,
+        topicId: topic1Id,
         role: 'user',
-        content: 'Session 1',
+        content: 'Topic 1',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      const session2Id = 'session-2'
+      const topic2Id = 'topic-2'
       addMessage({
         messageId: 'msg-2',
-        sessionId: session2Id,
+        topicId: topic2Id,
         role: 'user',
-        content: 'Session 2',
+        content: 'Topic 2',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      expect(state.sessions.list.length).toBe(2)
+      expect(state.topics.list.length).toBe(2)
 
-      // Delete first session
-      deleteSession(session1Id)
+      // Delete first topic
+      deleteTopic(topic1Id)
 
-      expect(state.sessions.list.length).toBe(1)
-      expect(state.messages.bySession[session1Id]).toBeUndefined()
-      expect(state.sessions.currentId).not.toBe(session1Id)
+      expect(state.topics.list.length).toBe(1)
+      expect(state.messages.byTopic[topic1Id]).toBeUndefined()
+      expect(state.topics.currentId).not.toBe(topic1Id)
     })
 
-    it('should create new session when deleting current session if no other sessions', () => {
-      const { state, addMessage, deleteSession } = useChatbotState(mockConfig)
+    it('should create new topic when deleting current topic if no other topics', () => {
+      const { state, addMessage, deleteTopic } = useChatbotState(mockConfig)
 
-      // useSessions auto-init creates 1 session
-      const initialSessionCount = state.sessions.list.length
-      expect(initialSessionCount).toBe(1)
+      // useTopics auto-init creates 1 topic
+      const initialTopicCount = state.topics.list.length
+      expect(initialTopicCount).toBe(1)
 
-      const currentSessionId = state.messages.currentSessionId
+      const currentTopicId = state.messages.currentTopicId
       addMessage({
         messageId: 'msg-1',
-        sessionId: currentSessionId,
+        topicId: currentTopicId,
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      expect(state.sessions.list.length).toBe(initialSessionCount)
+      expect(state.topics.list.length).toBe(initialTopicCount)
 
-      deleteSession(currentSessionId)
+      deleteTopic(currentTopicId)
 
-      // After delete, a new session is created by useSessions
-      // The list will have 1 session (the new one)
-      expect(state.sessions.list.length).toBe(1)
-      // update the current session IDs even if they're the same string.
+      // After delete, a new topic is created by useTopics
+      // The list will have 1 topic (the new one)
+      expect(state.topics.list.length).toBe(1)
+      // update the current topic IDs even if they're the same string.
       // Just verify that deletion occurred (list is empty).
     })
   })
 
-  describe('Session Management with Messages', () => {
-    it('should create session when adding first message', () => {
+  describe('Topic Management with Messages', () => {
+    it('should create topic when adding first message', () => {
       const { state, addMessage } = useChatbotState(mockConfig)
 
-      // useSessions auto-init creates 1 session
-      expect(state.sessions.list.length).toBe(1)
+      // useTopics auto-init creates 1 topic
+      expect(state.topics.list.length).toBe(1)
 
       addMessage({
         messageId: 'msg-1',
-        sessionId: state.messages.currentSessionId,
+        topicId: state.messages.currentTopicId,
         role: 'user',
         content: 'Hello',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      expect(state.sessions.list.length).toBe(1)
-      expect(state.sessions.list[0].sessionId).toBe(state.messages.currentSessionId)
+      expect(state.topics.list.length).toBe(1)
+      expect(state.topics.list[0].topicId).toBe(state.messages.currentTopicId)
     })
 
-    it('should update existing session when adding message', () => {
+    it('should update existing topic when adding message', () => {
       const { state, addMessage } = useChatbotState(mockConfig)
 
       addMessage({
         messageId: 'msg-1',
-        sessionId: state.messages.currentSessionId,
+        topicId: state.messages.currentTopicId,
         role: 'user',
         content: 'First message',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      const firstUpdatedAt = state.sessions.list[0].updatedAt
+      const firstUpdatedAt = state.topics.list[0].updatedAt
 
       // Add another message with a later timestamp
       addMessage({
         messageId: 'msg-2',
-        sessionId: state.messages.currentSessionId,
+        topicId: state.messages.currentTopicId,
         role: 'assistant',
         content: 'Response',
         timestamp: Date.now() + 1000, // Ensure different timestamp
         status: 'sent',
       })
 
-      expect(state.sessions.list[0].messageCount).toBe(2)
-      expect(state.sessions.list[0].updatedAt).toBeGreaterThanOrEqual(firstUpdatedAt)
+      expect(state.topics.list[0].messageCount).toBe(2)
+      expect(state.topics.list[0].updatedAt).toBeGreaterThanOrEqual(firstUpdatedAt)
     })
 
-    it('should move session to top when message is added', () => {
+    it('should move topic to top when message is added', () => {
       const { state, addMessage } = useChatbotState(mockConfig)
 
-      // Create two sessions
-      const session1Id = state.messages.currentSessionId
+      // Create two topics
+      const topic1Id = state.messages.currentTopicId
       addMessage({
         messageId: 'msg-1',
-        sessionId: session1Id,
+        topicId: topic1Id,
         role: 'user',
-        content: 'Session 1',
+        content: 'Topic 1',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      const session2Id = 'session-2'
+      const topic2Id = 'topic-2'
       addMessage({
         messageId: 'msg-2',
-        sessionId: session2Id,
+        topicId: topic2Id,
         role: 'user',
-        content: 'Session 2',
+        content: 'Topic 2',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      expect(state.sessions.list[0].sessionId).toBe(session2Id)
+      expect(state.topics.list[0].topicId).toBe(topic2Id)
 
-      // Add message to first session
+      // Add message to first topic
       addMessage({
         messageId: 'msg-3',
-        sessionId: session1Id,
+        topicId: topic1Id,
         role: 'user',
-        content: 'New message in session 1',
+        content: 'New message in topic 1',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      expect(state.sessions.list[0].sessionId).toBe(session1Id)
+      expect(state.topics.list[0].topicId).toBe(topic1Id)
     })
   })
 
@@ -613,17 +613,17 @@ describe('useChatbotState', () => {
   })
 
   describe('Edge Cases', () => {
-    it('should handle switching to non-existent session', () => {
-      const { state, switchSession } = useChatbotState(mockConfig)
+    it('should handle switching to non-existent topic', () => {
+      const { state, switchTopic } = useChatbotState(mockConfig)
 
-      const originalSessionId = state.messages.currentSessionId
+      const originalTopicId = state.messages.currentTopicId
 
-      // switchSession allows switching to any session ID without validation
-      switchSession('non-existent-session')
+      // switchTopic allows switching to any topic ID without validation
+      switchTopic('non-existent-topic')
 
       // The implementation doesn't validate - it just switches
-      expect(state.messages.currentSessionId).toBe('non-existent-session')
-      expect(state.sessions.currentId).toBe('non-existent-session')
+      expect(state.messages.currentTopicId).toBe('non-existent-topic')
+      expect(state.topics.currentId).toBe('non-existent-topic')
     })
 
     it('should handle updating non-existent message', () => {
@@ -633,39 +633,39 @@ describe('useChatbotState', () => {
       expect(() => updateMessage('non-existent', { content: 'New content' })).not.toThrow()
     })
 
-    it('should handle deleting non-existent session', () => {
-      const { deleteSession } = useChatbotState(mockConfig)
+    it('should handle deleting non-existent topic', () => {
+      const { deleteTopic } = useChatbotState(mockConfig)
 
       // Should not throw
-      expect(() => deleteSession('non-existent-session')).not.toThrow()
+      expect(() => deleteTopic('non-existent-topic')).not.toThrow()
     })
 
-    it('should handle adding message to multiple sessions', () => {
+    it('should handle adding message to multiple topics', () => {
       const { state, addMessage, currentMessages } = useChatbotState(mockConfig)
 
-      const session1Id = 'session-1'
-      const session2Id = 'session-2'
+      const topic1Id = 'topic-1'
+      const topic2Id = 'topic-2'
 
       addMessage({
         messageId: 'msg-1',
-        sessionId: session1Id,
+        topicId: topic1Id,
         role: 'user',
-        content: 'Session 1 message',
+        content: 'Topic 1 message',
         timestamp: Date.now(),
         status: 'sent',
       })
 
       addMessage({
         messageId: 'msg-2',
-        sessionId: session2Id,
+        topicId: topic2Id,
         role: 'user',
-        content: 'Session 2 message',
+        content: 'Topic 2 message',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      expect(state.messages.bySession[session1Id]?.length).toBe(1)
-      expect(state.messages.bySession[session2Id]?.length).toBe(1)
+      expect(state.messages.byTopic[topic1Id]?.length).toBe(1)
+      expect(state.messages.byTopic[topic2Id]?.length).toBe(1)
     })
   })
 })

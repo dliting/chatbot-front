@@ -2,7 +2,7 @@
  * Tests for AIChatbot mode-specific rendering behavior
  * Ensures each mode (extended, floating, sidebar) renders correctly
  * These tests specifically prevent regression of the sidebar mode
- * "历史对话" button missing bug.
+ * "历史话题" button missing bug.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -18,7 +18,7 @@ vi.mock('@/composables/useApiClient', () => ({
       yield { type: 'end' }
     }),
     getSessionMessages: vi.fn().mockResolvedValue([]),
-    createSession: vi.fn().mockResolvedValue({ sessionId: 'new-session' }),
+    createSession: vi.fn().mockResolvedValue({ topicId: 'new-topic' }),
   }),
 }))
 
@@ -32,7 +32,7 @@ describe('AIChatbot Mode Rendering', () => {
     it('should render AIChatbot directly without ChatPanel for floating mode', () => {
       const wrapper = mount(AIChatbot, {
         props: { config: { mode: 'floating', apiBaseUrl: '/api' } },
-        global: { stubs: { SuspendedBall: true, DraggableWindow: true, ChatHeader: true, ChatContent: true, SessionListView: true, FilePreviewModal: true } },
+        global: { stubs: { SuspendedBall: true, DraggableWindow: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true } },
       })
 
       // Floating mode should NOT use ChatPanel wrapper
@@ -42,7 +42,7 @@ describe('AIChatbot Mode Rendering', () => {
     it('should render AIChatbot directly without ChatPanel for extended mode', () => {
       const wrapper = mount(AIChatbot, {
         props: { config: { mode: 'extended', apiBaseUrl: '/api' } },
-        global: { stubs: { ChatHeader: true, ChatContent: true, SessionListView: true, FilePreviewModal: true } },
+        global: { stubs: { ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true } },
       })
 
       // Extended mode should NOT use ChatPanel wrapper
@@ -52,7 +52,7 @@ describe('AIChatbot Mode Rendering', () => {
     it('should wrap content in ChatPanel for sidebar mode', () => {
       const wrapper = mount(AIChatbot, {
         props: { config: { mode: 'sidebar', apiBaseUrl: '/api' } },
-        global: { stubs: { ChatHeader: true, ChatContent: true, SessionListView: true, FilePreviewModal: true, DraggableWindow: true } },
+        global: { stubs: { ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true, DraggableWindow: true } },
       })
 
       // Sidebar mode should use ChatPanel wrapper
@@ -64,7 +64,7 @@ describe('AIChatbot Mode Rendering', () => {
     it('should hide ChatPanel header for sidebar mode (inner ChatHeader handles navigation)', () => {
       const wrapper = mount(AIChatbot, {
         props: { config: { mode: 'sidebar', apiBaseUrl: '/api' } },
-        global: { stubs: { ChatHeader: true, ChatContent: true, SessionListView: true, FilePreviewModal: true, DraggableWindow: true } },
+        global: { stubs: { ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true, DraggableWindow: true } },
       })
 
       const chatPanel = wrapper.findComponent(ChatPanel)
@@ -75,11 +75,11 @@ describe('AIChatbot Mode Rendering', () => {
 
   })
 
-  describe('ChatHeader rendering for session navigation', () => {
+  describe('ChatHeader rendering for topic navigation', () => {
     it('should render ChatHeader for extended mode (dual layout)', () => {
       const wrapper = mount(AIChatbot, {
         props: { config: { mode: 'extended', apiBaseUrl: '/api' } },
-        global: { stubs: { ChatContent: true, SessionListView: true, FilePreviewModal: true, DraggableWindow: true } },
+        global: { stubs: { ChatContent: true, TopicListView: true, FilePreviewModal: true, DraggableWindow: true } },
       })
 
       // Extended mode renders ChatHeader (dual layout shows it alongside sidebar)
@@ -90,10 +90,10 @@ describe('AIChatbot Mode Rendering', () => {
 
   describe('layout assignment', () => {
     it('should assign dual layout for extended mode', () => {
-      // Verify by checking that both session sidebar and chat area would be needed
+      // Verify by checking that both topic sidebar and chat area would be needed
       const wrapper = mount(AIChatbot, {
         props: { config: { mode: 'extended', apiBaseUrl: '/api' } },
-        global: { stubs: { ChatHeader: true, ChatContent: true, SessionListView: true, FilePreviewModal: true, DraggableWindow: true } },
+        global: { stubs: { ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true, DraggableWindow: true } },
       })
 
       // Extended mode should have sidebar container
@@ -104,7 +104,7 @@ describe('AIChatbot Mode Rendering', () => {
     it('should use single layout for sidebar mode (view-based switching)', () => {
       const wrapper = mount(AIChatbot, {
         props: { config: { mode: 'sidebar', apiBaseUrl: '/api' } },
-        global: { stubs: { ChatHeader: true, ChatContent: true, SessionListView: true, FilePreviewModal: true, DraggableWindow: true } },
+        global: { stubs: { ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true, DraggableWindow: true } },
       })
 
       // Sidebar mode should NOT have sidebar container (uses single layout)

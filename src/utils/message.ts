@@ -27,7 +27,7 @@ function getMessageType(
 export function createMessage(
   role: MessageRole,
   content: string,
-  sessionId: string,
+  topicId: string,
   options: {
     type?: MessageType
     images?: string[]
@@ -43,7 +43,7 @@ export function createMessage(
 
   return {
     messageId: generateId('msg'),
-    sessionId,
+    topicId,
     role,
     type: messageType,
     content,
@@ -141,13 +141,13 @@ export function getMessagePreview(message: Message, maxLength = 50): string {
 }
 
 /**
- * Extract session title from first AI message
+ * Extract topic title from first AI message
  */
-export function extractSessionTitle(messages: Message[]): string {
+export function extractTopicTitle(messages: Message[]): string {
   const firstAIMessage = messages.find(m => m.role === 'assistant')
 
   if (!firstAIMessage || !firstAIMessage.content) {
-    return 'New Chat'
+    return 'New Topic'
   }
 
   // Get first line or up to 30 characters
@@ -156,10 +156,10 @@ export function extractSessionTitle(messages: Message[]): string {
 }
 
 /**
- * Filter messages by session
+ * Filter messages by topic
  */
-export function filterMessagesBySession(messages: Message[], sessionId: string): Message[] {
-  return messages.filter(m => m.sessionId === sessionId)
+export function filterMessagesByTopic(messages: Message[], topicId: string): Message[] {
+  return messages.filter(m => m.topicId === topicId)
 }
 
 /**
@@ -170,11 +170,11 @@ export function sortMessagesByTimestamp(messages: Message[]): Message[] {
 }
 
 /**
- * Get last message from a session
+ * Get last message from a topic
  */
-export function getLastMessage(messages: Message[], sessionId: string): Message | undefined {
-  const sessionMessages = filterMessagesBySession(messages, sessionId)
-  return sortMessagesByTimestamp(sessionMessages)[sessionMessages.length - 1]
+export function getLastMessage(messages: Message[], topicId: string): Message | undefined {
+  const topicMessages = filterMessagesByTopic(messages, topicId)
+  return sortMessagesByTimestamp(topicMessages)[topicMessages.length - 1]
 }
 
 /**

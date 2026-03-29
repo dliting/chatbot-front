@@ -4,16 +4,16 @@
     v-if="mode === 'floating'"
     :config="config"
     :messages="messages"
-    :sessions="sessions"
-    :current-session-id="currentSessionId"
+    :topics="topics"
+    :current-topic-id="currentTopicId"
     :is-streaming="isStreaming"
     :hide-welcome="hideWelcome"
     :hide-quick-actions="hideQuickActions"
     @send-message="handleSendMessage"
     @quick-action="$emit('quick-action', $event)"
-    @create-session="$emit('create-session')"
-    @select-session="$emit('select-session', $event)"
-    @delete-session="$emit('delete-session', $event)"
+    @create-topic="$emit('create-topic')"
+    @select-topic="$emit('select-topic', $event)"
+    @delete-topic="$emit('delete-topic', $event)"
     @edit-message="$emit('edit', $event)"
     @copy-message="$emit('copy', $event)"
     @refresh-message="$emit('refresh', $event)"
@@ -28,17 +28,17 @@
     :layout="layout"
     :config="config"
     :messages="messages"
-    :sessions="sessions"
-    :current-session-id="currentSessionId"
+    :topics="topics"
+    :current-topic-id="currentTopicId"
     :is-streaming="isStreaming"
     :hide-welcome="hideWelcome"
     :hide-quick-actions="hideQuickActions"
     :hide-header="hideHeader"
     @send-message="handleSendMessage"
     @quick-action="$emit('quick-action', $event)"
-    @create-session="$emit('create-session')"
-    @select-session="$emit('select-session', $event)"
-    @delete-session="$emit('delete-session', $event)"
+    @create-topic="$emit('create-topic')"
+    @select-topic="$emit('select-topic', $event)"
+    @delete-topic="$emit('delete-topic', $event)"
     @edit="$emit('edit', $event)"
     @copy="$emit('copy', $event)"
     @refresh="$emit('refresh', $event)"
@@ -48,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import type { ChatMode, Layout, ChatbotConfig, Message, Session } from '@/types'
+import type { ChatMode, Layout, ChatbotConfig, Message, Topic } from '@/types'
 
 // Components
 import FloatingChatPanel from './FloatingChatPanel.vue'
@@ -60,8 +60,8 @@ interface Props {
   config?: ChatbotConfig
   apiClient?: ReturnType<typeof import('@/composables/useApiClient')['useApiClient']>
   messages?: Message[]
-  sessions?: Session[]
-  currentSessionId?: string
+  topics?: Topic[]
+  currentTopicId?: string
   isStreaming?: boolean
   hideWelcome?: boolean
   hideQuickActions?: boolean
@@ -73,8 +73,8 @@ withDefaults(defineProps<Props>(), {
   layout: undefined,
   config: () => ({}),
   messages: () => [],
-  sessions: () => [],
-  currentSessionId: '',
+  topics: () => [],
+  currentTopicId: '',
   isStreaming: false,
   hideWelcome: false,
   hideQuickActions: false,
@@ -83,9 +83,9 @@ withDefaults(defineProps<Props>(), {
 
 // Emits
 interface Emits {
-  (e: 'create-session'): void
-  (e: 'select-session', sessionId: string): void
-  (e: 'delete-session', sessionId: string): void
+  (e: 'create-topic'): void
+  (e: 'select-topic', topicId: string): void
+  (e: 'delete-topic', topicId: string): void
   (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void

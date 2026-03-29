@@ -31,7 +31,7 @@ export interface ChatbotConfig {
 
   // Feature toggles
   enableImageUpload?: boolean
-  enableSessionManager?: boolean
+  enableTopicManager?: boolean
   enableVoiceInput?: boolean
   enableCopyMessage?: boolean
   enableDeleteMessage?: boolean
@@ -72,8 +72,8 @@ export interface ChatbotLabels {
   title: string
   placeholder: string
   send: string
-  newChat: string
-  history: string
+  newTopic: string
+  topics: string
   clearAll: string
   delete: string
   copy: string
@@ -109,8 +109,8 @@ export const defaultChatbotLabels: ChatbotLabels = {
   title: 'AI Assistant',
   placeholder: 'Type your message...',
   send: 'Send',
-  newChat: 'New Chat',
-  history: 'History',
+  newTopic: 'New Topic',
+  topics: 'Topics',
   clearAll: 'Clear All',
   delete: 'Delete',
   copy: 'Copy',
@@ -167,7 +167,7 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
 
   // Features
   enableImageUpload: true,
-  enableSessionManager: true,
+  enableTopicManager: true,
   enableVoiceInput: false,
   enableCopyMessage: true,
   enableDeleteMessage: true,

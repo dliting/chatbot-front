@@ -35,7 +35,7 @@ describe('MessageList.vue', () => {
   const createMockMessages = (count: number): Message[] => {
     return Array.from({ length: count }, (_, i) => ({
       id: `msg_${i}`,
-      sessionId: 'session_1',
+      topicId: 'session_1',
       role: i % 2 === 0 ? 'user' : 'assistant',
       type: 'text',
       content: `Message ${i + 1}`,
@@ -97,7 +97,7 @@ describe('MessageList.vue', () => {
       const messages = [
         {
           id: 'msg_1',
-          sessionId: 'session_1',
+          topicId: 'session_1',
           role: 'assistant',
           type: 'text',
           content: 'Hello!',
@@ -116,7 +116,7 @@ describe('MessageList.vue', () => {
       const messages = [
         {
           id: 'msg_1',
-          sessionId: 'session_1',
+          topicId: 'session_1',
           role: 'user',
           type: 'text',
           content: 'Hello, how are you?',
@@ -136,7 +136,7 @@ describe('MessageList.vue', () => {
       const messages = [
         {
           id: 'msg_1',
-          sessionId: 'session_1',
+          topicId: 'session_1',
           role: 'assistant',
           type: 'text',
           content: 'Streaming...',
@@ -206,7 +206,7 @@ describe('MessageList.vue', () => {
       const messages = [
         {
           id: 'msg_1',
-          sessionId: 'session_1',
+          topicId: 'session_1',
           role: 'user',
           type: 'text',
           content: 'Resend me',
@@ -239,7 +239,7 @@ describe('MessageList.vue', () => {
       const messages = [
         {
           id: 'msg_1',
-          sessionId: 'session_1',
+          topicId: 'session_1',
           role: 'user',
           type: 'image',
           content: '',
@@ -261,7 +261,7 @@ describe('MessageList.vue', () => {
       const messages = [
         {
           id: 'msg_1',
-          sessionId: 'session_1',
+          topicId: 'session_1',
           role: 'user',
           type: 'image',
           content: '',
@@ -286,7 +286,7 @@ describe('MessageList.vue', () => {
       const messages = [
         {
           id: 'msg_1',
-          sessionId: 'session_1',
+          topicId: 'session_1',
           role: 'user',
           type: 'text',
           content: 'Test',
@@ -311,7 +311,7 @@ describe('MessageList.vue', () => {
       const messages = [
         {
           id: 'msg_1',
-          sessionId: 'session_1',
+          topicId: 'session_1',
           role: 'user',
           type: 'text',
           content: 'Failed message',
@@ -332,7 +332,7 @@ describe('MessageList.vue', () => {
       const messages = [
         {
           id: 'msg_1',
-          sessionId: 'session_1',
+          topicId: 'session_1',
           role: 'user',
           type: 'text',
           content: 'Sending...',

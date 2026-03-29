@@ -8,11 +8,11 @@ import type { ChatMode } from '@/types'
 
 describe('useChatView Composable', () => {
   describe('Extended mode (dual layout)', () => {
-    it('should show session sidebar in extended mode', () => {
+    it('should show topic sidebar in extended mode', () => {
       const mode: ChatMode = 'extended'
-      const { showSessionSidebar, useViewNavigation, viewState } = useChatView(mode)
+      const { showTopicSidebar, useViewNavigation, viewState } = useChatView(mode)
 
-      expect(showSessionSidebar.value).toBe(true)
+      expect(showTopicSidebar.value).toBe(true)
       expect(useViewNavigation.value).toBe(false)
       expect(viewState.value.currentView).toBe('chat')
     })
@@ -26,11 +26,11 @@ describe('useChatView Composable', () => {
       expect(viewState.value.currentView).toBe('chat')
     })
 
-    it('should not change view in extended mode when showSessionsView is called', () => {
+    it('should not change view in extended mode when showTopicsView is called', () => {
       const mode: ChatMode = 'extended'
-      const { showSessionsView, viewState } = useChatView(mode)
+      const { showTopicsView, viewState } = useChatView(mode)
 
-      showSessionsView()
+      showTopicsView()
       // viewState should not change because useViewNavigation is false
       expect(viewState.value.currentView).toBe('chat')
     })
@@ -46,33 +46,33 @@ describe('useChatView Composable', () => {
   })
 
   describe('Floating mode (single layout)', () => {
-    it('should not show session sidebar in floating mode', () => {
+    it('should not show topic sidebar in floating mode', () => {
       const mode: ChatMode = 'floating'
-      const { showSessionSidebar, useViewNavigation } = useChatView(mode)
+      const { showTopicSidebar, useViewNavigation } = useChatView(mode)
 
-      expect(showSessionSidebar.value).toBe(false)
+      expect(showTopicSidebar.value).toBe(false)
       expect(useViewNavigation.value).toBe(true)
     })
 
     it('should change to chat view when showChatView is called', () => {
       const mode: ChatMode = 'floating'
-      const { showChatView, showSessionsView, viewState } = useChatView(mode)
+      const { showChatView, showTopicsView, viewState } = useChatView(mode)
 
-      // First switch to sessions view
-      showSessionsView()
-      expect(viewState.value.currentView).toBe('sessions')
+      // First switch to topics view
+      showTopicsView()
+      expect(viewState.value.currentView).toBe('topics')
 
       // Then switch back to chat view
       showChatView()
       expect(viewState.value.currentView).toBe('chat')
     })
 
-    it('should change to sessions view when showSessionsView is called', () => {
+    it('should change to topics view when showTopicsView is called', () => {
       const mode: ChatMode = 'floating'
-      const { showSessionsView, viewState } = useChatView(mode)
+      const { showTopicsView, viewState } = useChatView(mode)
 
-      showSessionsView()
-      expect(viewState.value.currentView).toBe('sessions')
+      showTopicsView()
+      expect(viewState.value.currentView).toBe('topics')
     })
 
     it('should toggle view when toggleView is called', () => {
@@ -82,9 +82,9 @@ describe('useChatView Composable', () => {
       // Initially chat view
       expect(viewState.value.currentView).toBe('chat')
 
-      // Toggle to sessions
+      // Toggle to topics
       toggleView()
-      expect(viewState.value.currentView).toBe('sessions')
+      expect(viewState.value.currentView).toBe('topics')
 
       // Toggle back to chat
       toggleView()
@@ -93,11 +93,11 @@ describe('useChatView Composable', () => {
   })
 
   describe('Sidebar mode (single layout)', () => {
-    it('should not show session sidebar in sidebar mode', () => {
+    it('should not show topic sidebar in sidebar mode', () => {
       const mode: ChatMode = 'sidebar'
-      const { showSessionSidebar, useViewNavigation } = useChatView(mode)
+      const { showTopicSidebar, useViewNavigation } = useChatView(mode)
 
-      expect(showSessionSidebar.value).toBe(false)
+      expect(showTopicSidebar.value).toBe(false)
       expect(useViewNavigation.value).toBe(true)
     })
 
@@ -108,20 +108,20 @@ describe('useChatView Composable', () => {
       expect(viewState.value.currentView).toBe('chat')
 
       toggleView()
-      expect(viewState.value.currentView).toBe('sessions')
+      expect(viewState.value.currentView).toBe('topics')
     })
   })
 
   describe('Fullscreen mode (single layout)', () => {
     it('should handle fullscreen mode correctly', () => {
       const mode: ChatMode = 'fullscreen'
-      const { showSessionSidebar, useViewNavigation, toggleView, viewState } = useChatView(mode)
+      const { showTopicSidebar, useViewNavigation, toggleView, viewState } = useChatView(mode)
 
-      expect(showSessionSidebar.value).toBe(false)
+      expect(showTopicSidebar.value).toBe(false)
       expect(useViewNavigation.value).toBe(true)
 
       toggleView()
-      expect(viewState.value.currentView).toBe('sessions')
+      expect(viewState.value.currentView).toBe('topics')
     })
   })
 })

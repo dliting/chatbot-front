@@ -25,7 +25,7 @@ vi.mock('element-plus', () => ({
 const mockMessages = [
   {
     messageId: 'msg-user-1',
-    sessionId: 'session-1',
+    topicId: 'topic-1',
     role: 'user' as const,
     type: 'text' as const,
     content: 'Hello, how are you?',
@@ -34,7 +34,7 @@ const mockMessages = [
   },
   {
     messageId: 'msg-assistant-1',
-    sessionId: 'session-1',
+    topicId: 'topic-1',
     role: 'assistant' as const,
     type: 'text' as const,
     content: 'I am fine, thank you! Here is some code:\n\n```python\nprint("Hello World")\n```',
