@@ -6,10 +6,11 @@ import type { Message, Session } from '@/types'
 
 export interface ApiClientOptions {
   baseUrl: string
+  streamTimeout?: number
 }
 
 export function useApiClient(options: ApiClientOptions) {
-  const { baseUrl } = options
+  const { baseUrl, streamTimeout = 120000 } = options
   const isLoading = ref(false)
   const error = ref<Error | null>(null)
 
@@ -28,6 +29,15 @@ export function useApiClient(options: ApiClientOptions) {
 
     try {
       const { signal, ...chatOptions } = options ?? {} as { signal?: AbortSignal; thinking?: { enabled?: boolean } }
+
+      // Combine user-provided signal with timeout signal
+      const signals: AbortSignal[] = []
+      signals.push(AbortSignal.timeout(streamTimeout))
+      if (signal) {
+        signals.push(signal)
+      }
+      const combinedSignal = signals.length > 1 ? AbortSignal.any(signals) : signals[0]
+
       const response = await fetch(`${baseUrl}/chat/stream`, {
         method: 'POST',
         headers: {
@@ -42,11 +52,13 @@ export function useApiClient(options: ApiClientOptions) {
           stream: true,
           ...(Object.keys(chatOptions).length > 0 ? { options: chatOptions } : {}),
         }),
-        signal,
+        signal: combinedSignal,
       })
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
+        const error = new Error(`API error: ${response.status}`)
+        ;(error as any).status = response.status
+        throw error
       }
 
       if (!response.body) {
@@ -81,10 +93,17 @@ export function useApiClient(options: ApiClientOptions) {
         }
       }
     } catch (error) {
-      if ((error as Error).name !== 'AbortError') {
-        throw error
+      if ((error as Error).name === 'AbortError') {
+        // AbortError: client intentionally stopped generation, exit gracefully
+        return
       }
-      // AbortError: client intentionally stopped generation, exit gracefully
+      // Re-throw with type info for timeout vs other errors
+      if ((error as Error).name === 'TimeoutError') {
+        const timeoutError = new Error('请求超时') as Error & { code: string }
+        timeoutError.code = 'TIMEOUT'
+        throw timeoutError
+      }
+      throw error
     } finally {
       if (reader) {
         reader.releaseLock()

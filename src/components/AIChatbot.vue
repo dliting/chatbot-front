@@ -138,6 +138,7 @@ watch(
       apiClient.value = useApiClient({
         baseUrl: newUrl,
         streamEnabled: config.value.streamEnabled ?? true,
+        streamTimeout: config.value.streamTimeout,
       })
     } else {
       apiClient.value = undefined
@@ -427,7 +428,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
     }
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
-      // User intentionally stopped generation — keep received content, mark as sent
+      // User intentionally stopped generation
       isThinkingActive.value = false
       const userMsg = currentMessages.find(m => m.messageId === userMessageId)
       if (userMsg) {
@@ -435,9 +436,18 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       }
       const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
       if (assistantMsg) {
-        assistantMsg.status = 'sent'
+        if (assistantMsg.content) {
+          // Partial content received — mark as stopped
+          assistantMsg.status = 'stopped'
+          assistantMsg.errorMessage = '已停止生成'
+        } else {
+          // No content received — mark as error
+          assistantMsg.status = 'error'
+          assistantMsg.errorMessage = '已停止生成'
+        }
       }
     } else {
+      // Real error (network, timeout, server)
       console.error('Failed to send message:', error)
       const userMsg = currentMessages.find(m => m.messageId === userMessageId)
       if (userMsg) {
@@ -446,6 +456,17 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
       if (assistantMsg) {
         assistantMsg.status = 'error'
+        // Generate user-friendly error message
+        const err = error as Error & { code?: string; status?: number }
+        if (err.code === 'TIMEOUT' || err.name === 'TimeoutError') {
+          assistantMsg.errorMessage = '响应超时，请检查网络或后端服务'
+        } else if (err.message?.includes('Failed to fetch') || err.message?.includes('NetworkError')) {
+          assistantMsg.errorMessage = '网络连接失败，请检查网络'
+        } else if (err.status) {
+          assistantMsg.errorMessage = `服务器错误 (HTTP ${err.status})`
+        } else {
+          assistantMsg.errorMessage = err.message || '发送失败，请重试'
+        }
       }
     }
   } finally {

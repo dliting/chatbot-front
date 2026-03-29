@@ -5,7 +5,7 @@
 // Message Types
 export type MessageRole = 'user' | 'assistant' | 'system'
 export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'mixed' | 'document'
-export type MessageStatus = 'sending' | 'sent' | 'error' | 'loading'
+export type MessageStatus = 'sending' | 'sent' | 'error' | 'loading' | 'stopped'
 
 // Document attachment
 export interface DocumentAttachment {
@@ -30,6 +30,7 @@ export interface Message {
   metadata?: Record<string, unknown>
   thinkingContent?: string    // Thinking/reasoning process text
   thinkingTime?: number       // Thinking elapsed time in ms
+  errorMessage?: string       // User-facing error description when status is 'error' or 'stopped'
 }
 
 // Session Types

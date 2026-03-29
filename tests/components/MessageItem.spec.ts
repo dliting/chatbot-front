@@ -363,7 +363,7 @@ describe('MessageItem Component', () => {
       const wrapper = createWrapper(message)
 
       expect(wrapper.find('.chatbot-message__error').exists()).toBe(true)
-      expect(wrapper.find('.chatbot-message__error').text()).toContain('Failed to send')
+      expect(wrapper.find('.chatbot-message__error').text()).toContain('发送失败')
     })
 
     it('should apply streaming class for streaming messages', () => {

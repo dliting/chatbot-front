@@ -60,9 +60,24 @@
             <div v-if="message.status === 'loading' && !message.content" class="chat-content__typing">
               <span/><span/><span/>
             </div>
+            <!-- Error / Stopped indicator -->
+            <div v-if="(message.status === 'error' || message.status === 'stopped') && message.errorMessage" class="chat-content__error-msg">
+              <svg viewBox="0 0 24 24" fill="currentColor" class="chat-content__error-icon">
+                <path v-if="message.status === 'stopped'" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                <path v-else d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+              <span>{{ message.errorMessage }}</span>
+              <button
+                v-if="message.role === 'assistant' || message.status === 'error'"
+                class="chat-content__error-retry"
+                @click.stop="handleRefreshMessage(message)"
+              >
+                重试
+              </button>
+            </div>
           </div>
           <!-- Message Actions (hover to show, Cherry Studio style) -->
-          <div v-if="message.status !== 'loading' && message.content" :class="['chat-content__message-actions', { 'chat-content__message-actions--visible': lastAiMessageIds.has(message.messageId) }]">
+          <div v-if="message.status !== 'loading' && message.status !== 'error' && message.content" :class="['chat-content__message-actions', { 'chat-content__message-actions--visible': lastAiMessageIds.has(message.messageId) }]">
             <button
               :class="['chat-content__action-btn', { 'chat-content__action-btn--copied': copyFeedbackMap[message.messageId] }]"
               :title="mergedLabels.copy || '复制'"
@@ -561,6 +576,47 @@ watch(() => props.messages, () => {
 
       &:nth-child(2) { animation-delay: 0.2s; }
       &:nth-child(3) { animation-delay: 0.4s; }
+    }
+  }
+
+  &__error-msg {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--chatbot-danger-color, #f56c6c);
+    background: rgba(245, 108, 108, 0.08);
+    border-radius: 6px;
+    border: 1px solid rgba(245, 108, 108, 0.15);
+
+    svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    span {
+      flex: 1;
+      line-height: 1.4;
+    }
+  }
+
+  &__error-retry {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    font-size: 12px;
+    color: var(--chatbot-primary-color, #409eff);
+    background: transparent;
+    border: 1px solid var(--chatbot-primary-color, #409eff);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+      background: var(--chatbot-primary-color, #409eff);
+      color: white;
     }
   }
 

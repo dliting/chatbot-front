@@ -56,7 +56,7 @@ export interface ChatbotConfig {
   // API configuration
   apiBaseUrl?: string
   streamEnabled?: boolean
-  streamTimeout?: number // in milliseconds
+  streamTimeout?: number // Stream response timeout in milliseconds (default: 120000 = 2min)
 
   // Iframe mode
   iframeMode?: boolean
@@ -87,6 +87,10 @@ export interface ChatbotLabels {
   uploading: string
   uploadFailed: string
   retry: string
+  timeout: string
+  networkError: string
+  serverError: string
+  generationStopped: string
   close: string
   expand: string
   collapse: string
@@ -132,6 +136,10 @@ export const defaultChatbotLabels: ChatbotLabels = {
   uploading: 'Uploading...',
   uploadFailed: 'Upload Failed',
   retry: 'Retry',
+  timeout: '响应超时，请检查网络或后端服务',
+  networkError: '网络连接失败，请检查网络',
+  serverError: '服务器错误',
+  generationStopped: '已停止生成',
   close: 'Close',
   expand: 'Expand',
   collapse: 'Collapse',
@@ -213,7 +221,7 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   // API
   apiBaseUrl: '/api',
   streamEnabled: true,
-  streamTimeout: 60000,
+  streamTimeout: 120000, // 2 minutes
 
   // Iframe
   iframeMode: false,

@@ -92,7 +92,12 @@
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
           </svg>
-          <span>Failed to send</span>
+          <span>{{ message.errorMessage || (isUser ? '发送失败' : '响应失败') }}</span>
+        </div>
+
+        <!-- Stopped indicator -->
+        <div v-if="isStopped" class="chatbot-message__stopped">
+          <span>{{ message.errorMessage || '已停止生成' }}</span>
         </div>
       </div>
 
@@ -190,6 +195,7 @@ const emit = defineEmits<Emits>()
 // Computed
 const isUser = computed(() => props.message.role === 'user')
 const isError = computed(() => props.message.status === 'error')
+const isStopped = computed(() => props.message.status === 'stopped')
 const hasText = computed(() => Boolean(props.message.content))
 const hasImages = computed(() => Boolean(props.message.images?.length))
 const hasVideos = computed(() => Boolean(props.message.videos?.length))
@@ -546,6 +552,13 @@ const handleDoubleClick = () => {
       width: 14px;
       height: 14px;
     }
+  }
+
+  &__stopped {
+    font-size: 12px;
+    color: var(--chatbot-subtext-color, #909399);
+    margin-top: 4px;
+    font-style: italic;
   }
 
   &__timestamp {
