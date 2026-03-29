@@ -46,7 +46,7 @@ describe('utils/message', () => {
   }
 
   const mockImageMessage: Message = {
-    id: 'msg_3',
+    messageId: 'msg_3',
     sessionId: mockSessionId,
     role: 'user',
     type: 'image',

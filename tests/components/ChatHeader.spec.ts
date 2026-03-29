@@ -228,11 +228,6 @@ describe('ChatHeader Component', () => {
       expect(html).toMatch(/title=["']切换到/)
     })
 
-    it('should have aria-label on input field', () => {
-      // This would be tested in InputArea component
-      // ChatHeader doesn't have input field
-      expect(true).toBe(true)
-    })
   })
 
   describe('Edge Cases', () => {

@@ -30,8 +30,8 @@ describe('utils/stream', () => {
       client.disconnect(true)
       client.reset()
 
-      // After reset, client should be in a state that allows reconnection
-      expect(client).toBeDefined()
+      // After reset, client should be disconnected
+      expect(client.isConnected()).toBe(false)
     })
 
     it('should disconnect with permanent flag', () => {
@@ -40,8 +40,8 @@ describe('utils/stream', () => {
       client.disconnect(true)
       client.disconnect(false)
 
-      // Should not throw
-      expect(client).toBeDefined()
+      // Should remain disconnected
+      expect(client.isConnected()).toBe(false)
     })
   })
 

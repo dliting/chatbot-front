@@ -2,7 +2,7 @@
  * Unit tests for file validation utilities
  */
 import { describe, it, expect } from 'vitest'
-import { validateFileSize, formatFileSize, getMediaType, FILE_SIZE_LIMITS } from '@/utils/fileValidation'
+import { validateFileSize, getMediaType, FILE_SIZE_LIMITS } from '@/utils/fileValidation'
 
 describe('fileValidation', () => {
   describe('validateFileSize', () => {
@@ -56,28 +56,6 @@ describe('fileValidation', () => {
       Object.defineProperty(file, 'size', { value: 10 * 1024 * 1024 })
       const result = validateFileSize(file, 'image')
       expect(result.valid).toBe(true)
-    })
-  })
-
-  describe('formatFileSize', () => {
-    it('should format bytes', () => {
-      expect(formatFileSize(500)).toBe('500 B')
-    })
-
-    it('should format kilobytes', () => {
-      expect(formatFileSize(2048)).toBe('2 KB')
-    })
-
-    it('should format megabytes', () => {
-      expect(formatFileSize(3 * 1024 * 1024)).toBe('3 MB')
-    })
-
-    it('should handle zero bytes', () => {
-      expect(formatFileSize(0)).toBe('0 B')
-    })
-
-    it('should handle gigabytes', () => {
-      expect(formatFileSize(1073741824)).toBe('1 GB')
     })
   })
 

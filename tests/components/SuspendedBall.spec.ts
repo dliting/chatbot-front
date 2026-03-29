@@ -109,6 +109,39 @@ describe('SuspendedBall Component', () => {
       expect(badge.text()).toBe('99+')
       expect(badge.classes()).toContain('chatbot-ball__badge--dot')
     })
+
+    it('should not show badge when unreadCount is 0', () => {
+      const wrapper = mount(SuspendedBall, {
+        props: { unreadCount: 0 },
+      })
+
+      expect(wrapper.find('.chatbot-ball__badge').exists()).toBe(false)
+    })
+
+    it('should show badge when unreadCount > 0', () => {
+      const wrapper = mount(SuspendedBall, {
+        props: { unreadCount: 3 },
+      })
+
+      const badge = wrapper.find('.chatbot-ball__badge')
+      expect(badge.exists()).toBe(true)
+      expect(badge.text()).toBe('3')
+    })
+
+    it('should display 99+ for unreadCount > 99', () => {
+      const wrapper = mount(SuspendedBall, {
+        props: { unreadCount: 150 },
+      })
+
+      const badge = wrapper.find('.chatbot-ball__badge')
+      expect(badge.text()).toBe('99+')
+    })
+
+    it('should not show badge when unreadCount is undefined', () => {
+      const wrapper = mount(SuspendedBall)
+
+      expect(wrapper.find('.chatbot-ball__badge').exists()).toBe(false)
+    })
   })
 
   describe('Events', () => {

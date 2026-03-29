@@ -6,7 +6,7 @@ describe('SessionManager Unread Badge', () => {
   it('should show unread badge when unreadCount > 0', () => {
     const sessions = [
       {
-        id: '1',
+        sessionId: '1',
         title: 'Session 1',
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -26,7 +26,7 @@ describe('SessionManager Unread Badge', () => {
   it('should show 99+ when unreadCount > 99', () => {
     const sessions = [
       {
-        id: '1',
+        sessionId: '1',
         title: 'Session 1',
         createdAt: Date.now(),
         updatedAt: Date.now(),
@@ -45,7 +45,7 @@ describe('SessionManager Unread Badge', () => {
   it('should NOT show badge when unreadCount = 0', () => {
     const sessions = [
       {
-        id: '1',
+        sessionId: '1',
         title: 'Session 1',
         createdAt: Date.now(),
         updatedAt: Date.now(),

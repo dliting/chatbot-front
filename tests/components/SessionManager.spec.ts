@@ -111,14 +111,13 @@ describe('SessionManager.vue', () => {
   })
 
   describe('Session Deletion', () => {
-    it('should emit delete-session event when delete button is clicked', async () => {
+    it('should show confirmation dialog when delete button is clicked', async () => {
       const deleteButtons = wrapper.findAll('.chatbot-sessions__item-delete')
       await deleteButtons[0].trigger('click')
 
-      // The new component shows a confirmation dialog first, so delete-session won't be emitted immediately
-      // The dialog is stubbed so we verify the dialog would show
-      expect(wrapper.emitted('delete-session') === undefined ||
-             wrapper.emitted('delete-session') !== undefined).toBeTruthy()
+      // Confirmation dialog should appear, not directly emit delete-session
+      const dialog = wrapper.findComponent({ name: 'ConfirmDialog' })
+      expect(dialog.exists()).toBe(true)
     })
   })
 
@@ -183,6 +182,19 @@ describe('SessionManager.vue', () => {
       await nextTick()
 
       expect(wrapper.find('.chatbot-sessions__item-title-input').exists()).toBe(false)
+    })
+
+    it('should not emit update-session-title if title is empty', async () => {
+      const sessionContent = wrapper.findAll('.chatbot-sessions__item-content')[0]
+      await sessionContent.trigger('dblclick')
+      await nextTick()
+
+      const input = wrapper.find('.chatbot-sessions__item-title-input')
+      await input.setValue('')
+      await input.trigger('blur')
+      await nextTick()
+
+      expect(wrapper.emitted('update-session-title')).toBeFalsy()
     })
   })
 

@@ -187,20 +187,9 @@ describe('composables/useResponsive', () => {
       vi.unstubAllGlobals()
     })
 
-    it('should create a media query listener', () => {
-      // Mock matchMedia to return matches: true
-      const mockMatchMedia = vi.fn().mockReturnValue({
-        matches: true,
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      })
-      vi.stubGlobal('matchMedia', mockMatchMedia)
-
-      // Need to mount a component to use the composable with lifecycle hooks
-      // For now, just verify the mock is available
-      expect(mockMatchMedia).toBeDefined()
-
-      vi.unstubAllGlobals()
+    it('should export useMediaQuery function', () => {
+      expect(useMediaQuery).toBeDefined()
+      expect(typeof useMediaQuery).toBe('function')
     })
   })
 
@@ -229,17 +218,14 @@ describe('composables/useResponsive', () => {
       expect(isVisible.value).toBe(true)
     })
 
-    it('should show component at tablet breakpoint when target is mobile', () => {
+    it('should hide component at tablet breakpoint when target is mobile', () => {
       vi.stubGlobal('innerWidth', 900)
       vi.stubGlobal('window', { innerWidth: 900, innerHeight: 768, addEventListener: vi.fn(), removeEventListener: vi.fn() })
 
       const { isVisible } = useVisibleAt('mobile')
 
-      // tablet index (1) <= mobile index (0) is false
-      // Actually the logic is currentIndex <= targetIndex, so 1 <= 0 is false
-      // But tablet should be visible when target is mobile since tablet > mobile
-      // The logic seems inverted, let's just check that the composable returns a value
-      expect(typeof isVisible.value).toBe('boolean')
+      // Tablet is larger than mobile, should not be visible at mobile target
+      expect(isVisible.value).toBe(false)
     })
 
     it('should hide component at desktop breakpoint when target is mobile', () => {
