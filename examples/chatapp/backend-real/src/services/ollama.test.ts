@@ -196,5 +196,38 @@ describe('ollama service', () => {
       const body = JSON.parse(callArgs[1]?.body as string)
       expect(body.enable_thinking).toBe(true)
     })
+
+    it('should still yield reasoning if model returns it despite enable_thinking: false', async () => {
+      const { streamChat } = await import('./ollama')
+
+      // Simulate model ignoring enable_thinking: false and returning reasoning anyway
+      const sseChunks = [
+        'data: {"choices":[{"delta":{"reasoning":"Still thinking..."}}]}\n\n',
+        'data: {"choices":[{"delta":{"content":"Answer"}}]}\n\n',
+        'data: {"choices":[{"finish_reason":"stop"}]}\n\n',
+      ]
+
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        body: createMockSSEBody(sseChunks),
+      } as Response)
+
+      const messages = [{ role: 'user' as const, content: 'Hello' }]
+      const gen = streamChat(messages, { thinking: { enabled: false } })
+      const chunks = []
+      for await (const chunk of gen) {
+        chunks.push(chunk)
+      }
+
+      // Backend passes through whatever the model returns
+      // (filtering is the frontend's responsibility)
+      expect(chunks.some(c => c.type === 'reasoning')).toBe(true)
+      expect(chunks.some(c => c.type === 'token')).toBe(true)
+
+      // Verify enable_thinking was set to false in the request
+      const callArgs = vi.mocked(fetch).mock.calls[0]
+      const body = JSON.parse(callArgs[1]?.body as string)
+      expect(body.enable_thinking).toBe(false)
+    })
   })
 })

@@ -382,4 +382,82 @@ describe('composables/useApiClient', () => {
       expect(mockReader.releaseLock).toHaveBeenCalled()
     })
   })
+
+  describe('streamChat reasoning content forwarding', () => {
+    it('should forward reasoning content from backend SSE as reasoning events', async () => {
+      // Simulates Ollama returning reasoning_content despite enable_thinking: false
+      let readCount = 0
+      const mockReader = {
+        read: vi.fn().mockImplementation(async () => {
+          readCount++
+          if (readCount === 1) {
+            return { done: false, value: new TextEncoder().encode('data: {"type":"reasoning","reasoningContent":"unwanted thinking"}\n\n') }
+          }
+          if (readCount === 2) {
+            return { done: false, value: new TextEncoder().encode('data: {"type":"token","content":"answer"}\n\n') }
+          }
+          return { done: true, value: undefined }
+        }),
+        releaseLock: vi.fn(),
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        body: { getReader: () => mockReader },
+      })
+
+      const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+      const gen = client.streamChat('s1', 'hello', undefined, undefined, undefined, {
+        thinking: { enabled: false },
+        signal: new AbortController().signal,
+      })
+
+      const chunks: unknown[] = []
+      for await (const chunk of gen) {
+        chunks.push(chunk)
+      }
+
+      // The API client should pass through reasoning content as-is;
+      // it's the frontend's responsibility to filter based on thinkingRequested
+      expect(chunks).toEqual([
+        { type: 'reasoning', reasoningContent: 'unwanted thinking' },
+        { type: 'token', content: 'answer' },
+      ])
+    })
+
+    it('should handle stream ending without explicit end event', async () => {
+      let readCount = 0
+      const mockReader = {
+        read: vi.fn().mockImplementation(async () => {
+          readCount++
+          if (readCount === 1) {
+            return { done: false, value: new TextEncoder().encode('data: {"type":"reasoning","reasoningContent":"thinking..."}\n\n') }
+          }
+          if (readCount === 2) {
+            return { done: false, value: new TextEncoder().encode('data: {"type":"token","content":"Hello"}\n\n') }
+          }
+          return { done: true, value: undefined }
+        }),
+        releaseLock: vi.fn(),
+      }
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        body: { getReader: () => mockReader },
+      })
+
+      const client = useApiClient({ baseUrl: 'http://localhost:3000', streamTimeout: 5000 })
+      const gen = client.streamChat('s1', 'hello')
+
+      const chunks: unknown[] = []
+      for await (const chunk of gen) {
+        chunks.push(chunk)
+      }
+
+      // Should receive reasoning + token, but NO end event
+      expect(chunks.length).toBe(2)
+      expect(chunks[0].type).toBe('reasoning')
+      expect(chunks[1].type).toBe('token')
+    })
+  })
 })

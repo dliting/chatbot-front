@@ -380,6 +380,9 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       status: 'loading'
     })
 
+    // Capture thinking preference at send time (toggle may change mid-stream)
+    const thinkingRequested = thinkingEnabled.value
+
     // Use streaming API with abort signal
     const stream = client.streamChat(
       sessionId,
@@ -387,7 +390,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       data.images,
       data.videos,
       data.audios,
-      { thinking: { enabled: thinkingEnabled.value }, signal: controller.signal }
+      { thinking: { enabled: thinkingRequested }, signal: controller.signal }
     )
 
     let fullThinkingContent = ''
@@ -395,6 +398,8 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
 
     for await (const chunk of stream) {
       if (chunk.type === 'reasoning' && chunk.reasoningContent) {
+        // Only process reasoning if user requested thinking mode
+        if (!thinkingRequested) continue
         if (!thinkingStartTime) thinkingStartTime = Date.now()
         isThinkingActive.value = true
         fullThinkingContent += chunk.reasoningContent
@@ -427,10 +432,10 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
         }
       }
     }
-    // Stream ended normally — check if it was due to user abort
-    // (useApiClient swallows AbortError, so it exits the for-await without throwing)
+    // Stream ended — ensure message status is finalized
+    isThinkingActive.value = false
     if (controller.signal.aborted) {
-      isThinkingActive.value = false
+      // User aborted
       const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
       if (assistantMsg && assistantMsg.status === 'loading') {
         if (assistantMsg.content) {
@@ -439,6 +444,22 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
         } else {
           assistantMsg.status = 'error'
           assistantMsg.errorMessage = '已停止生成'
+        }
+      }
+    } else {
+      // Stream completed without abort — finalize any message still in loading state
+      // (handles cases where 'end' event was missed or stream closed prematurely)
+      const userMsg = currentMessages.find(m => m.messageId === userMessage.messageId)
+      if (userMsg && userMsg.status === 'sending') {
+        userMsg.status = 'sent'
+      }
+      const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
+      if (assistantMsg && assistantMsg.status === 'loading') {
+        if (assistantMsg.content || assistantMsg.thinkingContent) {
+          assistantMsg.status = 'sent'
+        } else {
+          assistantMsg.status = 'error'
+          assistantMsg.errorMessage = '未收到回复'
         }
       }
     }
