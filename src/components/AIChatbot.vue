@@ -414,8 +414,9 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
           }
         }
       } else if (chunk.type === 'end') {
+        // If user already stopped, don't overwrite the stopped/error status
+        if (controller.signal.aborted) break
         isThinkingActive.value = false
-        // Mark message as sent
         const userMsg = currentMessages.find(m => m.messageId === userMessage.messageId)
         if (userMsg) {
           userMsg.status = 'sent'
@@ -423,6 +424,21 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
         const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
         if (assistantMsg) {
           assistantMsg.status = 'sent'
+        }
+      }
+    }
+    // Stream ended normally — check if it was due to user abort
+    // (useApiClient swallows AbortError, so it exits the for-await without throwing)
+    if (controller.signal.aborted) {
+      isThinkingActive.value = false
+      const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
+      if (assistantMsg && assistantMsg.status === 'loading') {
+        if (assistantMsg.content) {
+          assistantMsg.status = 'stopped'
+          assistantMsg.errorMessage = '已停止生成'
+        } else {
+          assistantMsg.status = 'error'
+          assistantMsg.errorMessage = '已停止生成'
         }
       }
     }
