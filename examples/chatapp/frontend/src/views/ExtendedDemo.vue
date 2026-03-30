@@ -2,19 +2,23 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { AIChatbot } from 'chatbot'
+import { useSettings } from '../composables/useSettings'
 
 const router = useRouter()
+const { getApiBaseUrl, settings } = useSettings()
 
 const config = computed(() => ({
   mode: 'extended', // 使用新的交互模式参数
   layout: 'dual',  // 明确指定双栏布局
   defaultExpanded: true, // 默认展开聊天面板
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
+  apiBaseUrl: getApiBaseUrl(),
   streamEnabled: true,
+  streamTimeout: settings.apiTimeout,
   enableImageUpload: true,
   maxImageCount: 3,
   enableSessionManager: true,
   enableThinking: true,
+  theme: settings.theme,
   labels: {
     title: '智能助手',
     placeholder: '输入消息...',

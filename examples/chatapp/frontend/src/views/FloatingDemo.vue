@@ -2,13 +2,16 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { AIChatbot } from 'chatbot'
+import { useSettings } from '../composables/useSettings'
 
 const router = useRouter()
+const { getApiBaseUrl, settings } = useSettings()
 
 const config = computed(() => ({
   mode: 'floating',
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
+  apiBaseUrl: getApiBaseUrl(),
   streamEnabled: true,
+  streamTimeout: settings.apiTimeout,
   position: 'bottom-right',
   panelWidth: 400,
   panelHeight: 600,
@@ -19,6 +22,7 @@ const config = computed(() => ({
   resizable: true,
   rememberPosition: true,
   enableSessionManager: true,
+  theme: settings.theme,
   labels: {
     title: '智能助手',
     placeholder: '输入消息...',
