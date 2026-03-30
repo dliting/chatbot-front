@@ -18,7 +18,9 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   })
 
   const messagesState = useMessagesState()
-  const sessionsState = useSessionsState()
+  const sessionsState = useSessionsState({
+    defaultTitle: config.labels?.newChat || '新对话',
+  })
   const interactionState = useInteractionState({
     maxImageCount: config.maxImageCount,
   })

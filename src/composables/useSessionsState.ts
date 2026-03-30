@@ -1,11 +1,14 @@
 /**
  * Composable for sessions state management
  */
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 import type { Session } from '@/types'
 
 // Storage key for sessions
 const SESSIONS_STORAGE_KEY = 'chatbot-sessions'
+
+// Default session title (can be overridden via options)
+const DEFAULT_SESSION_TITLE = '新对话'
 
 // Load sessions from localStorage
 function loadSessionsFromStorage(): Session[] {
@@ -36,7 +39,13 @@ export interface SessionsState {
   currentId: string
 }
 
-export function useSessionsState() {
+export interface UseSessionsStateOptions {
+  defaultTitle?: string
+}
+
+export function useSessionsState(options: UseSessionsStateOptions = {}) {
+  const { defaultTitle = DEFAULT_SESSION_TITLE } = options
+
   // Load from localStorage or create new
   const storedSessions = loadSessionsFromStorage()
   const initialSessionId = storedSessions.length > 0
@@ -46,7 +55,7 @@ export function useSessionsState() {
   const sessions = reactive<SessionsState>({
     list: storedSessions.length > 0 ? storedSessions : [{
       sessionId: initialSessionId,
-      title: '新对话',
+      title: defaultTitle,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       messageCount: 0,
@@ -54,6 +63,18 @@ export function useSessionsState() {
     }],
     currentId: initialSessionId,
   })
+
+  // Save initial state to localStorage
+  saveSessionsToStorage(sessions.list)
+
+  // Auto-persist sessions to localStorage on changes
+  watch(
+    () => sessions.list,
+    (list) => {
+      saveSessionsToStorage(list)
+    },
+    { deep: true }
+  )
 
   const currentSession = (): Session | undefined => {
     return sessions.list.find(s => s.sessionId === sessions.currentId)
@@ -66,7 +87,7 @@ export function useSessionsState() {
       // Create new session
       const newSession: Session = {
         sessionId,
-        title: '新对话',
+        title: defaultTitle,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         messageCount,
@@ -99,7 +120,7 @@ export function useSessionsState() {
   const createSession = (): string => {
     const newSession: Session = {
       sessionId: `session_${Date.now()}`,
-      title: '新对话',
+      title: defaultTitle,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       messageCount: 0,

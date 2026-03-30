@@ -263,6 +263,30 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
+   * Update session title
+   */
+  async function updateSessionTitle(sessionId: string, title: string): Promise<void> {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const response = await fetch(`${baseUrl}/sessions/${sessionId}/title`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ title }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
+  /**
    * Upload images
    */
   async function uploadImages(files: File[]): Promise<string[]> {
@@ -307,6 +331,7 @@ export function useApiClient(options: ApiClientOptions) {
     getSessionMessages,
     createSession,
     deleteSession,
+    updateSessionTitle,
     uploadImages,
   }
 }

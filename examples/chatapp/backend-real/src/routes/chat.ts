@@ -4,6 +4,7 @@ import {
   getSessions,
   getSession,
   deleteSession,
+  updateSessionTitle,
   getMessages,
   addMessage
 } from '../services/database'
@@ -178,13 +179,9 @@ router.get('/sessions', (_req: Request, res: Response) => {
 router.get('/sessions/:id/messages', (req: Request, res: Response) => {
   try {
     const id = req.params.id as string
-    const session = getSession(id)
 
-    if (!session) {
-      res.status(404).json({ code: 404, message: 'Session not found' })
-      return
-    }
-
+    // Return messages even if session row doesn't exist
+    // (messages may be stored before session metadata is created)
     const messages = getMessages(id)
     const apiResponse: ApiResponse = {
       code: 0,
@@ -235,6 +232,30 @@ router.delete('/sessions/:id', (req: Request, res: Response) => {
     res.json(apiResponse)
   } catch (error) {
     console.error('Delete session error:', error)
+    res.status(500).json({ code: 500, message: 'Internal server error' })
+  }
+})
+
+// PATCH /sessions/:id/title - Update session title
+router.patch('/sessions/:id/title', (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const { title } = req.body
+
+    if (!title) {
+      res.status(400).json({ code: 400, message: 'Title is required' })
+      return
+    }
+
+    updateSessionTitle(id, title)
+
+    const apiResponse: ApiResponse = {
+      code: 0,
+      message: 'success'
+    }
+    res.json(apiResponse)
+  } catch (error) {
+    console.error('Update session title error:', error)
     res.status(500).json({ code: 500, message: 'Internal server error' })
   }
 })

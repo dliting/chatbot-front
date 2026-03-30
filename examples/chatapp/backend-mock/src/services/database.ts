@@ -206,11 +206,19 @@ export function getMessages(sessionId: string): Message[] {
 export function updateSessionTitle(sessionId: string, title: string): void {
   if (!db) throw new Error('Database not initialized')
 
-  db.run('UPDATE sessions SET title = ?, updatedAt = ? WHERE sessionId = ?', [
-    title,
-    Date.now(),
-    sessionId
-  ])
+  const now = Date.now()
+  const existing = getSession(sessionId)
+  if (existing) {
+    db.run('UPDATE sessions SET title = ?, updatedAt = ? WHERE sessionId = ?', [
+      title, now, sessionId
+    ])
+  } else {
+    // Create session row if it doesn't exist
+    db.run(
+      'INSERT INTO sessions (sessionId, title, createdAt, updatedAt, messageCount) VALUES (?, ?, ?, ?, ?)',
+      [sessionId, title, now, now, 0]
+    )
+  }
 
   saveDatabase()
 }

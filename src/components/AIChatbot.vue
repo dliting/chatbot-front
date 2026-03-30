@@ -22,6 +22,7 @@
       @create-session="_handleCreateSession"
       @select-session="_handleSwitchSession"
       @delete-session="_handleDeleteSession"
+      @update-session-title="_handleUpdateSessionTitle"
       @edit="handleEditMessage"
       @copy="() => {}"
       @refresh="handleRefreshMessage"
@@ -74,6 +75,7 @@
         @create-session="_handleCreateSession"
         @select-session="_handleSwitchSession"
         @delete-session="_handleDeleteSession"
+        @update-session-title="_handleUpdateSessionTitle"
         @edit="handleEditMessage"
         @copy="() => {}"
         @refresh="handleRefreshMessage"
@@ -266,9 +268,20 @@ const _handleDeleteSession = (sessionId: string) => {
   emit('sessionDelete', sessionId)
 }
 
-const _handleUpdateSessionTitle = (sessionId: string, title: string) => {
+const _handleUpdateSessionTitle = async (sessionId: string, title: string) => {
+  // Update local state
   updateSessionTitle(sessionId, title)
   emit('sessionTitleUpdate', sessionId, title)
+
+  // Persist to backend
+  const client = apiClient.value
+  if (client) {
+    try {
+      await client.updateSessionTitle(sessionId, title)
+    } catch (error) {
+      console.error('Failed to update session title on backend:', error)
+    }
+  }
 }
 
 const handleEditMessage = (message: import('@/types').Message) => {
@@ -435,7 +448,11 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
     // Stream ended — ensure message status is finalized
     isThinkingActive.value = false
     if (controller.signal.aborted) {
-      // User aborted
+      // User aborted — finalize both user and assistant messages
+      const userMsg = currentMessages.find(m => m.messageId === userMessage.messageId)
+      if (userMsg) {
+        userMsg.status = 'sent'
+      }
       const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
       if (assistantMsg && assistantMsg.status === 'loading') {
         if (assistantMsg.content) {
@@ -459,13 +476,14 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
           assistantMsg.status = 'sent'
         } else {
           assistantMsg.status = 'error'
-          assistantMsg.errorMessage = '未收到回复'
+          assistantMsg.errorMessage = '响应异常结束'
         }
       }
     }
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
-      // User intentionally stopped generation
+      // useApiClient swallows AbortError, so this branch is unreachable via normal abort flow.
+      // It remains as defense-in-depth if the API client behavior ever changes.
       isThinkingActive.value = false
       const userMsg = currentMessages.find(m => m.messageId === userMessageId)
       if (userMsg) {
@@ -474,11 +492,9 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       const assistantMsg = currentMessages.find(m => m.messageId === assistantMessageId)
       if (assistantMsg) {
         if (assistantMsg.content) {
-          // Partial content received — mark as stopped
           assistantMsg.status = 'stopped'
           assistantMsg.errorMessage = '已停止生成'
         } else {
-          // No content received — mark as error
           assistantMsg.status = 'error'
           assistantMsg.errorMessage = '已停止生成'
         }
@@ -539,9 +555,26 @@ watch(
   }
 )
 
-// Initialize theme
+// Load messages for current session from backend
+const loadCurrentSessionMessages = async () => {
+  const client = apiClient.value
+  const sessionId = state.sessions.currentId
+  if (!client || !sessionId) return
+
+  try {
+    const messages = await client.getSessionMessages(sessionId)
+    if (messages.length > 0) {
+      state.messages.bySession[sessionId] = messages
+    }
+  } catch (error) {
+    console.error('Failed to load session messages on mount:', error)
+  }
+}
+
+// Initialize theme and restore messages from backend
 onMounted(() => {
   setTheme(config.value.theme)
+  loadCurrentSessionMessages()
 })
 
 // Watch theme changes from external config (e.g. settings page)

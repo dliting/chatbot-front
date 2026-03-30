@@ -460,4 +460,35 @@ describe('composables/useApiClient', () => {
       expect(chunks[1].type).toBe('token')
     })
   })
+
+  describe('updateSessionTitle', () => {
+    it('should send PATCH request to update session title', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ code: 0, message: 'success' }),
+      })
+
+      const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+      await client.updateSessionTitle('session-1', 'My Chat')
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'http://localhost:3000/sessions/session-1/title',
+        expect.objectContaining({
+          method: 'PATCH',
+          headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+          body: JSON.stringify({ title: 'My Chat' }),
+        })
+      )
+    })
+
+    it('should throw on non-ok response', async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        status: 500,
+      })
+
+      const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+      await expect(client.updateSessionTitle('s1', 't')).rejects.toThrow('API error: 500')
+    })
+  })
 })

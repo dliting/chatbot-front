@@ -17,6 +17,7 @@
     @create-session="$emit('create-session')"
     @select-session="$emit('select-session', $event)"
     @delete-session="$emit('delete-session', $event)"
+    @update-session-title="(sessionId, title) => $emit('update-session-title', sessionId, title)"
     @edit-message="$emit('edit', $event)"
     @copy-message="$emit('copy', $event)"
     @refresh-message="$emit('refresh', $event)"
@@ -47,6 +48,7 @@
     @create-session="$emit('create-session')"
     @select-session="$emit('select-session', $event)"
     @delete-session="$emit('delete-session', $event)"
+    @update-session-title="(sessionId, title) => $emit('update-session-title', sessionId, title)"
     @edit="$emit('edit', $event)"
     @copy="$emit('copy', $event)"
     @refresh="$emit('refresh', $event)"
@@ -99,6 +101,7 @@ interface Emits {
   (e: 'create-session'): void
   (e: 'select-session', sessionId: string): void
   (e: 'delete-session', sessionId: string): void
+  (e: 'update-session-title', sessionId: string, title: string): void
   (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void

@@ -10,6 +10,7 @@ export interface UseSessionsOptions {
   maxSessions?: number
   storageKey?: string
   persistToStorage?: boolean
+  defaultTitle?: string
 }
 
 export function useSessions(options: UseSessionsOptions = {}) {
@@ -17,6 +18,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
     maxSessions = 50,
     storageKey = 'chatbot-sessions',
     persistToStorage = true,
+    defaultTitle = '新对话',
   } = options
 
   const sessions = ref<Session[]>([])
@@ -55,7 +57,7 @@ export function useSessions(options: UseSessionsOptions = {}) {
   const createSession = (): string => {
     const newSession: Session = {
       sessionId: generateId('session'),
-      title: '新对话',
+      title: defaultTitle,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       messageCount: 0,

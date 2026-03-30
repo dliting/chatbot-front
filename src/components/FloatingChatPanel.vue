@@ -60,6 +60,7 @@
         @create-session="handleCreateSession"
         @select-session="handleSelectSession"
         @delete-session="handleDeleteSession"
+        @update-session-title="(sessionId, title) => $emit('update-session-title', sessionId, title)"
       />
     </div>
 
@@ -124,6 +125,7 @@ interface Emits {
   (e: 'create-session'): void
   (e: 'select-session', sessionId: string): void
   (e: 'delete-session', sessionId: string): void
+  (e: 'update-session-title', sessionId: string, title: string): void
   (e: 'edit-message', message: Message): void
   (e: 'copy-message', message: Message): void
   (e: 'refresh-message', message: Message): void
