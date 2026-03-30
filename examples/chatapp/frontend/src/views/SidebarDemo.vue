@@ -15,6 +15,7 @@ const config = computed(() => ({
   enableImageUpload: true,
   maxImageCount: 3,
   enableSessionManager: true,
+  enableThinking: true,
   theme: settings.theme,
   labels: {
     title: '智能助手',

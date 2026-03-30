@@ -523,6 +523,13 @@ onMounted(() => {
   setTheme(config.value.theme)
 })
 
+// Watch theme changes from external config (e.g. settings page)
+watch(() => config.value.theme, (newTheme) => {
+  if (newTheme) {
+    setTheme(newTheme)
+  }
+})
+
 // Cleanup on unmount
 onUnmounted(() => {
   cleanup()

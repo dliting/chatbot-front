@@ -22,6 +22,7 @@ const config = computed(() => ({
   resizable: true,
   rememberPosition: true,
   enableSessionManager: true,
+  enableThinking: true,
   theme: settings.theme,
   labels: {
     title: '智能助手',
