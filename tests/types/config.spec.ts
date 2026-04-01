@@ -56,7 +56,7 @@ describe('ChatbotConfig Type', () => {
 
     it('should have sensible default feature flags', () => {
       expect(defaultChatbotConfig.enableImageUpload).toBe(true)
-      expect(defaultChatbotConfig.enableSessionManager).toBe(true)
+      expect(defaultChatbotConfig.enableTopicManager).toBe(true)
       expect(defaultChatbotConfig.draggable).toBe(true)
       expect(defaultChatbotConfig.resizable).toBe(true)
       expect(defaultChatbotConfig.rememberPosition).toBe(true)
@@ -144,7 +144,7 @@ describe('ChatbotConfig Type', () => {
         'mode', 'layout', 'chatMode', 'position', 'panelWidth', 'panelHeight',
         'panelMinWidth', 'panelMaxWidth', 'defaultExpanded', 'panelMode',
         'draggable', 'resizable', 'minWidth', 'minHeight', 'rememberPosition',
-        'enableImageUpload', 'enableSessionManager', 'enableVoiceInput',
+        'enableImageUpload', 'enableTopicManager', 'enableVoiceInput',
         'enableCopyMessage', 'enableDeleteMessage', 'enableResend', 'enableClearAll',
         'maxImageCount', 'maxImageSize', 'theme', 'primaryColor',
         'apiBaseUrl', 'streamEnabled', 'streamTimeout',

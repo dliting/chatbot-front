@@ -1,6 +1,6 @@
 <template>
   <div
-    class="session-action-menu"
+    class="topic-action-menu"
     @contextmenu.prevent="handleContextMenu"
     @touchstart="handleTouchStart"
     @touchend="handleTouchEnd"
@@ -11,13 +11,13 @@
       <Transition name="menu-popover">
         <div
           v-if="visible"
-          class="session-action-menu__popover"
+          class="topic-action-menu__popover"
           :style="popoverStyle"
           @click.stop
         >
-          <div class="session-action-menu__list">
+          <div class="topic-action-menu__list">
             <button
-              class="session-action-menu__item"
+              class="topic-action-menu__item"
               @click="handleAction('edit')"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -27,7 +27,7 @@
               <span>{{ editLabel }}</span>
             </button>
             <button
-              class="session-action-menu__item session-action-menu__item--danger"
+              class="topic-action-menu__item topic-action-menu__item--danger"
               @click="handleAction('delete')"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -40,7 +40,7 @@
       </Transition>
       <div
         v-if="visible"
-        class="session-action-menu__backdrop"
+        class="topic-action-menu__backdrop"
         @click="closeMenu"
       />
     </Teleport>
@@ -137,7 +137,7 @@ const handleAction = (action: 'edit' | 'delete') => {
 
 const handleClickOutside = (e: MouseEvent) => {
   const target = e.target as HTMLElement
-  if (!target.closest('.session-action-menu__popover')) {
+  if (!target.closest('.topic-action-menu__popover')) {
     closeMenu()
   }
 }
@@ -155,11 +155,11 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-.session-action-menu {
+.topic-action-menu {
   position: relative;
 }
 
-.session-action-menu__popover {
+.topic-action-menu__popover {
   position: fixed;
   z-index: 10000;
   background: var(--chatbot-bg-color, #ffffff);
@@ -169,11 +169,11 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-.session-action-menu__list {
+.topic-action-menu__list {
   padding: 4px;
 }
 
-.session-action-menu__item {
+.topic-action-menu__item {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -206,7 +206,7 @@ onUnmounted(() => {
   }
 }
 
-.session-action-menu__backdrop {
+.topic-action-menu__backdrop {
   position: fixed;
   top: 0;
   left: 0;

@@ -12,8 +12,8 @@ import {
   getMessageText,
   groupMessagesByDate,
   getMessagePreview,
-  extractSessionTitle,
-  filterMessagesBySession,
+  extractTopicTitle,
+  filterMessagesByTopic,
   sortMessagesByTimestamp,
   getLastMessage,
   getMessageStats,
@@ -23,11 +23,11 @@ import {
 import type { Message } from '@/types'
 
 describe('utils/message', () => {
-  const mockSessionId = 'session_123'
+  const mockTopicId = 'topic_123'
 
   const mockUserMessage: Message = {
     messageId: 'msg_1',
-    sessionId: mockSessionId,
+    topicId: mockTopicId,
     role: 'user',
     type: 'text',
     content: 'Hello',
@@ -37,7 +37,7 @@ describe('utils/message', () => {
 
   const mockAssistantMessage: Message = {
     messageId: 'msg_2',
-    sessionId: mockSessionId,
+    topicId: mockTopicId,
     role: 'assistant',
     type: 'text',
     content: 'Hi there!',
@@ -47,7 +47,7 @@ describe('utils/message', () => {
 
   const mockImageMessage: Message = {
     messageId: 'msg_3',
-    sessionId: mockSessionId,
+    topicId: mockTopicId,
     role: 'user',
     type: 'image',
     content: '',
@@ -58,18 +58,18 @@ describe('utils/message', () => {
 
   describe('createMessage', () => {
     it('should create a text message', () => {
-      const msg = createMessage('user', 'Test', mockSessionId)
+      const msg = createMessage('user', 'Test', mockTopicId)
 
       expect(msg.role).toBe('user')
       expect(msg.content).toBe('Test')
-      expect(msg.sessionId).toBe(mockSessionId)
+      expect(msg.topicId).toBe(mockTopicId)
       expect(msg.type).toBe('text')
       expect(msg.status).toBe('sending')
     })
 
     it('should create an image message', () => {
       const images = ['https://example.com/img.jpg']
-      const msg = createMessage('user', '', mockSessionId, { images })
+      const msg = createMessage('user', '', mockTopicId, { images })
 
       expect(msg.images).toEqual(images)
       expect(msg.type).toBe('image')
@@ -77,7 +77,7 @@ describe('utils/message', () => {
 
     it('should create a mixed message', () => {
       const images = ['https://example.com/img.jpg']
-      const msg = createMessage('user', 'Look at this', mockSessionId, { images })
+      const msg = createMessage('user', 'Look at this', mockTopicId, { images })
 
       expect(msg.images).toEqual(images)
       expect(msg.type).toBe('mixed')
@@ -85,7 +85,7 @@ describe('utils/message', () => {
 
     it('should create a video message', () => {
       const videos = ['https://example.com/video.mp4']
-      const msg = createMessage('user', '', mockSessionId, { videos })
+      const msg = createMessage('user', '', mockTopicId, { videos })
 
       expect(msg.videos).toEqual(videos)
       expect(msg.type).toBe('video')
@@ -93,7 +93,7 @@ describe('utils/message', () => {
 
     it('should create an audio message', () => {
       const audios = ['https://example.com/audio.mp3']
-      const msg = createMessage('user', '', mockSessionId, { audios })
+      const msg = createMessage('user', '', mockTopicId, { audios })
 
       expect(msg.audios).toEqual(audios)
       expect(msg.type).toBe('audio')
@@ -103,7 +103,7 @@ describe('utils/message', () => {
       const videos = ['https://example.com/video.mp4']
       const images = ['https://example.com/image.jpg']
       const audios = ['https://example.com/audio.mp3']
-      const msg = createMessage('user', 'Check this', mockSessionId, {
+      const msg = createMessage('user', 'Check this', mockTopicId, {
         videos,
         images,
         audios,
@@ -116,7 +116,7 @@ describe('utils/message', () => {
     })
 
     it('should create assistant message with loading status', () => {
-      const msg = createMessage('assistant', 'Response', mockSessionId)
+      const msg = createMessage('assistant', 'Response', mockTopicId)
 
       expect(msg.status).toBe('loading')
     })
@@ -241,25 +241,25 @@ describe('utils/message', () => {
     })
   })
 
-  describe('extractSessionTitle', () => {
+  describe('extractTopicTitle', () => {
     it('should return AI response as title', () => {
       const messages: Message[] = [
         mockUserMessage,
         mockAssistantMessage,
       ]
 
-      const title = extractSessionTitle(messages)
+      const title = extractTopicTitle(messages)
       expect(title).toBe('Hi there!')
     })
 
     it('should return default for empty messages', () => {
-      const title = extractSessionTitle([])
-      expect(title).toBe('新对话')
+      const title = extractTopicTitle([])
+      expect(title).toBe('新话题')
     })
 
     it('should return default for user-only messages', () => {
-      const title = extractSessionTitle([mockUserMessage])
-      expect(title).toBe('新对话')
+      const title = extractTopicTitle([mockUserMessage])
+      expect(title).toBe('新话题')
     })
 
     it('should truncate long AI responses', () => {
@@ -268,20 +268,20 @@ describe('utils/message', () => {
         content: 'a'.repeat(100),
       }
 
-      const title = extractSessionTitle([mockUserMessage, longMessage])
+      const title = extractTopicTitle([mockUserMessage, longMessage])
       expect(title.length).toBeLessThanOrEqual(33) // 30 + '...'
     })
   })
 
-  describe('filterMessagesBySession', () => {
-    it('should filter messages by session ID', () => {
+  describe('filterMessagesByTopic', () => {
+    it('should filter messages by topic ID', () => {
       const messages: Message[] = [
         mockUserMessage,
         mockAssistantMessage,
-        { ...mockUserMessage, sessionId: 'other_session' },
+        { ...mockUserMessage, topicId: 'other_topic' },
       ]
 
-      const filtered = filterMessagesBySession(messages, mockSessionId)
+      const filtered = filterMessagesByTopic(messages, mockTopicId)
       expect(filtered.length).toBe(2)
     })
   })
@@ -306,12 +306,12 @@ describe('utils/message', () => {
         mockAssistantMessage,
       ]
 
-      const last = getLastMessage(messages, mockSessionId)
+      const last = getLastMessage(messages, mockTopicId)
       expect(last).toEqual(mockAssistantMessage)
     })
 
     it('should return undefined for empty messages', () => {
-      const last = getLastMessage([], mockSessionId)
+      const last = getLastMessage([], mockTopicId)
       expect(last).toBeUndefined()
     })
   })

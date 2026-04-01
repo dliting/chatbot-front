@@ -38,7 +38,7 @@ const app = createApp({
       panelWidth: 400,
       theme: 'light',
       enableImageUpload: true,
-      enableSessionManager: true,
+      enableTopicManager: true,
       iframeMode: true,
       ...chatbotConfig,
     }))
@@ -66,8 +66,8 @@ const app = createApp({
       messenger.send('chatbot:messageReceived', data)
     }
 
-    const handleSessionChange = (sessionId: string) => {
-      messenger.send('chatbot:sessionChange', { sessionId })
+    const handleTopicChange = (topicId: string) => {
+      messenger.send('chatbot:topicChange', { topicId })
     }
 
     // Listen for messages from parent
@@ -87,7 +87,7 @@ const app = createApp({
       handleToggle,
       handleSendMessage,
       handleMessageSuccess,
-      handleSessionChange,
+      handleTopicChange,
     }
   },
   template: `
@@ -97,7 +97,7 @@ const app = createApp({
       @panel-toggle="handleToggle"
       @send-message="handleSendMessage"
       @message-success="handleMessageSuccess"
-      @session-change="handleSessionChange"
+      @topic-change="handleTopicChange"
     />
   `,
 })

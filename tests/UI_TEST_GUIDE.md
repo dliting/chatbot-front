@@ -895,6 +895,66 @@ await expect(page.locator('h1')).toContainText('AI Chatbot')
 | 4 | 点击标题编辑 | 支持用户手动编辑标题 |
 | 5 | 未提取时 | 显示 "新对话" |
 
+#### 3.2.6 Topic持久化测试 (F-PERSIST)
+
+**测试用例 TC-EXTENDED-008: Topic自动持久化到localStorage**
+
+| 步骤 | 操作 | 预期结果 |
+|------|------|----------|
+| 1 | 创建新Topic | Topic立即保存到localStorage (`chatbot-topics`) |
+| 2 | 修改Topic标题 | localStorage中的数据同步更新 |
+| 3 | 切换Topic | 当前TopicID保存到localStorage |
+| 4 | 删除Topic | Topic从localStorage中移除 |
+| 5 | 刷新页面 | Topic列表从localStorage恢复 |
+| 6 | 清空localStorage | 页面加载时创建默认Topic |
+
+**Playwright测试参考：**
+```typescript
+test('TC-EXTENDED-008: Topic自动持久化', async ({ page }) => {
+  await page.goto('/extended')
+
+  // 创建新Topic并验证localStorage
+  const initialTopics = await page.evaluate(() => {
+    const data = localStorage.getItem('chatbot-topics')
+    return data ? JSON.parse(data) : []
+  })
+  const initialCount = initialTopics.length
+
+  // 创建新Topic
+  await page.getByRole('button', { name: /新建|new/i }).click()
+  await page.waitForTimeout(100)
+
+  // 验证localStorage更新
+  const updatedTopics = await page.evaluate(() => {
+    const data = localStorage.getItem('chatbot-topics')
+    return data ? JSON.parse(data) : []
+  })
+  expect(updatedTopics.length).toBe(initialCount + 1)
+})
+```
+
+#### 3.2.7 Topic标题更新与回滚测试 (F-ROLLBACK)
+
+**测试用例 TC-EXTENDED-009: Topic标题更新失败时的回滚**
+
+| 步骤 | 操作 | 预期结果 |
+|------|------|----------|
+| 1 | 双击Topic标题 | 进入编辑模式 |
+| 2 | 修改标题为"测试标题" | 本地状态立即更新（乐观更新） |
+| 3 | 模拟后端更新失败 | 控制台显示错误日志 |
+| 4 | 检查标题显示 | 标题回滚到原值 |
+| 5 | 检查localStorage | localStorage中的标题也回滚 |
+
+**测试用例 TC-EXTENDED-010: Topic标题更新成功**
+
+| 步骤 | 操作 | 预期结果 |
+|------|------|----------|
+| 1 | 双击Topic标题进入编辑模式 | 显示输入框 |
+| 2 | 输入新标题"我的对话" | 输入框显示新标题 |
+| 3 | 按Enter键或点击外部 | 标题更新，localStorage同步 |
+| 4 | 检查后端API | 发送PATCH请求到 `/sessions/:sessionId/title` |
+| 5 | 刷新页面 | 新标题保持不变 |
+
 ### 3.3 扩展模式布局特性 (F-205)
 
 **测试用例 TC-EXTENDED-007: 布局特性**

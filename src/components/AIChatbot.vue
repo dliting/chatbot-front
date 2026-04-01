@@ -7,8 +7,8 @@
       :layout="layout"
       :config="themedConfig"
       :messages="currentMessages"
-      :sessions="state.sessions.list"
-      :current-session-id="state.sessions.currentId"
+      :topics="state.topics.list"
+      :current-topic-id="state.topics.currentId"
       :is-streaming="isGenerating"
       :hide-welcome="false"
       :hide-quick-actions="false"
@@ -19,10 +19,10 @@
       :is-thinking="isThinkingActive"
       @send-message="handleSendMessage"
       @quick-action="handleQuickAction"
-      @create-session="_handleCreateSession"
-      @select-session="_handleSwitchSession"
-      @delete-session="_handleDeleteSession"
-      @update-session-title="_handleUpdateSessionTitle"
+      @create-topic="_handleCreateTopic"
+      @select-topic="_handleSwitchTopic"
+      @delete-topic="_handleDeleteTopic"
+      @update-topic-title="_handleUpdateTopicTitle"
       @edit="handleEditMessage"
       @copy="() => {}"
       @refresh="handleRefreshMessage"
@@ -58,8 +58,8 @@
         :layout="layout"
         :panel-open="state.ui.isPanelOpen"
         :messages="currentMessages"
-        :sessions="state.sessions.list"
-        :current-session-id="state.sessions.currentId"
+        :topics="state.topics.list"
+        :current-topic-id="state.topics.currentId"
         :is-streaming="isGenerating"
         :hide-header="!showAIChatHeader"
         :hide-welcome="state.ui.panelMode === 'dialog'"
@@ -72,10 +72,10 @@
         :is-thinking="isThinkingActive"
         @send-message="handleSendMessage"
         @quick-action="handleQuickAction"
-        @create-session="_handleCreateSession"
-        @select-session="_handleSwitchSession"
-        @delete-session="_handleDeleteSession"
-        @update-session-title="_handleUpdateSessionTitle"
+        @create-topic="_handleCreateTopic"
+        @select-topic="_handleSwitchTopic"
+        @delete-topic="_handleDeleteTopic"
+        @update-topic-title="_handleUpdateTopicTitle"
         @edit="handleEditMessage"
         @copy="() => {}"
         @refresh="handleRefreshMessage"
@@ -154,10 +154,10 @@ const {
   state,
   togglePanel,
   setTheme,
-  switchSession,
-  createSession,
-  deleteSession,
-  updateSessionTitle,
+  switchTopic,
+  createTopic,
+  deleteTopic,
+  updateTopicTitle,
   cleanup,
 } = useChatbotState(config.value)
 
@@ -222,10 +222,10 @@ const themedConfig = computed(() => ({
   theme: resolvedTheme.value,
 }))
 
-// Get current messages for the active session
+// Get current messages for the active topic
 const currentMessages = computed(() => {
-  const sessionId = state.sessions.currentId
-  return state.messages.bySession[sessionId] || []
+  const topicId = state.topics.currentId
+  return state.messages.byTopic[topicId] || []
 })
 
 // Methods
@@ -236,50 +236,57 @@ const toggleTheme = () => {
   setTheme(newTheme)
 }
 
-const _handleCreateSession = () => {
-  // Reuse current session if it's empty (avoid duplicate empty sessions)
-  const currentMsgs = state.messages.bySession[state.sessions.currentId]
+const _handleCreateTopic = () => {
+  // Reuse current topic if it's empty (avoid duplicate empty topics)
+  const currentMsgs = state.messages.byTopic[state.topics.currentId]
   if (currentMsgs && currentMsgs.length > 0) {
-    // Current session has messages, create a new session
-    const newId = createSession()
-    emit('sessionCreate', newId)
+    // Current topic has messages, create a new topic
+    const newId = createTopic()
+    emit('topicCreate', newId)
   }
-  // If current session is empty, do nothing (user stays on the empty session)
+  // If current topic is empty, do nothing (user stays on the empty topic)
 }
 
-const _handleSwitchSession = async (sessionId: string) => {
-  switchSession(sessionId)
-  emit('sessionChange', sessionId)
+const _handleSwitchTopic = async (topicId: string) => {
+  switchTopic(topicId)
+  emit('topicChange', topicId)
 
-  // Load messages from backend for the selected session
+  // Load messages from backend for the selected topic
   const client = apiClient.value
-  if (client && !state.messages.bySession[sessionId]?.length) {
+  if (client && !state.messages.byTopic[topicId]?.length) {
     try {
-      const messages = await client.getSessionMessages(sessionId)
-      state.messages.bySession[sessionId] = messages
+      const messages = await client.getTopicMessages(topicId)
+      state.messages.byTopic[topicId] = messages
     } catch (error) {
-      console.error('Failed to load session messages:', error)
+      console.error('Failed to load topic messages:', error)
     }
   }
 }
 
-const _handleDeleteSession = (sessionId: string) => {
-  deleteSession(sessionId)
-  emit('sessionDelete', sessionId)
+const _handleDeleteTopic = (topicId: string) => {
+  deleteTopic(topicId)
+  emit('topicDelete', topicId)
 }
 
-const _handleUpdateSessionTitle = async (sessionId: string, title: string) => {
-  // Update local state
-  updateSessionTitle(sessionId, title)
-  emit('sessionTitleUpdate', sessionId, title)
+const _handleUpdateTopicTitle = async (topicId: string, title: string) => {
+  // Get current topic to save old title for rollback
+  const currentTopic = state.topics.list.find(t => t.topicId === topicId)
+  const oldTitle = currentTopic?.title || ''
+
+  // Update local state (optimistic update)
+  updateTopicTitle(topicId, title)
+  emit('topicTitleUpdate', topicId, title)
 
   // Persist to backend
   const client = apiClient.value
   if (client) {
     try {
-      await client.updateSessionTitle(sessionId, title)
+      await client.updateTopicTitle(topicId, title)
     } catch (error) {
-      console.error('Failed to update session title on backend:', error)
+      console.error('Failed to update topic title on backend:', error)
+      // Rollback local state on failure
+      updateTopicTitle(topicId, oldTitle)
+      emit('topicTitleUpdate', topicId, oldTitle)
     }
   }
 }
@@ -291,8 +298,8 @@ const handleEditMessage = (message: import('@/types').Message) => {
 
 const handleRefreshMessage = (message: import('@/types').Message) => {
   // Refresh: remove the assistant message and resend the preceding user message
-  const sessionId = state.sessions.currentId
-  const msgs = state.messages.bySession[sessionId]
+  const topicId = state.topics.currentId
+  const msgs = state.messages.byTopic[topicId]
   if (!msgs) return
 
   // Find the assistant message and remove it
@@ -311,8 +318,8 @@ const handleRefreshMessage = (message: import('@/types').Message) => {
 }
 
 const handleDeleteMessage = (message: import('@/types').Message) => {
-  const sessionId = state.sessions.currentId
-  const msgs = state.messages.bySession[sessionId]
+  const topicId = state.topics.currentId
+  const msgs = state.messages.byTopic[topicId]
   if (!msgs) return
 
   const index = msgs.findIndex(m => m.messageId === message.messageId)
@@ -337,21 +344,21 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
   // Prevent sending while generating
   if (isGenerating.value) return
 
-  // Get current session ID
-  const sessionId = state.sessions.currentId
-  if (!sessionId) {
-    console.error('No active session')
+  // Get current topic ID
+  const topicId = state.topics.currentId
+  if (!topicId) {
+    console.error('No active topic')
     return
   }
 
-  // Sync messages.currentSessionId with sessions.currentId to ensure consistency
-  state.messages.currentSessionId = sessionId
+  // Sync messages.currentTopicId with topics.currentId to ensure consistency
+  state.messages.currentTopicId = topicId
 
-  // Get or create messages array for current session
-  if (!state.messages.bySession[sessionId]) {
-    state.messages.bySession[sessionId] = []
+  // Get or create messages array for current topic
+  if (!state.messages.byTopic[topicId]) {
+    state.messages.byTopic[topicId] = []
   }
-  const currentMessages = state.messages.bySession[sessionId]
+  const currentMessages = state.messages.byTopic[topicId]
 
   isGenerating.value = true
   const controller = new AbortController()
@@ -365,7 +372,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
     // Add user message to state
     const userMessage: import('@/types').Message = {
       messageId: generateId('msg'),
-      sessionId,
+      topicId,
       role: 'user',
       type: data.images?.length ? 'image' : data.videos?.length ? 'video' : data.audios?.length ? 'audio' : 'text',
       content: data.content,
@@ -385,7 +392,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
     // Add placeholder for AI response
     currentMessages.push({
       messageId: assistantMessageId,
-      sessionId,
+      topicId,
       role: 'assistant',
       type: 'text',
       content: '',
@@ -398,7 +405,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
 
     // Use streaming API with abort signal
     const stream = client.streamChat(
-      sessionId,
+      topicId,
       data.content,
       data.images,
       data.videos,
@@ -538,10 +545,10 @@ const handleStopGenerating = () => {
 // Emits
 interface Emits {
   (e: 'panelToggle', data: { isOpen: boolean; mode: string }): void
-  (e: 'sessionChange', sessionId: string): void
-  (e: 'sessionCreate', sessionId: string): void
-  (e: 'sessionDelete', sessionId: string): void
-  (e: 'sessionTitleUpdate', sessionId: string, title: string): void
+  (e: 'topicChange', topicId: string): void
+  (e: 'topicCreate', topicId: string): void
+  (e: 'topicDelete', topicId: string): void
+  (e: 'topicTitleUpdate', topicId: string, title: string): void
   (e: 'editMessage', message: import('@/types').Message): void
 }
 
@@ -555,26 +562,32 @@ watch(
   }
 )
 
-// Load messages for current session from backend
-const loadCurrentSessionMessages = async () => {
+// Load messages for current topic from backend
+const loadCurrentTopicMessages = async () => {
   const client = apiClient.value
-  const sessionId = state.sessions.currentId
-  if (!client || !sessionId) return
+  const topicId = state.topics.currentId
+  if (!client || !topicId) return
 
   try {
-    const messages = await client.getSessionMessages(sessionId)
+    const messages = await client.getTopicMessages(topicId)
     if (messages.length > 0) {
-      state.messages.bySession[sessionId] = messages
+      state.messages.byTopic[topicId] = messages
     }
-  } catch (error) {
-    console.error('Failed to load session messages on mount:', error)
+  } catch (error: unknown) {
+    // 404 is expected for new topics without message history - silently ignore
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    if (errorMessage.includes('404')) {
+      // New topic - no messages to load, this is normal
+      return
+    }
+    console.error('Failed to load topic messages on mount:', error)
   }
 }
 
 // Initialize theme and restore messages from backend
 onMounted(() => {
   setTheme(config.value.theme)
-  loadCurrentSessionMessages()
+  loadCurrentTopicMessages()
 })
 
 // Watch theme changes from external config (e.g. settings page)
@@ -599,7 +612,7 @@ defineExpose({
 <style scoped lang="scss">
 .ai-chatbot {
   --chatbot-primary-color: v-bind('config.primaryColor');
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 </style>
 

@@ -51,10 +51,10 @@ describe('composables/useApiClient', () => {
 
       expect(typeof client.streamChat).toBe('function')
       expect(typeof client.sendMessage).toBe('function')
-      expect(typeof client.getSessions).toBe('function')
-      expect(typeof client.getSessionMessages).toBe('function')
-      expect(typeof client.createSession).toBe('function')
-      expect(typeof client.deleteSession).toBe('function')
+      expect(typeof client.getTopics).toBe('function')
+      expect(typeof client.getTopicMessages).toBe('function')
+      expect(typeof client.createTopic).toBe('function')
+      expect(typeof client.deleteTopic).toBe('function')
       expect(typeof client.uploadImages).toBe('function')
     })
   })
@@ -146,18 +146,18 @@ describe('composables/useApiClient', () => {
     })
   })
 
-  describe('getSessions', () => {
-    it('should fetch sessions', async () => {
-      const mockSessions = [
-        { id: 'session_1', title: 'Session 1' },
-        { id: 'session_2', title: 'Session 2' },
+  describe('getTopics', () => {
+    it('should fetch topics', async () => {
+      const mockTopics = [
+        { topicId: 'topic_1', title: 'Topic 1' },
+        { topicId: 'topic_2', title: 'Topic 2' },
       ]
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           code: 0,
-          data: { sessions: mockSessions },
+          data: { sessions: mockTopics }, // API returns 'sessions' key
         }),
       })
 
@@ -165,15 +165,15 @@ describe('composables/useApiClient', () => {
         baseUrl: 'http://localhost:3000',
       })
 
-      const result = await client.getSessions()
+      const result = await client.getTopics()
 
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/sessions')
-      expect(result).toEqual(mockSessions)
+      expect(result).toEqual(mockTopics)
     })
   })
 
-  describe('getSessionMessages', () => {
-    it('should fetch session messages', async () => {
+  describe('getTopicMessages', () => {
+    it('should fetch topic messages', async () => {
       const mockMessages = [
         { id: 'msg_1', content: 'Hello' },
         { id: 'msg_2', content: 'Hi there' },
@@ -191,22 +191,22 @@ describe('composables/useApiClient', () => {
         baseUrl: 'http://localhost:3000',
       })
 
-      const result = await client.getSessionMessages('session_1')
+      const result = await client.getTopicMessages('topic_1')
 
-      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/sessions/session_1/messages')
+      expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/sessions/topic_1/messages')
       expect(result).toEqual(mockMessages)
     })
   })
 
-  describe('createSession', () => {
-    it('should create session with title', async () => {
+  describe('createTopic', () => {
+    it('should create topic with title', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           code: 0,
           data: {
-            sessionId: 'session_new',
-            title: 'New Session',
+            topicId: 'topic_new',
+            title: 'New Topic',
             createdAt: Date.now(),
           },
         }),
@@ -216,7 +216,7 @@ describe('composables/useApiClient', () => {
         baseUrl: 'http://localhost:3000',
       })
 
-      const result = await client.createSession('New Session')
+      const result = await client.createTopic('New Topic')
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:3000/sessions',
@@ -224,13 +224,13 @@ describe('composables/useApiClient', () => {
           method: 'POST',
         })
       )
-      expect(result.sessionId).toBe('session_new')
-      expect(result.title).toBe('New Session')
+      expect(result.topicId).toBe('topic_new')
+      expect(result.title).toBe('New Topic')
     })
   })
 
-  describe('deleteSession', () => {
-    it('should delete session', async () => {
+  describe('deleteTopic', () => {
+    it('should delete topic', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
       })
@@ -239,10 +239,10 @@ describe('composables/useApiClient', () => {
         baseUrl: 'http://localhost:3000',
       })
 
-      await client.deleteSession('session_1')
+      await client.deleteTopic('topic_1')
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3000/sessions/session_1',
+        'http://localhost:3000/sessions/topic_1',
         expect.objectContaining({
           method: 'DELETE',
         })
@@ -461,18 +461,18 @@ describe('composables/useApiClient', () => {
     })
   })
 
-  describe('updateSessionTitle', () => {
-    it('should send PATCH request to update session title', async () => {
+  describe('updateTopicTitle', () => {
+    it('should send PATCH request to update topic title', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ code: 0, message: 'success' }),
       })
 
       const client = useApiClient({ baseUrl: 'http://localhost:3000' })
-      await client.updateSessionTitle('session-1', 'My Chat')
+      await client.updateTopicTitle('topic-1', 'My Chat')
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'http://localhost:3000/sessions/session-1/title',
+        'http://localhost:3000/sessions/topic-1/title',
         expect.objectContaining({
           method: 'PATCH',
           headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
@@ -488,7 +488,7 @@ describe('composables/useApiClient', () => {
       })
 
       const client = useApiClient({ baseUrl: 'http://localhost:3000' })
-      await expect(client.updateSessionTitle('s1', 't')).rejects.toThrow('API error: 500')
+      await expect(client.updateTopicTitle('t1', 't')).rejects.toThrow('API error: 500')
     })
   })
 })

@@ -5,20 +5,20 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EmbeddedChatPanel from '@/components/EmbeddedChatPanel.vue'
-import SessionListView from '@/components/SessionListView.vue'
+import TopicListView from '@/components/TopicListView.vue'
 import ChatHeader from '@/components/ChatHeader.vue'
 import ChatContent from '@/components/ChatContent.vue'
 import type { ChatMode, Layout, ChatbotConfig } from '@/types'
-import type { Message, Session } from '@/types'
+import type { Message, Topic } from '@/types'
 
 // Mock child components
-vi.mock('@/components/SessionListView.vue', () => ({
+vi.mock('@/components/TopicListView.vue', () => ({
   default: {
-    name: 'SessionListView',
-    template: '<div class="session-list-view-mock"></div>',
+    name: 'TopicListView',
+    template: '<div class="topic-list-view-mock"></div>',
     props: {
-      sessions: Array,
-      currentSessionId: String,
+      topics: Array,
+      currentTopicId: String,
       config: Object,
       isEmbedded: Boolean,
       layout: String,
@@ -43,18 +43,18 @@ vi.mock('@/components/ChatContent.vue', () => ({
 
 describe('EmbeddedChatPanel Component', () => {
   // Mock data
-  const mockSessions: Session[] = [
+  const mockTopics: Topic[] = [
     {
-      sessionId: 'session-1',
-      title: 'Session 1',
+      topicId: 'topic-1',
+      title: 'Topic 1',
       createdAt: Date.now(),
       updatedAt: Date.now(),
       messageCount: 5,
       unreadCount: 0,
     },
     {
-      sessionId: 'session-2',
-      title: 'Session 2',
+      topicId: 'topic-2',
+      title: 'Topic 2',
       createdAt: Date.now() - 10000,
       updatedAt: Date.now() - 10000,
       messageCount: 3,
@@ -65,7 +65,7 @@ describe('EmbeddedChatPanel Component', () => {
   const mockMessages: Message[] = [
     {
       id: 'msg-1',
-      sessionId: 'session-1',
+      topicId: 'topic-1',
       role: 'user',
       type: 'text',
       content: 'Hello',
@@ -74,7 +74,7 @@ describe('EmbeddedChatPanel Component', () => {
     },
     {
       id: 'msg-2',
-      sessionId: 'session-1',
+      topicId: 'topic-1',
       role: 'assistant',
       type: 'text',
       content: 'Hi there!',
@@ -99,8 +99,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -115,8 +115,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -126,56 +126,56 @@ describe('EmbeddedChatPanel Component', () => {
   })
 
   describe('Layout: Dual Layout', () => {
-    it('should render SessionListView as sidebar in dual layout', () => {
+    it('should render TopicListView as sidebar in dual layout', () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
-      // In dual layout, SessionListView should be rendered in aside element
+      // In dual layout, TopicListView should be rendered in aside element
       expect(wrapper.find('aside').exists()).toBe(true)
-      expect(wrapper.find('.session-list-view-mock').exists()).toBe(true)
+      expect(wrapper.find('.topic-list-view-mock').exists()).toBe(true)
     })
 
-    it('should pass layout prop to SessionListView in dual layout', () => {
+    it('should pass layout prop to TopicListView in dual layout', () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
-      const sessionListView = wrapper.findComponent(SessionListView)
-      expect(sessionListView.props('layout')).toBe('dual')
+      const topicListView = wrapper.findComponent(TopicListView)
+      expect(topicListView.props('layout')).toBe('dual')
     })
 
-    it('should pass enable-close prop as true to SessionListView in dual layout', () => {
+    it('should pass enable-close prop as true to TopicListView in dual layout', () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
-      const sessionListView = wrapper.findComponent(SessionListView)
-      expect(sessionListView.props('enableClose')).toBe(true)
+      const topicListView = wrapper.findComponent(TopicListView)
+      expect(topicListView.props('enableClose')).toBe(true)
     })
 
     it('should render ChatHeader in dual layout', () => {
@@ -185,8 +185,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
@@ -202,8 +202,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: true,
         },
@@ -214,44 +214,43 @@ describe('EmbeddedChatPanel Component', () => {
   })
 
   describe('Layout: Single Layout', () => {
-    it('should render SessionListView as view in single layout', () => {
+    it('should render TopicListView as view in single layout', () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
-      // In single layout with chat view, SessionListView is conditionally rendered
-      // Need to check if viewState.currentView is 'chat' or 'sessions'
-      expect(wrapper.find('.session-list-view-mock').exists() || wrapper.find('.chat-content-mock').exists()).toBe(true)
+      // In single layout with chat view, TopicListView is conditionally rendered
+      expect(wrapper.find('.topic-list-view-mock').exists() || wrapper.find('.chat-content-mock').exists()).toBe(true)
     })
 
-    it('should pass layout prop to SessionListView in single layout', async () => {
+    it('should pass layout prop to TopicListView in single layout', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
       })
 
-      // Switch to sessions view
+      // Switch to topics view
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      const sessionListView = wrapper.findComponent(SessionListView)
-      expect(sessionListView.props('layout')).toBe('single')
+      const topicListView = wrapper.findComponent(TopicListView)
+      expect(topicListView.props('layout')).toBe('single')
     })
 
     it('should not pass enable-close prop in single layout (uses default false)', async () => {
@@ -261,20 +260,20 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
       })
 
-      // Switch to sessions view
+      // Switch to topics view
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      const sessionListView = wrapper.findComponent(SessionListView)
+      const topicListView = wrapper.findComponent(TopicListView)
       // enableClose prop is not explicitly passed in single layout, so it defaults to false
-      expect(sessionListView.props('enableClose')).toBe(false)
+      expect(topicListView.props('enableClose')).toBe(false)
     })
 
     it('should render ChatContent in single layout', () => {
@@ -284,8 +283,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -301,8 +300,8 @@ describe('EmbeddedChatPanel Component', () => {
           mode: 'extended',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -317,8 +316,8 @@ describe('EmbeddedChatPanel Component', () => {
           mode: 'floating',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -333,8 +332,8 @@ describe('EmbeddedChatPanel Component', () => {
           mode: 'sidebar',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -345,121 +344,121 @@ describe('EmbeddedChatPanel Component', () => {
   })
 
   describe('Event Handling', () => {
-    it('should emit create-session event when SessionListView emits create-session', async () => {
+    it('should emit create-topic event when TopicListView emits create-topic', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('create-session')
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('create-topic')
 
-      expect(wrapper.emitted('create-session')).toBeTruthy()
+      expect(wrapper.emitted('create-topic')).toBeTruthy()
     })
 
-    it('should emit select-session event when SessionListView emits select-session', async () => {
+    it('should emit select-topic event when TopicListView emits select-topic', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('select-session', 'session-2')
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('select-topic', 'topic-2')
 
-      expect(wrapper.emitted('select-session')).toBeTruthy()
-      expect(wrapper.emitted('select-session')?.[0]).toEqual(['session-2'])
+      expect(wrapper.emitted('select-topic')).toBeTruthy()
+      expect(wrapper.emitted('select-topic')?.[0]).toEqual(['topic-2'])
     })
 
-    it('should emit delete-session event when SessionListView emits delete-session', async () => {
+    it('should emit delete-topic event when TopicListView emits delete-topic', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('delete-session', 'session-2')
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('delete-topic', 'topic-2')
 
-      expect(wrapper.emitted('delete-session')).toBeTruthy()
-      expect(wrapper.emitted('delete-session')?.[0]).toEqual(['session-2'])
+      expect(wrapper.emitted('delete-topic')).toBeTruthy()
+      expect(wrapper.emitted('delete-topic')?.[0]).toEqual(['topic-2'])
     })
 
-    it('should emit delete-sessions event when SessionListView emits delete-sessions', async () => {
+    it('should emit delete-topics event when TopicListView emits delete-topics', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
-      const sessionListView = wrapper.findComponent(SessionListView)
-      const sessionIdsToDelete = ['session-1', 'session-2']
-      await sessionListView.vm.$emit('delete-sessions', sessionIdsToDelete)
+      const topicListView = wrapper.findComponent(TopicListView)
+      const topicIdsToDelete = ['topic-1', 'topic-2']
+      await topicListView.vm.$emit('delete-topics', topicIdsToDelete)
 
-      expect(wrapper.emitted('delete-sessions')).toBeTruthy()
-      expect(wrapper.emitted('delete-sessions')?.[0]).toEqual([sessionIdsToDelete])
+      expect(wrapper.emitted('delete-topics')).toBeTruthy()
+      expect(wrapper.emitted('delete-topics')?.[0]).toEqual([topicIdsToDelete])
     })
 
-    it('should emit update-session-title event when SessionListView emits update-session-title', async () => {
+    it('should emit update-topic-title event when TopicListView emits update-topic-title', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('update-session-title', 'session-1', 'Updated Title')
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('update-topic-title', 'topic-1', 'Updated Title')
 
-      expect(wrapper.emitted('update-session-title')).toBeTruthy()
-      expect(wrapper.emitted('update-session-title')?.[0]).toEqual(['session-1', 'Updated Title'])
+      expect(wrapper.emitted('update-topic-title')).toBeTruthy()
+      expect(wrapper.emitted('update-topic-title')?.[0]).toEqual(['topic-1', 'Updated Title'])
     })
 
-    it('should emit close event when SessionListView emits close in dual layout', async () => {
+    it('should emit close event when TopicListView emits close in dual layout', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('close')
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('close')
 
       expect(wrapper.emitted('close')).toBeTruthy()
     })
@@ -471,8 +470,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -491,8 +490,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -511,8 +510,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -532,8 +531,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
@@ -547,15 +546,15 @@ describe('EmbeddedChatPanel Component', () => {
   })
 
   describe('View Switching (Single Layout)', () => {
-    it('should switch to sessions view when ChatHeader emits sessions event', async () => {
+    it('should switch to topics view when ChatHeader emits topics event', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
@@ -564,39 +563,39 @@ describe('EmbeddedChatPanel Component', () => {
       // Initially should show chat view
       expect(wrapper.find('.chat-content-mock').exists()).toBe(true)
 
-      // Click sessions button in header
+      // Click topics button in header
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      // After emitting sessions event, view should change to sessions
-      // The component should re-render with SessionListView
-      expect(wrapper.findComponent(SessionListView).exists()).toBe(true)
+      // After emitting topics event, view should change to topics
+      // The component should re-render with TopicListView
+      expect(wrapper.findComponent(TopicListView).exists()).toBe(true)
     })
 
-    it('should switch back to chat view when SessionListView emits close event', async () => {
+    it('should switch back to chat view when TopicListView emits close event', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
       })
 
-      // First switch to sessions view
+      // First switch to topics view
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      // Should show sessions
-      expect(wrapper.findComponent(SessionListView).exists()).toBe(true)
+      // Should show topics
+      expect(wrapper.findComponent(TopicListView).exists()).toBe(true)
 
-      // Then close sessions view
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('close')
+      // Then close topics view
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('close')
 
       // Should show chat view again
       expect(wrapper.find('.chat-content-mock').exists()).toBe(true)
@@ -611,8 +610,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: [],
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideWelcome: true,
         },
@@ -629,8 +628,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideQuickActions: true,
         },
@@ -647,8 +646,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: true,
         },
       })
@@ -666,8 +665,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: { ...mockConfig, theme: 'dark' },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
@@ -685,8 +684,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: { ...mockConfig, labels: { title: 'Custom Title' } },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
@@ -709,44 +708,44 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
       // Should show chat content by default
       expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
-      expect(wrapper.findComponent(SessionListView).exists()).toBe(false)
+      expect(wrapper.findComponent(TopicListView).exists()).toBe(false)
     })
 
-    it('should show session sidebar for extended mode', () => {
+    it('should show topic sidebar for extended mode', () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
 
       // Extended mode should always show sidebar
       expect(wrapper.find('aside').exists()).toBe(true)
-      expect(wrapper.findComponent(SessionListView).exists()).toBe(true)
+      expect(wrapper.findComponent(TopicListView).exists()).toBe(true)
     })
 
-    it('should toggle between chat and sessions view in floating mode', async () => {
+    it('should toggle between chat and topics view in floating mode', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
@@ -754,40 +753,40 @@ describe('EmbeddedChatPanel Component', () => {
 
       // Initially shows chat view
       expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
-      expect(wrapper.findComponent(SessionListView).exists()).toBe(false)
+      expect(wrapper.findComponent(TopicListView).exists()).toBe(false)
 
-      // Switch to sessions view via header button
+      // Switch to topics view via header button
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      // Now should show sessions view
-      expect(wrapper.findComponent(SessionListView).exists()).toBe(true)
+      // Now should show topics view
+      expect(wrapper.findComponent(TopicListView).exists()).toBe(true)
       expect(wrapper.findComponent(ChatContent).exists()).toBe(false)
 
       // Switch back to chat view via close button
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('close')
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('close')
 
       // Should show chat view again
       expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
-      expect(wrapper.findComponent(SessionListView).exists()).toBe(false)
+      expect(wrapper.findComponent(TopicListView).exists()).toBe(false)
     })
 
-    it('should show chat view initially even when no current session in floating mode', () => {
+    it('should show chat view initially even when no current topic in floating mode', () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: [],
-          sessions: mockSessions,
-          currentSessionId: '',
+          topics: mockTopics,
+          currentTopicId: '',
           isStreaming: false,
         },
       })
 
-      // Default view is chat view, even when no current session
-      // SessionListView is only shown after explicit navigation
+      // Default view is chat view, even when no current topic
+      // TopicListView is only shown after explicit navigation
       expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
     })
   })
@@ -800,8 +799,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: [],
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -810,32 +809,32 @@ describe('EmbeddedChatPanel Component', () => {
       expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
     })
 
-    it('should render with empty sessions array', () => {
+    it('should render with empty topics array', () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: [],
-          currentSessionId: '',
+          topics: [],
+          currentTopicId: '',
           isStreaming: false,
         },
       })
 
       expect(wrapper.exists()).toBe(true)
-      expect(wrapper.findComponent(SessionListView).exists()).toBe(true)
+      expect(wrapper.findComponent(TopicListView).exists()).toBe(true)
     })
 
-    it('should render with no current session', () => {
+    it('should render with no current topic', () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
           layout: 'dual',
           config: mockConfig,
           messages: [],
-          sessions: mockSessions,
-          currentSessionId: '',
+          topics: mockTopics,
+          currentTopicId: '',
           isStreaming: false,
         },
       })
@@ -849,8 +848,8 @@ describe('EmbeddedChatPanel Component', () => {
           mode: 'sidebar',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -868,8 +867,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -886,8 +885,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -903,8 +902,8 @@ describe('EmbeddedChatPanel Component', () => {
           mode: 'sidebar',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -921,8 +920,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'dual',
           config: { ...mockConfig, theme: 'dark' },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -939,8 +938,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
@@ -949,11 +948,11 @@ describe('EmbeddedChatPanel Component', () => {
       // In chat view, header should be visible
       expect(wrapper.findComponent(ChatHeader).exists()).toBe(true)
 
-      // Switch to sessions view
+      // Switch to topics view
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      // In sessions view, header should not be visible
+      // In topics view, header should not be visible
       expect(wrapper.findComponent(ChatHeader).exists()).toBe(false)
     })
 
@@ -964,8 +963,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: true,
         },
@@ -984,8 +983,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: [],
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideWelcome: false,
         },
@@ -1002,8 +1001,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
@@ -1015,137 +1014,137 @@ describe('EmbeddedChatPanel Component', () => {
       expect(wrapper.emitted('toggle-theme')).toBeTruthy()
     })
 
-    it('should emit create-session in sessions view in single layout', async () => {
+    it('should emit create-topic in topics view in single layout', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
       })
 
-      // Switch to sessions view
+      // Switch to topics view
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      // Should show sessions view
-      expect(wrapper.findComponent(SessionListView).exists()).toBe(true)
+      // Should show topics view
+      expect(wrapper.findComponent(TopicListView).exists()).toBe(true)
 
-      // Emit create-session from SessionListView
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('create-session')
+      // Emit create-topic from TopicListView
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('create-topic')
 
-      expect(wrapper.emitted('create-session')).toBeTruthy()
+      expect(wrapper.emitted('create-topic')).toBeTruthy()
     })
 
-    it('should emit select-session in sessions view in single layout', async () => {
+    it('should emit select-topic in topics view in single layout', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
       })
 
-      // Switch to sessions view
+      // Switch to topics view
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      // Emit select-session from SessionListView
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('select-session', 'session-2')
+      // Emit select-topic from TopicListView
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('select-topic', 'topic-2')
 
-      expect(wrapper.emitted('select-session')).toBeTruthy()
-      expect(wrapper.emitted('select-session')?.[0]).toEqual(['session-2'])
+      expect(wrapper.emitted('select-topic')).toBeTruthy()
+      expect(wrapper.emitted('select-topic')?.[0]).toEqual(['topic-2'])
     })
 
-    it('should emit delete-session in sessions view in single layout', async () => {
+    it('should emit delete-topic in topics view in single layout', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
       })
 
-      // Switch to sessions view
+      // Switch to topics view
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      // Emit delete-session from SessionListView
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('delete-session', 'session-2')
+      // Emit delete-topic from TopicListView
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('delete-topic', 'topic-2')
 
-      expect(wrapper.emitted('delete-session')).toBeTruthy()
-      expect(wrapper.emitted('delete-session')?.[0]).toEqual(['session-2'])
+      expect(wrapper.emitted('delete-topic')).toBeTruthy()
+      expect(wrapper.emitted('delete-topic')?.[0]).toEqual(['topic-2'])
     })
 
-    it('should emit delete-sessions in sessions view in single layout', async () => {
+    it('should emit delete-topics in topics view in single layout', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
       })
 
-      // Switch to sessions view
+      // Switch to topics view
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      // Emit delete-sessions from SessionListView
-      const sessionListView = wrapper.findComponent(SessionListView)
-      const sessionIdsToDelete = ['session-1', 'session-2']
-      await sessionListView.vm.$emit('delete-sessions', sessionIdsToDelete)
+      // Emit delete-topics from TopicListView
+      const topicListView = wrapper.findComponent(TopicListView)
+      const topicIdsToDelete = ['topic-1', 'topic-2']
+      await topicListView.vm.$emit('delete-topics', topicIdsToDelete)
 
-      expect(wrapper.emitted('delete-sessions')).toBeTruthy()
-      expect(wrapper.emitted('delete-sessions')?.[0]).toEqual([sessionIdsToDelete])
+      expect(wrapper.emitted('delete-topics')).toBeTruthy()
+      expect(wrapper.emitted('delete-topics')?.[0]).toEqual([topicIdsToDelete])
     })
 
-    it('should emit update-session-title in sessions view in single layout', async () => {
+    it('should emit update-topic-title in topics view in single layout', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
           hideHeader: false,
         },
       })
 
-      // Switch to sessions view
+      // Switch to topics view
       const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('sessions')
+      await chatHeader.vm.$emit('topics')
 
-      // Emit update-session-title from SessionListView
-      const sessionListView = wrapper.findComponent(SessionListView)
-      await sessionListView.vm.$emit('update-session-title', 'session-1', 'New Title')
+      // Emit update-topic-title from TopicListView
+      const topicListView = wrapper.findComponent(TopicListView)
+      await topicListView.vm.$emit('update-topic-title', 'topic-1', 'New Title')
 
-      expect(wrapper.emitted('update-session-title')).toBeTruthy()
-      expect(wrapper.emitted('update-session-title')?.[0]).toEqual(['session-1', 'New Title'])
+      expect(wrapper.emitted('update-topic-title')).toBeTruthy()
+      expect(wrapper.emitted('update-topic-title')?.[0]).toEqual(['topic-1', 'New Title'])
     })
 
     it('should render ChatContent with key based on messages length in single layout', () => {
@@ -1155,8 +1154,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -1172,8 +1171,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: [],
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: true,
           hideWelcome: true,
           hideQuickActions: true,
@@ -1191,8 +1190,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -1211,8 +1210,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })
@@ -1231,8 +1230,8 @@ describe('EmbeddedChatPanel Component', () => {
           layout: 'single',
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session-1',
+          topics: mockTopics,
+          currentTopicId: 'topic-1',
           isStreaming: false,
         },
       })

@@ -53,9 +53,9 @@ describe('ChatHeader Component', () => {
       expect(wrapper.findAll('.chat-header__btn').length).toBe(0)
     })
 
-    it('should show sessions button when enabled', () => {
+    it('should show topics button when enabled', () => {
       const wrapper = mount(ChatHeader, {
-        props: { showSessionsButton: true },
+        props: { showTopicsButton: true },
       })
 
       expect(wrapper.findAll('.chat-header__btn').length).toBeGreaterThan(0)
@@ -131,14 +131,14 @@ describe('ChatHeader Component', () => {
       expect(wrapper.emitted('back').length).toBe(1)
     })
 
-    it('should emit sessions event when sessions button is clicked', async () => {
+    it('should emit topics event when topics button is clicked', async () => {
       const wrapper = mount(ChatHeader, {
-        props: { showSessionsButton: true },
+        props: { showTopicsButton: true },
       })
 
       await wrapper.find('.chat-header__btn').trigger('click')
 
-      expect(wrapper.emitted('sessions')).toBeTruthy()
+      expect(wrapper.emitted('topics')).toBeTruthy()
     })
 
     it('should emit toggle-theme event when theme button is clicked', async () => {
@@ -167,7 +167,7 @@ describe('ChatHeader Component', () => {
       const wrapper = mount(ChatHeader, {
         props: {
           showBackButton: true,
-          showSessionsButton: true,
+          showTopicsButton: true,
           showThemeToggle: true,
           showCloseButton: true,
         },
@@ -180,7 +180,7 @@ describe('ChatHeader Component', () => {
       await wrapper.find('.chat-header__close').trigger('click')
 
       expect(wrapper.emitted('back')).toBeTruthy()
-      expect(wrapper.emitted('sessions')).toBeTruthy()
+      expect(wrapper.emitted('topics')).toBeTruthy()
       expect(wrapper.emitted('toggle-theme')).toBeTruthy()
       expect(wrapper.emitted('close')).toBeTruthy()
     })
@@ -212,7 +212,7 @@ describe('ChatHeader Component', () => {
     it('should have proper button titles', () => {
       const wrapper = mount(ChatHeader, {
         props: {
-          showSessionsButton: true,
+          showTopicsButton: true,
           showThemeToggle: true,
           showCloseButton: true,
         },
@@ -224,7 +224,7 @@ describe('ChatHeader Component', () => {
       // Check for title attributes
       const html = wrapper.html()
       // Check for title attributes using escaped quotes
-      expect(html).toMatch(/title=["']历史对话["']/)
+      expect(html).toMatch(/title=["']历史话题["']/)
       expect(html).toMatch(/title=["']切换到/)
     })
 
@@ -252,7 +252,7 @@ describe('ChatHeader Component', () => {
       const wrapper = mount(ChatHeader, {
         props: {
           showBackButton: true,
-          showSessionsButton: true,
+          showTopicsButton: true,
           showThemeToggle: true,
           showCloseButton: true,
         },
@@ -270,7 +270,7 @@ describe('ChatHeader Component', () => {
       const wrapper = mount(ChatHeader, {
         props: {
           showBackButton: false,
-          showSessionsButton: false,
+          showTopicsButton: false,
           showThemeToggle: false,
           showCloseButton: false,
         },
@@ -293,14 +293,14 @@ describe('ChatHeader Component', () => {
     it('should render all action buttons in correct order', () => {
       const wrapper = mount(ChatHeader, {
         props: {
-          showSessionsButton: true,
+          showTopicsButton: true,
           showThemeToggle: true,
           showCloseButton: true,
         },
       })
 
       const buttons = wrapper.findAll('.chat-header__btn')
-      expect(buttons.length).toBe(3) // sessions, theme, close
+      expect(buttons.length).toBe(3) // topics, theme, close
     })
 
     it('should update theme when prop changes', async () => {
@@ -321,10 +321,10 @@ describe('ChatHeader Component', () => {
 
   describe('Mode-specific Tests', () => {
     describe('Extended Mode', () => {
-      it('should show sessions button in extended mode', () => {
+      it('should show topics button in extended mode', () => {
         const wrapper = mount(ChatHeader, {
           props: {
-            showSessionsButton: true,
+            showTopicsButton: true,
             showThemeToggle: true,
           },
         })
@@ -356,17 +356,17 @@ describe('ChatHeader Component', () => {
         expect(wrapper.find('.chat-header__close').exists()).toBe(true)
       })
 
-      it('should not show sessions button in compact mode', () => {
+      it('should not show topics button in compact mode', () => {
         const wrapper = mount(ChatHeader, {
           props: {
-            showSessionsButton: false,
+            showTopicsButton: false,
           },
         })
 
-        const sessionsBtn = wrapper.findAll('.chat-header__btn').filter(btn => {
-          return btn.attributes('title')?.includes('历史对话')
+        const topicsBtn = wrapper.findAll('.chat-header__btn').filter(btn => {
+          return btn.attributes('title')?.includes('历史话题')
         })
-        expect(sessionsBtn.length).toBe(0)
+        expect(topicsBtn.length).toBe(0)
       })
     })
 

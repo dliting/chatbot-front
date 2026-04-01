@@ -1,27 +1,27 @@
 <template>
-  <div class="chatbot-sessions">
+  <div class="chatbot-topics">
     <!-- Search bar -->
-    <SessionSearch
+    <TopicSearch
       v-model="searchQuery"
       :placeholder="searchPlaceholder"
-      class="chatbot-sessions__search"
+      class="chatbot-topics__search"
     />
 
     <!-- Batch operation bar (shown when items are selected) -->
     <Transition name="batch-bar">
-      <div v-if="selectedSessionIds.length > 0" class="chatbot-sessions__batch-bar">
-        <span class="chatbot-sessions__batch-count">
+      <div v-if="selectedTopicIds.length > 0" class="chatbot-topics__batch-bar">
+        <span class="chatbot-topics__batch-count">
           {{ selectedCountText }}
         </span>
-        <div class="chatbot-sessions__batch-actions">
+        <div class="chatbot-topics__batch-actions">
           <button
-            class="chatbot-sessions__batch-btn chatbot-sessions__batch-btn--cancel"
+            class="chatbot-topics__batch-btn chatbot-topics__batch-btn--cancel"
             @click="clearSelection"
           >
             {{ cancelLabel }}
           </button>
           <button
-            class="chatbot-sessions__batch-btn chatbot-sessions__batch-btn--delete"
+            class="chatbot-topics__batch-btn chatbot-topics__batch-btn--delete"
             @click="handleBatchDelete"
           >
             {{ deleteSelectedLabel }}
@@ -30,22 +30,22 @@
       </div>
     </Transition>
 
-    <!-- New session button -->
+    <!-- New topic button -->
     <button
       v-if="!isBatchMode"
-      class="chatbot-sessions__new-btn"
-      @click="$emit('create-session')"
+      class="chatbot-topics__new-btn"
+      @click="$emit('create-topic')"
     >
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
       </svg>
-      <span>{{ newChatLabel }}</span>
+      <span>{{ newTopicLabel }}</span>
     </button>
 
     <!-- Batch mode toggle -->
     <button
       v-else
-      class="chatbot-sessions__batch-toggle"
+      class="chatbot-topics__batch-toggle"
       @click="toggleBatchMode"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -55,28 +55,28 @@
       <span>{{ doneLabel }}</span>
     </button>
 
-    <!-- Sessions list -->
-    <div class="chatbot-sessions__list">
-      <SessionActionMenu
-        v-for="session in filteredSessions"
-        :key="session.sessionId"
+    <!-- Topics list -->
+    <div class="chatbot-topics__list">
+      <TopicActionMenu
+        v-for="topic in filteredTopics"
+        :key="topic.topicId"
         :edit-label="editLabel"
         :delete-label="deleteLabel"
-        @edit="startEditTitle(session)"
-        @delete="handleDelete(session.sessionId)"
+        @edit="startEditTitle(topic)"
+        @delete="handleDelete(topic.topicId)"
       >
         <div
-          :class="sessionClasses(session)"
-          @click="handleSessionClick(session.sessionId)"
+          :class="topicClasses(topic)"
+          @click="handleTopicClick(topic.topicId)"
         >
           <!-- Checkbox for batch mode -->
           <div
             v-if="isBatchMode"
-            class="chatbot-sessions__checkbox"
-            @click.stop="toggleSelection(session.sessionId)"
+            class="chatbot-topics__checkbox"
+            @click.stop="toggleSelection(topic.topicId)"
           >
             <svg
-              v-if="selectedSessionIds.includes(session.sessionId)"
+              v-if="selectedTopicIds.includes(topic.topicId)"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -86,53 +86,53 @@
             </svg>
           </div>
 
-          <div class="chatbot-sessions__item-content" @dblclick.stop="startEditTitle(session)">
+          <div class="chatbot-topics__item-content" @dblclick.stop="startEditTitle(topic)">
             <!-- Editing mode -->
             <input
-              v-if="editingSessionId === session.sessionId"
+              v-if="editingTopicId === topic.topicId"
               ref="editInputRef"
               v-model="editingTitle"
-              class="chatbot-sessions__item-title-input"
-              @blur="saveTitle(session.sessionId)"
-              @keyup.enter="saveTitle(session.sessionId)"
+              class="chatbot-topics__item-title-input"
+              @blur="saveTitle(topic.topicId)"
+              @keyup.enter="saveTitle(topic.topicId)"
               @keyup.escape="cancelEdit"
               @click.stop
             />
             <!-- Display mode with highlight -->
-            <div v-else class="chatbot-sessions__item-title">
+            <div v-else class="chatbot-topics__item-title">
               <!-- eslint-disable-next-line vue/no-v-html -- Sanitized input for text highlighting -->
-              <span v-html="highlightText(session.title, searchQuery)" />
+              <span v-html="highlightText(topic.title, searchQuery)" />
             </div>
-            <div class="chatbot-sessions__item-meta">
-              {{ formatSessionMeta(session) }}
+            <div class="chatbot-topics__item-meta">
+              {{ formatTopicMeta(topic) }}
             </div>
           </div>
 
           <!-- Unread badge -->
           <span
-            v-if="session.unreadCount > 0"
-            class="chatbot-sessions__item-badge"
+            v-if="topic.unreadCount > 0"
+            class="chatbot-topics__item-badge"
           >
-            {{ session.unreadCount > 99 ? '99+' : session.unreadCount }}
+            {{ topic.unreadCount > 99 ? '99+' : topic.unreadCount }}
           </span>
 
           <!-- Delete button (only in non-batch mode) -->
           <button
             v-if="!isBatchMode"
-            class="chatbot-sessions__item-delete"
+            class="chatbot-topics__item-delete"
             :title="deleteLabel"
-            @click.stop="handleDelete(session.sessionId)"
+            @click.stop="handleDelete(topic.topicId)"
           >
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
             </svg>
           </button>
         </div>
-      </SessionActionMenu>
+      </TopicActionMenu>
 
       <!-- Empty state -->
-      <div v-if="filteredSessions.length === 0" class="chatbot-sessions__empty">
-        {{ searchQuery ? noResultsLabel : noSessionsLabel }}
+      <div v-if="filteredTopics.length === 0" class="chatbot-topics__empty">
+        {{ searchQuery ? noResultsLabel : noTopicsLabel }}
       </div>
     </div>
 
@@ -149,8 +149,8 @@
 
     <!-- Batch mode button (shown when not in batch mode) -->
     <button
-      v-if="!isBatchMode && sessions.length > 0"
-      class="chatbot-sessions__batch-mode-btn"
+      v-if="!isBatchMode && topics.length > 0"
+      class="chatbot-topics__batch-mode-btn"
       :title="batchModeLabel"
       @click="toggleBatchMode"
     >
@@ -166,16 +166,17 @@
 
 <script setup lang="ts">
 import { ref, computed, nextTick } from 'vue'
-import type { Session } from '@/types'
+import type { Topic } from '@/types'
 import { formatTime, escapeHTML } from '@/utils/helpers'
-import SessionSearch from './SessionSearch.vue'
-import SessionActionMenu from './SessionActionMenu.vue'
+import { TOPIC_DEFAULTS } from '@/constants'
+import TopicSearch from './TopicSearch.vue'
+import TopicActionMenu from './TopicActionMenu.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
 
 interface Props {
-  sessions: Session[]
-  currentSessionId: string
-  newChatLabel?: string
+  topics: Topic[]
+  currentTopicId: string
+  newTopicLabel?: string
   searchPlaceholder?: string
   editLabel?: string
   deleteLabel?: string
@@ -184,7 +185,7 @@ interface Props {
   batchModeLabel?: string
   deleteSelectedLabel?: string
   noResultsLabel?: string
-  noSessionsLabel?: string
+  noTopicsLabel?: string
   deleteConfirmTitle?: string
   deleteConfirmMessage?: string
   batchDeleteConfirmTitle?: string
@@ -192,8 +193,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  newChatLabel: '新对话',
-  searchPlaceholder: 'Search sessions...',
+  newTopicLabel: TOPIC_DEFAULTS.TITLE,
+  searchPlaceholder: 'Search topics...',
   editLabel: 'Rename',
   deleteLabel: 'Delete',
   cancelLabel: 'Cancel',
@@ -201,19 +202,19 @@ const props = withDefaults(defineProps<Props>(), {
   batchModeLabel: 'Select multiple',
   deleteSelectedLabel: 'Delete selected',
   noResultsLabel: 'No results found',
-  noSessionsLabel: 'No sessions yet',
-  deleteConfirmTitle: 'Delete session?',
-  deleteConfirmMessage: 'Are you sure you want to delete this session?',
-  batchDeleteConfirmTitle: 'Delete sessions?',
-  batchDeleteConfirmMessage: 'Are you sure you want to delete the selected sessions?',
+  noTopicsLabel: 'No topics yet',
+  deleteConfirmTitle: 'Delete topic?',
+  deleteConfirmMessage: 'Are you sure you want to delete this topic?',
+  batchDeleteConfirmTitle: 'Delete topics?',
+  batchDeleteConfirmMessage: 'Are you sure you want to delete the selected topics?',
 })
 
 interface Emits {
-  (e: 'create-session'): void
-  (e: 'switch-session', sessionId: string): void
-  (e: 'delete-session', sessionId: string | string[]): void
-  (e: 'delete-sessions', sessionIds: string[]): void
-  (e: 'update-session-title', sessionId: string, title: string): void
+  (e: 'create-topic'): void
+  (e: 'switch-topic', topicId: string): void
+  (e: 'delete-topic', topicId: string | string[]): void
+  (e: 'delete-topics', topicIds: string[]): void
+  (e: 'update-topic-title', topicId: string, title: string): void
 }
 
 const emit = defineEmits<Emits>()
@@ -223,7 +224,7 @@ const searchQuery = ref('')
 
 // Batch mode state
 const isBatchMode = ref(false)
-const selectedSessionIds = ref<string[]>([])
+const selectedTopicIds = ref<string[]>([])
 
 // Delete confirmation state
 const showDeleteDialog = ref(false)
@@ -242,24 +243,24 @@ const deleteDialog = computed(() => {
 })
 
 // Editing state
-const editingSessionId = ref<string | null>(null)
+const editingTopicId = ref<string | null>(null)
 const editingTitle = ref('')
 const editInputRef = ref<HTMLInputElement | null>(null)
 
-// Filter sessions by search query
-const filteredSessions = computed(() => {
+// Filter topics by search query
+const filteredTopics = computed(() => {
   if (!searchQuery.value.trim()) {
-    return props.sessions
+    return props.topics
   }
   const query = searchQuery.value.toLowerCase()
-  return props.sessions.filter(session =>
-    session.title.toLowerCase().includes(query)
+  return props.topics.filter(topic =>
+    topic.title.toLowerCase().includes(query)
   )
 })
 
 // Selected count text
 const selectedCountText = computed(() => {
-  const count = selectedSessionIds.value.length
+  const count = selectedTopicIds.value.length
   return count === 1 ? '1 selected' : `${count} selected`
 })
 
@@ -273,38 +274,38 @@ const toggleBatchMode = () => {
 
 // Clear selection
 const clearSelection = () => {
-  selectedSessionIds.value = []
+  selectedTopicIds.value = []
 }
 
 // Toggle selection
-const toggleSelection = (sessionId: string) => {
-  const index = selectedSessionIds.value.indexOf(sessionId)
+const toggleSelection = (topicId: string) => {
+  const index = selectedTopicIds.value.indexOf(topicId)
   if (index > -1) {
-    selectedSessionIds.value.splice(index, 1)
+    selectedTopicIds.value.splice(index, 1)
   } else {
-    selectedSessionIds.value.push(sessionId)
+    selectedTopicIds.value.push(topicId)
   }
 }
 
-// Handle session click
-const handleSessionClick = (sessionId: string) => {
+// Handle topic click
+const handleTopicClick = (topicId: string) => {
   if (isBatchMode.value) {
-    toggleSelection(sessionId)
+    toggleSelection(topicId)
   } else {
-    emit('switch-session', sessionId)
+    emit('switch-topic', topicId)
   }
 }
 
 // Handle single delete
-const handleDelete = (sessionId: string) => {
-  pendingDeleteIds.value = [sessionId]
+const handleDelete = (topicId: string) => {
+  pendingDeleteIds.value = [topicId]
   showDeleteDialog.value = true
 }
 
 // Handle batch delete
 const handleBatchDelete = () => {
-  if (selectedSessionIds.value.length > 0) {
-    pendingDeleteIds.value = [...selectedSessionIds.value]
+  if (selectedTopicIds.value.length > 0) {
+    pendingDeleteIds.value = [...selectedTopicIds.value]
     showDeleteDialog.value = true
   }
 }
@@ -312,9 +313,9 @@ const handleBatchDelete = () => {
 // Confirm delete
 const confirmDelete = () => {
   if (pendingDeleteIds.value.length === 1) {
-    emit('delete-session', pendingDeleteIds.value[0])
+    emit('delete-topic', pendingDeleteIds.value[0])
   } else {
-    emit('delete-sessions', pendingDeleteIds.value)
+    emit('delete-topics', pendingDeleteIds.value)
   }
   clearSelection()
   isBatchMode.value = false
@@ -332,10 +333,10 @@ const highlightText = (text: string, query: string): string => {
 }
 
 // Start editing title
-const startEditTitle = async (session: Session) => {
+const startEditTitle = async (topic: Topic) => {
   if (isBatchMode.value) return
-  editingSessionId.value = session.sessionId
-  editingTitle.value = session.title
+  editingTopicId.value = topic.topicId
+  editingTitle.value = topic.title
   await nextTick()
   if (editInputRef.value) {
     if (typeof editInputRef.value.focus === 'function') {
@@ -348,40 +349,40 @@ const startEditTitle = async (session: Session) => {
 }
 
 // Save title
-const saveTitle = (sessionId: string) => {
+const saveTitle = (topicId: string) => {
   const trimmedTitle = editingTitle.value.trim()
-  const originalSession = props.sessions.find(s => s.sessionId === sessionId)
-  if (trimmedTitle && originalSession && trimmedTitle !== originalSession.title) {
-    emit('update-session-title', sessionId, trimmedTitle)
+  const originalTopic = props.topics.find(t => t.topicId === topicId)
+  if (trimmedTitle && originalTopic && trimmedTitle !== originalTopic.title) {
+    emit('update-topic-title', topicId, trimmedTitle)
   }
   cancelEdit()
 }
 
 // Cancel editing
 const cancelEdit = () => {
-  editingSessionId.value = null
+  editingTopicId.value = null
   editingTitle.value = ''
 }
 
-// Session classes
-const sessionClasses = (session: Session) => [
-  'chatbot-sessions__item',
+// Topic classes
+const topicClasses = (topic: Topic) => [
+  'chatbot-topics__item',
   {
-    'chatbot-sessions__item--active': session.sessionId === props.currentSessionId,
-    'chatbot-sessions__item--selected': selectedSessionIds.value.includes(session.sessionId),
+    'chatbot-topics__item--active': topic.topicId === props.currentTopicId,
+    'chatbot-topics__item--selected': selectedTopicIds.value.includes(topic.topicId),
   },
 ]
 
-// Format session metadata
-const formatSessionMeta = (session: Session): string => {
-  const timeStr = formatTime(session.updatedAt)
-  const countStr = session.messageCount === 1 ? '1 message' : `${session.messageCount} messages`
+// Format topic metadata
+const formatTopicMeta = (topic: Topic): string => {
+  const timeStr = formatTime(topic.updatedAt)
+  const countStr = topic.messageCount === 1 ? '1 message' : `${topic.messageCount} messages`
   return `${timeStr} • ${countStr}`
 }
 </script>
 
 <style scoped lang="scss">
-.chatbot-sessions {
+.chatbot-topics {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -517,7 +518,7 @@ const formatSessionMeta = (session: Session): string => {
     &:hover {
       background-color: var(--chatbot-panel-border, #e4e7ed);
 
-      .chatbot-sessions__item-delete {
+      .chatbot-topics__item-delete {
         opacity: 1;
       }
     }
@@ -558,7 +559,7 @@ const formatSessionMeta = (session: Session): string => {
       color: var(--chatbot-primary-color, #409eff);
     }
 
-    .chatbot-sessions__item--selected & {
+    .chatbot-topics__item--selected & {
       border-color: var(--chatbot-primary-color, #409eff);
       background: var(--chatbot-primary-color, #409eff);
     }

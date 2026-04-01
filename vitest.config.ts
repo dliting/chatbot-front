@@ -20,6 +20,8 @@ export default defineConfig({
     ],
     exclude: [
       'tests/e2e/**',
+      '**/node_modules/**',
+      'examples/chatapp/**/node_modules/**',
     ],
     coverage: {
       provider: 'v8',

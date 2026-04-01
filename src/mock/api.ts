@@ -1,8 +1,9 @@
 /**
  * Mock API for development and testing
  */
-import type { Message, Session, StreamEvent, ApiResponse } from '@/types'
+import type { Message, Topic, StreamEvent, ApiResponse } from '@/types'
 import { generateId, sleep } from '@/utils/helpers'
+import { TOPIC_DEFAULTS } from '@/constants'
 
 /**
  * Mock chat responses
@@ -76,7 +77,7 @@ export const mockAPI = {
       message: 'success',
       data: {
         messageId: generateId('msg'),
-        sessionId: generateId('session'),
+        topicId: generateId('topic'),
         role: 'assistant',
         type: 'text',
         content: getMockResponse(content),
@@ -103,14 +104,14 @@ export const mockAPI = {
   },
 
   /**
-   * Get session list (mock)
+   * Get topic list (mock)
    */
-  async getSessions(): Promise<ApiResponse<Session[]>> {
+  async getTopics(): Promise<ApiResponse<Topic[]>> {
     await sleep(200)
 
-    const sessions: Session[] = [
+    const topics: Topic[] = [
       {
-        sessionId: generateId('session'),
+        topicId: generateId('topic'),
         title: 'How to use the chatbot',
         createdAt: Date.now() - 3600000,
         updatedAt: Date.now() - 3600000,
@@ -118,7 +119,7 @@ export const mockAPI = {
         unreadCount: 0,
       },
       {
-        sessionId: generateId('session'),
+        topicId: generateId('topic'),
         title: 'Technical questions',
         createdAt: Date.now() - 86400000,
         updatedAt: Date.now() - 86400000,
@@ -130,20 +131,20 @@ export const mockAPI = {
     return {
       code: 0,
       message: 'success',
-      data: sessions,
+      data: topics,
     }
   },
 
   /**
-   * Get session messages (mock)
+   * Get topic messages (mock)
    */
-  async getSessionMessages(sessionId: string): Promise<ApiResponse<Message[]>> {
+  async getTopicMessages(topicId: string): Promise<ApiResponse<Message[]>> {
     await sleep(200)
 
     const messages: Message[] = [
       {
         messageId: generateId('msg'),
-        sessionId,
+        topicId,
         role: 'user',
         type: 'text',
         content: 'Hello! How can I use this chatbot?',
@@ -152,7 +153,7 @@ export const mockAPI = {
       },
       {
         messageId: generateId('msg'),
-        sessionId,
+        topicId,
         role: 'assistant',
         type: 'text',
         content: 'Welcome! Just type your message in the input box and press Enter or click the send button.',
@@ -169,17 +170,17 @@ export const mockAPI = {
   },
 
   /**
-   * Create session (mock)
+   * Create topic (mock)
    */
-  async createSession(): Promise<ApiResponse<Session>> {
+  async createTopic(): Promise<ApiResponse<Topic>> {
     await sleep(100)
 
     return {
       code: 0,
       message: 'success',
       data: {
-        sessionId: generateId('session'),
-        title: '新对话',
+        topicId: generateId('topic'),
+        title: TOPIC_DEFAULTS.TITLE,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         messageCount: 0,
@@ -189,9 +190,9 @@ export const mockAPI = {
   },
 
   /**
-   * Delete session (mock)
+   * Delete topic (mock)
    */
-  async deleteSession(_sessionId: string): Promise<ApiResponse<void>> {
+  async deleteTopic(_topicId: string): Promise<ApiResponse<void>> {
     await sleep(100)
     return { code: 0, message: 'success' }
   },

@@ -1,7 +1,7 @@
 <template>
-  <div class="session-search">
-    <div class="session-search__wrapper">
-      <svg class="session-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+  <div class="topic-search">
+    <div class="topic-search__wrapper">
+      <svg class="topic-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="11" cy="11" r="8" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M21 21l-4.35-4.35" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
@@ -9,13 +9,13 @@
         ref="inputRef"
         v-model="searchQuery"
         type="text"
-        class="session-search__input"
+        class="topic-search__input"
         :placeholder="placeholder"
         @input="handleInput"
       />
       <button
         v-if="searchQuery"
-        class="session-search__clear"
+        class="topic-search__clear"
         @click="handleClear"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -37,7 +37,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: '',
-  placeholder: 'Search sessions...',
+  placeholder: 'Search topics...',
   debounceMs: 300,
 })
 
@@ -88,7 +88,7 @@ defineExpose({
 </script>
 
 <style scoped lang="scss">
-.session-search {
+.topic-search {
   padding: 12px 16px;
 
   &__wrapper {

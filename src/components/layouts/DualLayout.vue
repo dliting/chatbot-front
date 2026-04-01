@@ -1,9 +1,9 @@
 <template>
   <div class="chatbot-dual-layout">
-    <!-- 左侧会话列表 -->
+    <!-- 左侧话题列表 -->
     <aside class="chatbot-dual-layout__sidebar">
       <slot name="sidebar">
-        <SessionListView />
+        <TopicListView />
       </slot>
     </aside>
 
@@ -17,8 +17,8 @@
 </template>
 
 <script setup lang="ts">
-// DualLayout: 双栏布局，会话列表始终显示在左侧
-import SessionListView from '@/components/SessionListView.vue'
+// DualLayout: 双栏布局，话题列表始终显示在左侧
+import TopicListView from '@/components/TopicListView.vue'
 import ChatArea from '@/components/ChatArea.vue'
 </script>
 

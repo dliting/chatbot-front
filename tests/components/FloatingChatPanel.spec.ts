@@ -7,7 +7,7 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import FloatingChatPanel from '@/components/FloatingChatPanel.vue'
 import type { ChatbotConfig } from '@/types/config'
-import type { Message, Session } from '@/types'
+import type { Message, Topic } from '@/types'
 
 describe('FloatingChatPanel Component', () => {
   // Sample test data
@@ -24,7 +24,7 @@ describe('FloatingChatPanel Component', () => {
   const mockMessages: Message[] = [
     {
       messageId: 'msg_1',
-      sessionId: 'session_1',
+      topicId: 'topic_1',
       role: 'user',
       type: 'text',
       content: 'Hello',
@@ -33,7 +33,7 @@ describe('FloatingChatPanel Component', () => {
     },
     {
       messageId: 'msg_2',
-      sessionId: 'session_1',
+      topicId: 'topic_1',
       role: 'assistant',
       type: 'text',
       content: 'Hi there!',
@@ -42,9 +42,9 @@ describe('FloatingChatPanel Component', () => {
     },
   ]
 
-  const mockSessions: Session[] = [
+  const mockTopics: Topic[] = [
     {
-      sessionId: 'session_1',
+      topicId: 'topic_1',
       title: 'Chat 1',
       createdAt: Date.now() - 86400000,
       updatedAt: Date.now() - 60000,
@@ -52,7 +52,7 @@ describe('FloatingChatPanel Component', () => {
       unreadCount: 0,
     },
     {
-      sessionId: 'session_2',
+      topicId: 'topic_2',
       title: 'Chat 2',
       createdAt: Date.now() - 172800000,
       updatedAt: Date.now() - 3600000,
@@ -67,8 +67,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -81,8 +81,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -97,8 +97,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -114,8 +114,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -131,8 +131,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: [],
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
           hideWelcome: true,
         },
@@ -149,8 +149,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
           hideQuickActions: true,
         },
@@ -169,8 +169,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -192,8 +192,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -213,13 +213,13 @@ describe('FloatingChatPanel Component', () => {
   })
 
   describe('Session List View', () => {
-    it('should show SessionListView when sessions button is clicked', async () => {
+    it('should show TopicListView when topics button is clicked', async () => {
       const wrapper = mount(FloatingChatPanel, {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -230,41 +230,41 @@ describe('FloatingChatPanel Component', () => {
       let chatContent = wrapper.findComponent({ name: 'ChatContent' })
       expect(chatContent.exists()).toBe(true)
 
-      // Click sessions button in ChatHeader - find the sessions button
-      const sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
-      expect(sessionsBtn.exists()).toBe(true)
-      await sessionsBtn.trigger('click')
+      // Click topics button in ChatHeader - find the topics button
+      const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      expect(topicsBtn.exists()).toBe(true)
+      await topicsBtn.trigger('click')
       await nextTick()
 
-      // Now should show SessionListView
-      const sessionListView = wrapper.findComponent({ name: 'SessionListView' })
-      expect(sessionListView.exists()).toBe(true)
+      // Now should show TopicListView
+      const topicListView = wrapper.findComponent({ name: 'TopicListView' })
+      expect(topicListView.exists()).toBe(true)
     })
 
-    it('should switch to chat view when close button is clicked in SessionListView', async () => {
+    it('should switch to chat view when close button is clicked in TopicListView', async () => {
       const wrapper = mount(FloatingChatPanel, {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
 
       await nextTick()
 
-      // Go to sessions view
-      const sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
-      await sessionsBtn.trigger('click')
+      // Go to topics view
+      const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await topicsBtn.trigger('click')
       await nextTick()
 
-      // Verify we're in sessions view
-      let sessionListView = wrapper.findComponent({ name: 'SessionListView' })
-      expect(sessionListView.exists()).toBe(true)
+      // Verify we're in topics view
+      let topicListView = wrapper.findComponent({ name: 'TopicListView' })
+      expect(topicListView.exists()).toBe(true)
 
-      // Emit close event from SessionListView component
-      await sessionListView.vm.$emit('close')
+      // Emit close event from TopicListView component
+      await topicListView.vm.$emit('close')
       await nextTick()
 
       // Should be back to chat view
@@ -279,15 +279,15 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true, theme: 'light' },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
 
       await nextTick()
 
-      // Find the theme toggle button (it's the second button, first is sessions)
+      // Find the theme toggle button (it's the second button, first is topics)
       const themeBtn = wrapper.findAll('.chat-header__btn').at(1)
       expect(themeBtn).toBeDefined()
       await themeBtn?.trigger('click')
@@ -306,8 +306,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -336,8 +336,8 @@ describe('FloatingChatPanel Component', () => {
             rememberPosition: true,
           },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -359,8 +359,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: true,
         },
       })
@@ -386,8 +386,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: customConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -403,8 +403,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -412,7 +412,7 @@ describe('FloatingChatPanel Component', () => {
       await nextTick()
 
       const chatHeader = wrapper.findComponent({ name: 'ChatHeader' })
-      expect(chatHeader.props('showSessionsButton')).toBe(true)
+      expect(chatHeader.props('showTopicsButton')).toBe(true)
       expect(chatHeader.props('showThemeToggle')).toBe(true)
       expect(chatHeader.props('showCloseButton')).toBe(true)
     })
@@ -424,8 +424,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -445,8 +445,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -466,8 +466,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -487,8 +487,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -509,8 +509,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -525,110 +525,110 @@ describe('FloatingChatPanel Component', () => {
       expect(wrapper.emitted('toggle-theme')).toBeTruthy()
     })
 
-    it('should emit create-session event when creating new session', async () => {
+    it('should emit create-topic event when creating new topic', async () => {
       const wrapper = mount(FloatingChatPanel, {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
 
       await nextTick()
 
-      // Go to sessions view
-      const sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
-      await sessionsBtn.trigger('click')
+      // Go to topics view
+      const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await topicsBtn.trigger('click')
       await nextTick()
 
-      // Find SessionListView and emit create-session
-      const sessionListView = wrapper.findComponent({ name: 'SessionListView' })
-      await sessionListView.vm.$emit('create-session')
+      // Find TopicListView and emit create-topic
+      const topicListView = wrapper.findComponent({ name: 'TopicListView' })
+      await topicListView.vm.$emit('create-topic')
       await nextTick()
 
-      expect(wrapper.emitted('create-session')).toBeTruthy()
+      expect(wrapper.emitted('create-topic')).toBeTruthy()
     })
 
-    it('should emit select-session event when selecting a session', async () => {
+    it('should emit select-topic event when selecting a topic', async () => {
       const wrapper = mount(FloatingChatPanel, {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
 
       await nextTick()
 
-      // Go to sessions view
-      const sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
-      await sessionsBtn.trigger('click')
+      // Go to topics view
+      const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await topicsBtn.trigger('click')
       await nextTick()
 
-      // Find SessionListView and emit select-session
-      const sessionListView = wrapper.findComponent({ name: 'SessionListView' })
-      await sessionListView.vm.$emit('select-session', 'session_2')
+      // Find TopicListView and emit select-topic
+      const topicListView = wrapper.findComponent({ name: 'TopicListView' })
+      await topicListView.vm.$emit('select-topic', 'topic_2')
       await nextTick()
 
-      expect(wrapper.emitted('select-session')).toBeTruthy()
-      expect(wrapper.emitted('select-session')?.[0]).toEqual(['session_2'])
+      expect(wrapper.emitted('select-topic')).toBeTruthy()
+      expect(wrapper.emitted('select-topic')?.[0]).toEqual(['topic_2'])
     })
 
-    it('should emit delete-session event when deleting a session', async () => {
+    it('should emit delete-topic event when deleting a topic', async () => {
       const wrapper = mount(FloatingChatPanel, {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
 
       await nextTick()
 
-      // Go to sessions view
-      const sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
-      await sessionsBtn.trigger('click')
+      // Go to topics view
+      const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await topicsBtn.trigger('click')
       await nextTick()
 
-      // Find SessionListView and emit delete-session
-      const sessionListView = wrapper.findComponent({ name: 'SessionListView' })
-      await sessionListView.vm.$emit('delete-session', 'session_2')
+      // Find TopicListView and emit delete-topic
+      const topicListView = wrapper.findComponent({ name: 'TopicListView' })
+      await topicListView.vm.$emit('delete-topic', 'topic_2')
       await nextTick()
 
-      expect(wrapper.emitted('delete-session')).toBeTruthy()
-      expect(wrapper.emitted('delete-session')?.[0]).toEqual(['session_2'])
+      expect(wrapper.emitted('delete-topic')).toBeTruthy()
+      expect(wrapper.emitted('delete-topic')?.[0]).toEqual(['topic_2'])
     })
 
-    it('should switch to chat view after selecting session', async () => {
+    it('should switch to chat view after selecting topic', async () => {
       const wrapper = mount(FloatingChatPanel, {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
 
       await nextTick()
 
-      // Go to sessions view
-      let sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
-      await sessionsBtn.trigger('click')
+      // Go to topics view
+      let topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await topicsBtn.trigger('click')
       await nextTick()
 
-      // Verify we're in sessions view
-      let sessionListView = wrapper.findComponent({ name: 'SessionListView' })
-      expect(sessionListView.exists()).toBe(true)
+      // Verify we're in topics view
+      let topicListView = wrapper.findComponent({ name: 'TopicListView' })
+      expect(topicListView.exists()).toBe(true)
 
-      // Select a session
-      await sessionListView.vm.$emit('select-session', 'session_2')
+      // Select a topic
+      await topicListView.vm.$emit('select-topic', 'topic_2')
       await nextTick()
 
       // Should be back to chat view
@@ -643,8 +643,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: [],
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -657,12 +657,12 @@ describe('FloatingChatPanel Component', () => {
       expect(chatContent.props('welcomeVisible')).toBe(true)
     })
 
-    it('should render correctly with empty sessions array', async () => {
+    it('should render correctly with empty topics array', async () => {
       const wrapper = mount(FloatingChatPanel, {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: [],
-          sessions: [],
+          topics: [],
           currentSessionId: '',
           isStreaming: false,
         },
@@ -670,14 +670,14 @@ describe('FloatingChatPanel Component', () => {
 
       await nextTick()
 
-      // Go to sessions view
-      const sessionsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
-      await sessionsBtn.trigger('click')
+      // Go to topics view
+      const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await topicsBtn.trigger('click')
       await nextTick()
 
-      const sessionListView = wrapper.findComponent({ name: 'SessionListView' })
-      expect(sessionListView.exists()).toBe(true)
-      expect(sessionListView.props('sessions')).toEqual([])
+      const topicListView = wrapper.findComponent({ name: 'TopicListView' })
+      expect(topicListView.exists()).toBe(true)
+      expect(topicListView.props('topics')).toEqual([])
     })
 
     it('should use default config values when config is empty', async () => {
@@ -685,8 +685,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: {},
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -702,8 +702,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true, theme: 'dark' },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -722,8 +722,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, position: 'top-left' },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -739,8 +739,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { position: 'bottom-left' },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -756,8 +756,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { position: 'top-right' },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -773,8 +773,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -791,8 +791,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: false },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -812,8 +812,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, primaryColor: '#ff0000' },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -831,8 +831,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: mockConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -855,8 +855,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -879,8 +879,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })
@@ -908,8 +908,8 @@ describe('FloatingChatPanel Component', () => {
         props: {
           config: customConfig,
           messages: mockMessages,
-          sessions: mockSessions,
-          currentSessionId: 'session_1',
+          topics: mockTopics,
+          currentTopicId: 'topic_1',
           isStreaming: false,
         },
       })

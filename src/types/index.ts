@@ -17,7 +17,7 @@ export interface DocumentAttachment {
 
 export interface Message {
   messageId: string
-  sessionId: string
+  topicId: string
   role: MessageRole
   type: MessageType
   content: string
@@ -33,9 +33,9 @@ export interface Message {
   errorMessage?: string       // User-facing error description when status is 'error' or 'stopped'
 }
 
-// Session Types
-export interface Session {
-  sessionId: string
+// Topic Types
+export interface Topic {
+  topicId: string
   title: string
   createdAt: number
   updatedAt: number
@@ -85,7 +85,7 @@ export interface SendMessageData {
 
 // Message success data
 export interface MessageSuccessData {
-  sessionId: string
+  topicId: string
   messageId: string
   message: string
 }

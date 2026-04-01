@@ -34,8 +34,8 @@ test.describe('Sidebar Mode - ChatApp', () => {
     const chatPanel = page.locator('.chatbot-panel')
     await expect(chatPanel).toBeVisible({ timeout: 10000 })
 
-    // Chat header should show the title
-    const chatHeader = page.locator('.chatbot-panel__title')
+    // Chat header should show the title (in EmbeddedChatPanel's ChatHeader, not ChatPanel's header)
+    const chatHeader = page.locator('.chat-header__title')
     await expect(chatHeader).toContainText('智能助手')
   })
 

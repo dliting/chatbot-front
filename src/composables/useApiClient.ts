@@ -2,7 +2,7 @@
  * API client composable for connecting to backend
  */
 import { ref } from 'vue'
-import type { Message, Session } from '@/types'
+import type { Message, Topic } from '@/types'
 
 export interface ApiClientOptions {
   baseUrl: string
@@ -56,8 +56,8 @@ export function useApiClient(options: ApiClientOptions) {
       })
 
       if (!response.ok) {
-        const error = new Error(`API error: ${response.status}`)
-        ;(error as any).status = response.status
+        const error = new Error(`API error: ${response.status}`) as Error & { status?: number }
+        error.status = response.status
         throw error
       }
 
@@ -155,9 +155,9 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
-   * Get sessions
+   * Get topics
    */
-  async function getSessions(): Promise<Session[]> {
+  async function getTopics(): Promise<Topic[]> {
     isLoading.value = true
     error.value = null
 
@@ -180,14 +180,14 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
-   * Get session messages
+   * Get topic messages
    */
-  async function getSessionMessages(sessionId: string): Promise<Message[]> {
+  async function getTopicMessages(topicId: string): Promise<Message[]> {
     isLoading.value = true
     error.value = null
 
     try {
-      const response = await fetch(`${baseUrl}/sessions/${sessionId}/messages`)
+      const response = await fetch(`${baseUrl}/sessions/${topicId}/messages`)
 
       if (!response.ok) {
         throw new Error(`API error: ${response.status}`)
@@ -205,9 +205,9 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
-   * Create session
+   * Create topic
    */
-  async function createSession(title?: string): Promise<Session> {
+  async function createTopic(title?: string): Promise<Topic> {
     isLoading.value = true
     error.value = null
 
@@ -230,7 +230,7 @@ export function useApiClient(options: ApiClientOptions) {
       }
 
       return {
-        sessionId: result.data.sessionId,
+        topicId: result.data.topicId,
         title: result.data.title,
         createdAt: result.data.createdAt,
         updatedAt: result.data.createdAt,
@@ -243,14 +243,14 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
-   * Delete session
+   * Delete topic
    */
-  async function deleteSession(sessionId: string): Promise<void> {
+  async function deleteTopic(topicId: string): Promise<void> {
     isLoading.value = true
     error.value = null
 
     try {
-      const response = await fetch(`${baseUrl}/sessions/${sessionId}`, {
+      const response = await fetch(`${baseUrl}/sessions/${topicId}`, {
         method: 'DELETE',
       })
 
@@ -263,14 +263,14 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
-   * Update session title
+   * Update topic title
    */
-  async function updateSessionTitle(sessionId: string, title: string): Promise<void> {
+  async function updateTopicTitle(topicId: string, title: string): Promise<void> {
     isLoading.value = true
     error.value = null
 
     try {
-      const response = await fetch(`${baseUrl}/sessions/${sessionId}/title`, {
+      const response = await fetch(`${baseUrl}/sessions/${topicId}/title`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -327,11 +327,11 @@ export function useApiClient(options: ApiClientOptions) {
     // Methods
     streamChat,
     sendMessage,
-    getSessions,
-    getSessionMessages,
-    createSession,
-    deleteSession,
-    updateSessionTitle,
+    getTopics,
+    getTopicMessages,
+    createTopic,
+    deleteTopic,
+    updateTopicTitle,
     uploadImages,
   }
 }

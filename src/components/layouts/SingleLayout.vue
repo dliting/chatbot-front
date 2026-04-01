@@ -3,13 +3,13 @@
     <!-- Tab 导航 -->
     <div class="chatbot-single-layout__tabs">
       <button
-        :class="['tab-btn', { active: currentView === 'sessions' }]"
-        @click="handleViewChange('sessions')"
+        :class="['tab-btn', { active: currentView === 'topics' }]"
+        @click="handleViewChange('topics')"
       >
         <svg viewBox="0 0 24 24" fill="currentColor">
           <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
         </svg>
-        会话
+        话题
       </button>
       <button
         :class="['tab-btn', { active: currentView === 'chat' }]"
@@ -25,7 +25,7 @@
     <!-- 视图内容 -->
     <div class="chatbot-single-layout__content">
       <Transition name="fade" mode="out-in">
-        <SessionListView v-if="currentView === 'sessions'" key="sessions" />
+        <TopicListView v-if="currentView === 'topics'" key="topics" />
         <ChatArea v-else key="chat" />
       </Transition>
     </div>
@@ -35,11 +35,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useChatbotState } from '@/composables/useChatbotState'
-import SessionListView from '@/components/SessionListView.vue'
+import TopicListView from '@/components/TopicListView.vue'
 import ChatArea from '@/components/ChatContent.vue'
 import { defaultChatbotConfig } from '@/types/config'
 
-type ViewType = 'sessions' | 'chat'
+type ViewType = 'topics' | 'chat'
 
 // SingleLayout is used internally and doesn't need custom config
 const { state, setCurrentView } = useChatbotState(defaultChatbotConfig)

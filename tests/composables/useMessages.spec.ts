@@ -484,32 +484,32 @@ describe('useMessages', () => {
     })
   })
 
-  describe('Get Session Title', () => {
+  describe('Get Topic Title', () => {
     it('should extract title from messages', () => {
-      const { messages, getSessionTitle } = useMessages()
+      const { messages, getTopicTitle } = useMessages()
 
       messages.value.push({
         messageId: 'msg-1',
-        sessionId: 'session-1',
+        topicId: 'topic-1',
         role: 'user',
         content: 'How do I create a Vue component?',
         timestamp: Date.now(),
         status: 'sent',
       })
 
-      const title = getSessionTitle()
+      const title = getTopicTitle()
 
       // Just verify that a title is returned
       expect(title).toBeTruthy()
-      // The actual title format depends on the extractSessionTitle implementation
+      // The actual title format depends on the extractTopicTitle implementation
     })
 
     it('should return default title when no messages', () => {
-      const { getSessionTitle } = useMessages()
+      const { getTopicTitle } = useMessages()
 
-      const title = getSessionTitle()
+      const title = getTopicTitle()
 
-      expect(title).toBe('新对话')
+      expect(title).toBe('新话题')
     })
   })
 

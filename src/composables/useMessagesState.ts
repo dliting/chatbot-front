@@ -5,46 +5,46 @@ import { reactive } from 'vue'
 import type { Message } from '@/types'
 
 export interface MessagesState {
-  bySession: Record<string, Message[]>
-  currentSessionId: string
+  byTopic: Record<string, Message[]>
+  currentTopicId: string
   streamingMessageId: string | null
 }
 
 export function useMessagesState() {
   // Messages State
   const messages = reactive<MessagesState>({
-    bySession: {},
-    currentSessionId: `session_${Date.now()}`,
+    byTopic: {},
+    currentTopicId: `topic_${Date.now()}`,
     streamingMessageId: null,
   })
 
   // Actions
   const addMessage = (message: Message) => {
-    const { sessionId } = message
+    const { topicId } = message
 
-    if (!messages.bySession[sessionId]) {
-      messages.bySession[sessionId] = []
+    if (!messages.byTopic[topicId]) {
+      messages.byTopic[topicId] = []
     }
 
-    messages.bySession[sessionId].push(message)
+    messages.byTopic[topicId].push(message)
   }
 
-  const updateMessage = (messageId: string, sessionId: string, updates: Partial<Message>) => {
-    const sessionMessages = messages.bySession[sessionId]
-    if (!sessionMessages) return
+  const updateMessage = (messageId: string, topicId: string, updates: Partial<Message>) => {
+    const topicMessages = messages.byTopic[topicId]
+    if (!topicMessages) return
 
-    const index = sessionMessages.findIndex(m => m.messageId === messageId)
+    const index = topicMessages.findIndex(m => m.messageId === messageId)
     if (index > -1) {
-      sessionMessages.splice(index, 1, { ...sessionMessages[index], ...updates })
+      topicMessages.splice(index, 1, { ...topicMessages[index], ...updates })
     }
   }
 
-  const clearCurrentMessages = (sessionId: string) => {
-    messages.bySession[sessionId] = []
+  const clearCurrentMessages = (topicId: string) => {
+    messages.byTopic[topicId] = []
   }
 
-  const deleteMessagesForSession = (sessionId: string) => {
-    delete messages.bySession[sessionId]
+  const deleteMessagesForTopic = (topicId: string) => {
+    delete messages.byTopic[topicId]
   }
 
   const setStreamingMessage = (messageId: string | null) => {
@@ -60,7 +60,7 @@ export function useMessagesState() {
     addMessage,
     updateMessage,
     clearCurrentMessages,
-    deleteMessagesForSession,
+    deleteMessagesForTopic,
     setStreamingMessage,
     isStreaming,
   }

@@ -20,11 +20,11 @@
       <ChatHeader
         :title="configRef.labels?.title || '智能助手'"
         :theme="configRef.theme || 'light'"
-        :show-sessions-button="true"
+        :show-topics-button="true"
         :show-theme-toggle="true"
         :show-close-button="true"
         :unread-count="0"
-        @sessions="showSessionsView"
+        @topics="showTopicsView"
         @toggle-theme="handleToggleTheme"
         @close="closePanel"
       />
@@ -50,17 +50,17 @@
         @thinking-toggle="$emit('thinking-toggle', $event)"
         @stop-generating="$emit('stop-generating')"
       />
-      <SessionListView
+      <TopicListView
         v-else
-        :sessions="sessions"
-        :current-session-id="currentSessionId"
+        :topics="topics"
+        :current-topic-id="currentTopicId"
         :config="configRef"
         :layout="'single'"
         @close="showChatView"
-        @create-session="handleCreateSession"
-        @select-session="handleSelectSession"
-        @delete-session="handleDeleteSession"
-        @update-session-title="(sessionId, title) => $emit('update-session-title', sessionId, title)"
+        @create-topic="handleCreateTopic"
+        @select-topic="handleSelectTopic"
+        @delete-topic="handleDeleteTopic"
+        @update-topic-title="(topicId, title) => $emit('update-topic-title', topicId, title)"
       />
     </div>
 
@@ -88,13 +88,13 @@
 import { ref, computed, onMounted } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
-import type { Message, Session } from '@/types'
+import type { Message, Topic } from '@/types'
 import { useChatView } from '@/composables/useChatView'
 
 // Components
 import DraggableWindow from './DraggableWindow.vue'
 import SuspendedBall from './SuspendedBall.vue'
-import SessionListView from './SessionListView.vue'
+import TopicListView from './TopicListView.vue'
 import ChatHeader from './ChatHeader.vue'
 import ChatContent from './ChatContent.vue'
 import FilePreviewModal from './FilePreviewModal.vue'
@@ -102,8 +102,8 @@ import FilePreviewModal from './FilePreviewModal.vue'
 interface Props {
   config?: ChatbotConfig
   messages: Message[]
-  sessions: Session[]
-  currentSessionId: string
+  topics: Topic[]
+  currentTopicId: string
   isStreaming: boolean
   hideWelcome?: boolean
   hideQuickActions?: boolean
@@ -122,10 +122,10 @@ const props = withDefaults(defineProps<Props>(), {
 interface Emits {
   (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
   (e: 'quick-action', text: string): void
-  (e: 'create-session'): void
-  (e: 'select-session', sessionId: string): void
-  (e: 'delete-session', sessionId: string): void
-  (e: 'update-session-title', sessionId: string, title: string): void
+  (e: 'create-topic'): void
+  (e: 'select-topic', topicId: string): void
+  (e: 'delete-topic', topicId: string): void
+  (e: 'update-topic-title', topicId: string, title: string): void
   (e: 'edit-message', message: Message): void
   (e: 'copy-message', message: Message): void
   (e: 'refresh-message', message: Message): void
@@ -144,7 +144,7 @@ const configRef = computed(() => ({
 }))
 
 // View state
-const { viewState, showChatView, showSessionsView } = useChatView('floating')
+const { viewState, showChatView, showTopicsView } = useChatView('floating')
 
 // Panel state
 const isPanelOpen = ref(configRef.value.defaultExpanded)
@@ -187,17 +187,17 @@ const handleQuickAction = (text: string) => {
   emit('quick-action', text)
 }
 
-const handleCreateSession = () => {
-  emit('create-session')
+const handleCreateTopic = () => {
+  emit('create-topic')
 }
 
-const handleSelectSession = (sessionId: string) => {
-  emit('select-session', sessionId)
+const handleSelectTopic = (topicId: string) => {
+  emit('select-topic', topicId)
   showChatView()
 }
 
-const handleDeleteSession = (sessionId: string) => {
-  emit('delete-session', sessionId)
+const handleDeleteTopic = (topicId: string) => {
+  emit('delete-topic', topicId)
 }
 
 const handleMessageEdit = (message: Message) => {

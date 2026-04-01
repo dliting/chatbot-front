@@ -22,8 +22,8 @@ test.describe('Extended Mode - ChatApp', () => {
 
     await expect(page).toHaveURL(/\/extended/)
 
-    // Extended page shows sidebar with "历史对话" and chat area with "智能助手"
-    await expect(page.getByRole('heading', { name: '历史对话' })).toBeVisible()
+    // Extended page shows sidebar with "历史话题" and chat area with "智能助手"
+    await expect(page.getByRole('heading', { name: '历史话题' })).toBeVisible()
     await expect(page.locator('.chat-header__title')).toContainText('智能助手')
   })
 

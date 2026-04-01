@@ -5,20 +5,20 @@
   >
     <!-- Dual Layout: Sidebar + Main Content -->
     <template v-if="effectiveLayout === 'dual'">
-      <!-- Session Sidebar -->
+      <!-- Topic Sidebar -->
       <aside class="ai-chat__sidebar">
-        <SessionListView
-          :sessions="sessions"
-          :current-session-id="currentSessionId"
+        <TopicListView
+          :topics="topics"
+          :current-topic-id="currentTopicId"
           :config="config"
           :is-embedded="true"
           :layout="effectiveLayout"
           :enable-close="true"
-          @create-session="$emit('create-session')"
-          @select-session="$emit('select-session', $event)"
-          @delete-session="$emit('delete-session', $event)"
-          @delete-sessions="$emit('delete-sessions', $event)"
-          @update-session-title="(sessionId, title) => $emit('update-session-title', sessionId, title)"
+          @create-topic="$emit('create-topic')"
+          @select-topic="$emit('select-topic', $event)"
+          @delete-topic="$emit('delete-topic', $event)"
+          @delete-topics="$emit('delete-topics', $event)"
+          @update-topic-title="(topicId, title) => $emit('update-topic-title', topicId, title)"
           @close="$emit('close')"
         />
       </aside>
@@ -59,9 +59,9 @@
         v-if="!hideHeader && viewState.currentView === 'chat'"
         :title="config.labels?.title || '智能助手'"
         :theme="config.theme || 'light'"
-        :show-sessions-button="true"
+        :show-topics-button="true"
         :show-theme-toggle="true"
-        @sessions="showSessionsView"
+        @topics="showTopicsView"
         @toggle-theme="$emit('toggle-theme')"
       />
       <ChatContent
@@ -84,18 +84,18 @@
         @thinking-toggle="$emit('thinking-toggle', $event)"
         @stop-generating="$emit('stop-generating')"
       />
-      <SessionListView
+      <TopicListView
         v-else
-        :sessions="sessions"
-        :current-session-id="currentSessionId"
+        :topics="topics"
+        :current-topic-id="currentTopicId"
         :config="config"
         :layout="effectiveLayout"
         @close="showChatView"
-        @create-session="$emit('create-session')"
-        @select-session="$emit('select-session', $event)"
-        @delete-session="$emit('delete-session', $event)"
-        @delete-sessions="$emit('delete-sessions', $event)"
-        @update-session-title="(sessionId, title) => $emit('update-session-title', sessionId, title)"
+        @create-topic="$emit('create-topic')"
+        @select-topic="$emit('select-topic', $event)"
+        @delete-topic="$emit('delete-topic', $event)"
+        @delete-topics="$emit('delete-topics', $event)"
+        @update-topic-title="(topicId, title) => $emit('update-topic-title', topicId, title)"
       />
     </template>
 
@@ -116,7 +116,7 @@ import { defaultChatbotConfig } from '@/types/config'
 import { useChatView } from '@/composables/useChatView'
 
 // Components
-import SessionListView from './SessionListView.vue'
+import TopicListView from './TopicListView.vue'
 import ChatHeader from './ChatHeader.vue'
 import ChatContent from './ChatContent.vue'
 import FilePreviewModal from './FilePreviewModal.vue'
@@ -126,8 +126,8 @@ interface Props {
   layout?: Layout
   config?: ChatbotConfig
   messages?: import('@/types').Message[]
-  sessions?: import('@/types').Session[]
-  currentSessionId?: string
+  topics?: import('@/types').Topic[]
+  currentTopicId?: string
   isStreaming?: boolean
   hideWelcome?: boolean
   hideQuickActions?: boolean
@@ -142,8 +142,8 @@ const props = withDefaults(defineProps<Props>(), {
   layout: undefined,
   config: () => ({}),
   messages: () => [],
-  sessions: () => [],
-  currentSessionId: '',
+  topics: () => [],
+  currentTopicId: '',
   isStreaming: false,
   hideWelcome: false,
   hideQuickActions: false,
@@ -152,11 +152,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 interface Emits {
-  (e: 'create-session'): void
-  (e: 'select-session', sessionId: string): void
-  (e: 'delete-session', sessionId: string): void
-  (e: 'delete-sessions', sessionIds: string[]): void
-  (e: 'update-session-title', sessionId: string, title: string): void
+  (e: 'create-topic'): void
+  (e: 'select-topic', topicId: string): void
+  (e: 'delete-topic', topicId: string): void
+  (e: 'delete-topics', topicIds: string[]): void
+  (e: 'update-topic-title', topicId: string, title: string): void
   (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: import('@/types').Message): void
@@ -201,7 +201,7 @@ const effectiveLayout = computed(() => {
 })
 
 // View state management using useChatView - pass mode as reactive ref
-const { viewState, showChatView, showSessionsView } = useChatView(computed(() => props.mode))
+const { viewState, showChatView, showTopicsView } = useChatView(computed(() => props.mode))
 
 // Container classes
 const containerClasses = computed(() => [
