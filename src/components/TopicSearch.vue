@@ -141,7 +141,7 @@ defineExpose({
     background: var(--chatbot-subtext-color, #909399);
     border-radius: 50%;
     cursor: pointer;
-    color: white;
+    color: var(--text-on-primary, #fff);
     opacity: 0.8;
     transition: all 0.2s;
 

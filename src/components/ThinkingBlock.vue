@@ -160,7 +160,7 @@ watch(() => props.isThinking, (newVal, oldVal) => {
     flex-shrink: 0;
 
     &--active {
-      stroke: #e6a23c;
+      stroke: var(--color-warning, #e6a23c);
       animation: thinking-pulse 1.5s infinite ease-in-out;
     }
   }

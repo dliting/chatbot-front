@@ -400,7 +400,7 @@ const handleDoubleClick = () => {
     white-space: pre-wrap;
 
     :deep(code) {
-      background-color: rgba(0, 0, 0, 0.1);
+      background-color: var(--bg-tertiary, rgba(0, 0, 0, 0.1));
       padding: 2px 4px;
       border-radius: 4px;
       font-family: monospace;
@@ -454,7 +454,7 @@ const handleDoubleClick = () => {
     border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
-    background: #000;
+    background: var(--bg-video-overlay, #000);
 
     &-player {
       width: 100%;
@@ -471,12 +471,12 @@ const handleDoubleClick = () => {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--bg-overlay, rgba(0, 0, 0, 0.3));
 
       svg {
         width: 48px;
         height: 48px;
-        fill: white;
+        fill: var(--text-on-primary, #fff);
       }
     }
   }
@@ -506,7 +506,7 @@ const handleDoubleClick = () => {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
     border-radius: 8px;
     cursor: pointer;
     transition: background 0.2s;
@@ -613,7 +613,7 @@ const handleDoubleClick = () => {
 
     &--danger:hover {
       background-color: var(--chatbot-danger-color, #f56c6c);
-      color: #fff;
+      color: var(--text-on-primary, #fff);
     }
   }
 }

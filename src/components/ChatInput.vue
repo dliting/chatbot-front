@@ -411,7 +411,7 @@ const handleFileSelect = async (e: Event) => {
     right: -2px;
     font-size: 10px;
     background: rgba(0, 0, 0, 0.7);
-    color: white;
+    color: var(--text-on-primary, #fff);
     padding: 2px 4px;
     border-radius: 4px;
   }
@@ -435,7 +435,7 @@ const handleFileSelect = async (e: Event) => {
     svg {
       width: 28px;
       height: 28px;
-      stroke: white;
+      stroke: var(--text-on-primary, #fff);
     }
   }
 
@@ -474,7 +474,7 @@ const handleFileSelect = async (e: Event) => {
     width: 20px;
     height: 20px;
     border: none;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--bg-overlay, rgba(0, 0, 0, 0.6));
     border-radius: 50%;
     cursor: pointer;
     display: flex;
@@ -484,7 +484,7 @@ const handleFileSelect = async (e: Event) => {
     svg {
       width: 12px;
       height: 12px;
-      stroke: white;
+      stroke: var(--text-on-primary, #fff);
     }
   }
 
@@ -532,7 +532,7 @@ const handleFileSelect = async (e: Event) => {
     svg {
       width: 20px;
       height: 20px;
-      stroke: white;
+      stroke: var(--text-on-primary, #fff);
     }
 
     &:hover:not(:disabled) {
@@ -561,7 +561,7 @@ const handleFileSelect = async (e: Event) => {
     svg {
       width: 16px;
       height: 16px;
-      fill: white;
+      fill: var(--text-on-primary, #fff);
     }
 
     &:hover {

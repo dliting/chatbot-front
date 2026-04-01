@@ -437,7 +437,7 @@ const formatTopicMeta = (topic: Topic): string => {
 
     &--delete {
       background: var(--chatbot-danger-color, #f56c6c);
-      color: white;
+      color: var(--text-on-primary, #fff);
 
       &:hover {
         background: var(--chatbot-danger-color-dark, #f78989);
@@ -484,7 +484,7 @@ const formatTopicMeta = (topic: Topic): string => {
     border: none;
     border-radius: 50%;
     background: var(--chatbot-primary-color, #409eff);
-    color: white;
+    color: var(--text-on-primary, #fff);
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
     transition: all 0.2s;
@@ -644,7 +644,7 @@ const formatTopicMeta = (topic: Topic): string => {
     padding: 0 5px;
     font-size: 11px;
     font-weight: 600;
-    color: #fff;
+    color: var(--text-on-primary, #fff);
     background-color: var(--chatbot-danger-color, #f56c6c);
     border-radius: 9px;
     flex-shrink: 0;
