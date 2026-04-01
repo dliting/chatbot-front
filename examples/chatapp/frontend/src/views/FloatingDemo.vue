@@ -21,14 +21,14 @@ const config = computed(() => ({
   draggable: true,
   resizable: true,
   rememberPosition: true,
-  enableSessionManager: true,
+  enableTopicManager: true,
   enableThinking: true,
   theme: settings.theme,
   labels: {
     title: '智能助手',
     placeholder: '输入消息...',
-    newChat: '新建对话',
-    history: '历史对话',
+    newChat: '新话题',
+    history: '历史话题',
   },
 }))
 
@@ -100,7 +100,7 @@ function goHome() {
 
 .floating-demo {
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 40px 20px;
 }
@@ -121,31 +121,32 @@ function goHome() {
 .demo-container {
   max-width: 800px;
   margin: 0 auto;
-  background: white;
+  background: var(--bg-base, white);
   border-radius: 16px;
   padding: 40px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-xl, 0 20px 60px rgba(0, 0, 0, 0.3));
+  transition: background var(--transition-base);
 }
 
 .demo-container h1 {
-  color: #333;
+  color: var(--text-primary, #333);
   margin-bottom: 8px;
   font-size: 28px;
 }
 
 .demo-container .subtitle {
-  color: #666;
+  color: var(--text-secondary, #666);
   font-size: 16px;
   margin-bottom: 24px;
 }
 
 .demo-container .description {
-  color: #666;
+  color: var(--text-secondary, #666);
   font-size: 14px;
   line-height: 1.6;
   margin-bottom: 24px;
   padding: 16px;
-  background: #f5f7fa;
+  background: var(--bg-secondary, #f5f7fa);
   border-radius: 8px;
 }
 
@@ -158,39 +159,39 @@ function goHome() {
 
 .feature {
   padding: 16px;
-  background: #f5f7fa;
+  background: var(--bg-secondary, #f5f7fa);
   border-radius: 8px;
 }
 
 .feature h3 {
   font-size: 14px;
-  color: #409eff;
+  color: var(--theme-primary, #409eff);
   margin-bottom: 8px;
 }
 
 .feature p {
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary, #666);
   margin: 0;
 }
 
 .usage {
   margin-top: 32px;
   padding: 20px;
-  background: #e8f4ff;
-  border-left: 4px solid #409eff;
+  background: var(--theme-primary-light, #e8f4ff);
+  border-left: 4px solid var(--theme-primary, #409eff);
   border-radius: 8px;
 }
 
 .usage h3 {
-  color: #409eff;
+  color: var(--theme-primary, #409eff);
   font-size: 16px;
   margin-bottom: 12px;
 }
 
 .usage ol {
   margin-left: 20px;
-  color: #666;
+  color: var(--text-secondary, #666);
   font-size: 14px;
   line-height: 1.8;
 }
