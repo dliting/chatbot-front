@@ -162,10 +162,11 @@ function goHome() {
 }
 
 .settings-card {
-  background: white;
+  background: var(--bg-base, white);
   border-radius: 20px;
   padding: 32px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-xl, 0 10px 40px rgba(0, 0, 0, 0.1));
+  transition: background var(--transition-base);
 }
 
 .setting-section {
@@ -178,7 +179,7 @@ function goHome() {
 
 .setting-section h2 {
   font-size: 18px;
-  color: #333;
+  color: var(--text-primary, #333);
   margin-bottom: 12px;
   font-weight: 600;
 }
@@ -198,7 +199,7 @@ function goHome() {
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  border: 2px solid #e4e7ed;
+  border: 2px solid var(--border-light, #e4e7ed);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -227,12 +228,12 @@ function goHome() {
 .radio-title {
   font-size: 15px;
   font-weight: 500;
-  color: #333;
+  color: var(--text-primary, #333);
 }
 
 .radio-desc {
   font-size: 13px;
-  color: #909399;
+  color: var(--text-tertiary, #909399);
 }
 
 .radio-option.compact {
@@ -242,7 +243,7 @@ function goHome() {
 
 .radio-option.compact span {
   font-size: 14px;
-  color: #606266;
+  color: var(--text-secondary, #606266);
 }
 
 .timeout-input {
@@ -255,10 +256,12 @@ function goHome() {
 .timeout-input input {
   width: 160px;
   padding: 8px 12px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--border-base, #dcdfe6);
   border-radius: 8px;
   font-size: 14px;
   outline: none;
+  background: var(--bg-base, white);
+  color: var(--text-primary, #303133);
   transition: border-color 0.2s;
 }
 
@@ -267,7 +270,7 @@ function goHome() {
 }
 
 .timeout-input .unit {
-  color: #909399;
+  color: var(--text-tertiary, #909399);
   font-size: 14px;
 }
 
@@ -278,10 +281,10 @@ function goHome() {
 
 .preset-btn {
   padding: 6px 16px;
-  border: 1px solid #dcdfe6;
+  border: 1px solid var(--border-base, #dcdfe6);
   border-radius: 6px;
-  background: white;
-  color: #606266;
+  background: var(--bg-base, white);
+  color: var(--text-secondary, #606266);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s;
@@ -303,7 +306,7 @@ function goHome() {
   align-items: center;
   gap: 12px;
   padding-top: 8px;
-  border-top: 1px solid #ebeef5;
+  border-top: 1px solid var(--border-lighter, #ebeef5);
 }
 
 .btn {
@@ -326,17 +329,17 @@ function goHome() {
 }
 
 .btn-secondary {
-  background: #f5f7fa;
-  color: #606266;
-  border: 1px solid #dcdfe6;
+  background: var(--bg-secondary, #f5f7fa);
+  color: var(--text-secondary, #606266);
+  border: 1px solid var(--border-base, #dcdfe6);
 }
 
 .btn-secondary:hover {
-  background: #ebeef5;
+  background: var(--bg-tertiary, #ebeef5);
 }
 
 .save-hint {
-  color: #67c23a;
+  color: var(--color-success, #67c23a);
   font-size: 14px;
   font-weight: 500;
   animation: fadeIn 0.3s ease;
