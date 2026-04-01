@@ -277,10 +277,10 @@ html, body, #app {
 }
 
 .mode-card {
-  background: white;
+  background: var(--bg-base, white);
   border-radius: 20px;
   padding: 32px 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg, 0 10px 40px rgba(0, 0, 0, 0.1));
   transition: all 0.3s ease;
   cursor: pointer;
   animation: fadeInUp 0.8s ease backwards;
@@ -310,7 +310,7 @@ html, body, #app {
 
 .mode-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-xl, 0 20px 60px rgba(0, 0, 0, 0.15));
 }
 
 .mode-icon {
@@ -333,27 +333,27 @@ html, body, #app {
 .mode-card h2 {
   font-size: 20px;
   margin-bottom: 8px;
-  color: #333;
+  color: var(--text-primary, #333);
 }
 
 .mode-card .subtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary, #666);
   margin-bottom: 16px;
 }
 
 .mode-card .description {
   font-size: 13px;
-  color: #888;
+  color: var(--text-tertiary, #888);
   line-height: 1.6;
 }
 
 .section {
-  background: white;
+  background: var(--bg-base, white);
   border-radius: 20px;
   padding: 32px;
   margin-bottom: 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg, 0 10px 40px rgba(0, 0, 0, 0.1));
   animation: fadeInUp 0.8s ease backwards;
   animation-delay: 0.4s;
 }
@@ -361,29 +361,29 @@ html, body, #app {
 .section h2 {
   font-size: 24px;
   margin-bottom: 16px;
-  color: #333;
+  color: var(--text-primary, #333);
 }
 
 .section h3 {
   font-size: 18px;
   margin: 24px 0 12px;
-  color: #409eff;
+  color: var(--theme-primary, #409eff);
 }
 
 .section p {
   font-size: 15px;
-  color: #666;
+  color: var(--text-secondary, #666);
   line-height: 1.8;
   margin-bottom: 12px;
 }
 
 .section code {
-  background: #f5f7fa;
+  background: var(--bg-secondary, #f5f7fa);
   padding: 2px 8px;
   border-radius: 4px;
   font-family: 'Monaco', 'Menlo', monospace;
   font-size: 13px;
-  color: #e6a23c;
+  color: var(--color-warning, #e6a23c);
 }
 
 .section pre {
@@ -409,7 +409,7 @@ html, body, #app {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: #f5f7fa;
+  background: var(--bg-secondary, #f5f7fa);
   border-radius: 8px;
 }
 
@@ -426,7 +426,7 @@ html, body, #app {
 
 .feature-item span {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary, #666);
 }
 
 footer {
