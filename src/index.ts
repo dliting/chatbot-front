@@ -16,7 +16,7 @@ export { default as TopicManager } from './components/TopicManager.vue'
 
 // Export types
 export type * from './types'
-export type { ChatbotConfig } from './types/config'
+export type { ChatbotConfig, ChatbotCallbacks, SendMessageParams } from './types/config'
 
 // Export composables
 export { useChatbotState } from './composables/useChatbotState'

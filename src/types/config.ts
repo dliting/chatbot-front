@@ -1,9 +1,72 @@
 /**
  * Configuration types for AI Chatbot
  */
-import type { Position, Theme, Locale, InteractionMode, Layout } from './index'
+import type { Position, Theme, Locale, InteractionMode, Layout, PanelMode, Topic, Attachment, StreamEvent, Message, UploadResult } from './index'
 
-import type { PanelMode } from './index'
+/**
+ * Parameters for send-related callbacks
+ */
+export interface SendMessageParams {
+  topicId: string
+  content: string
+  attachments?: Attachment[]
+  thinking?: { enabled: boolean }
+  signal?: AbortSignal
+  /** For edit/regenerate: original message being modified */
+  messageId?: string
+}
+
+/**
+ * Callback interface for host application to control operations.
+ * All callbacks are optional. If not provided, the component
+ * falls back to apiClient or local-only behavior.
+ */
+export interface ChatbotCallbacks {
+  // ===== Message Operations =====
+
+  /** Send message and get AI response via streaming.
+   *  The host MUST return an AsyncGenerator<StreamEvent>. */
+  onSendMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+
+  /** Delete a specific message. */
+  onDeleteMessage?: (messageId: string, topicId: string) => Promise<void>
+
+  /** Edit a message: replace user message content and get new AI response.
+   *  params.messageId is the original message being modified. */
+  onEditMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+
+  /** Regenerate AI response for a preceding user message.
+   *  params contains the original user message's content and attachments. */
+  onRegenerateMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+
+  // ===== Topic Operations =====
+
+  /** Load all topics. Called on mount and after topic create/delete. */
+  onLoadTopics?: (signal?: AbortSignal) => Promise<Topic[]>
+
+  /** Load messages for a specific topic. Called on topic switch and mount. */
+  onLoadMessages?: (topicId: string, signal?: AbortSignal) => Promise<Message[]>
+
+  /** Create a new topic. Returns the full Topic object. */
+  onCreateTopic?: (title?: string) => Promise<Topic>
+
+  /** Switch to a topic. Component calls onLoadMessages after this resolves. */
+  onSwitchTopic?: (topicId: string) => Promise<void>
+
+  /** Delete a topic and all its messages. */
+  onDeleteTopic?: (topicId: string) => Promise<void>
+
+  /** Update topic title. */
+  onUpdateTopicTitle?: (topicId: string, title: string) => Promise<void>
+
+  /** Clear all messages in a topic. */
+  onClearMessages?: (topicId: string) => Promise<void>
+
+  // ===== File Operations =====
+
+  /** Upload image files. Returns URLs of uploaded files. */
+  onUploadImages?: (files: File[]) => Promise<UploadResult>
+}
 
 export interface ChatbotConfig {
   // Interaction mode (new dual-dimension architecture)
@@ -57,6 +120,9 @@ export interface ChatbotConfig {
   apiBaseUrl?: string
   streamEnabled?: boolean
   streamTimeout?: number // Stream response timeout in milliseconds (default: 120000 = 2min)
+
+  /** Callback interface for host application to control operations */
+  callbacks?: ChatbotCallbacks
 
   // Iframe mode
   iframeMode?: boolean
@@ -222,6 +288,9 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   apiBaseUrl: '/api',
   streamEnabled: true,
   streamTimeout: 120000, // 2 minutes
+
+  // Callbacks
+  callbacks: {} as ChatbotCallbacks,
 
   // Iframe
   iframeMode: false,
