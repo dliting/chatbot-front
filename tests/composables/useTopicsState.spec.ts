@@ -195,19 +195,24 @@ describe('useTopicsState', () => {
       expect(topics.currentId).toBe(newTopicId)
     })
 
-    it('should move switched topic to top of list', () => {
+    it('should NOT reorder the list when switching topics', () => {
       const { topics, createTopic, switchTopic } = useTopicsState()
 
       const topic1 = topics.list[0].topicId
       const topic2 = createTopic()
       const topic3 = createTopic()
 
-      expect(topics.list[0].topicId).toBe(topic3)
+      // After creating, topic3 is at the top (createTopic unshifts)
+      const orderBefore = topics.list.map(t => t.topicId)
+      expect(orderBefore[0]).toBe(topic3)
 
-      // Switch to first topic (should move to top)
+      // Switch to the first topic (topic1)
       switchTopic(topic1)
 
-      expect(topics.list[0].topicId).toBe(topic1)
+      // Order should NOT change — only currentId changes
+      const orderAfter = topics.list.map(t => t.topicId)
+      expect(orderAfter).toEqual(orderBefore)
+      expect(topics.currentId).toBe(topic1)
     })
 
     it('should persist to localStorage when switching topics', () => {

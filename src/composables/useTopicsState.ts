@@ -88,15 +88,8 @@ export function useTopicsState(options: UseTopicsStateOptions = {}) {
 
   const switchTopic = (topicId: string) => {
     topics.currentId = topicId
-    // Move topic to top of list
-    const index = topics.list.findIndex(t => t.topicId === topicId)
-    if (index > 0) {
-      const topic = topics.list.splice(index, 1)[0]
-      topics.list.unshift(topic)
-      // Note: saveTopicsToStorage is called by the watch, so explicit save is redundant
-      // but kept for compatibility with existing behavior
-      saveTopicsToStorage(topics.list)
-    }
+    // Only update currentId — do NOT reorder the list.
+    // Topics are sorted by updatedAt; only updateTopicAfterMessage should reorder.
   }
 
   const createTopic = (): string => {
