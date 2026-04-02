@@ -85,9 +85,17 @@ export function useApiClient(options: ApiClientOptions) {
           try {
             const data = JSON.parse(line.slice(6))
             // Support both camelCase (our backend) and snake_case (OpenAI) field names
-            if (data.reasoningContent || data.reasoning_content) {
-              yield { type: 'reasoning', reasoningContent: data.reasoningContent || data.reasoning_content }
-            } else {
+            // Must yield BOTH reasoning and token if both present in same chunk
+            const reasoning = data.reasoningContent ?? data.reasoning_content
+            const content = data.content ?? data.delta?.content
+            if (reasoning) {
+              yield { type: 'reasoning', reasoningContent: reasoning }
+            }
+            if (content) {
+              yield { type: 'token', content }
+            }
+            if (!reasoning && !content && data.type) {
+              // Pass through other event types (start, end, etc.)
               yield data
             }
           } catch (e) {
