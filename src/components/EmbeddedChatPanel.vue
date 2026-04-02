@@ -40,6 +40,7 @@
           :enable-thinking="enableThinking"
           :thinking-enabled="thinkingEnabled"
           :is-thinking="isThinking"
+          :enable-voice-input="enableVoiceInput"
           @send-message="handleSendMessage"
           @quick-action="$emit('quick-action', $event)"
           @edit="$emit('edit', $event)"
@@ -74,6 +75,7 @@
         :enable-thinking="enableThinking"
         :thinking-enabled="thinkingEnabled"
         :is-thinking="isThinking"
+        :enable-voice-input="enableVoiceInput"
         @send-message="handleSendMessage"
         @quick-action="$emit('quick-action', $event)"
         @edit="$emit('edit', $event)"
@@ -135,6 +137,7 @@ interface Props {
   enableThinking?: boolean
   thinkingEnabled?: boolean
   isThinking?: boolean
+  enableVoiceInput?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -157,7 +160,7 @@ interface Emits {
   (e: 'delete-topic', topicId: string): void
   (e: 'delete-topics', topicIds: string[]): void
   (e: 'update-topic-title', topicId: string, title: string): void
-  (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
+  (e: 'send-message', data: { content: string; attachments?: import('@/types').Attachment[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: import('@/types').Message): void
   (e: 'copy', message: import('@/types').Message): void
@@ -180,7 +183,7 @@ const handleFileClick = (file: { type: string; url: string; name?: string }) => 
 }
 
 // Handle send message
-const handleSendMessage = (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
+const handleSendMessage = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {
   emit('send-message', data)
 }
 

@@ -40,6 +40,7 @@
         :enable-thinking="enableThinking"
         :thinking-enabled="thinkingEnabled"
         :is-thinking="isThinking"
+        :enable-voice-input="enableVoiceInput"
         @send-message="handleSend"
         @quick-action="handleQuickAction"
         @edit="handleMessageEdit"
@@ -110,6 +111,7 @@ interface Props {
   enableThinking?: boolean
   thinkingEnabled?: boolean
   isThinking?: boolean
+  enableVoiceInput?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -120,7 +122,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Emits
 interface Emits {
-  (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
+  (e: 'send-message', data: { content: string; attachments?: import('@/types').Attachment[] }): void
   (e: 'quick-action', text: string): void
   (e: 'create-topic'): void
   (e: 'select-topic', topicId: string): void
@@ -179,7 +181,7 @@ const handleToggleTheme = () => {
   emit('toggle-theme')
 }
 
-const handleSend = (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
+const handleSend = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {
   emit('send-message', data)
 }
 

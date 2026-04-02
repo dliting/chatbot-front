@@ -12,6 +12,7 @@
     :enable-thinking="enableThinking"
     :thinking-enabled="thinkingEnabled"
     :is-thinking="isThinking"
+    :enable-voice-input="enableVoiceInput"
     @send-message="handleSendMessage"
     @quick-action="$emit('quick-action', $event)"
     @create-topic="$emit('create-topic')"
@@ -43,6 +44,7 @@
     :enable-thinking="enableThinking"
     :thinking-enabled="thinkingEnabled"
     :is-thinking="isThinking"
+    :enable-voice-input="enableVoiceInput"
     @send-message="handleSendMessage"
     @quick-action="$emit('quick-action', $event)"
     @create-topic="$emit('create-topic')"
@@ -81,6 +83,7 @@ interface Props {
   enableThinking?: boolean
   thinkingEnabled?: boolean
   isThinking?: boolean
+  enableVoiceInput?: boolean
 }
 
 withDefaults(defineProps<Props>(), {
@@ -102,7 +105,7 @@ interface Emits {
   (e: 'select-topic', topicId: string): void
   (e: 'delete-topic', topicId: string): void
   (e: 'update-topic-title', topicId: string, title: string): void
-  (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
+  (e: 'send-message', data: { content: string; attachments?: import('@/types').Attachment[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void
   (e: 'copy', message: Message): void
@@ -116,7 +119,7 @@ interface Emits {
 const emit = defineEmits<Emits>()
 
 // Handle send message
-const handleSendMessage = (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
+const handleSendMessage = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {
   emit('send-message', data)
 }
 </script>

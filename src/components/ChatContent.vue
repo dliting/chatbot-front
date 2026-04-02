@@ -42,13 +42,13 @@
           />
           <div class="chat-content__bubble">
             <!-- Images -->
-            <div v-if="message.images && message.images.length > 0" class="chat-content__images">
+            <div v-if="message.attachments && message.attachments.some(a => a.type === 'image')" class="chat-content__images">
               <img
-                v-for="(img, idx) in message.images"
+                v-for="(img, idx) in message.attachments.filter(a => a.type === 'image')"
                 :key="idx"
-                :src="img"
+                :src="img.url"
                 class="chat-content__image"
-                @click="$emit('file-click', { type: 'image', url: img })"
+                @click="$emit('file-click', { type: 'image', url: img.url })"
               />
             </div>
             <!-- Text -->
@@ -112,6 +112,7 @@
         :disabled="isStreaming"
         :enable-thinking="enableThinking"
         :thinking-enabled="thinkingEnabled"
+        :enable-voice-input="enableVoiceInput"
         @send="handleSend"
         @stop="$emit('stop-generating')"
         @file-click="$emit('file-click', $event)"
@@ -177,6 +178,7 @@ interface Props {
   enableThinking?: boolean
   thinkingEnabled?: boolean
   isThinking?: boolean
+  enableVoiceInput?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -201,7 +203,7 @@ const quickActions = computed(() => [
 ])
 
 interface Emits {
-  (e: 'send-message', data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }): void
+  (e: 'send-message', data: { content: string; attachments?: import('@/types').Attachment[] }): void
   (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void
   (e: 'copy', message: Message): void
@@ -215,7 +217,7 @@ interface Emits {
 const emit = defineEmits<Emits>()
 
 // Handle send event from ChatInput
-const handleSend = (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
+const handleSend = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {
   emit('send-message', data)
 }
 
