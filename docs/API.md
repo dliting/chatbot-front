@@ -1,15 +1,25 @@
-# AI Chatbot Frontend 组件 API 文档
+# AI Chatbot Frontend API Documentation
 
-## 文档信息
-| 项目 | 内容 |
-|------|------|
-| 产品名称 | ai-chatbot-frontend |
-| 版本 | v1.2 |
-| 最后更新 | 2026-03-30 |
+| Field | Value |
+|-------|-------|
+| Product | ai-chatbot-frontend |
+| Version | v1.3 |
+| Last Updated | 2026-04-02 |
 
 ---
 
-## 1. 快速开始
+## 1. Overview
+
+ai-chatbot-frontend is a Vue 3 component library for embedding AI chat into web applications. It supports three interaction modes (floating, extended, sidebar), streaming responses, topic management, file attachments, and thinking/chain-of-thought.
+
+The component uses a **three-tier fallback** strategy for backend communication:
+1. **Callbacks** (`ChatbotCallbacks`) -- host application provides direct control
+2. **apiBaseUrl** (`useApiClient`) -- built-in REST client for standard backends
+3. **Local-only** -- in-memory state with no backend
+
+---
+
+## 2. Installation / Quick Start
 
 ```bash
 npm install chatbot
@@ -20,10 +30,11 @@ npm install chatbot
   <AIChatbot :config="chatConfig" />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { AIChatbot } from 'chatbot'
+import type { ChatbotConfig } from 'chatbot'
 
-const chatConfig = {
+const chatConfig: ChatbotConfig = {
   apiBaseUrl: '/api',
   mode: 'extended',
   enableThinking: true,
@@ -33,181 +44,445 @@ const chatConfig = {
 
 ---
 
-## 2. AIChatbot 主组件
-
-主入口组件，包含完整的聊天功能（会话管理、消息收发、流式响应等）。
-
-### Props
-
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `config` | `ChatbotConfig` | `{}` | 聊天机器人配置对象 |
-
-### ChatbotConfig 完整配置
+## 3. Configuration (ChatbotConfig)
 
 ```typescript
 interface ChatbotConfig {
-  // === 交互模式 ===
-  mode?: 'floating' | 'extended' | 'sidebar'  // 交互模式（推荐）
-  layout?: 'dual' | 'single'                // 布局（自动从 mode 推导）
-  chatMode?: 'extended' | 'compact' | 'floating'  // 旧版模式（兼容）
+  // === Interaction Mode (dual-dimension architecture) ===
+  mode?: 'floating' | 'extended' | 'sidebar'  // Interaction mode (default: 'floating')
+  layout?: 'dual' | 'single'                   // Layout (auto-derived from mode)
+  chatMode?: 'extended' | 'compact' | 'floating'  // Legacy (backward compat)
 
-  // === 布局配置 ===
-  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'  // 悬浮球位置
-  panelWidth?: number          // 面板宽度（默认 400）
-  panelHeight?: number         // 面板高度（默认 600）
-  defaultExpanded?: boolean    // 默认展开（默认 false）
-  panelMode?: 'sidebar' | 'dialog' | 'fullscreen' | 'auto'  // 面板模式
+  // === Layout ===
+  position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+  panelWidth?: number              // Default 400
+  panelHeight?: number             // Default 600
+  panelMinWidth?: number           // Default 320
+  panelMaxWidth?: number           // Default 600
+  defaultExpanded?: boolean        // Default false
+  panelMode?: 'sidebar' | 'dialog' | 'fullscreen' | 'auto'
 
-  // === 悬浮面板 ===
-  draggable?: boolean     // 可拖拽（默认 true）
-  resizable?: boolean     // 可调整大小（默认 true）
-  minWidth?: number        // 最小宽度（默认 300）
-  minHeight?: number       // 最小高度（默认 400）
-  rememberPosition?: boolean  // 记住位置（默认 true）
+  // === Floating Panel ===
+  draggable?: boolean              // Default true
+  resizable?: boolean              // Default true
+  minWidth?: number                // Default 300
+  minHeight?: number               // Default 400
+  rememberPosition?: boolean       // Default true
 
-  // === 功能开关 ===
-  enableImageUpload?: boolean    // 图片上传（默认 true）
-  enableSessionManager?: boolean // 会话管理（默认 true）
-  enableVoiceInput?: boolean     // 语音输入（默认 false）
-  enableCopyMessage?: boolean    // 复制消息（默认 true）
-  enableDeleteMessage?: boolean  // 删除消息（默认 true）
-  enableResend?: boolean         // 重新发送（默认 true）
-  enableClearAll?: boolean       // 清空所有（默认 true）
-  enableThinking?: boolean       // 思考模式（默认 false）
+  // === Feature Toggles ===
+  enableImageUpload?: boolean      // Default true
+  enableTopicManager?: boolean     // Default true
+  enableVoiceInput?: boolean       // Default false
+  enableCopyMessage?: boolean      // Default true
+  enableDeleteMessage?: boolean    // Default true
+  enableResend?: boolean           // Default true
+  enableClearAll?: boolean         // Default true
+  enableThinking?: boolean         // Default false
 
-  // === 思考模式 ===
-  thinkingDefaultEnabled?: boolean  // 默认启用思考（默认 true）
-  thinkingAutoCollapse?: boolean   // 自动收起思考过程（默认 true）
+  // === Thinking / Chain-of-Thought ===
+  thinkingDefaultEnabled?: boolean // Default true
+  thinkingAutoCollapse?: boolean  // Default true
 
-  // === 上传限制 ===
-  maxImageCount?: number     // 最大图片数（默认 8）
-  maxImageSize?: number      // 最大图片大小 bytes（默认 10MB）
-  allowedImageTypes?: string[]  // 允许的图片类型
+  // === Upload Limits ===
+  maxImageCount?: number           // Default 8
+  maxImageSize?: number            // Default 10MB (bytes)
+  allowedImageTypes?: string[]     // Default: jpeg, png, gif, webp
 
-  // === 样式 ===
-  theme?: 'light' | 'dark' | 'system'  // 主题
-  primaryColor?: string     // 主色调（默认 '#409eff'）
-  customStyles?: Record<string, string>  // 自定义 CSS 变量
+  // === Style ===
+  theme?: 'light' | 'dark' | 'system'  // Default 'light'
+  primaryColor?: string            // Default '#409eff'
+  customStyles?: Record<string, string>
 
   // === API ===
-  apiBaseUrl?: string        // 后端 API 地址（默认 '/api'）
-  streamEnabled?: boolean   // 启用流式响应（默认 true）
-  streamTimeout?: number    // 流式响应超时 ms（默认 120000 = 2分钟）
+  apiBaseUrl?: string              // Default '/api'
+  streamEnabled?: boolean          // Default true
+  streamTimeout?: number           // Default 120000 (2min)
 
-  // === 国际化 ===
-  locale?: 'zh-CN' | 'en-US'
-  labels?: Partial<ChatbotLabels>  // 自定义标签文案
+  // === Callbacks (host-controlled operations) ===
+  callbacks?: ChatbotCallbacks
 
-  // === 消息 ===
-  maxMessagesInMemory?: number  // 最大消息数（默认 1000）
-  autoScroll?: boolean         // 自动滚动（默认 true）
+  // === Iframe ===
+  iframeMode?: boolean
+  allowedOrigins?: string[]
+
+  // === Internationalization ===
+  locale?: 'zh-CN' | 'en-US'      // Default 'en-US'
+  labels?: Partial<ChatbotLabels>
+
+  // === Messages ===
+  maxMessagesInMemory?: number     // Default 1000
+  autoScroll?: boolean             // Default true
 }
 ```
 
-### ChatbotLabels 标签文案
+---
+
+## 4. Callbacks API
+
+The `ChatbotCallbacks` interface lets the host application control all operations directly. All callbacks are optional -- the component falls back to `apiBaseUrl` (apiClient) or local-only behavior when a callback is not provided.
+
+```typescript
+interface ChatbotCallbacks {
+  // ===== Message Operations =====
+
+  /** Send a message and stream AI response.
+   *  Must return an AsyncGenerator<StreamEvent>. */
+  onSendMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+
+  /** Delete a specific message. */
+  onDeleteMessage?: (messageId: string, topicId: string) => Promise<void>
+
+  /** Edit a message and get new AI response.
+   *  params.messageId is the original message being modified. */
+  onEditMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+
+  /** Regenerate AI response for a user message.
+   *  params contains the original user message content and attachments. */
+  onRegenerateMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+
+  // ===== Topic Operations =====
+
+  /** Load all topics. Called on mount and after create/delete. */
+  onLoadTopics?: (signal?: AbortSignal) => Promise<Topic[]>
+
+  /** Load messages for a topic. Called on topic switch and mount. */
+  onLoadMessages?: (topicId: string, signal?: AbortSignal) => Promise<Message[]>
+
+  /** Create a new topic. Returns the full Topic object. */
+  onCreateTopic?: (title?: string) => Promise<Topic>
+
+  /** Switch to a topic. Component calls onLoadMessages after this resolves. */
+  onSwitchTopic?: (topicId: string) => Promise<void>
+
+  /** Delete a topic and all its messages. */
+  onDeleteTopic?: (topicId: string) => Promise<void>
+
+  /** Update topic title. */
+  onUpdateTopicTitle?: (topicId: string, title: string) => Promise<void>
+
+  /** Clear all messages in a topic. */
+  onClearMessages?: (topicId: string) => Promise<void>
+
+  // ===== File Operations =====
+
+  /** Upload image files. Returns URLs of uploaded files. */
+  onUploadImages?: (files: File[]) => Promise<UploadResult>
+}
+```
+
+### SendMessageParams
+
+Unified parameters for all send-related callbacks (`onSendMessage`, `onEditMessage`, `onRegenerateMessage`):
+
+```typescript
+interface SendMessageParams {
+  topicId: string
+  content: string
+  attachments?: Attachment[]
+  thinking?: { enabled: boolean }
+  signal?: AbortSignal
+  messageId?: string  // For edit/regenerate: the original message ID
+}
+```
+
+### Example: Using Callbacks
+
+```vue
+<template>
+  <AIChatbot :config="config" />
+</template>
+
+<script setup lang="ts">
+import { AIChatbot } from 'chatbot'
+import type { ChatbotConfig, SendMessageParams, StreamEvent } from 'chatbot'
+
+async function* mySendMessage(params: SendMessageParams): AsyncGenerator<StreamEvent> {
+  yield { type: 'start', messageId: crypto.randomUUID() }
+
+  // Call your own backend or LLM service here
+  const response = await fetch('/my-api/chat', {
+    method: 'POST',
+    body: JSON.stringify(params),
+    signal: params.signal,
+  })
+  const reader = response.body!.getReader()
+  const decoder = new TextDecoder()
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+    const text = decoder.decode(value)
+    yield { type: 'token', content: text }
+  }
+
+  yield { type: 'end', fullContent: 'accumulated content' }
+}
+
+const config: ChatbotConfig = {
+  mode: 'extended',
+  callbacks: {
+    onSendMessage: mySendMessage,
+    async onLoadTopics() {
+      const res = await fetch('/my-api/topics')
+      return res.json()
+    },
+    async onCreateTopic(title) {
+      const res = await fetch('/my-api/topics', {
+        method: 'POST',
+        body: JSON.stringify({ title }),
+      })
+      return res.json()
+    },
+  },
+}
+</script>
+```
+
+### Three-Tier Fallback
+
+For each operation, the component tries in order:
+
+| Priority | Source | Behavior |
+|----------|--------|----------|
+| 1 | `callbacks.*` | Host-provided callback function |
+| 2 | `apiBaseUrl` (apiClient) | Built-in REST calls to `{apiBaseUrl}/...` |
+| 3 | Local-only | In-memory state, no backend communication |
+
+Example: when a user deletes a message:
+1. If `callbacks.onDeleteMessage` exists, call it.
+2. Else if `apiBaseUrl` is set, call `DELETE {apiBaseUrl}/messages/:id`.
+3. Else, remove the message from local state only.
+
+---
+
+## 5. Events API
+
+Events use a colon-separated naming convention (`domain:action`) and carry object payloads. All events are emitted from the `AIChatbot` component.
+
+### Message Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `message:sent` | `{ message: Message }` | User message sent |
+| `message:error` | `{ message: Message, error: Error }` | Message error occurred |
+| `message:deleted` | `{ messageId: string, topicId: string }` | Message deleted (synced with backend) |
+| `message:edited` | `{ messageId: string, topicId: string }` | Message edited |
+| `message:copied` | `{ message: Message }` | Message content copied |
+| `message:resend` | `{ message: Message }` | Message resent |
+| `message:regenerated` | `{ messageId: string, topicId: string }` | AI response regenerated |
+| `message:stream-start` | `{ messageId: string }` | Streaming response started |
+| `message:stream-end` | `{ messageId: string, fullContent: string }` | Streaming response completed |
+
+### Topic Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `topic:created` | `{ topic: Topic }` | New topic created |
+| `topic:switched` | `{ topicId: string }` | Active topic switched |
+| `topic:deleted` | `{ topicId: string }` | Topic deleted |
+| `topic:title-updated` | `{ topicId: string, title: string }` | Topic title changed |
+| `topic:cleared` | `{ topicId: string }` | All messages in topic cleared |
+
+### UI Events
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `ui:panel-toggle` | `{ isOpen: boolean, mode: string }` | Panel opened/closed |
+| `ui:theme-changed` | `{ theme: string }` | Theme changed |
+| `ui:stop-generating` | -- | User stopped generation |
+
+### Lifecycle Event
+
+| Event | Payload | Description |
+|-------|---------|-------------|
+| `chatbot:ready` | -- | Component fully mounted and ready |
+
+### Legacy Events (backward compatible)
+
+The following legacy events are still emitted alongside the new events:
+
+| Legacy Event | New Equivalent |
+|--------------|----------------|
+| `panelToggle` | `ui:panel-toggle` |
+| `topicChange` | `topic:switched` |
+| `topicCreate` | `topic:created` |
+| `topicDelete` | `topic:deleted` |
+| `topicTitleUpdate` | `topic:title-updated` |
+| `editMessage` | `message:edited` |
+
+---
+
+## 6. Attachment Model
+
+The unified `Attachment` interface replaces the previous separate `images[]`, `videos[]`, `audios[]`, and `documents[]` fields:
+
+```typescript
+interface Attachment {
+  name: string
+  url: string
+  type: 'image' | 'video' | 'audio' | 'document'
+  size?: number       // File size in bytes
+  mimeType?: string   // MIME type, e.g. 'image/png'
+}
+```
+
+Attachments are used in:
+- `Message.attachments` -- array of attachments on a message
+- `SendMessageParams.attachments` -- attachments sent with a message
+- `SendMessageData.attachments` -- internal send data structure
+
+Example:
+```typescript
+const message: Message = {
+  messageId: 'msg-1',
+  topicId: 'topic-1',
+  role: 'user',
+  type: 'mixed',
+  content: 'Check this image',
+  attachments: [
+    { name: 'screenshot.png', url: 'https://example.com/img.png', type: 'image', size: 245000, mimeType: 'image/png' },
+    { name: 'report.pdf', url: 'https://example.com/doc.pdf', type: 'document', mimeType: 'application/pdf' },
+  ],
+  timestamp: Date.now(),
+  status: 'sent',
+}
+```
+
+---
+
+## 7. Types Reference
+
+### Message
+
+```typescript
+interface Message {
+  messageId: string
+  topicId: string
+  role: 'user' | 'assistant' | 'system'
+  type: 'text' | 'image' | 'video' | 'audio' | 'mixed' | 'document'
+  content: string
+  attachments?: Attachment[]     // Unified attachment array
+  timestamp: number
+  status: 'sending' | 'sent' | 'error' | 'loading' | 'stopped'
+  errorMessage?: string          // User-facing error when status is 'error' or 'stopped'
+  thinkingContent?: string       // Thinking/reasoning process text
+  thinkingTime?: number          // Thinking elapsed time in ms
+  metadata?: Record<string, unknown>
+}
+```
+
+### Topic
+
+```typescript
+interface Topic {
+  topicId: string
+  title: string
+  createdAt: number
+  updatedAt: number
+  messageCount: number
+  unreadCount: number
+}
+```
+
+### StreamEvent
+
+```typescript
+interface StreamEvent {
+  type: 'start' | 'token' | 'reasoning' | 'end' | 'error'
+  messageId?: string
+  content?: string
+  fullContent?: string
+  reasoningContent?: string   // Thinking content fragment
+  thinkingTime?: number       // Cumulative thinking time in ms
+  error?: string
+}
+```
+
+### UploadResult
+
+```typescript
+interface UploadResult {
+  urls: string[]
+  errors?: Array<{ file: string; error: string }>
+}
+```
+
+### ChatbotLabels
 
 ```typescript
 interface ChatbotLabels {
-  title: string           // 标题（默认 'AI Assistant'）
-  placeholder: string     // 输入框占位符
-  send: string            // 发送按钮
-  newChat: string         // 新建对话
-  history: string         // 历史记录
-  copy: string            // 复制
-  refresh: string         // 重新生成
-  resend: string          // 重发
-  delete: string          // 删除
-  timeout: string         // 超时提示
-  networkError: string    // 网络错误提示
-  serverError: string     // 服务器错误提示
-  generationStopped: string  // 已停止生成提示
-  thinking?: {
-    toggle: string        // 思考切换
-    thinking: string      // 思考中
-    deeplyThought: string // 深度思考
-    showThinking: string  // 查看思考过程
-    hideThinking: string  // 收起思考过程
-  }
-  // 欢迎页面标签
+  title: string
+  placeholder: string
+  send: string
+  newTopic: string
+  history: string
+  clearAll: string
+  delete: string
+  copy: string
+  refresh: string
+  resend: string
+  uploading: string
+  uploadFailed: string
+  retry: string
+  timeout: string
+  networkError: string
+  serverError: string
+  generationStopped: string
+  close: string
+  expand: string
+  collapse: string
   welcomeTitle?: string
   welcomeSubtitle?: string
   quickAction1Title?: string
   quickAction1Desc?: string
   quickAction1Text?: string
-  // ... quickAction2-4 类似
+  // quickAction2-4 follow the same pattern
+  copied?: string
+  thinking?: {
+    toggle?: string
+    thinking?: string
+    deeplyThought?: string
+    showThinking?: string
+    hideThinking?: string
+  }
 }
 ```
 
-### Events 事件
-
-| 事件名 | 参数 | 说明 |
-|--------|------|------|
-| `panelToggle` | `{ isOpen: boolean, mode: string }` | 面板打开/关闭 |
-| `sessionChange` | `sessionId: string` | 切换会话 |
-| `sessionCreate` | `sessionId: string` | 创建新会话 |
-| `sessionDelete` | `sessionId: string` | 删除会话 |
-| `sessionTitleUpdate` | `sessionId: string, title: string` | 更新会话标题 |
-| `editMessage` | `message: Message` | 编辑消息 |
-
-### Methods 暴露方法
-
-通过 `ref` 调用：
+### Utility Types
 
 ```typescript
-const chatRef = ref()
-chatRef.value.togglePanel()  // 切换面板
-chatRef.value.setTheme('dark')  // 设置主题
-```
-
-### 使用示例
-
-**扩展模式（双栏布局）：**
-```vue
-<AIChatbot :config="{
-  mode: 'extended',
-  apiBaseUrl: '/api',
-  enableThinking: true,
-  labels: { title: '智能助手' }
-}" />
-```
-
-**悬浮模式（悬浮球 + 弹窗）：**
-```vue
-<AIChatbot :config="{
-  mode: 'floating',
-  position: 'bottom-right',
-  primaryColor: '#6366f1'
-}" />
-```
-
-**边栏模式：**
-```vue
-<AIChatbot :config="{
-  mode: 'sidebar',
-  apiBaseUrl: 'https://api.example.com'
-}" />
+type MessageRole = 'user' | 'assistant' | 'system'
+type MessageType = 'text' | 'image' | 'video' | 'audio' | 'mixed' | 'document'
+type MessageStatus = 'sending' | 'sent' | 'error' | 'loading' | 'stopped'
+type AttachmentType = 'image' | 'video' | 'audio' | 'document'
+type InteractionMode = 'floating' | 'extended' | 'sidebar'
+type Layout = 'dual' | 'single'
+type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
+type PanelMode = 'sidebar' | 'dialog' | 'fullscreen' | 'auto'
+type Theme = 'light' | 'dark' | 'system'
+type Locale = 'zh-CN' | 'en-US'
 ```
 
 ---
 
-## 3. 独立组件
+## 8. Independent Components
 
-所有组件均可独立导入使用：
+All components can be imported independently:
 
 ```typescript
 import {
-  SuspendedBall,    // 悬浮球
-  ChatPanel,       // 面板容器
-  DraggableWindow, // 可拖拽窗口
-  MessageList,     // 消息列表
-  MessageItem,     // 消息项
-  InputArea,       // 输入区域
-  SessionManager,  // 会话管理
+  AIChatbot,        // Main entry component
+  SuspendedBall,    // Floating trigger ball
+  ChatPanel,        // Chat window container
+  DraggableWindow,  // Reusable draggable/resizable window
+  MessageList,      // Message list container
+  MessageItem,      // Single message display
+  InputArea,        // User input area
+  TopicManager,     // Topic/session management panel
 } from 'chatbot'
 ```
 
-### SuspendedBall 悬浮球
+### SuspendedBall
 
 ```vue
 <SuspendedBall
@@ -219,27 +494,11 @@ import {
 />
 ```
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `visible` | `boolean` | `true` | 是否显示 |
-| `size` | `number` | `56` | 尺寸(px) |
-| `badge` | `string \| number \| null` | `null` | 角标数字 |
-| `unreadCount` | `number` | - | 未读数（优先于 badge） |
-| `position` | `Position` | `'bottom-right'` | 位置 |
-| `iconColor` | `string` | - | 图标颜色 |
-| `backgroundColor` | `string` | - | 背景颜色 |
-| `draggable` | `boolean` | `true` | 是否可拖拽 |
-
-| 事件 | 参数 | 说明 |
-|------|------|------|
-| `click` | - | 点击 |
-
-### MessageItem 消息项
+### MessageItem
 
 ```vue
 <MessageItem
   :message="msg"
-  :theme="'dark'"
   :is-streaming="isStreaming"
   :show-avatar="true"
   :show-actions="true"
@@ -253,31 +512,17 @@ import {
 />
 ```
 
-| 属性 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `message` | `Message` | **必填** | 消息对象 |
-| `theme` | `'light' \| 'dark'` | `'light'` | 主题 |
-| `showAvatar` | `boolean` | `true` | 显示头像 |
-| `showLabel` | `boolean` | `false` | 显示角色标签 |
-| `showTimestamp` | `boolean` | `false` | 显示时间戳 |
-| `showActions` | `boolean` | `true` | 显示操作按钮 |
-| `enableCopy` | `boolean` | `true` | 启用复制 |
-| `enableDelete` | `boolean` | `true` | 启用删除 |
-| `enableResend` | `boolean` | `true` | 启用重发 |
-| `isStreaming` | `boolean` | `false` | 是否正在流式输出 |
-| `isLastMessage` | `boolean` | `false` | 是否为最后一条 AI 消息 |
-
 ---
 
-## 4. Composables 组合式函数
+## 9. Composables
 
 ```typescript
 import {
-  useChatbotState,  // 聊天状态管理
-  useResponsive,    // 响应式断点
-  useStream,        // 流式响应处理
-  useMessages,      // 消息管理
-  useSessions,      // 会话管理
+  useChatbotState,  // Chat state management
+  useResponsive,    // Responsive breakpoints
+  useStream,        // Stream response handling
+  useMessages,      // Message management
+  useTopics,        // Topic management
 } from 'chatbot'
 ```
 
@@ -285,37 +530,12 @@ import {
 
 ```typescript
 const { isStreaming, streamedContent, streamFromGenerator, cancel, reset } = useStream({
-  onChunk: (content) => { /* 逐块接收 */ },
-  onComplete: (fullContent) => { /* 完成 */ },
-  onError: (error) => { /* 错误 */ },
+  onChunk: (content) => { /* receive chunk */ },
+  onComplete: (fullContent) => { /* completed */ },
+  onError: (error) => { /* error */ },
 })
 
-// 使用 AsyncGenerator 流式处理
 await streamFromGenerator(myGenerator())
-```
-
-### useApiClient
-
-```typescript
-import { useApiClient } from 'chatbot'
-
-const { streamChat, sendMessage, getSessions } = useApiClient({
-  baseUrl: '/api',
-  streamTimeout: 120000,  // 2分钟超时
-})
-
-// 流式聊天（返回 AsyncGenerator）
-const stream = streamChat(sessionId, content, images, undefined, undefined, {
-  signal: abortController.signal,
-  thinking: { enabled: true },
-})
-
-for await (const chunk of stream) {
-  // chunk.type: 'start' | 'token' | 'reasoning' | 'end'
-  if (chunk.type === 'token') {
-    console.log(chunk.content)
-  }
-}
 ```
 
 ### useChatbotState
@@ -326,115 +546,137 @@ const { state, togglePanel, setTheme, switchSession, createSession, deleteSessio
 
 ---
 
-## 5. 类型定义
+## 10. Backend API Endpoints
 
-```typescript
-import type {
-  Message,           // 消息
-  Session,           // 会话
-  MessageStatus,     // 'sending' | 'sent' | 'error' | 'loading' | 'stopped'
-  MessageType,       // 'text' | 'image' | 'video' | 'audio' | 'mixed' | 'document'
-  MessageRole,       // 'user' | 'assistant' | 'system'
-  InteractionMode,   // 'floating' | 'extended' | 'sidebar'
-  Layout,            // 'dual' | 'single'
-  StreamEvent,       // 流式事件
-  ChatbotConfig,     // 配置
-} from 'chatbot'
-```
+When using `apiBaseUrl` (without callbacks), the component expects the following REST endpoints:
 
-### Message 消息结构
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/chat/stream` | Stream chat (SSE) |
+| `POST` | `/chat/message` | Non-streaming chat |
+| `POST` | `/upload/images` | Upload images |
+| `GET` | `/sessions` | List sessions/topics |
+| `POST` | `/sessions` | Create session/topic |
+| `GET` | `/sessions/:id/messages` | Get session messages |
+| `DELETE` | `/sessions/:id` | Delete session/topic |
+| `PATCH` | `/sessions/:id/title` | Update session title |
+| `DELETE` | `/messages/:id` | Delete a specific message |
 
-```typescript
-interface Message {
-  messageId: string
-  sessionId: string
-  role: 'user' | 'assistant' | 'system'
-  type: 'text' | 'image' | 'video' | 'audio' | 'mixed' | 'document'
-  content: string
-  images?: string[]
-  videos?: string[]
-  audios?: string[]
-  documents?: DocumentAttachment[]
-  timestamp: number
-  status: 'sending' | 'sent' | 'error' | 'loading' | 'stopped'
-  errorMessage?: string      // 错误/停止时的提示信息
-  thinkingContent?: string   // 思考过程内容
-  thinkingTime?: number      // 思考耗时（毫秒）
-  metadata?: Record<string, unknown>
-}
-```
-
-### StreamEvent 流式事件
-
-```typescript
-interface StreamEvent {
-  type: 'start' | 'token' | 'reasoning' | 'end' | 'error'
-  messageId?: string
-  content?: string           // 文本内容
-  fullContent?: string       // 完整内容（end 事件）
-  reasoningContent?: string  // 思考内容（reasoning 事件）
-  error?: string             // 错误信息（error 事件）
-}
-```
-
----
-
-## 6. 错误处理
-
-组件内置以下错误处理机制：
-
-| 场景 | 用户提示 | 消息状态 |
-|------|----------|----------|
-| 网络不可达 | "网络连接失败，请检查网络" | `error` |
-| 请求超时（默认 2min） | "响应超时，请检查网络或后端服务" | `error` |
-| HTTP 错误 | "服务器错误 (HTTP {status})" | `error` |
-| 用户点击停止（有部分内容） | "已停止生成" | `stopped` |
-| 用户点击停止（无内容） | "已停止生成" | `error` |
-| 其他错误 | 原始错误信息 | `error` |
-
-错误消息通过 `message.errorMessage` 字段传递，可在 UI 中显示并支持重试。
-
----
-
-## 7. 超时控制
-
-流式请求默认超时时间为 **2 分钟**（120000ms），可通过配置修改：
-
-```typescript
-const config = {
-  streamTimeout: 60000,  // 1分钟超时
-  // 或更长
-  streamTimeout: 30 * 60 * 1000,  // 30分钟（适用于复杂推理）
-}
-```
-
-超时后自动中断请求，前端显示超时错误提示，用户可重试。
-
----
-
-## 8. 后端接口对接
-
-组件通过 `apiBaseUrl` 配置对接后端。后端需实现以下接口：
-
-### 流式聊天
+### Stream Chat (SSE)
 
 ```
 POST {apiBaseUrl}/chat/stream
+Content-Type: application/json
 
-请求: { sessionId, content, images, videos, audios, stream: true, options: { thinking: { enabled } } }
-响应: SSE 流
+Request:
+{
+  "sessionId": "string",
+  "content": "string",
+  "images": ["string"],
+  "videos": ["string"],
+  "audios": ["string"],
+  "stream": true,
+  "options": { "thinking": { "enabled": true } }
+}
+
+Response: SSE stream
   data: {"type":"start","messageId":"..."}
-  data: {"type":"reasoning","reasoningContent":"思考内容"}  // 可选
+  data: {"type":"reasoning","reasoningContent":"思考内容"}  // optional
   data: {"type":"token","content":"文本片段"}
   data: {"type":"end","fullContent":"完整内容","messageId":"..."}
 ```
 
-### 其他接口
+### Delete Message
 
-- `POST {apiBaseUrl}/sessions` — 创建会话
-- `GET {apiBaseUrl}/sessions` — 获取会话列表
-- `GET {apiBaseUrl}/sessions/{id}/messages` — 获取会话消息
-- `DELETE {apiBaseUrl}/sessions/{id}` — 删除会话
-- `POST {apiBaseUrl}/upload/images` — 上传图片
+```
+DELETE {apiBaseUrl}/messages/:id
 
-完整的后端实现可参考 `examples/chatapp/` 目录下的示例代码。
+Response:
+{ "code": 0, "message": "success" }
+```
+
+**Note**: The backend uses "session" terminology while the frontend uses "topic". The apiClient maps `topicId` to `sessionId` automatically.
+
+### Full Backend Reference
+
+A complete backend implementation is available at `examples/chatapp/` (both mock and real modes).
+
+---
+
+## 11. Error Handling
+
+| Scenario | User Prompt | Message Status |
+|----------|-------------|----------------|
+| Network unreachable | "Network connection failed" | `error` |
+| Request timeout (default 2min) | "Response timeout" | `error` |
+| HTTP error | "Server error (HTTP {status})" | `error` |
+| User clicked stop (partial content) | "Generation stopped" | `stopped` |
+| User clicked stop (no content) | "Generation stopped" | `error` |
+
+---
+
+## 12. Timeout Control
+
+Default stream timeout is **2 minutes** (120000ms). Configurable via `streamTimeout`:
+
+```typescript
+const config: ChatbotConfig = {
+  streamTimeout: 60000,          // 1 minute
+  // or longer for complex reasoning:
+  streamTimeout: 30 * 60 * 1000, // 30 minutes
+}
+```
+
+---
+
+## 13. Usage Examples
+
+### Extended Mode (dual layout)
+
+```vue
+<AIChatbot :config="{
+  mode: 'extended',
+  apiBaseUrl: '/api',
+  enableThinking: true,
+  labels: { title: '智能助手' }
+}" />
+```
+
+### Floating Mode (suspension ball + popup)
+
+```vue
+<AIChatbot :config="{
+  mode: 'floating',
+  position: 'bottom-right',
+  primaryColor: '#6366f1'
+}" />
+```
+
+### Sidebar Mode
+
+```vue
+<AIChatbot :config="{
+  mode: 'sidebar',
+  apiBaseUrl: 'https://api.example.com'
+}" />
+```
+
+### Full Callback Control
+
+```vue
+<AIChatbot :config="{
+  mode: 'extended',
+  callbacks: {
+    onSendMessage: myLlmHandler,
+    onDeleteMessage: async (id) => await db.deleteMessage(id),
+    onLoadTopics: async () => await db.getTopics(),
+    onLoadMessages: async (topicId) => await db.getMessages(topicId),
+    onCreateTopic: async (title) => await db.createTopic(title),
+    onSwitchTopic: async (topicId) => { /* optional side effects */ },
+    onDeleteTopic: async (topicId) => await db.deleteTopic(topicId),
+    onUpdateTopicTitle: async (topicId, title) => await db.updateTitle(topicId, title),
+    onClearMessages: async (topicId) => await db.clearMessages(topicId),
+    onUploadImages: async (files) => await uploadService.upload(files),
+  }
+}" />
+```
