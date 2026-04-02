@@ -31,6 +31,12 @@ describe('SettingsPage', () => {
     expect(wrapper.text()).toContain('亮色')
     expect(wrapper.text()).toContain('暗色')
     expect(wrapper.text()).toContain('后端超时')
+    expect(wrapper.text()).toContain('思考设置')
+    expect(wrapper.text()).toContain('显示思考开关')
+    expect(wrapper.text()).toContain('思考默认开启')
+    expect(wrapper.text()).toContain('自动折叠思考内容')
+    expect(wrapper.text()).toContain('语音输入')
+    expect(wrapper.text()).toContain('允许语音输入')
   })
 
   it('should have mock and real backend radio options', () => {
@@ -48,7 +54,15 @@ describe('SettingsPage', () => {
 
     expect(setItemSpy).toHaveBeenCalledWith(
       'chatapp-settings',
-      JSON.stringify({ backendMode: 'mock', theme: 'light', apiTimeout: 30000 }),
+      JSON.stringify({
+        backendMode: 'mock',
+        theme: 'light',
+        apiTimeout: 30000,
+        showThinkingToggle: true,
+        thinkingDefaultEnabled: true,
+        thinkingAutoCollapse: true,
+        enableVoiceInput: true,
+      }),
     )
   })
 

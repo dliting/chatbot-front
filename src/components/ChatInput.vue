@@ -167,6 +167,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
+  enableVoiceInput: true,
 })
 
 type FileType = MediaType | 'document'

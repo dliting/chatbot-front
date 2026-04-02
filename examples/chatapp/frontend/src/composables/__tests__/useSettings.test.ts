@@ -25,6 +25,10 @@ describe('useSettings', () => {
     expect(settings.backendMode).toBe('mock')
     expect(settings.theme).toBe('light')
     expect(settings.apiTimeout).toBe(30000)
+    expect(settings.showThinkingToggle).toBe(true)
+    expect(settings.thinkingDefaultEnabled).toBe(true)
+    expect(settings.thinkingAutoCollapse).toBe(true)
+    expect(settings.enableVoiceInput).toBe(true)
   })
 
   it('should load saved settings from localStorage', async () => {
@@ -37,6 +41,10 @@ describe('useSettings', () => {
     expect(settings.backendMode).toBe('real')
     expect(settings.theme).toBe('dark')
     expect(settings.apiTimeout).toBe(60000)
+    expect(settings.showThinkingToggle).toBe(true)
+    expect(settings.thinkingDefaultEnabled).toBe(true)
+    expect(settings.thinkingAutoCollapse).toBe(true)
+    expect(settings.enableVoiceInput).toBe(true)
   })
 
   it('should persist settings via saveSettings', async () => {
@@ -50,6 +58,10 @@ describe('useSettings', () => {
       backendMode: 'real',
       theme: 'dark',
       apiTimeout: 10000,
+      showThinkingToggle: true,
+      thinkingDefaultEnabled: true,
+      thinkingAutoCollapse: true,
+      enableVoiceInput: true,
     }))
   })
 
@@ -64,6 +76,10 @@ describe('useSettings', () => {
     expect(settings.backendMode).toBe('mock')
     expect(settings.theme).toBe('light')
     expect(settings.apiTimeout).toBe(30000)
+    expect(settings.showThinkingToggle).toBe(true)
+    expect(settings.thinkingDefaultEnabled).toBe(true)
+    expect(settings.thinkingAutoCollapse).toBe(true)
+    expect(settings.enableVoiceInput).toBe(true)
     expect(removeItemSpy).toHaveBeenCalledWith('chatapp-settings')
   })
 
@@ -83,6 +99,10 @@ describe('useSettings', () => {
     expect(settings.backendMode).toBe('mock')
     expect(settings.theme).toBe('light')
     expect(settings.apiTimeout).toBe(30000)
+    expect(settings.showThinkingToggle).toBe(true)
+    expect(settings.thinkingDefaultEnabled).toBe(true)
+    expect(settings.thinkingAutoCollapse).toBe(true)
+    expect(settings.enableVoiceInput).toBe(true)
   })
 
   it('should merge partial stored settings with defaults', async () => {
@@ -93,6 +113,10 @@ describe('useSettings', () => {
     expect(settings.backendMode).toBe('real')
     expect(settings.theme).toBe('light')
     expect(settings.apiTimeout).toBe(30000)
+    expect(settings.showThinkingToggle).toBe(true)
+    expect(settings.thinkingDefaultEnabled).toBe(true)
+    expect(settings.thinkingAutoCollapse).toBe(true)
+    expect(settings.enableVoiceInput).toBe(true)
   })
 
   it('should return the same reactive object across calls (singleton)', async () => {
