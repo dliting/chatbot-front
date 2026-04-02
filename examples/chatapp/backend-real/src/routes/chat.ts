@@ -6,7 +6,8 @@ import {
   deleteSession,
   updateSessionTitle,
   getMessages,
-  addMessage
+  addMessage,
+  deleteMessage
 } from '../services/database'
 import { streamChat, chat, type OllamaMessage } from '../services/ollama'
 import type { ApiResponse } from '../types'
@@ -256,6 +257,22 @@ router.patch('/sessions/:id/title', (req: Request, res: Response) => {
     res.json(apiResponse)
   } catch (error) {
     console.error('Update session title error:', error)
+    res.status(500).json({ code: 500, message: 'Internal server error' })
+  }
+})
+
+// DELETE /messages/:id - Delete message
+router.delete('/messages/:id', (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const success = deleteMessage(id)
+    if (!success) {
+      res.status(404).json({ code: 404, message: 'Message not found' })
+      return
+    }
+    res.json({ code: 0, message: 'success' })
+  } catch (error) {
+    console.error('Delete message error:', error)
     res.status(500).json({ code: 500, message: 'Internal server error' })
   }
 })

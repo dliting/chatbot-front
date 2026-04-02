@@ -186,6 +186,21 @@ export function getMessages(sessionId: string): Message[] {
   }))
 }
 
+export function deleteMessage(messageId: string): boolean {
+  if (!db) throw new Error('Database not initialized')
+
+  // Get sessionId before deleting
+  const results = db.exec('SELECT sessionId FROM messages WHERE messageId = ?', [messageId])
+  if (results.length === 0 || results[0].values.length === 0) return false
+  const sessionId = results[0].values[0][0] as string
+
+  db.run('DELETE FROM messages WHERE messageId = ?', [messageId])
+  // Decrement messageCount
+  db.run('UPDATE sessions SET messageCount = MAX(messageCount - 1, 0) WHERE sessionId = ?', [sessionId])
+  saveDatabase()
+  return true
+}
+
 export function updateSessionTitle(sessionId: string, title: string): void {
   if (!db) throw new Error('Database not initialized')
 

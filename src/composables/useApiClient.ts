@@ -2,7 +2,7 @@
  * API client composable for connecting to backend
  */
 import { ref } from 'vue'
-import type { Message, Topic } from '@/types'
+import type { Message, Topic, Attachment } from '@/types'
 
 export interface ApiClientOptions {
   baseUrl: string
@@ -20,9 +20,7 @@ export function useApiClient(options: ApiClientOptions) {
   async function* streamChat(
     sessionId: string,
     content: string,
-    images?: string[],
-    videos?: string[],
-    audios?: string[],
+    attachments?: Attachment[],
     options?: { thinking?: { enabled?: boolean }; signal?: AbortSignal }
   ): AsyncGenerator<{ type: string; messageId?: string; content?: string; fullContent?: string; reasoningContent?: string }> {
     let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
@@ -38,6 +36,11 @@ export function useApiClient(options: ApiClientOptions) {
       }
       const combinedSignal = signals.length > 1 ? AbortSignal.any(signals) : signals[0]
 
+      // Convert attachments to separate arrays for backend compatibility
+      const images = attachments?.filter(a => a.type === 'image').map(a => a.url) || []
+      const videos = attachments?.filter(a => a.type === 'video').map(a => a.url) || []
+      const audios = attachments?.filter(a => a.type === 'audio').map(a => a.url) || []
+
       const response = await fetch(`${baseUrl}/chat/stream`, {
         method: 'POST',
         headers: {
@@ -46,9 +49,9 @@ export function useApiClient(options: ApiClientOptions) {
         body: JSON.stringify({
           sessionId,
           content,
-          images: images || [],
-          videos: videos || [],
-          audios: audios || [],
+          images,
+          videos,
+          audios,
           stream: true,
           ...(Object.keys(chatOptions).length > 0 ? { options: chatOptions } : {}),
         }),
@@ -117,14 +120,17 @@ export function useApiClient(options: ApiClientOptions) {
   async function sendMessage(
     sessionId: string,
     content: string,
-    images?: string[],
-    videos?: string[],
-    audios?: string[]
+    attachments?: Attachment[]
   ): Promise<Message> {
     isLoading.value = true
     error.value = null
 
     try {
+      // Convert attachments to separate arrays for backend compatibility
+      const images = attachments?.filter(a => a.type === 'image').map(a => a.url) || []
+      const videos = attachments?.filter(a => a.type === 'video').map(a => a.url) || []
+      const audios = attachments?.filter(a => a.type === 'audio').map(a => a.url) || []
+
       const response = await fetch(`${baseUrl}/chat/message`, {
         method: 'POST',
         headers: {
@@ -133,9 +139,9 @@ export function useApiClient(options: ApiClientOptions) {
         body: JSON.stringify({
           sessionId,
           content,
-          images: images || [],
-          videos: videos || [],
-          audios: audios || [],
+          images,
+          videos,
+          audios,
         }),
       })
 
@@ -198,7 +204,45 @@ export function useApiClient(options: ApiClientOptions) {
         throw new Error(result.message || 'API error')
       }
 
-      return result.data.messages
+      const messages: Message[] = result.data.messages
+
+      // Convert backend response fields (images, videos, audios, documents)
+      // into unified attachments[] format
+      messages.forEach(msg => {
+        const raw = msg as Record<string, unknown>
+        if (raw.images || raw.videos || raw.audios || raw.documents) {
+          const attachments: Attachment[] = []
+
+          if (Array.isArray(raw.images)) {
+            ;(raw.images as string[]).forEach((url: string) => {
+              attachments.push({ name: '', url, type: 'image' })
+            })
+          }
+          if (Array.isArray(raw.videos)) {
+            ;(raw.videos as string[]).forEach((url: string) => {
+              attachments.push({ name: '', url, type: 'video' })
+            })
+          }
+          if (Array.isArray(raw.audios)) {
+            ;(raw.audios as string[]).forEach((url: string) => {
+              attachments.push({ name: '', url, type: 'audio' })
+            })
+          }
+          if (Array.isArray(raw.documents)) {
+            ;(raw.documents as Array<{ name: string; url: string; size?: number }>).forEach((d) => {
+              attachments.push({ name: d.name, url: d.url, type: 'document', size: d.size })
+            })
+          }
+
+          msg.attachments = attachments
+          delete raw.images
+          delete raw.videos
+          delete raw.audios
+          delete raw.documents
+        }
+      })
+
+      return messages
     } finally {
       isLoading.value = false
     }
@@ -319,6 +363,26 @@ export function useApiClient(options: ApiClientOptions) {
     }
   }
 
+  /**
+   * Delete message
+   */
+  async function deleteMessage(messageId: string): Promise<void> {
+    isLoading.value = true
+    error.value = null
+
+    try {
+      const response = await fetch(`${baseUrl}/messages/${messageId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+    } finally {
+      isLoading.value = false
+    }
+  }
+
   return {
     // State
     isLoading,
@@ -333,5 +397,6 @@ export function useApiClient(options: ApiClientOptions) {
     deleteTopic,
     updateTopicTitle,
     uploadImages,
+    deleteMessage,
   }
 }
