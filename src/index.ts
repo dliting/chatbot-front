@@ -31,6 +31,7 @@ export { makeDraggable, getInitialPosition } from './utils/drag'
 export { StreamClient, fetchStream } from './utils/stream'
 export { IframeMessenger, HostMessenger } from './utils/postMessage'
 export { createMockUploadEndpoint } from './utils/upload'
+export { deriveMessageType, getAttachmentsByType } from './utils/message'
 
 // Default export
 export default AIChatbot

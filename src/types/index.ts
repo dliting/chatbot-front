@@ -7,7 +7,19 @@ export type MessageRole = 'user' | 'assistant' | 'system'
 export type MessageType = 'text' | 'image' | 'video' | 'audio' | 'mixed' | 'document'
 export type MessageStatus = 'sending' | 'sent' | 'error' | 'loading' | 'stopped'
 
-// Document attachment
+// Attachment types
+export type AttachmentType = 'image' | 'video' | 'audio' | 'document'
+
+// Unified attachment interface
+export interface Attachment {
+  name: string
+  url: string
+  type: AttachmentType
+  size?: number
+  mimeType?: string
+}
+
+/** @deprecated Use Attachment instead */
 export interface DocumentAttachment {
   name: string
   url: string
@@ -21,10 +33,7 @@ export interface Message {
   role: MessageRole
   type: MessageType
   content: string
-  images?: string[]
-  videos?: string[]
-  audios?: string[]
-  documents?: DocumentAttachment[]
+  attachments?: Attachment[]
   timestamp: number
   status: MessageStatus
   metadata?: Record<string, unknown>
@@ -75,12 +84,9 @@ export interface Size {
 
 // Send message data
 export interface SendMessageData {
-  type: 'text' | 'image' | 'video' | 'audio' | 'document'
+  type: MessageType
   content: string
-  images?: string[]
-  videos?: string[]
-  audios?: string[]
-  documents?: DocumentAttachment[]
+  attachments?: Attachment[]
 }
 
 // Message success data
