@@ -234,28 +234,76 @@ const toggleTheme = () => {
   const currentTheme = state.ui.theme
   const newTheme = currentTheme === 'light' ? 'dark' : 'light'
   setTheme(newTheme)
+  emit('ui:theme-changed', { theme: newTheme })
 }
 
-const _handleCreateTopic = () => {
+const _handleCreateTopic = async () => {
   // Reuse current topic if it's empty (avoid duplicate empty topics)
   const currentMsgs = state.messages.byTopic[state.topics.currentId]
   if (currentMsgs && currentMsgs.length > 0) {
     // Current topic has messages, create a new topic
-    const newId = createTopic()
-    emit('topicCreate', newId)
+    if (config.value.callbacks?.onCreateTopic) {
+      try {
+        const topic = await config.value.callbacks.onCreateTopic()
+        state.topics.list.unshift(topic)
+        state.topics.currentId = topic.topicId
+        state.messages.currentTopicId = topic.topicId
+        emit('topic:created', { topic })
+        emit('topicCreate', topic.topicId)
+      } catch (error) {
+        console.error('Create topic callback failed:', error)
+      }
+    } else if (apiClient.value) {
+      try {
+        const topic = await apiClient.value.createTopic()
+        state.topics.list.unshift(topic)
+        state.topics.currentId = topic.topicId
+        state.messages.currentTopicId = topic.topicId
+        emit('topic:created', { topic })
+        emit('topicCreate', topic.topicId)
+      } catch (error) {
+        console.error('Failed to create topic:', error)
+      }
+    } else {
+      const newId = createTopic()
+      const topic = state.topics.list.find(t => t.topicId === newId)
+      if (topic) {
+        emit('topic:created', { topic })
+      }
+      emit('topicCreate', newId)
+    }
   }
   // If current topic is empty, do nothing (user stays on the empty topic)
 }
 
 const _handleSwitchTopic = async (topicId: string) => {
+  // Call callback if provided (for host-side tracking)
+  if (config.value.callbacks?.onSwitchTopic) {
+    try {
+      await config.value.callbacks.onSwitchTopic(topicId)
+    } catch (error) {
+      console.error('Switch topic callback failed:', error)
+    }
+  }
+
+  // Switch topic locally
   switchTopic(topicId)
+
+  // Emit both new and legacy events
+  emit('topic:switched', { topicId })
   emit('topicChange', topicId)
 
-  // Load messages from backend for the selected topic
-  const client = apiClient.value
-  if (client && !state.messages.byTopic[topicId]?.length) {
+  // Load messages: callback first, then apiClient fallback
+  if (config.value.callbacks?.onLoadMessages) {
     try {
-      const messages = await client.getTopicMessages(topicId)
+      const messages = await config.value.callbacks.onLoadMessages(topicId)
+      state.messages.byTopic[topicId] = messages
+    } catch (error) {
+      console.error('Failed to load topic messages:', error)
+    }
+  } else if (apiClient.value && !state.messages.byTopic[topicId]?.length) {
+    try {
+      const messages = await apiClient.value.getTopicMessages(topicId)
       state.messages.byTopic[topicId] = messages
     } catch (error) {
       console.error('Failed to load topic messages:', error)
@@ -263,9 +311,23 @@ const _handleSwitchTopic = async (topicId: string) => {
   }
 }
 
-const _handleDeleteTopic = (topicId: string) => {
-  deleteTopic(topicId)
-  emit('topicDelete', topicId)
+const _handleDeleteTopic = async (topicId: string) => {
+  try {
+    if (config.value.callbacks?.onDeleteTopic) {
+      await config.value.callbacks.onDeleteTopic(topicId)
+    } else if (apiClient.value) {
+      await apiClient.value.deleteTopic(topicId)
+    }
+    // Remove from local state after successful backend operation
+    deleteTopic(topicId)
+    emit('topic:deleted', { topicId })
+    emit('topicDelete', topicId)
+
+    // Reload topics list after deletion (spec Section 4.1)
+    await reloadTopics()
+  } catch (error) {
+    console.error('Failed to delete topic:', error)
+  }
 }
 
 const _handleUpdateTopicTitle = async (topicId: string, title: string) => {
@@ -273,31 +335,36 @@ const _handleUpdateTopicTitle = async (topicId: string, title: string) => {
   const currentTopic = state.topics.list.find(t => t.topicId === topicId)
   const oldTitle = currentTopic?.title || ''
 
-  // Update local state (optimistic update)
+  // Optimistic local update
   updateTopicTitle(topicId, title)
-  emit('topicTitleUpdate', topicId, title)
 
-  // Persist to backend
-  const client = apiClient.value
-  if (client) {
-    try {
-      await client.updateTopicTitle(topicId, title)
-    } catch (error) {
-      console.error('Failed to update topic title on backend:', error)
-      // Rollback local state on failure
-      updateTopicTitle(topicId, oldTitle)
-      emit('topicTitleUpdate', topicId, oldTitle)
+  try {
+    if (config.value.callbacks?.onUpdateTopicTitle) {
+      await config.value.callbacks.onUpdateTopicTitle(topicId, title)
+    } else if (apiClient.value) {
+      await apiClient.value.updateTopicTitle(topicId, title)
     }
+    emit('topic:title-updated', { topicId, title })
+    emit('topicTitleUpdate', topicId, title)
+  } catch (error) {
+    console.error('Failed to update topic title:', error)
+    // Rollback on failure
+    updateTopicTitle(topicId, oldTitle)
+    emit('topicTitleUpdate', topicId, oldTitle)
   }
 }
 
 const handleEditMessage = (message: import('@/types').Message) => {
-  // Emit edit event for parent components to handle (e.g., fill input with message content)
+  // Emit both new and legacy events
+  // The host component is expected to handle filling the input with the edited content.
+  // After the user submits the edited content, the flow goes through handleSendMessage
+  // which will use onSendMessage callback (or apiClient) with messageId set for backend reference.
+  emit('message:edited', { messageId: message.messageId, topicId: message.topicId })
   emit('editMessage', message)
 }
 
-const handleRefreshMessage = (message: import('@/types').Message) => {
-  // Refresh: remove the assistant message and resend the preceding user message
+const handleRefreshMessage = async (message: import('@/types').Message) => {
+  // Regenerate: remove the assistant message and get a new AI response
   const topicId = state.topics.currentId
   const msgs = state.messages.byTopic[topicId]
   if (!msgs) return
@@ -309,22 +376,129 @@ const handleRefreshMessage = (message: import('@/types').Message) => {
   }
 
   // Find the preceding user message
+  let userMsg: import('@/types').Message | undefined
   for (let i = index - 1; i >= 0; i--) {
     if (msgs[i].role === 'user') {
-      handleSendMessage({ content: msgs[i].content })
+      userMsg = msgs[i]
       break
     }
   }
+  if (!userMsg) return
+
+  emit('message:regenerated', { messageId: message.messageId, topicId })
+
+  // Use onRegenerateMessage callback if available, otherwise fall through to handleSendMessage
+  if (config.value.callbacks?.onRegenerateMessage) {
+    // Use the dedicated regenerate callback — follow same streaming pattern as handleSendMessage
+    if (isGenerating.value) return
+
+    isGenerating.value = true
+    const controller = new AbortController()
+    abortController.value = controller
+
+    const assistantMessageId = generateId('msg')
+
+    try {
+      // Add placeholder for new AI response
+      msgs.splice(index, 0, {
+        messageId: assistantMessageId,
+        topicId,
+        role: 'assistant',
+        type: 'text',
+        content: '',
+        timestamp: Date.now(),
+        status: 'loading'
+      })
+
+      const thinkingRequested = thinkingEnabled.value
+      const stream = config.value.callbacks.onRegenerateMessage({
+        topicId,
+        content: userMsg.content,
+        attachments: userMsg.attachments,
+        thinking: { enabled: thinkingRequested },
+        signal: controller.signal,
+        messageId: userMsg.messageId,
+      })
+
+      let fullContent = ''
+      let fullThinkingContent = ''
+      let thinkingStartTime = 0
+
+      for await (const chunk of stream) {
+        if (chunk.type === 'reasoning' && chunk.reasoningContent) {
+          if (!thinkingRequested) continue
+          if (!thinkingStartTime) thinkingStartTime = Date.now()
+          isThinkingActive.value = true
+          fullThinkingContent += chunk.reasoningContent
+          const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
+          if (assistantMsg) {
+            assistantMsg.thinkingContent = fullThinkingContent
+            assistantMsg.thinkingTime = Date.now() - thinkingStartTime
+          }
+        } else if (chunk.type === 'token' && chunk.content) {
+          isThinkingActive.value = false
+          fullContent += chunk.content
+          const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
+          if (assistantMsg) {
+            assistantMsg.content = fullContent
+            if (thinkingStartTime) {
+              assistantMsg.thinkingTime = Date.now() - thinkingStartTime
+            }
+          }
+        } else if (chunk.type === 'end') {
+          if (controller.signal.aborted) break
+          isThinkingActive.value = false
+          const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
+          if (assistantMsg) {
+            assistantMsg.status = 'sent'
+          }
+        }
+      }
+
+      // Finalize status
+      isThinkingActive.value = false
+      const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
+      if (assistantMsg && assistantMsg.status === 'loading') {
+        assistantMsg.status = assistantMsg.content ? 'sent' : 'error'
+      }
+    } catch (error) {
+      console.error('Failed to regenerate message:', error)
+      isThinkingActive.value = false
+      const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
+      if (assistantMsg) {
+        assistantMsg.status = 'error'
+        assistantMsg.errorMessage = (error as Error).message || '重新生成失败'
+      }
+    } finally {
+      isGenerating.value = false
+      abortController.value = null
+    }
+  } else {
+    // No regenerate callback — use handleSendMessage (which uses onSendMessage or apiClient)
+    handleSendMessage({ content: userMsg.content, attachments: userMsg.attachments })
+  }
 }
 
-const handleDeleteMessage = (message: import('@/types').Message) => {
+const handleDeleteMessage = async (message: import('@/types').Message) => {
   const topicId = state.topics.currentId
   const msgs = state.messages.byTopic[topicId]
   if (!msgs) return
 
   const index = msgs.findIndex(m => m.messageId === message.messageId)
-  if (index !== -1) {
+  if (index === -1) return
+
+  try {
+    // Try callback first, then apiClient fallback
+    if (config.value.callbacks?.onDeleteMessage) {
+      await config.value.callbacks.onDeleteMessage(message.messageId, topicId)
+    } else if (apiClient.value) {
+      await apiClient.value.deleteMessage(message.messageId)
+    }
+    // Remove from local state after successful backend operation
     msgs.splice(index, 1)
+    emit('message:deleted', { messageId: message.messageId, topicId })
+  } catch (error) {
+    console.error('Failed to delete message:', error)
   }
 }
 
@@ -333,14 +507,8 @@ const handleQuickAction = (text: string) => {
   handleSendMessage({ content: text })
 }
 
-// Handle send message - use apiClient to send to backend
-const handleSendMessage = async (data: { content: string; images?: string[]; videos?: string[]; audios?: string[] }) => {
-  const client = apiClient.value
-  if (!client) {
-    console.error('API client not available')
-    return
-  }
-
+// Handle send message - use callback > apiClient > local-only fallback
+const handleSendMessage = async (data: { content: string; attachments?: import('@/types').Attachment[] }) => {
   // Prevent sending while generating
   if (isGenerating.value) return
 
@@ -374,16 +542,17 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
       messageId: generateId('msg'),
       topicId,
       role: 'user',
-      type: data.images?.length ? 'image' : data.videos?.length ? 'video' : data.audios?.length ? 'audio' : 'text',
+      type: data.attachments?.length
+        ? (data.attachments.length === 1 ? data.attachments[0].type : 'mixed')
+        : 'text',
       content: data.content,
-      images: data.images,
-      videos: data.videos,
-      audios: data.audios,
+      attachments: data.attachments,
       timestamp: Date.now(),
       status: 'sending'
     }
     userMessageId = userMessage.messageId
     currentMessages.push(userMessage)
+    emit('message:sent', { message: userMessage })
 
     // Get AI response using streaming
     let fullContent = ''
@@ -403,15 +572,31 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
     // Capture thinking preference at send time (toggle may change mid-stream)
     const thinkingRequested = thinkingEnabled.value
 
-    // Use streaming API with abort signal
-    const stream = client.streamChat(
-      topicId,
-      data.content,
-      data.images,
-      data.videos,
-      data.audios,
-      { thinking: { enabled: thinkingRequested }, signal: controller.signal }
-    )
+    // Three-tier fallback: callback > apiClient > local-only
+    let stream: AsyncGenerator<{ type: string; messageId?: string; content?: string; fullContent?: string; reasoningContent?: string }>
+    if (config.value.callbacks?.onSendMessage) {
+      stream = config.value.callbacks.onSendMessage({
+        topicId,
+        content: data.content,
+        attachments: data.attachments,
+        thinking: { enabled: thinkingRequested },
+        signal: controller.signal,
+      })
+    } else if (apiClient.value) {
+      stream = apiClient.value.streamChat(
+        topicId,
+        data.content,
+        data.attachments,
+        { thinking: { enabled: thinkingRequested }, signal: controller.signal }
+      )
+    } else {
+      // Local-only mode: no API available
+      console.error('No API client or callback provided')
+      isGenerating.value = false
+      return
+    }
+
+    emit('message:stream-start', { messageId: assistantMessageId })
 
     let fullThinkingContent = ''
     let thinkingStartTime = 0
@@ -487,6 +672,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
         }
       }
     }
+    emit('message:stream-end', { messageId: assistantMessageId, fullContent })
   } catch (error) {
     if ((error as Error).name === 'AbortError') {
       // useApiClient swallows AbortError, so this branch is unreachable via normal abort flow.
@@ -527,6 +713,7 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
         } else {
           assistantMsg.errorMessage = err.message || '发送失败，请重试'
         }
+        emit('message:error', { message: assistantMsg, error: error as Error })
       }
     }
   } finally {
@@ -539,11 +726,33 @@ const handleSendMessage = async (data: { content: string; images?: string[]; vid
 const handleStopGenerating = () => {
   if (abortController.value) {
     abortController.value.abort()
+    emit('ui:stop-generating')
   }
 }
 
 // Emits
 interface Emits {
+  // New events (colon-separated, object payloads)
+  (e: 'message:sent', data: { message: import('@/types').Message }): void
+  (e: 'message:error', data: { message: import('@/types').Message; error: Error }): void
+  (e: 'message:deleted', data: { messageId: string; topicId: string }): void
+  (e: 'message:edited', data: { messageId: string; topicId: string }): void
+  (e: 'message:copied', data: { message: import('@/types').Message }): void
+  (e: 'message:resend', data: { message: import('@/types').Message }): void
+  (e: 'message:regenerated', data: { messageId: string; topicId: string }): void
+  (e: 'message:stream-start', data: { messageId: string }): void
+  (e: 'message:stream-end', data: { messageId: string; fullContent: string }): void
+  (e: 'topic:created', data: { topic: import('@/types').Topic }): void
+  (e: 'topic:switched', data: { topicId: string }): void
+  (e: 'topic:deleted', data: { topicId: string }): void
+  (e: 'topic:title-updated', data: { topicId: string; title: string }): void
+  (e: 'topic:cleared', data: { topicId: string }): void
+  (e: 'ui:panel-toggle', data: { isOpen: boolean; mode: string }): void
+  (e: 'ui:theme-changed', data: { theme: string }): void
+  (e: 'ui:stop-generating'): void
+  (e: 'chatbot:ready'): void
+
+  // Legacy events (kept for backward compatibility)
   (e: 'panelToggle', data: { isOpen: boolean; mode: string }): void
   (e: 'topicChange', topicId: string): void
   (e: 'topicCreate', topicId: string): void
@@ -558,18 +767,44 @@ const emit = defineEmits<Emits>()
 watch(
   () => state.ui.isPanelOpen,
   (isOpen) => {
+    emit('ui:panel-toggle', { isOpen, mode: state.ui.panelMode })
     emit('panelToggle', { isOpen, mode: state.ui.panelMode })
   }
 )
 
-// Load messages for current topic from backend
+// Reload topics list from callback or apiClient (used after create/delete operations)
+const reloadTopics = async () => {
+  try {
+    if (config.value.callbacks?.onLoadTopics) {
+      const topics = await config.value.callbacks.onLoadTopics()
+      if (topics.length > 0) {
+        state.topics.list.length = 0
+        state.topics.list.push(...topics)
+      }
+    } else if (apiClient.value) {
+      const topics = await apiClient.value.getTopics()
+      if (topics.length > 0) {
+        state.topics.list.length = 0
+        state.topics.list.push(...topics)
+      }
+    }
+  } catch (error) {
+    console.error('Failed to reload topics:', error)
+  }
+}
+
+// Load messages for current topic from backend or callback
 const loadCurrentTopicMessages = async () => {
-  const client = apiClient.value
   const topicId = state.topics.currentId
-  if (!client || !topicId) return
+  if (!topicId) return
 
   try {
-    const messages = await client.getTopicMessages(topicId)
+    let messages: import('@/types').Message[] = []
+    if (config.value.callbacks?.onLoadMessages) {
+      messages = await config.value.callbacks.onLoadMessages(topicId)
+    } else if (apiClient.value) {
+      messages = await apiClient.value.getTopicMessages(topicId)
+    }
     if (messages.length > 0) {
       state.messages.byTopic[topicId] = messages
     }
@@ -585,9 +820,26 @@ const loadCurrentTopicMessages = async () => {
 }
 
 // Initialize theme and restore messages from backend
-onMounted(() => {
+onMounted(async () => {
   setTheme(config.value.theme)
-  loadCurrentTopicMessages()
+
+  // Load topics from callback/apiClient if available
+  if (config.value.callbacks?.onLoadTopics) {
+    try {
+      const topics = await config.value.callbacks.onLoadTopics()
+      if (topics.length > 0) {
+        state.topics.list.length = 0
+        state.topics.list.push(...topics)
+        state.topics.currentId = topics[0].topicId
+        state.messages.currentTopicId = topics[0].topicId
+      }
+    } catch (error) {
+      console.error('Failed to load topics:', error)
+    }
+  }
+
+  await loadCurrentTopicMessages()
+  emit('chatbot:ready')
 })
 
 // Watch theme changes from external config (e.g. settings page)
