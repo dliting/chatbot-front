@@ -126,6 +126,7 @@
       </button>
 
       <button
+        v-if="enableVoiceInput"
         class="chat-input__voice-btn"
         @click="$emit('toggle-voice')"
       >
@@ -153,6 +154,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { validateFileSize, formatFileSize, getMediaType as utilsGetMediaType, type MediaType } from '@/utils/fileValidation'
+import type { Attachment } from '@/types'
 import ThinkingToggle from './ThinkingToggle.vue'
 import { getPreviewType } from '@/utils/fileType'
 
@@ -160,6 +162,7 @@ interface Props {
   disabled?: boolean
   enableThinking?: boolean
   thinkingEnabled?: boolean
+  enableVoiceInput?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -178,7 +181,7 @@ interface MediaFile {
 }
 
 interface Emits {
-  (e: 'send', data: { content: string; images?: string[]; videos?: string[]; audios?: string[]; documents?: Array<{ name: string; url: string; type: string }> }): void
+  (e: 'send', data: { content: string; attachments?: Attachment[] }): void
   (e: 'stop'): void
   (e: 'toggle-voice'): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
@@ -244,23 +247,20 @@ const handleSend = () => {
 
   const content = inputText.value.trim()
   const validFiles = selectedFiles.value.filter(f => !f.error)
-  // Use preview URL (with data URL prefix) for proper image display
-  const images = validFiles
-    .filter(f => f.type === 'image')
-    .map(f => f.preview || `data:image/png;base64,${f.data}`)
-  const videos = validFiles
-    .filter(f => f.type === 'video')
-    .map(f => f.data)
-  const audios = validFiles
-    .filter(f => f.type === 'audio')
-    .map(f => f.data)
-  const documents = validFiles
-    .filter(f => f.type === 'document')
-    .map(f => ({
-      name: f.name,
-      url: f.preview || `data:application/octet-stream;base64,${f.data}`,
-      type: f.name.split('.').pop() || 'unknown'
-    }))
+
+  // Build unified attachments array from valid files
+  const attachments: Attachment[] = validFiles.map(f => ({
+    name: f.name,
+    url: f.preview || (f.type === 'image'
+      ? `data:image/png;base64,${f.data}`
+      : f.type === 'video'
+        ? `data:video/mp4;base64,${f.data}`
+        : f.type === 'audio'
+          ? `data:audio/mp3;base64,${f.data}`
+          : `data:application/octet-stream;base64,${f.data}`),
+    type: f.type === 'document' ? 'document' : f.type,
+    size: f.size,
+  }))
 
   // Clear input
   inputText.value = ''
@@ -271,10 +271,7 @@ const handleSend = () => {
 
   emit('send', {
     content,
-    images: images.length > 0 ? images : undefined,
-    videos: videos.length > 0 ? videos : undefined,
-    audios: audios.length > 0 ? audios : undefined,
-    documents: documents.length > 0 ? documents : undefined
+    attachments: attachments.length > 0 ? attachments : undefined,
   })
 }
 

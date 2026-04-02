@@ -7,6 +7,10 @@ export interface ChatAppSettings {
   backendMode: BackendMode
   theme: ThemeMode
   apiTimeout: number
+  showThinkingToggle: boolean
+  thinkingDefaultEnabled: boolean
+  thinkingAutoCollapse: boolean
+  enableVoiceInput: boolean
 }
 
 const STORAGE_KEY = 'chatapp-settings'
@@ -15,6 +19,10 @@ const DEFAULTS: ChatAppSettings = {
   backendMode: 'mock',
   theme: 'light',
   apiTimeout: 30000,
+  showThinkingToggle: true,
+  thinkingDefaultEnabled: true,
+  thinkingAutoCollapse: true,
+  enableVoiceInput: true,
 }
 
 function loadSettings(): ChatAppSettings {

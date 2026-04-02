@@ -22,7 +22,10 @@ const config = computed(() => ({
   resizable: true,
   rememberPosition: true,
   enableTopicManager: true,
-  enableThinking: true,
+  enableThinking: settings.showThinkingToggle,
+  thinkingDefaultEnabled: settings.thinkingDefaultEnabled,
+  thinkingAutoCollapse: settings.thinkingAutoCollapse,
+  enableVoiceInput: settings.enableVoiceInput,
   theme: settings.theme,
   labels: {
     title: '智能助手',
