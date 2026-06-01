@@ -327,7 +327,7 @@ const handleDoubleClick = () => {
 
   &--error {
     .chatbot-message__bubble {
-      border: 1px solid var(--chatbot-danger-color, #f56c6c);
+      border: 1px solid var(--color-danger, #f56c6c);
     }
   }
 
@@ -352,13 +352,13 @@ const handleDoubleClick = () => {
     }
 
     .chatbot-message--user & {
-      background-color: var(--chatbot-user-bubble-bg, #409eff);
-      color: var(--chatbot-user-bubble-text, #ffffff);
+      background-color: var(--chat-user-bg, #409eff);
+      color: var(--chat-user-text, #ffffff);
     }
 
     .chatbot-message--assistant & {
-      background-color: var(--chatbot-assistant-bubble-bg, #f5f7fa);
-      color: var(--chatbot-assistant-bubble-text, #303133);
+      background-color: var(--chat-assistant-bg, #f5f7fa);
+      color: var(--chat-assistant-text, #303133);
     }
   }
 
@@ -370,7 +370,7 @@ const handleDoubleClick = () => {
 
   &__label {
     font-size: 12px;
-    color: var(--chatbot-panel-subtext, #909399);
+    color: var(--text-tertiary, #909399);
     margin-bottom: 4px;
     padding: 0 4px;
   }
@@ -383,14 +383,14 @@ const handleDoubleClick = () => {
     overflow-wrap: break-word;
 
     &--user {
-      background-color: var(--chatbot-user-bubble-bg, #409eff);
-      color: var(--chatbot-user-bubble-text, #ffffff);
+      background-color: var(--chat-user-bg, #409eff);
+      color: var(--chat-user-text, #ffffff);
       border-bottom-right-radius: 4px;
     }
 
     &--assistant {
-      background-color: var(--chatbot-assistant-bubble-bg, #f5f7fa);
-      color: var(--chatbot-assistant-bubble-text, #303133);
+      background-color: var(--chat-assistant-bg, #f5f7fa);
+      color: var(--chat-assistant-text, #303133);
       border-bottom-left-radius: 4px;
     }
 
@@ -520,7 +520,7 @@ const handleDoubleClick = () => {
       width: 20px;
       height: 20px;
       flex-shrink: 0;
-      stroke: var(--chatbot-text-color, #606266);
+      stroke: var(--text-primary, #606266);
     }
 
     &:hover {
@@ -529,7 +529,7 @@ const handleDoubleClick = () => {
 
     &-name {
       font-size: 13px;
-      color: var(--chatbot-text-color, #303133);
+      color: var(--text-primary, #303133);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -549,7 +549,7 @@ const handleDoubleClick = () => {
     display: flex;
     align-items: center;
     gap: 4px;
-    color: var(--chatbot-danger-color, #f56c6c);
+    color: var(--color-danger, #f56c6c);
     font-size: 12px;
     margin-top: 4px;
 
@@ -561,14 +561,14 @@ const handleDoubleClick = () => {
 
   &__stopped {
     font-size: 12px;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     margin-top: 4px;
     font-style: italic;
   }
 
   &__timestamp {
     font-size: 11px;
-    color: var(--chatbot-panel-subtext, #909399);
+    color: var(--text-tertiary, #909399);
     margin-top: 4px;
     padding: 0 4px;
   }
@@ -599,7 +599,7 @@ const handleDoubleClick = () => {
     background: transparent;
     border-radius: 4px;
     cursor: pointer;
-    color: var(--chatbot-action-icon-color, #8c8c8c);
+    color: var(--action-icon-color, #8c8c8c);
     transition: all 0.2s;
 
     svg, :deep(svg) {
@@ -608,16 +608,16 @@ const handleDoubleClick = () => {
     }
 
     &:hover {
-      background-color: var(--chatbot-action-hover-bg, rgba(0, 0, 0, 0.1));
-      color: var(--chatbot-action-icon-hover-color, #4a4a4a);
+      background-color: var(--action-hover-bg, rgba(0, 0, 0, 0.1));
+      color: var(--action-icon-hover-color, #4a4a4a);
     }
 
     &--copied {
-      color: var(--chatbot-color-success, #67c23a);
+      color: var(--color-success, #67c23a);
     }
 
     &--danger:hover {
-      background-color: var(--chatbot-danger-color, #f56c6c);
+      background-color: var(--color-danger, #f56c6c);
       color: var(--text-on-primary, #fff);
     }
   }

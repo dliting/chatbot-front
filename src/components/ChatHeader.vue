@@ -96,8 +96,8 @@ defineEmits<Emits>()
   display: flex;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid var(--chatbot-border-color, #e4e7ed);
-  background: var(--chatbot-bg-color, #ffffff);
+  border-bottom: 1px solid var(--border-light, #e4e7ed);
+  background: var(--bg-base, #ffffff);
   flex-shrink: 0;
   gap: 8px;
 
@@ -111,11 +111,11 @@ defineEmits<Emits>()
     background: transparent;
     border-radius: 8px;
     cursor: pointer;
-    color: var(--chatbot-text-color, #303133);
+    color: var(--text-primary, #303133);
     transition: background 0.2s;
 
     &:hover {
-      background: var(--chatbot-border-color, #e4e7ed);
+      background: var(--border-light, #e4e7ed);
     }
 
     svg {
@@ -128,7 +128,7 @@ defineEmits<Emits>()
     flex: 1;
     font-size: 16px;
     font-weight: 600;
-    color: var(--chatbot-text-color, #303133);
+    color: var(--text-primary, #303133);
     margin: 0;
   }
 
@@ -148,12 +148,12 @@ defineEmits<Emits>()
     background: transparent;
     border-radius: 8px;
     cursor: pointer;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     transition: all 0.2s;
 
     &:hover {
-      background: var(--chatbot-border-color, #e4e7ed);
-      color: var(--chatbot-text-color, #303133);
+      background: var(--border-light, #e4e7ed);
+      color: var(--text-primary, #303133);
     }
 
     svg {
@@ -162,7 +162,7 @@ defineEmits<Emits>()
     }
 
     &.chat-header__close:hover {
-      background: var(--chatbot-danger-color, #f56c6c);
+      background: var(--color-danger, #f56c6c);
       color: white;
     }
   }

@@ -73,7 +73,7 @@ const mediaUrl = computed(() => {
   }
 
   &__error {
-    color: var(--chatbot-danger-color, #f56c6c);
+    color: var(--color-danger, #f56c6c);
     font-size: 14px;
   }
 }

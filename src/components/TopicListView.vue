@@ -442,12 +442,12 @@ const formatTopicMeta = (topic: Topic): string => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--chatbot-panel-bg, #ffffff);
-  color: var(--chatbot-text-color, #303133);
+  background-color: var(--bg-base, #ffffff);
+  color: var(--text-primary, #303133);
 
   &--embedded {
     height: auto;
-    border-right: 1px solid var(--chatbot-panel-border, #e4e7ed);
+    border-right: 1px solid var(--topic-border, #e4e7ed);
   }
 
   &__header {
@@ -455,7 +455,7 @@ const formatTopicMeta = (topic: Topic): string => {
     align-items: center;
     justify-content: space-between;
     padding: 16px;
-    border-bottom: 1px solid var(--chatbot-border-color, #e4e7ed);
+    border-bottom: 1px solid var(--border-light, #e4e7ed);
     flex-shrink: 0;
   }
 
@@ -463,7 +463,7 @@ const formatTopicMeta = (topic: Topic): string => {
     font-size: 18px;
     font-weight: 600;
     margin: 0;
-    color: var(--chatbot-text-color, #303133);
+    color: var(--text-primary, #303133);
   }
 
   &__header-close {
@@ -476,12 +476,12 @@ const formatTopicMeta = (topic: Topic): string => {
     background: transparent;
     border-radius: 6px;
     cursor: pointer;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     transition: all 0.2s;
 
     &:hover {
-      background: var(--chatbot-border-color, #e4e7ed);
-      color: var(--chatbot-text-color, #303133);
+      background: var(--border-light, #e4e7ed);
+      color: var(--text-primary, #303133);
     }
 
     svg {
@@ -500,15 +500,15 @@ const formatTopicMeta = (topic: Topic): string => {
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: var(--chatbot-primary-color-light, #ecf5ff);
-    border-bottom: 1px solid var(--chatbot-primary-color, #409eff);
+    background: var(--theme-primary-light, #ecf5ff);
+    border-bottom: 1px solid var(--theme-primary, #409eff);
     flex-shrink: 0;
   }
 
   &__batch-count {
     font-size: 14px;
     font-weight: 500;
-    color: var(--chatbot-primary-color, #409eff);
+    color: var(--theme-primary, #409eff);
   }
 
   &__batch-actions {
@@ -526,21 +526,21 @@ const formatTopicMeta = (topic: Topic): string => {
     transition: all 0.2s;
 
     &--cancel {
-      background: var(--chatbot-bg-color, #ffffff);
-      color: var(--chatbot-text-color, #303133);
-      border: 1px solid var(--chatbot-border-color, #dcdfe6);
+      background: var(--bg-base, #ffffff);
+      color: var(--text-primary, #303133);
+      border: 1px solid var(--border-light, #dcdfe6);
 
       &:hover {
-        background: var(--chatbot-border-color, #e4e7ed);
+        background: var(--border-light, #e4e7ed);
       }
     }
 
     &--delete {
-      background: var(--chatbot-danger-color, #f56c6c);
+      background: var(--color-danger, #f56c6c);
       color: var(--text-on-primary, #fff);
 
       &:hover {
-        background: var(--chatbot-danger-color-dark, #f78989);
+        background: var(--color-danger-dark, #f78989);
       }
     }
   }
@@ -556,7 +556,7 @@ const formatTopicMeta = (topic: Topic): string => {
     margin: 0 16px;
     border: none;
     border-radius: 12px;
-    background: var(--chatbot-primary-gradient);
+    background: var(--theme-primary-gradient);
     color: var(--text-on-primary, #fff);
     font-size: 15px;
     font-weight: 500;
@@ -580,12 +580,12 @@ const formatTopicMeta = (topic: Topic): string => {
   }
 
   &__batch-toggle {
-    background: var(--chatbot-bg-color, #ffffff);
-    color: var(--chatbot-text-color, #303133);
-    border: 1px solid var(--chatbot-border-color, #dcdfe6);
+    background: var(--bg-base, #ffffff);
+    color: var(--text-primary, #303133);
+    border: 1px solid var(--border-light, #dcdfe6);
 
     &:hover {
-      background: var(--chatbot-border-color, #e4e7ed);
+      background: var(--border-light, #e4e7ed);
       transform: none;
       box-shadow: none;
     }
@@ -602,7 +602,7 @@ const formatTopicMeta = (topic: Topic): string => {
     height: 40px;
     border: none;
     border-radius: 50%;
-    background: var(--chatbot-primary-color, #409eff);
+    background: var(--theme-primary, #409eff);
     color: var(--text-on-primary, #fff);
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
@@ -634,7 +634,7 @@ const formatTopicMeta = (topic: Topic): string => {
     }
 
     &::-webkit-scrollbar-thumb {
-      background: var(--chatbot-border-color, #e4e7ed);
+      background: var(--border-light, #e4e7ed);
       border-radius: 2px;
     }
   }
@@ -651,7 +651,7 @@ const formatTopicMeta = (topic: Topic): string => {
     position: relative;
 
     &:hover {
-      background: var(--chatbot-primary-color-light, #ecf5ff);
+      background: var(--theme-primary-light, #ecf5ff);
 
       .chatbot-topics__item-delete,
       .topic-list-view__item-delete {
@@ -661,20 +661,20 @@ const formatTopicMeta = (topic: Topic): string => {
 
     &:focus {
       outline: none;
-      background: var(--chatbot-primary-color-light, #ecf5ff);
+      background: var(--theme-primary-light, #ecf5ff);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--chatbot-primary-color, #409eff);
+      outline: 2px solid var(--theme-primary, #409eff);
       outline-offset: 2px;
     }
 
     &--active {
-      background: var(--chatbot-primary-color-light, #ecf5ff);
+      background: var(--theme-primary-light, #ecf5ff);
 
       .chatbot-topics__item-title,
       .topic-list-view__item-title {
-        color: var(--chatbot-primary-color, #409eff);
+        color: var(--theme-primary, #409eff);
         font-weight: 500;
       }
 
@@ -685,13 +685,13 @@ const formatTopicMeta = (topic: Topic): string => {
         top: 0;
         bottom: 0;
         width: 3px;
-        background-color: var(--chatbot-primary-color, #409eff);
+        background-color: var(--theme-primary, #409eff);
         border-radius: 12px 0 0 12px;
       }
     }
 
     &--selected {
-      background: var(--chatbot-primary-color-light, #ecf5ff);
+      background: var(--theme-primary-light, #ecf5ff);
     }
   }
 
@@ -702,8 +702,8 @@ const formatTopicMeta = (topic: Topic): string => {
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    background: var(--chatbot-primary-color-light, #ecf5ff);
-    color: var(--chatbot-primary-color, #409eff);
+    background: var(--theme-primary-light, #ecf5ff);
+    color: var(--theme-primary, #409eff);
     flex-shrink: 0;
 
     svg {
@@ -718,7 +718,7 @@ const formatTopicMeta = (topic: Topic): string => {
     justify-content: center;
     width: 20px;
     height: 20px;
-    border: 2px solid var(--chatbot-border-color, #dcdfe6);
+    border: 2px solid var(--border-light, #dcdfe6);
     border-radius: 4px;
     flex-shrink: 0;
     transition: all 0.2s;
@@ -726,25 +726,25 @@ const formatTopicMeta = (topic: Topic): string => {
 
     &:focus {
       outline: none;
-      border-color: var(--chatbot-primary-color, #409eff);
+      border-color: var(--theme-primary, #409eff);
       box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.3);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--chatbot-primary-color, #409eff);
+      outline: 2px solid var(--theme-primary, #409eff);
       outline-offset: 2px;
     }
 
     svg {
       width: 14px;
       height: 14px;
-      color: var(--chatbot-primary-color, #409eff);
+      color: var(--theme-primary, #409eff);
     }
 
     .chatbot-topics__item--selected &,
     .topic-list-view__item--selected & {
-      border-color: var(--chatbot-primary-color, #409eff);
-      background: var(--chatbot-primary-color, #409eff);
+      border-color: var(--theme-primary, #409eff);
+      background: var(--theme-primary, #409eff);
     }
   }
 
@@ -755,15 +755,15 @@ const formatTopicMeta = (topic: Topic): string => {
 
   &__item-title {
     font-size: 14px;
-    color: var(--chatbot-text-color, #303133);
+    color: var(--text-primary, #303133);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     cursor: text;
 
     :deep(mark) {
-      background: var(--chatbot-warning-color-light, #fdf6ec);
-      color: var(--chatbot-warning-color, #e6a23c);
+      background: var(--color-warning-light, #fdf6ec);
+      color: var(--color-warning, #e6a23c);
       padding: 0 2px;
       border-radius: 2px;
     }
@@ -774,10 +774,10 @@ const formatTopicMeta = (topic: Topic): string => {
     padding: 4px 8px;
     font-size: 14px;
     font-weight: 500;
-    border: 1px solid var(--chatbot-primary-color, #409eff);
+    border: 1px solid var(--theme-primary, #409eff);
     border-radius: 4px;
-    background-color: var(--chatbot-bg-color, #ffffff);
-    color: var(--chatbot-text-color, #303133);
+    background-color: var(--bg-base, #ffffff);
+    color: var(--text-primary, #303133);
     outline: none;
 
     &:focus {
@@ -787,7 +787,7 @@ const formatTopicMeta = (topic: Topic): string => {
 
   &__item-meta {
     font-size: 12px;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     margin-top: 2px;
   }
 
@@ -801,7 +801,7 @@ const formatTopicMeta = (topic: Topic): string => {
     background: transparent;
     border-radius: 6px;
     cursor: pointer;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     opacity: 0;
     transition: all 0.2s;
     flex-shrink: 0;
@@ -812,7 +812,7 @@ const formatTopicMeta = (topic: Topic): string => {
     }
 
     &:hover {
-      background: var(--chatbot-danger-color, #f56c6c);
+      background: var(--color-danger, #f56c6c);
       color: var(--text-on-primary, #fff);
     }
   }
@@ -827,7 +827,7 @@ const formatTopicMeta = (topic: Topic): string => {
     font-size: 11px;
     font-weight: 600;
     color: var(--text-on-primary, #fff);
-    background-color: var(--chatbot-danger-color, #f56c6c);
+    background-color: var(--color-danger, #f56c6c);
     border-radius: 9px;
     flex-shrink: 0;
   }
@@ -839,7 +839,7 @@ const formatTopicMeta = (topic: Topic): string => {
     justify-content: center;
     padding: 48px 20px;
     text-align: center;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
 
     svg {
       width: 64px;

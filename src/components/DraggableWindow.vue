@@ -344,7 +344,7 @@ defineExpose({
 
 .draggable-window {
   position: fixed;
-  background-color: var(--chatbot-bg-color, #ffffff);
+  background-color: var(--bg-base, #ffffff);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;

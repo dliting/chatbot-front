@@ -124,8 +124,8 @@ watch(() => props.isThinking, (newVal, oldVal) => {
 <style scoped lang="scss">
 .thinking-block {
   border-radius: 12px;
-  background: var(--chatbot-assistant-bubble-bg, rgba(245, 247, 250, 0.8));
-  border: 1px solid var(--chatbot-border-color, rgba(0, 0, 0, 0.08));
+  background: var(--chat-assistant-bg, rgba(245, 247, 250, 0.8));
+  border: 1px solid var(--border-light, rgba(0, 0, 0, 0.08));
   overflow: hidden;
   transition: border-color 0.3s ease;
 
@@ -143,7 +143,7 @@ watch(() => props.isThinking, (newVal, oldVal) => {
     transition: background-color 0.2s ease;
 
     &:hover {
-      background-color: var(--chatbot-border-color, rgba(0, 0, 0, 0.04));
+      background-color: var(--border-light, rgba(0, 0, 0, 0.04));
     }
   }
 
@@ -156,7 +156,7 @@ watch(() => props.isThinking, (newVal, oldVal) => {
   &__icon {
     width: 16px;
     height: 16px;
-    stroke: var(--chatbot-subtext-color, #909399);
+    stroke: var(--text-tertiary, #909399);
     flex-shrink: 0;
 
     &--active {
@@ -167,14 +167,14 @@ watch(() => props.isThinking, (newVal, oldVal) => {
 
   &__label {
     font-size: 13px;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     line-height: 1;
   }
 
   &__arrow {
     width: 14px;
     height: 14px;
-    stroke: var(--chatbot-subtext-color, #909399);
+    stroke: var(--text-tertiary, #909399);
     flex-shrink: 0;
     transition: transform 0.3s ease;
 
@@ -185,7 +185,7 @@ watch(() => props.isThinking, (newVal, oldVal) => {
 
   &__body {
     position: relative;
-    border-top: 1px solid var(--chatbot-border-color, rgba(0, 0, 0, 0.08));
+    border-top: 1px solid var(--border-light, rgba(0, 0, 0, 0.08));
     max-height: 400px;
     overflow-y: auto;
     padding: 12px 14px;
@@ -217,7 +217,7 @@ watch(() => props.isThinking, (newVal, oldVal) => {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     transition: all 0.2s ease;
 
     svg {
@@ -226,15 +226,15 @@ watch(() => props.isThinking, (newVal, oldVal) => {
     }
 
     &:hover {
-      color: var(--chatbot-text-color, #303133);
-      background-color: var(--chatbot-border-color, rgba(0, 0, 0, 0.08));
+      color: var(--text-primary, #303133);
+      background-color: var(--border-light, rgba(0, 0, 0, 0.08));
     }
   }
 
   &__content {
     font-size: 13px;
     line-height: 1.6;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
   }
 }
 

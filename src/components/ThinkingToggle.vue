@@ -51,14 +51,14 @@ const handleClick = () => {
   flex-shrink: 0;
   background: linear-gradient(
     135deg,
-    var(--chatbot-assistant-bubble-bg, #f0f0f3) 0%,
-    var(--chatbot-border-color, #e8e8ec) 100%
+    var(--chat-assistant-bg, #f0f0f3) 0%,
+    var(--border-light, #e8e8ec) 100%
   );
 
   &__icon {
     width: 20px;
     height: 20px;
-    stroke: var(--chatbot-subtext-color, #909399);
+    stroke: var(--text-tertiary, #909399);
     transition: stroke 0.3s ease;
   }
 

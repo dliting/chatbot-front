@@ -1,6 +1,7 @@
 /**
  * AI Chatbot - Library Entry Point
  */
+import './styles/chatbot.scss'
 import AIChatbot from './components/AIChatbot.vue'
 import type { ChatbotConfig } from './types/config'
 

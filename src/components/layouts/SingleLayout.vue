@@ -60,8 +60,8 @@ const handleViewChange = (view: ViewType) => {
 
   &__tabs {
     display: flex;
-    border-bottom: 1px solid var(--chatbot-border-color, #e4e7ed);
-    background: var(--chatbot-bg-color, #ffffff);
+    border-bottom: 1px solid var(--border-light, #e4e7ed);
+    background: var(--bg-base, #ffffff);
   }
 
   .tab-btn {
@@ -73,17 +73,17 @@ const handleViewChange = (view: ViewType) => {
     padding: 12px 16px;
     border: none;
     background: transparent;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     cursor: pointer;
     transition: all 0.2s;
 
     &:hover {
-      background: var(--chatbot-border-color, #e4e7ed);
+      background: var(--border-light, #e4e7ed);
     }
 
     &.active {
-      color: var(--chatbot-primary-color, #409eff);
-      border-bottom: 2px solid var(--chatbot-primary-color, #409eff);
+      color: var(--theme-primary, #409eff);
+      border-bottom: 2px solid var(--theme-primary, #409eff);
     }
 
     svg {

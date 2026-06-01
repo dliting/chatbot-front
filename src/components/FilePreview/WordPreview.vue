@@ -62,7 +62,7 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background: var(--chatbot-assistant-bubble-bg, #f5f7fa);
+  background: var(--chat-assistant-bg, #f5f7fa);
   border-radius: 8px;
 
   &__loading,
@@ -71,12 +71,12 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     font-size: 14px;
   }
 
   &__error {
-    color: var(--chatbot-danger-color, #f56c6c);
+    color: var(--color-danger, #f56c6c);
   }
 
   :deep(.vue-office-docx) {
@@ -84,7 +84,7 @@ onMounted(() => {
     height: 100%;
 
     .docx-wrapper {
-      background: var(--chatbot-bg-color, #ffffff);
+      background: var(--bg-base, #ffffff);
       padding: 20px;
     }
   }

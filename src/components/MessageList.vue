@@ -181,7 +181,7 @@ defineExpose({
 
   &__empty-content {
     text-align: center;
-    color: var(--chatbot-panel-subtext, #909399);
+    color: var(--text-tertiary, #909399);
 
     svg {
       width: 48px;
@@ -203,14 +203,14 @@ defineExpose({
     width: 36px;
     height: 36px;
     border: none;
-    background-color: var(--chatbot-bg-color, #ffffff);
+    background-color: var(--bg-base, #ffffff);
     border-radius: 50%;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--chatbot-panel-subtext, #909399);
+    color: var(--text-tertiary, #909399);
     transition: all 0.2s;
 
     svg {
@@ -219,7 +219,7 @@ defineExpose({
     }
 
     &:hover {
-      background-color: var(--chatbot-primary-color, #409eff);
+      background-color: var(--theme-primary, #409eff);
       color: #fff;
       transform: scale(1.1);
     }

@@ -345,7 +345,7 @@ watch(() => props.messages, () => {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: linear-gradient(180deg, var(--chatbot-content-bg-1, #f0f4ff) 0%, var(--chatbot-content-bg-2, #e8f0ff) 50%, var(--chatbot-content-bg-3, #f5f3ff) 100%);
+  background: linear-gradient(180deg, var(--content-bg-1, #f0f4ff) 0%, var(--content-bg-2, #e8f0ff) 50%, var(--content-bg-3, #f5f3ff) 100%);
 
   &__messages {
     flex: 1;
@@ -375,7 +375,7 @@ watch(() => props.messages, () => {
     width: 80px;
     height: 80px;
     margin: 0 auto 20px;
-    background: var(--chatbot-primary-gradient);
+    background: var(--theme-primary-gradient);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -393,12 +393,12 @@ watch(() => props.messages, () => {
     font-size: 24px;
     font-weight: 600;
     margin-bottom: 8px;
-    color: var(--chatbot-text-color, #1a1a2e);
+    color: var(--text-primary, #1a1a2e);
   }
 
   &__welcome-subtitle {
     font-size: 14px;
-    color: var(--chatbot-subtext-color, #6b7280);
+    color: var(--text-tertiary, #6b7280);
     font-weight: 300;
     margin-bottom: 24px;
   }
@@ -412,9 +412,9 @@ watch(() => props.messages, () => {
   }
 
   &__quick-action {
-    background: var(--chatbot-quick-action-bg, rgba(255, 255, 255, 0.7));
+    background: var(--quick-action-bg, rgba(255, 255, 255, 0.7));
     backdrop-filter: blur(10px);
-    border: 1px solid var(--chatbot-quick-action-border, rgba(255, 255, 255, 0.5));
+    border: 1px solid var(--quick-action-border, rgba(255, 255, 255, 0.5));
     border-radius: 16px;
     padding: 16px;
     text-align: center;
@@ -430,7 +430,7 @@ watch(() => props.messages, () => {
   &__quick-action-icon {
     width: 36px;
     height: 36px;
-    background: var(--chatbot-primary-gradient);
+    background: var(--theme-primary-gradient);
     border-radius: 10px;
     display: flex;
     align-items: center;
@@ -447,20 +447,20 @@ watch(() => props.messages, () => {
   &__quick-action-title {
     font-size: 14px;
     font-weight: 500;
-    color: var(--chatbot-text-color, #1a1a2e);
+    color: var(--text-primary, #1a1a2e);
     margin-bottom: 4px;
   }
 
   &__quick-action-desc {
     font-size: 12px;
-    color: var(--chatbot-subtext-color, #6b7280);
+    color: var(--text-tertiary, #6b7280);
   }
 
   &__message-list {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    max-width: var(--chatbot-message-max-width, 800px);
+    max-width: var(--message-max-width, 800px);
     margin: 0 auto;
     width: 100%;
   }
@@ -474,7 +474,7 @@ watch(() => props.messages, () => {
       align-items: flex-end;
 
       .chat-content__bubble {
-        max-width: var(--chatbot-user-bubble-max-width, 70%);
+        max-width: var(--user-bubble-max-width, 70%);
         align-self: flex-end;
       }
     }
@@ -484,7 +484,7 @@ watch(() => props.messages, () => {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: var(--chatbot-primary-gradient);
+    background: var(--theme-primary-gradient);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -514,15 +514,15 @@ watch(() => props.messages, () => {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     .user & {
-      background: var(--chatbot-user-bubble-bg, #409eff);
-      color: var(--chatbot-user-bubble-text, #ffffff);
+      background: var(--chat-user-bg, #409eff);
+      color: var(--chat-user-text, #ffffff);
       border-bottom-right-radius: 6px;
     }
 
     .assistant & {
-      background: var(--chatbot-assistant-bubble-bg, rgba(255, 255, 255, 0.9));
+      background: var(--chat-assistant-bg, rgba(255, 255, 255, 0.9));
       backdrop-filter: blur(10px);
-      color: var(--chatbot-assistant-bubble-text, #1a1a2e);
+      color: var(--chat-assistant-text, #1a1a2e);
       border-bottom-left-radius: 6px;
     }
   }
@@ -572,7 +572,7 @@ watch(() => props.messages, () => {
     span {
       width: 8px;
       height: 8px;
-      background: var(--chatbot-subtext-color, #6b7280);
+      background: var(--text-tertiary, #6b7280);
       border-radius: 50%;
       animation: typing 1.4s infinite;
 
@@ -588,7 +588,7 @@ watch(() => props.messages, () => {
     padding: 6px 10px;
     margin-top: 4px;
     font-size: 12px;
-    color: var(--chatbot-danger-color, #f56c6c);
+    color: var(--color-danger, #f56c6c);
     background: rgba(245, 108, 108, 0.08);
     border-radius: 6px;
     border: 1px solid rgba(245, 108, 108, 0.15);
@@ -609,15 +609,15 @@ watch(() => props.messages, () => {
     flex-shrink: 0;
     padding: 2px 8px;
     font-size: 12px;
-    color: var(--chatbot-primary-color, #409eff);
+    color: var(--theme-primary, #409eff);
     background: transparent;
-    border: 1px solid var(--chatbot-primary-color, #409eff);
+    border: 1px solid var(--theme-primary, #409eff);
     border-radius: 4px;
     cursor: pointer;
     transition: all 0.2s;
 
     &:hover {
-      background: var(--chatbot-primary-color, #409eff);
+      background: var(--theme-primary, #409eff);
       color: white;
     }
   }
@@ -648,7 +648,7 @@ watch(() => props.messages, () => {
     align-items: center;
     padding: 2px 8px;
     font-size: 12px;
-    color: var(--chatbot-success-color, #67c23a);
+    color: var(--color-success, #67c23a);
     background-color: rgba(103, 194, 58, 0.1);
     border-radius: 4px;
     white-space: nowrap;
@@ -664,7 +664,7 @@ watch(() => props.messages, () => {
     background: transparent;
     border-radius: 6px;
     cursor: pointer;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     transition: all 0.2s ease;
 
     svg {
@@ -673,17 +673,17 @@ watch(() => props.messages, () => {
     }
 
     &:hover {
-      background-color: var(--chatbot-border-color, rgba(0, 0, 0, 0.08));
-      color: var(--chatbot-text-color, #303133);
+      background-color: var(--border-light, rgba(0, 0, 0, 0.08));
+      color: var(--text-primary, #303133);
     }
 
     &--danger:hover {
       background-color: rgba(245, 108, 108, 0.1);
-      color: var(--chatbot-danger-color, #f56c6c);
+      color: var(--color-danger, #f56c6c);
     }
 
     &--copied {
-      color: var(--chatbot-success-color, #67c23a);
+      color: var(--color-success, #67c23a);
     }
   }
 

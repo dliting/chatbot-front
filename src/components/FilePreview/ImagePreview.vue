@@ -76,7 +76,7 @@ const handleError = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--chatbot-assistant-bubble-bg, #f5f7fa);
+  background: var(--chat-assistant-bg, #f5f7fa);
   border-radius: 8px;
 
   &__img {
@@ -91,12 +91,12 @@ const handleError = () => {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     font-size: 14px;
   }
 
   &__error {
-    color: var(--chatbot-danger-color, #f56c6c);
+    color: var(--color-danger, #f56c6c);
   }
 }
 </style>

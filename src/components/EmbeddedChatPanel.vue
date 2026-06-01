@@ -217,21 +217,21 @@ const containerClasses = computed(() => [
 <style scoped lang="scss">
 .ai-chat {
   font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: var(--chatbot-bg-color, #ffffff);
-  color: var(--chatbot-text-color, #303133);
+  background: var(--bg-base, #ffffff);
+  color: var(--text-primary, #303133);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 
   // Theme variations
   &--light {
-    --chatbot-bg-color: #ffffff;
-    --chatbot-text-color: #303133;
+    --bg-base: #ffffff;
+    --text-primary: #303133;
   }
 
   &--dark {
-    --chatbot-bg-color: #1a1a1a;
-    --chatbot-text-color: #e5e5e5;
+    --bg-base: #1a1a1a;
+    --text-primary: #e5e5e5;
   }
 
   // Extended mode
@@ -263,14 +263,14 @@ const containerClasses = computed(() => [
   &__sidebar {
     width: 280px;
     flex-shrink: 0;
-    border-right: 1px solid var(--chatbot-border-color, #e4e7ed);
+    border-right: 1px solid var(--border-light, #e4e7ed);
     overflow: hidden;
 
     // Mobile: collapse sidebar to full-width
     @media (max-width: 768px) {
       width: 100%;
       border-right: none;
-      border-bottom: 1px solid var(--chatbot-border-color, #e4e7ed);
+      border-bottom: 1px solid var(--border-light, #e4e7ed);
     }
   }
 

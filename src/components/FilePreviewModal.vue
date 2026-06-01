@@ -86,7 +86,7 @@ watch(() => props.visible, (val) => {
     max-width: 900px;
     height: 90vh;
     max-height: 800px;
-    background: var(--chatbot-bg-color, #ffffff);
+    background: var(--bg-base, #ffffff);
     border-radius: 12px;
     display: flex;
     flex-direction: column;
@@ -99,14 +99,14 @@ watch(() => props.visible, (val) => {
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    border-bottom: 1px solid var(--chatbot-border-color, #ebeef5);
+    border-bottom: 1px solid var(--border-light, #ebeef5);
     flex-shrink: 0;
   }
 
   &__title {
     font-size: 16px;
     font-weight: 500;
-    color: var(--chatbot-text-color, #303133);
+    color: var(--text-primary, #303133);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -123,7 +123,7 @@ watch(() => props.visible, (val) => {
     align-items: center;
     justify-content: center;
     transition: background 0.2s;
-    color: var(--chatbot-subtext-color, #606266);
+    color: var(--text-tertiary, #606266);
 
     svg {
       width: 20px;
@@ -131,8 +131,8 @@ watch(() => props.visible, (val) => {
     }
 
     &:hover {
-      background: var(--chatbot-assistant-bubble-bg, #f5f7fa);
-      color: var(--chatbot-text-color, #303133);
+      background: var(--chat-assistant-bg, #f5f7fa);
+      color: var(--text-primary, #303133);
     }
   }
 
@@ -147,7 +147,7 @@ watch(() => props.visible, (val) => {
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     font-size: 14px;
   }
 }

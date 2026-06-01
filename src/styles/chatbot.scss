@@ -5,10 +5,6 @@
 // Import markdown styles
 @import './markdown.css';
 
-// Import theme overrides
-@import './themes/light.scss';
-@import './themes/dark.scss';
-
 // =============================================
 // CSS Variables — Light Theme (default)
 // =============================================
@@ -59,6 +55,7 @@
   --chat-user-text: #ffffff;
   --chat-assistant-bg: #f5f7fa;
   --chat-assistant-text: #303133;
+  --bg-video-overlay: rgba(0, 0, 0, 0.8);
 
   // === 内容区背景渐变 ===
   --content-bg-1: #f0f4ff;
@@ -131,61 +128,103 @@
   // === 文字覆盖色 ===
   --text-on-primary: #ffffff;
 
-  // =============================================
-  // 旧变量别名映射层 (backward compatibility)
-  // =============================================
-  --chatbot-bg-color: var(--bg-base);
-  --chatbot-text-color: var(--text-primary);
-  --chatbot-border-color: var(--border-light);
-  --chatbot-subtext-color: var(--text-tertiary);
-  --chatbot-panel-bg: var(--bg-base);
-  --chatbot-panel-text: var(--text-primary);
-  --chatbot-panel-subtext: var(--text-tertiary);
-  --chatbot-panel-border: var(--topic-border);
-  --chatbot-primary-color: var(--theme-primary);
-  --chatbot-primary-color-light: var(--theme-primary-light);
-  --chatbot-primary-color-dark: var(--theme-primary-dark);
-  --chatbot-primary-gradient: var(--theme-primary-gradient);
-  --chatbot-danger-color: var(--color-danger);
-  --chatbot-danger-color-light: var(--color-danger-light);
-  --chatbot-danger-color-dark: #f78989;
-  --chatbot-danger-color-strong: var(--color-danger-strong);
-  --chatbot-success-color: var(--color-success);
-  --chatbot-warning-color: var(--color-warning);
-  --chatbot-warning-color-light: var(--color-warning-light);
-  --chatbot-info-color: var(--color-info);
-  --chatbot-info-color-light: var(--color-info-light);
-  --chatbot-border-color-dark: var(--border-base);
-  --chatbot-user-bubble-bg: var(--chat-user-bg);
-  --chatbot-user-bubble-text: var(--chat-user-text);
-  --chatbot-assistant-bubble-bg: var(--chat-assistant-bg);
-  --chatbot-assistant-bubble-text: var(--chat-assistant-text);
-  --chatbot-input-bg: var(--input-bg);
-  --chatbot-input-border: var(--input-border);
-  --chatbot-placeholder-color: var(--text-placeholder);
-  --chatbot-content-bg-1: var(--content-bg-1);
-  --chatbot-content-bg-2: var(--content-bg-2);
-  --chatbot-content-bg-3: var(--content-bg-3);
-  --chatbot-quick-action-bg: var(--quick-action-bg);
-  --chatbot-quick-action-border: var(--quick-action-border);
-  --chatbot-message-max-width: var(--message-max-width);
-  --chatbot-user-bubble-max-width: var(--user-bubble-max-width);
-  --chatbot-action-icon-color: #8c8c8c;
-  --chatbot-action-hover-bg: rgba(0, 0, 0, 0.1);
-  --chatbot-action-icon-hover-color: #4a4a4a;
-  --chatbot-color-success: var(--color-success);
+  // === 操作图标 ===
+  --action-icon-color: #8c8c8c;
+  --action-hover-bg: rgba(0, 0, 0, 0.1);
+  --action-icon-hover-color: #4a4a4a;
+
+  // === 语义色深色变体 ===
+  --color-danger-dark: #f78989;
+  --color-warning-dark: #ebb563;
 }
 
 // =============================================
-// 暗色主题下的旧变量别名微调
+// 暗色主题
 // =============================================
 [data-theme="dark"] {
-  --chatbot-border-color-dark: #6b6c6e;
-  --chatbot-danger-color-dark: #c45656;
-  --chatbot-primary-gradient: linear-gradient(135deg, #5a6fd6 0%, #6a5bb5 100%);
-  --chatbot-action-icon-color: #a3a3a3;
-  --chatbot-action-hover-bg: rgba(255, 255, 255, 0.1);
-  --chatbot-action-icon-hover-color: #e5e5e5;
+  // 背景色系统
+  --bg-base: #1a1a1a;
+  --bg-secondary: #2c2c2c;
+  --bg-tertiary: #3a3a3a;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-backdrop: rgba(26, 26, 26, 0.8);
+
+  // 文字色系统
+  --text-primary: #e5e5e5;
+  --text-secondary: #a3a3a3;
+  --text-tertiary: #757575;
+  --text-placeholder: #5a5a5a;
+  --text-disabled: #4a4a4a;
+
+  // 边框色系统
+  --border-base: #4c4d4f;
+  --border-light: #3a3a3a;
+  --border-lighter: #2c2c2c;
+  --border-dark: #5a5a5a;
+
+  // 语义色浅色变体（暗色主题下需要更深）
+  --color-success-light: rgba(103, 194, 58, 0.15);
+  --color-warning-light: rgba(230, 162, 60, 0.15);
+  --color-danger-light: rgba(245, 108, 108, 0.15);
+  --color-info-light: rgba(144, 147, 153, 0.15);
+
+  // 聊天消息气泡
+  --chat-user-bg: #5a6fd6;
+  --chat-assistant-bg: #2c2c2c;
+  --chat-assistant-text: #e5e5e5;
+
+  // 内容区背景渐变
+  --content-bg-1: #1a1f2e;
+  --content-bg-2: #1a1e2d;
+  --content-bg-3: #1e1a2e;
+
+  // 快捷操作
+  --quick-action-bg: rgba(44, 44, 44, 0.7);
+  --quick-action-border: rgba(44, 44, 44, 0.5);
+
+  // 输入区域
+  --input-bg: #2c2c2c;
+  --input-bg-hover: #3a3a3a;
+  --input-border: #4c4d4f;
+  --input-border-hover: #5a5a5a;
+
+  // 会话列表
+  --topic-bg: #1a1a1a;
+  --topic-bg-hover: #2c2c2c;
+  --topic-bg-active: #1a3a5c;
+  --topic-border: #4c4d4f;
+
+  // 悬浮元素
+  --float-bg: #2c2c2c;
+  --float-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  --float-shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+  // 思考过程
+  --thinking-bg: #1a3a5c;
+  --thinking-border: #2c5a8a;
+  --thinking-text: #7ab8e8;
+
+  // 滚动条
+  --scrollbar-thumb: #4c4d4f;
+  --scrollbar-thumb-hover: #5a5a5a;
+
+  // 阴影（暗色下更深）
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  // 操作图标
+  --action-icon-color: #a3a3a3;
+  --action-hover-bg: rgba(255, 255, 255, 0.1);
+  --action-icon-hover-color: #e5e5e5;
+
+  // 语义色深色变体
+  --color-danger-dark: #c45656;
+  --color-warning-dark: #d4a23c;
+
+  // 渐变覆盖
+  --theme-primary-gradient: linear-gradient(135deg, #5a6fd6 0%, #6a5bb5 100%);
 }
 
 // Reset

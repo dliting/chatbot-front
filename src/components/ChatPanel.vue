@@ -282,8 +282,8 @@ onMounted(() => {
 <style scoped lang="scss">
 .chatbot-panel {
   position: fixed;
-  background-color: var(--chatbot-bg-color, #ffffff);
-  border-radius: var(--chatbot-border-radius, 12px);
+  background-color: var(--bg-base, #ffffff);
+  border-radius: var(--radius-lg, 12px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
@@ -307,13 +307,13 @@ onMounted(() => {
     &.chatbot-panel--top-left,
     &.chatbot-panel--bottom-left {
       left: 0;
-      border-radius: 0 var(--chatbot-border-radius, 12px) var(--chatbot-border-radius, 12px) 0;
+      border-radius: 0 var(--radius-lg, 12px) var(--radius-lg, 12px) 0;
     }
 
     &.chatbot-panel--top-right,
     &.chatbot-panel--bottom-right {
       right: 0;
-      border-radius: var(--chatbot-border-radius, 12px) 0 0 var(--chatbot-border-radius, 12px);
+      border-radius: var(--radius-lg, 12px) 0 0 var(--radius-lg, 12px);
     }
   }
 
@@ -346,22 +346,22 @@ onMounted(() => {
   &--floating {
     max-height: none;
     resize: none; // We use custom resize handles
-    border-radius: var(--chatbot-border-radius, 12px) !important;
+    border-radius: var(--radius-lg, 12px) !important;
   }
 
   // Theme
   &--light {
-    --chatbot-panel-bg: #ffffff;
-    --chatbot-panel-border: #e4e7ed;
-    --chatbot-panel-text: #303133;
-    --chatbot-panel-subtext: #909399;
+    --bg-base: #ffffff;
+    --topic-border: #e4e7ed;
+    --text-primary: #303133;
+    --text-tertiary: #909399;
   }
 
   &--dark {
-    --chatbot-panel-bg: #1a1a1a;
-    --chatbot-panel-border: #4c4d4f;
-    --chatbot-panel-text: #e5e5e5;
-    --chatbot-panel-subtext: #a3a3a3;
+    --bg-base: #1a1a1a;
+    --topic-border: #4c4d4f;
+    --text-primary: #e5e5e5;
+    --text-tertiary: #a3a3a3;
   }
 
   &__header {
@@ -369,12 +369,12 @@ onMounted(() => {
     align-items: center;
     justify-content: space-between;
     padding: 16px;
-    border-bottom: 1px solid var(--chatbot-panel-border);
-    background-color: var(--chatbot-panel-bg);
+    border-bottom: 1px solid var(--topic-border);
+    background-color: var(--bg-base);
     flex-shrink: 0;
     width: 100%;
     box-sizing: border-box;
-    border-radius: var(--chatbot-border-radius, 12px) var(--chatbot-border-radius, 12px) 0 0;
+    border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
 
     &--draggable {
       cursor: move;
@@ -384,7 +384,7 @@ onMounted(() => {
   &__title {
     font-size: 18px;
     font-weight: 600;
-    color: var(--chatbot-panel-text);
+    color: var(--text-primary);
     pointer-events: none; // Prevent text selection during drag
   }
 
@@ -404,13 +404,13 @@ onMounted(() => {
     background: transparent;
     border-radius: 6px;
     cursor: pointer;
-    color: var(--chatbot-panel-subtext);
+    color: var(--text-tertiary);
     transition: background-color 0.2s, color 0.2s;
     flex-shrink: 0;
 
     &:hover {
-      background-color: var(--chatbot-panel-border);
-      color: var(--chatbot-panel-text);
+      background-color: var(--topic-border);
+      color: var(--text-primary);
     }
 
     svg {
@@ -421,7 +421,7 @@ onMounted(() => {
 
   &__close-btn {
     &:hover {
-      background-color: var(--chatbot-danger-color, #f56c6c);
+      background-color: var(--color-danger, #f56c6c);
       color: #fff;
     }
   }
@@ -434,7 +434,7 @@ onMounted(() => {
     min-height: 0;
     width: 100%;
     box-sizing: border-box;
-    border-radius: 0 0 var(--chatbot-border-radius, 12px) var(--chatbot-border-radius, 12px);
+    border-radius: 0 0 var(--radius-lg, 12px) var(--radius-lg, 12px);
   }
 }
 

@@ -314,7 +314,7 @@ defineExpose({
 
 <style scoped lang="scss">
 .ai-chatbot {
-  --chatbot-primary-color: v-bind('config.primaryColor');
+  --theme-primary: v-bind('config.primaryColor');
   font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 </style>

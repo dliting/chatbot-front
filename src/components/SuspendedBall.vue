@@ -233,7 +233,7 @@ onUnmounted(() => {
     height: 18px;
     padding: 0 5px;
     border-radius: 9px;
-    background-color: var(--chatbot-danger-color, #f56c6c);
+    background-color: var(--color-danger, #f56c6c);
     color: #fff;
     font-size: 12px;
     line-height: 18px;
