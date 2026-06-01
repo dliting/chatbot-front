@@ -6,13 +6,34 @@ import type { Message, Topic, Attachment } from '@/types'
 
 export interface ApiClientOptions {
   baseUrl: string
+  streamEnabled?: boolean
   streamTimeout?: number
 }
 
 export function useApiClient(options: ApiClientOptions) {
   const { baseUrl, streamTimeout = 120000 } = options
+  const pendingCount = ref(0)
+
+  /** True while any request is in flight */
   const isLoading = ref(false)
+
+  /** Last error from any request */
   const error = ref<Error | null>(null)
+
+  function startRequest() {
+    pendingCount.value++
+    isLoading.value = true
+    error.value = null
+  }
+
+  function endRequest(err?: Error) {
+    pendingCount.value--
+    if (pendingCount.value <= 0) {
+      pendingCount.value = 0
+      isLoading.value = false
+    }
+    if (err) error.value = err
+  }
 
   /**
    * Create streaming response generator
@@ -59,9 +80,9 @@ export function useApiClient(options: ApiClientOptions) {
       })
 
       if (!response.ok) {
-        const error = new Error(`API error: ${response.status}`) as Error & { status?: number }
-        error.status = response.status
-        throw error
+        const err = new Error(`API error: ${response.status}`) as Error & { status?: number }
+        err.status = response.status
+        throw err
       }
 
       if (!response.body) {
@@ -84,8 +105,6 @@ export function useApiClient(options: ApiClientOptions) {
           if (!line.trim() || !line.startsWith('data: ')) continue
           try {
             const data = JSON.parse(line.slice(6))
-            // Support both camelCase (our backend) and snake_case (OpenAI) field names
-            // Must yield BOTH reasoning and token if both present in same chunk
             const reasoning = data.reasoningContent ?? data.reasoning_content
             const content = data.content ?? data.delta?.content
             if (reasoning) {
@@ -95,26 +114,23 @@ export function useApiClient(options: ApiClientOptions) {
               yield { type: 'token', content }
             }
             if (!reasoning && !content && data.type) {
-              // Pass through other event types (start, end, etc.)
               yield data
             }
-          } catch (e) {
+          } catch {
             // Skip invalid JSON lines in SSE stream
           }
         }
       }
-    } catch (error) {
-      if ((error as Error).name === 'AbortError') {
-        // AbortError: client intentionally stopped generation, exit gracefully
+    } catch (err) {
+      if ((err as Error).name === 'AbortError') {
         return
       }
-      // Re-throw with type info for timeout vs other errors
-      if ((error as Error).name === 'TimeoutError') {
+      if ((err as Error).name === 'TimeoutError') {
         const timeoutError = new Error('请求超时') as Error & { code: string }
         timeoutError.code = 'TIMEOUT'
         throw timeoutError
       }
-      throw error
+      throw err
     } finally {
       if (reader) {
         reader.releaseLock()
@@ -130,41 +146,29 @@ export function useApiClient(options: ApiClientOptions) {
     content: string,
     attachments?: Attachment[]
   ): Promise<Message> {
-    isLoading.value = true
-    error.value = null
-
+    startRequest()
     try {
-      // Convert attachments to separate arrays for backend compatibility
       const images = attachments?.filter(a => a.type === 'image').map(a => a.url) || []
       const videos = attachments?.filter(a => a.type === 'video').map(a => a.url) || []
       const audios = attachments?.filter(a => a.type === 'audio').map(a => a.url) || []
 
       const response = await fetch(`${baseUrl}/chat/message`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sessionId,
-          content,
-          images,
-          videos,
-          audios,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId, content, images, videos, audios }),
       })
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`API error: ${response.status}`)
 
       const result = await response.json()
-      if (result.code !== 0) {
-        throw new Error(result.message || 'API error')
-      }
+      if (result.code !== 0) throw new Error(result.message || 'API error')
 
       return result.data
+    } catch (err) {
+      endRequest(err as Error)
+      throw err
     } finally {
-      isLoading.value = false
+      endRequest()
     }
   }
 
@@ -172,24 +176,20 @@ export function useApiClient(options: ApiClientOptions) {
    * Get topics
    */
   async function getTopics(): Promise<Topic[]> {
-    isLoading.value = true
-    error.value = null
-
+    startRequest()
     try {
       const response = await fetch(`${baseUrl}/sessions`)
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`API error: ${response.status}`)
 
       const result = await response.json()
-      if (result.code !== 0) {
-        throw new Error(result.message || 'API error')
-      }
+      if (result.code !== 0) throw new Error(result.message || 'API error')
 
       return result.data.sessions
+    } catch (err) {
+      endRequest(err as Error)
+      throw err
     } finally {
-      isLoading.value = false
+      endRequest()
     }
   }
 
@@ -197,25 +197,17 @@ export function useApiClient(options: ApiClientOptions) {
    * Get topic messages
    */
   async function getTopicMessages(topicId: string): Promise<Message[]> {
-    isLoading.value = true
-    error.value = null
-
+    startRequest()
     try {
       const response = await fetch(`${baseUrl}/sessions/${topicId}/messages`)
-
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`API error: ${response.status}`)
 
       const result = await response.json()
-      if (result.code !== 0) {
-        throw new Error(result.message || 'API error')
-      }
+      if (result.code !== 0) throw new Error(result.message || 'API error')
 
       const messages: Message[] = result.data.messages
 
-      // Convert backend response fields (images, videos, audios, documents)
-      // into unified attachments[] format
+      // Convert backend response fields into unified attachments[] format
       messages.forEach(msg => {
         const raw = msg as Record<string, unknown>
         if (raw.images || raw.videos || raw.audios || raw.documents) {
@@ -251,8 +243,11 @@ export function useApiClient(options: ApiClientOptions) {
       })
 
       return messages
+    } catch (err) {
+      endRequest(err as Error)
+      throw err
     } finally {
-      isLoading.value = false
+      endRequest()
     }
   }
 
@@ -260,26 +255,18 @@ export function useApiClient(options: ApiClientOptions) {
    * Create topic
    */
   async function createTopic(title?: string): Promise<Topic> {
-    isLoading.value = true
-    error.value = null
-
+    startRequest()
     try {
       const response = await fetch(`${baseUrl}/sessions`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title }),
       })
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`API error: ${response.status}`)
 
       const result = await response.json()
-      if (result.code !== 0) {
-        throw new Error(result.message || 'API error')
-      }
+      if (result.code !== 0) throw new Error(result.message || 'API error')
 
       return {
         topicId: result.data.topicId,
@@ -289,8 +276,11 @@ export function useApiClient(options: ApiClientOptions) {
         messageCount: 0,
         unreadCount: 0,
       }
+    } catch (err) {
+      endRequest(err as Error)
+      throw err
     } finally {
-      isLoading.value = false
+      endRequest()
     }
   }
 
@@ -298,19 +288,18 @@ export function useApiClient(options: ApiClientOptions) {
    * Delete topic
    */
   async function deleteTopic(topicId: string): Promise<void> {
-    isLoading.value = true
-    error.value = null
-
+    startRequest()
     try {
       const response = await fetch(`${baseUrl}/sessions/${topicId}`, {
         method: 'DELETE',
       })
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`API error: ${response.status}`)
+    } catch (err) {
+      endRequest(err as Error)
+      throw err
     } finally {
-      isLoading.value = false
+      endRequest()
     }
   }
 
@@ -318,23 +307,20 @@ export function useApiClient(options: ApiClientOptions) {
    * Update topic title
    */
   async function updateTopicTitle(topicId: string, title: string): Promise<void> {
-    isLoading.value = true
-    error.value = null
-
+    startRequest()
     try {
       const response = await fetch(`${baseUrl}/sessions/${topicId}/title`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title }),
       })
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`API error: ${response.status}`)
+    } catch (err) {
+      endRequest(err as Error)
+      throw err
     } finally {
-      isLoading.value = false
+      endRequest()
     }
   }
 
@@ -342,9 +328,7 @@ export function useApiClient(options: ApiClientOptions) {
    * Upload images
    */
   async function uploadImages(files: File[]): Promise<string[]> {
-    isLoading.value = true
-    error.value = null
-
+    startRequest()
     try {
       const formData = new FormData()
       files.forEach((file) => {
@@ -356,18 +340,17 @@ export function useApiClient(options: ApiClientOptions) {
         body: formData,
       })
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`API error: ${response.status}`)
 
       const result = await response.json()
-      if (result.code !== 0) {
-        throw new Error(result.message || 'API error')
-      }
+      if (result.code !== 0) throw new Error(result.message || 'API error')
 
       return result.data.urls
+    } catch (err) {
+      endRequest(err as Error)
+      throw err
     } finally {
-      isLoading.value = false
+      endRequest()
     }
   }
 
@@ -375,19 +358,18 @@ export function useApiClient(options: ApiClientOptions) {
    * Delete message
    */
   async function deleteMessage(messageId: string): Promise<void> {
-    isLoading.value = true
-    error.value = null
-
+    startRequest()
     try {
       const response = await fetch(`${baseUrl}/messages/${messageId}`, {
         method: 'DELETE',
       })
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`)
-      }
+      if (!response.ok) throw new Error(`API error: ${response.status}`)
+    } catch (err) {
+      endRequest(err as Error)
+      throw err
     } finally {
-      isLoading.value = false
+      endRequest()
     }
   }
 
