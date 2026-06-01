@@ -37,6 +37,9 @@ vi.mock('@/utils/message', () => ({
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/`(.*?)`/g, '<code>$1</code>')
   },
+  getAttachmentsByType: (message: any, type: string) => {
+    return (message.attachments || []).filter((a: any) => a.type === type)
+  },
 }))
 
 describe('MessageItem Component', () => {
@@ -160,7 +163,10 @@ describe('MessageItem Component', () => {
     it('should render images when message has images', () => {
       const message = createUserMessage({
         content: '',
-        images: ['https://example.com/image1.jpg', 'https://example.com/image2.jpg'],
+        attachments: [
+          { name: '', url: 'https://example.com/image1.jpg', type: 'image' },
+          { name: '', url: 'https://example.com/image2.jpg', type: 'image' },
+        ],
       })
       const wrapper = createWrapper(message)
 
@@ -171,7 +177,7 @@ describe('MessageItem Component', () => {
     it('should render both text and images', () => {
       const message = createUserMessage({
         content: 'Check out this image',
-        images: ['https://example.com/image.jpg'],
+        attachments: [{ name: '', url: 'https://example.com/image.jpg', type: 'image' }],
       })
       const wrapper = createWrapper(message)
 
@@ -183,7 +189,7 @@ describe('MessageItem Component', () => {
     it('should emit file-click event when image is clicked', async () => {
       const message = createUserMessage({
         content: '',
-        images: ['https://example.com/image.jpg'],
+        attachments: [{ name: '', url: 'https://example.com/image.jpg', type: 'image' }],
       })
       const wrapper = createWrapper(message)
 
@@ -197,7 +203,7 @@ describe('MessageItem Component', () => {
     it('should apply image-only class when message has only images', () => {
       const message = createUserMessage({
         content: '',
-        images: ['https://example.com/image.jpg'],
+        attachments: [{ name: '', url: 'https://example.com/image.jpg', type: 'image' }],
       })
       const wrapper = createWrapper(message)
 
@@ -491,7 +497,7 @@ describe('MessageItem Component', () => {
     it('should have clickable images with proper attributes', () => {
       const message = createUserMessage({
         content: '',
-        images: ['https://example.com/image.jpg'],
+        attachments: [{ name: '', url: 'https://example.com/image.jpg', type: 'image' }],
       })
       const wrapper = createWrapper(message)
 
@@ -535,10 +541,14 @@ describe('MessageItem Component', () => {
     })
 
     it('should handle message with many images', () => {
-      const manyImages = Array.from({ length: 10 }, (_, i) => `https://example.com/image${i}.jpg`)
+      const manyAttachments = Array.from({ length: 10 }, (_, i) => ({
+        name: '',
+        url: `https://example.com/image${i}.jpg`,
+        type: 'image' as const,
+      }))
       const message = createUserMessage({
         content: '',
-        images: manyImages,
+        attachments: manyAttachments,
       })
       const wrapper = createWrapper(message)
 
@@ -550,7 +560,7 @@ describe('MessageItem Component', () => {
     it('should apply mixed class when message has both text and images', () => {
       const message = createUserMessage({
         content: 'Check this out',
-        images: ['https://example.com/image.jpg'],
+        attachments: [{ name: '', url: 'https://example.com/image.jpg', type: 'image' }],
       })
       const wrapper = createWrapper(message)
 

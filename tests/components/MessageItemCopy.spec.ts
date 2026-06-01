@@ -36,6 +36,9 @@ vi.mock('@/utils/message', () => ({
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/`(.*?)`/g, '<code>$1</code>')
   },
+  getAttachmentsByType: (message: any, type: string) => {
+    return (message.attachments || []).filter((a: any) => a.type === type)
+  },
 }))
 
 // Import the mocked function

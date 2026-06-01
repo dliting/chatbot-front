@@ -41,17 +41,51 @@ echo Real backend: http://localhost:%REAL_PORT%
 echo Frontend:     http://localhost:5180
 echo.
 
-rem Check and kill occupied ports
+rem Check and kill occupied ports using PowerShell for reliability
 echo Checking ports...
-for %%p in (5173 5174 5175 5176 5177 5178 5179 5180 %MOCK_PORT% %REAL_PORT%) do (
-    netstat -ano ^| findstr ":%%p " >nul 2>nul
-    if !errorlevel! equ 0 (
-        for /f "tokens=5" %%i in ('netstat -ano ^| findstr ":%%p " ^| findstr LISTENING') do (
-            echo Stopping process on port %%p (PID: %%i)
-            taskkill /F /PID %%i >nul 2>nul
-        )
-    )
-)
+powershell -NoProfile -Command ^
+  "$ErrorActionPreference = 'SilentlyContinue'; " ^
+  "$projectRoot = '%PROJECT_ROOT%'; " ^
+  "$chatAppPaths = @(); " ^
+  "$chatAppPaths += [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'examples\chatapp\backend-mock')); " ^
+  "$chatAppPaths += [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'examples\chatapp\backend-real')); " ^
+  "$chatAppPaths += [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'examples\chatapp\frontend')); " ^
+  "$ports = @('%MOCK_PORT%', '%REAL_PORT%', 5173, 5174, 5175, 5176, 5177, 5178, 5179, 5180); " ^
+  "foreach ($port in $ports) { " ^
+  "  $conns = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue; " ^
+  "  if ($conns) { " ^
+  "    foreach ($conn in $conns) { " ^
+  "      $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue; " ^
+  "      if ($proc) { " ^
+  "        $procPath = [System.IO.Path]::GetFullPath($proc.Path); " ^
+  "        $isChatApp = $false; " ^
+  "        foreach ($chatAppPath in $chatAppPaths) { " ^
+  "          if ($procPath.StartsWith($chatAppPath, 'OrdinalIgnoreCase')) { " ^
+  "            $isChatApp = $true; " ^
+  "            break; " ^
+  "          } " ^
+  "        } " ^
+  "        if ($procPath -match 'node\.exe$') { " ^
+  "          try { " ^
+  "            $parentProc = Get-Process -Id $proc.ParentProcessId -ErrorAction SilentlyContinue; " ^
+  "            if ($parentProc -and ($parentProc.ProcessName -eq 'cmd' -or $parentProc.ProcessName -eq 'npm')) { " ^
+  "              $parentCmd = if ($parentProc.CommandLine) { $parentProc.CommandLine } else { '' }; " ^
+  "              if ($parentCmd -match 'examples[\\\\/]chatapp') { " ^
+  "                $isChatApp = $true; " ^
+  "              } " ^
+  "            } " ^
+  "          } catch { } " ^
+  "        } " ^
+  "        if ($isChatApp) { " ^
+  "          Write-Host \"Stopping ChatApp process on port $port (PID: $($conn.OwningProcess), $($proc.ProcessName))\"; " ^
+  "          Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue; " ^
+  "        } else { " ^
+  "          Write-Host \"WARNING: Port $port occupied by non-ChatApp process ($($proc.ProcessName) PID $($conn.OwningProcess)) - skipping\"; " ^
+  "        } " ^
+  "      } " ^
+  "    } " ^
+  "  } " ^
+  "}"
 ping -n 2 127.0.0.1 >nul
 
 rem Check and install mock backend dependencies

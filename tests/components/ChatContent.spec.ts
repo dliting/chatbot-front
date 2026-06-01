@@ -306,7 +306,7 @@ describe('ChatContent', () => {
       const messageWithImage = {
         ...mockMessages[0],
         messageId: 'msg-img',
-        images: ['data:image/png;base64,test'],
+        attachments: [{ name: '', url: 'data:image/png;base64,test', type: 'image' }],
       }
       const wrapper = createWrapper({ messages: [messageWithImage] })
       const img = wrapper.find('.chat-content__image')

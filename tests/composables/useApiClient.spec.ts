@@ -290,7 +290,7 @@ describe('composables/useApiClient', () => {
       mockFetch.mockRejectedValueOnce(new DOMException('Aborted', 'AbortError'))
 
       const client = useApiClient({ baseUrl: 'http://localhost:3000' })
-      const gen = client.streamChat('s1', 'hello', undefined, undefined, undefined, { signal })
+      const gen = client.streamChat('s1', 'hello', undefined, { signal })
 
       // Consume generator (should exit gracefully)
       const chunks: unknown[] = []
@@ -302,10 +302,10 @@ describe('composables/useApiClient', () => {
         expect.unreachable('streamChat should not throw on AbortError')
       }
 
-      // Verify signal was passed to fetch
+      // Verify signal was passed to fetch (combined signal via AbortSignal.any)
       expect(mockFetch).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({ signal })
+        expect.objectContaining({ signal: expect.any(AbortSignal) })
       )
       expect(chunks).toEqual([])
     })
@@ -319,7 +319,7 @@ describe('composables/useApiClient', () => {
 
       const client = useApiClient({ baseUrl: 'http://localhost:3000' })
       const gen = client.streamChat(
-        's1', 'hello', undefined, undefined, undefined,
+        's1', 'hello', undefined,
         { signal: controller.signal }
       )
 
@@ -361,7 +361,7 @@ describe('composables/useApiClient', () => {
 
       const client = useApiClient({ baseUrl: 'http://localhost:3000' })
       const gen = client.streamChat(
-        's1', 'hello', undefined, undefined, undefined,
+        's1', 'hello', undefined,
         { signal: controller.signal }
       )
 
@@ -407,7 +407,7 @@ describe('composables/useApiClient', () => {
       })
 
       const client = useApiClient({ baseUrl: 'http://localhost:3000' })
-      const gen = client.streamChat('s1', 'hello', undefined, undefined, undefined, {
+      const gen = client.streamChat('s1', 'hello', undefined, {
         thinking: { enabled: false },
         signal: new AbortController().signal,
       })
