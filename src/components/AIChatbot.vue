@@ -92,7 +92,7 @@
 <script setup lang="ts">
 import { computed, watch, onMounted, onUnmounted, ref } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
-import { defaultChatbotConfig } from '@/types/config'
+import { defaultChatbotConfig, getDefaultLabels } from '@/types/config'
 import type { InteractionMode } from '@/types'
 import { modeToLayoutMap } from '@/types'
 import { useChatbotState } from '@/composables/useChatbotState'
@@ -138,6 +138,10 @@ const config = computed((): Required<ChatbotConfig> => {
   const merged = { ...defaultChatbotConfig, ...props.config } as Required<ChatbotConfig>
   if (!merged.mode && merged.chatMode) {
     merged.mode = merged.chatMode as InteractionMode
+  }
+  // Use locale-aware labels when user hasn't overridden labels
+  if (!props.config?.labels || Object.keys(props.config.labels).length === 0) {
+    merged.labels = getDefaultLabels(merged.locale)
   }
   return merged
 })

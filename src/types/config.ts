@@ -188,28 +188,27 @@ export interface ChatbotLabels {
   }
 }
 
-export const defaultChatbotLabels: ChatbotLabels = {
-  title: 'AI Assistant',
-  placeholder: 'Type your message...',
-  send: 'Send',
+export const zhCNLabels: ChatbotLabels = {
+  title: 'AI 助手',
+  placeholder: '输入消息...',
+  send: '发送',
   newTopic: '新话题',
-  history: 'History',
-  clearAll: 'Clear All',
-  delete: 'Delete',
-  copy: 'Copy',
-  refresh: 'Regenerate',
-  resend: 'Resend',
-  uploading: 'Uploading...',
-  uploadFailed: 'Upload Failed',
-  retry: 'Retry',
+  history: '历史',
+  clearAll: '清空全部',
+  delete: '删除',
+  copy: '复制',
+  refresh: '重新生成',
+  resend: '重发',
+  uploading: '上传中...',
+  uploadFailed: '上传失败',
+  retry: '重试',
   timeout: '响应超时，请检查网络或后端服务',
   networkError: '网络连接失败，请检查网络',
   serverError: '服务器错误',
   generationStopped: '已停止生成',
-  close: 'Close',
-  expand: 'Expand',
-  collapse: 'Collapse',
-  // Default welcome screen labels (Chinese as default since original was Chinese)
+  close: '关闭',
+  expand: '展开',
+  collapse: '收起',
   welcomeTitle: '智能助手',
   welcomeSubtitle: '有什么可以帮助您的吗？',
   quickAction1Title: '写邮件',
@@ -224,9 +223,7 @@ export const defaultChatbotLabels: ChatbotLabels = {
   quickAction4Title: '数据分析',
   quickAction4Desc: '智能分析数据',
   quickAction4Text: '帮我分析数据',
-  // Copy button labels
   copied: '已复制',
-  // Thinking labels
   thinking: {
     toggle: '思考',
     thinking: '思考中...',
@@ -235,6 +232,63 @@ export const defaultChatbotLabels: ChatbotLabels = {
     hideThinking: '收起思考过程',
   },
 }
+
+export const enUSLabels: ChatbotLabels = {
+  title: 'AI Assistant',
+  placeholder: 'Type your message...',
+  send: 'Send',
+  newTopic: 'New Topic',
+  history: 'History',
+  clearAll: 'Clear All',
+  delete: 'Delete',
+  copy: 'Copy',
+  refresh: 'Regenerate',
+  resend: 'Resend',
+  uploading: 'Uploading...',
+  uploadFailed: 'Upload Failed',
+  retry: 'Retry',
+  timeout: 'Response timeout, check network or backend',
+  networkError: 'Network connection failed',
+  serverError: 'Server error',
+  generationStopped: 'Generation stopped',
+  close: 'Close',
+  expand: 'Expand',
+  collapse: 'Collapse',
+  welcomeTitle: 'AI Assistant',
+  welcomeSubtitle: 'How can I help you?',
+  quickAction1Title: 'Write Email',
+  quickAction1Desc: 'Help me write an email',
+  quickAction1Text: 'Help me write an email',
+  quickAction2Title: 'Summarize',
+  quickAction2Desc: 'Extract key information',
+  quickAction2Text: 'Help me summarize this article',
+  quickAction3Title: 'Translate',
+  quickAction3Desc: 'Multi-language translation',
+  quickAction3Text: 'Help me translate this text',
+  quickAction4Title: 'Data Analysis',
+  quickAction4Desc: 'Smart data analysis',
+  quickAction4Text: 'Help me analyze this data',
+  copied: 'Copied',
+  thinking: {
+    toggle: 'Think',
+    thinking: 'Thinking...',
+    deeplyThought: 'Thought deeply for {seconds}s',
+    showThinking: 'Show thinking process',
+    hideThinking: 'Hide thinking process',
+  },
+}
+
+const localeLabelsMap: Record<Locale, ChatbotLabels> = {
+  'zh-CN': zhCNLabels,
+  'en-US': enUSLabels,
+}
+
+export function getDefaultLabels(locale: Locale = 'zh-CN'): ChatbotLabels {
+  return localeLabelsMap[locale] ?? zhCNLabels
+}
+
+/** @deprecated Use getDefaultLabels(locale) instead */
+export const defaultChatbotLabels: ChatbotLabels = zhCNLabels
 
 export const defaultChatbotConfig: Required<ChatbotConfig> = {
   // Interaction mode
@@ -304,5 +358,5 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   autoScroll: true,
 
   // Labels
-  labels: defaultChatbotLabels,
+  labels: getDefaultLabels('zh-CN'),
 }
