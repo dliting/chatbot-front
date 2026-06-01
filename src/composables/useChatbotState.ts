@@ -57,6 +57,53 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     messagesState.updateMessage(messageId, messagesState.messages.currentTopicId, updates)
   }
 
+  /** Remove a message by ID from a topic */
+  const removeMessage = (topicId: string, messageId: string) => {
+    const msgs = messagesState.messages.byTopic[topicId]
+    if (!msgs) return
+    const index = msgs.findIndex(m => m.messageId === messageId)
+    if (index > -1) {
+      msgs.splice(index, 1)
+    }
+  }
+
+  /** Insert a message at a specific index in a topic */
+  const insertMessage = (topicId: string, index: number, message: import('@/types').Message) => {
+    const msgs = messagesState.messages.byTopic[topicId]
+    if (!msgs) return
+    msgs.splice(index, 0, message)
+  }
+
+  /** Replace all messages for a topic */
+  const setMessages = (topicId: string, messages: import('@/types').Message[]) => {
+    messagesState.messages.byTopic[topicId] = messages
+  }
+
+  /** Ensure a messages array exists for a topic, return it */
+  const ensureMessages = (topicId: string): import('@/types').Message[] => {
+    if (!messagesState.messages.byTopic[topicId]) {
+      messagesState.messages.byTopic[topicId] = []
+    }
+    return messagesState.messages.byTopic[topicId]
+  }
+
+  /** Replace the entire topic list (used after backend reload) */
+  const setTopicList = (topics: import('@/types').Topic[]) => {
+    topicsState.topics.list.length = 0
+    topicsState.topics.list.push(...topics)
+  }
+
+  /** Set current topic ID and sync messages state */
+  const setCurrentTopicId = (topicId: string) => {
+    topicsState.topics.currentId = topicId
+    messagesState.messages.currentTopicId = topicId
+  }
+
+  /** Add a topic to the front of the list */
+  const addTopicToFront = (topic: import('@/types').Topic) => {
+    topicsState.topics.list.unshift(topic)
+  }
+
   const clearCurrentMessages = () => {
     const topicId = messagesState.messages.currentTopicId
     messagesState.clearCurrentMessages(topicId)
@@ -126,6 +173,10 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     // Message Actions
     addMessage,
     updateMessage,
+    removeMessage,
+    insertMessage,
+    setMessages,
+    ensureMessages,
     clearCurrentMessages,
     setStreamingMessage: messagesState.setStreamingMessage,
 
@@ -134,6 +185,9 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     createTopic,
     deleteTopic,
     updateTopicTitle: topicsState.updateTopicTitle,
+    setTopicList,
+    setCurrentTopicId,
+    addTopicToFront,
 
     // Interaction Actions
     setSelectedImages: interactionState.setSelectedImages,

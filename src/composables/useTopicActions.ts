@@ -23,6 +23,11 @@ interface TopicActionsDeps {
   createTopic: () => string
   deleteTopic: (topicId: string) => void
   updateTopicTitle: (topicId: string, title: string) => void
+  // Mutation helpers from useChatbotState
+  setTopicList: (topics: import('@/types').Topic[]) => void
+  setCurrentTopicId: (topicId: string) => void
+  addTopicToFront: (topic: import('@/types').Topic) => void
+  setMessages: (topicId: string, messages: Message[]) => void
 }
 
 export function useTopicActions(deps: TopicActionsDeps) {
@@ -40,8 +45,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
         topics = await apiClient.value.getTopics()
       }
       if (topics.length > 0) {
-        state.topics.list.length = 0
-        state.topics.list.push(...topics)
+        deps.setTopicList(topics)
       }
     } catch (error) {
       console.error('Failed to reload topics:', error)
@@ -76,9 +80,8 @@ export function useTopicActions(deps: TopicActionsDeps) {
       if (config.value.callbacks?.onCreateTopic) {
         try {
           const topic = await config.value.callbacks.onCreateTopic()
-          state.topics.list.unshift(topic)
-          state.topics.currentId = topic.topicId
-          state.messages.currentTopicId = topic.topicId
+          deps.addTopicToFront(topic)
+          deps.setCurrentTopicId(topic.topicId)
           emit('topic:created', { topic })
         } catch (error) {
           console.error('Create topic callback failed:', error)
@@ -86,9 +89,8 @@ export function useTopicActions(deps: TopicActionsDeps) {
       } else if (apiClient.value) {
         try {
           const topic = await apiClient.value.createTopic()
-          state.topics.list.unshift(topic)
-          state.topics.currentId = topic.topicId
-          state.messages.currentTopicId = topic.topicId
+          deps.addTopicToFront(topic)
+          deps.setCurrentTopicId(topic.topicId)
           emit('topic:created', { topic })
         } catch (error) {
           console.error('Failed to create topic:', error)
@@ -122,7 +124,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
     if (!state.messages.byTopic[topicId]?.length) {
       const messages = await loadTopicMessages(topicId)
       if (messages.length > 0) {
-        state.messages.byTopic[topicId] = messages
+        deps.setMessages(topicId, messages)
       }
     }
   }
@@ -176,7 +178,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
 
     const messages = await loadTopicMessages(topicId)
     if (messages.length > 0) {
-      state.messages.byTopic[topicId] = messages
+      deps.setMessages(topicId, messages)
     }
   }
 
@@ -188,10 +190,8 @@ export function useTopicActions(deps: TopicActionsDeps) {
       try {
         const topics = await config.value.callbacks.onLoadTopics()
         if (topics.length > 0) {
-          state.topics.list.length = 0
-          state.topics.list.push(...topics)
-          state.topics.currentId = topics[0].topicId
-          state.messages.currentTopicId = topics[0].topicId
+          deps.setTopicList(topics)
+          deps.setCurrentTopicId(topics[0].topicId)
         }
       } catch (error) {
         console.error('Failed to load topics:', error)

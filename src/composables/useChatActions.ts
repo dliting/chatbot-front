@@ -19,6 +19,12 @@ interface ChatActionsDeps {
   }
   apiClient: Ref<ReturnType<typeof import('@/composables/useApiClient')['useApiClient']> | undefined>
   emit: (event: string, ...args: unknown[]) => void
+  // Mutation helpers from useChatbotState
+  ensureMessages: (topicId: string) => Message[]
+  removeMessage: (topicId: string, messageId: string) => void
+  insertMessage: (topicId: string, index: number, message: Message) => void
+  updateMessage: (messageId: string, updates: Partial<Message>) => void
+  setCurrentTopicId: (topicId: string) => void
 }
 
 export function useChatActions(deps: ChatActionsDeps) {
@@ -27,16 +33,6 @@ export function useChatActions(deps: ChatActionsDeps) {
   const isGenerating = ref(false)
   const isThinkingActive = ref(false)
   const abortController = ref<AbortController | null>(null)
-
-  /**
-   * Get messages array for a topic, creating it if needed
-   */
-  function ensureMessages(topicId: string): Message[] {
-    if (!state.messages.byTopic[topicId]) {
-      state.messages.byTopic[topicId] = []
-    }
-    return state.messages.byTopic[topicId]
-  }
 
   /**
    * Process a stream, updating the assistant message in place.
@@ -157,8 +153,8 @@ export function useChatActions(deps: ChatActionsDeps) {
     const topicId = state.topics.currentId
     if (!topicId) return
 
-    state.messages.currentTopicId = topicId
-    const currentMessages = ensureMessages(topicId)
+    deps.setCurrentTopicId(topicId)
+    deps.ensureMessages(topicId)
 
     isGenerating.value = true
     const controller = new AbortController()
@@ -182,12 +178,12 @@ export function useChatActions(deps: ChatActionsDeps) {
         status: 'sending',
       }
       userMessageId = userMessage.messageId
-      currentMessages.push(userMessage)
+      state.messages.byTopic[topicId].push(userMessage)
       emit('message:sent', { message: userMessage })
 
       // Add assistant placeholder
       assistantMessageId = generateId('msg')
-      currentMessages.push({
+      state.messages.byTopic[topicId].push({
         messageId: assistantMessageId,
         topicId,
         role: 'assistant',
@@ -244,7 +240,7 @@ export function useChatActions(deps: ChatActionsDeps) {
     // Remove the assistant message
     const index = msgs.findIndex(m => m.messageId === message.messageId)
     if (index !== -1) {
-      msgs.splice(index, 1)
+      deps.removeMessage(topicId, message.messageId)
     }
 
     // Find the preceding user message
@@ -270,7 +266,7 @@ export function useChatActions(deps: ChatActionsDeps) {
 
       try {
         // Add placeholder for new AI response
-        msgs.splice(index, 0, {
+        deps.insertMessage(topicId, index, {
           messageId: assistantMessageId,
           topicId,
           role: 'assistant',
@@ -349,8 +345,8 @@ export function useChatActions(deps: ChatActionsDeps) {
     const msgs = state.messages.byTopic[topicId]
     if (!msgs) return
 
-    const index = msgs.findIndex(m => m.messageId === message.messageId)
-    if (index === -1) return
+    const exists = msgs.some(m => m.messageId === message.messageId)
+    if (!exists) return
 
     try {
       if (config.value.callbacks?.onDeleteMessage) {
@@ -358,7 +354,7 @@ export function useChatActions(deps: ChatActionsDeps) {
       } else if (apiClient.value) {
         await apiClient.value.deleteMessage(message.messageId)
       }
-      msgs.splice(index, 1)
+      deps.removeMessage(topicId, message.messageId)
       emit('message:deleted', { messageId: message.messageId, topicId })
     } catch (error) {
       console.error('Failed to delete message:', error)

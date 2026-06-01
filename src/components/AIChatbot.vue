@@ -179,6 +179,14 @@ const {
   createTopic,
   deleteTopic,
   updateTopicTitle,
+  removeMessage,
+  insertMessage,
+  updateMessage,
+  ensureMessages: ensureMessagesForTopic,
+  setTopicList,
+  setCurrentTopicId,
+  addTopicToFront,
+  setMessages,
   cleanup,
 } = useChatbotState(config.value)
 
@@ -197,6 +205,11 @@ const chatActions = useChatActions({
   state,
   apiClient,
   emit: emitEvent,
+  ensureMessages: ensureMessagesForTopic,
+  removeMessage,
+  insertMessage,
+  updateMessage,
+  setCurrentTopicId,
 })
 
 // Topic actions (create/switch/delete/rename)
@@ -209,6 +222,10 @@ const topicActions = useTopicActions({
   createTopic,
   deleteTopic,
   updateTopicTitle,
+  setTopicList,
+  setCurrentTopicId,
+  addTopicToFront,
+  setMessages,
 })
 
 // Computed
