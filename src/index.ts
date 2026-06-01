@@ -11,8 +11,6 @@ export { default as ChatPanel } from './components/ChatPanel.vue'
 export { default as DraggableWindow } from './components/DraggableWindow.vue'
 export { default as MessageList } from './components/MessageList.vue'
 export { default as MessageItem } from './components/MessageItem.vue'
-export { default as InputArea } from './components/InputArea.vue'
-export { default as TopicManager } from './components/TopicManager.vue'
 
 // Export types
 export type * from './types'
@@ -22,8 +20,6 @@ export type { ChatbotConfig, ChatbotCallbacks, SendMessageParams } from './types
 export { useChatbotState } from './composables/useChatbotState'
 export { useResponsive } from './composables/useResponsive'
 export { useStream } from './composables/useStream'
-export { useMessages } from './composables/useMessages'
-export { useTopics } from './composables/useTopics'
 
 // Export utilities
 export { generateId, throttle, debounce, copyToClipboard } from './utils/helpers'

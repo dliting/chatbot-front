@@ -19,14 +19,6 @@ export interface Attachment {
   mimeType?: string
 }
 
-/** @deprecated Use Attachment instead */
-export interface DocumentAttachment {
-  name: string
-  url: string
-  type: string
-  size?: number
-}
-
 export interface Message {
   messageId: string
   topicId: string

@@ -1,7 +1,7 @@
 /**
  * Event types for AI Chatbot
  */
-import type { SendMessageData, MessageSuccessData, PanelToggleData, Message } from './index'
+import type { SendMessageData, MessageSuccessData, Message } from './index'
 
 export interface ChatbotEmits {
   // Message events
@@ -10,13 +10,7 @@ export interface ChatbotEmits {
   messageError: (error: Error, message: Message) => void
 
   // Panel events
-  panelToggle: (data: PanelToggleData) => void
   panelResize: (width: number) => void
-
-  // Topic events
-  topicChange: (topicId: string) => void
-  topicCreate: (topicId: string) => void
-  topicDelete: (topicId: string) => void
 
   // UI events
   themeChange: (theme: 'light' | 'dark') => void

@@ -22,30 +22,30 @@
       <!-- Bubble -->
       <div :class="bubbleClasses" @dblclick="handleDoubleClick">
         <!-- Text content -->
-        <!-- eslint-disable-next-line vue/no-v-html -- Content is sanitized via DOMPurify in formatMessageContent -->
+        <!-- eslint-disable-next-line vue/no-v-html -- Content is sanitized via DOMPurify in formatMarkdownContent -->
         <div v-if="hasText" class="chatbot-message__text" v-html="formattedContent"/>
 
         <!-- Image content -->
         <div v-if="hasImages" class="chatbot-message__images">
           <img
-            v-for="(image, index) in message.images"
+            v-for="(image, index) in imageAttachments"
             :key="index"
-            :src="image"
+            :src="image.url"
             :alt="`Image ${index + 1}`"
             class="chatbot-message__image"
-            @click="$emit('file-click', { type: 'image', url: image })"
+            @click="$emit('file-click', { type: 'image', url: image.url })"
           />
         </div>
 
         <!-- Video content -->
         <div v-if="hasVideos" class="chatbot-message__videos">
           <div
-            v-for="(video, index) in message.videos"
+            v-for="(video, index) in videoAttachments"
             :key="`video-${index}`"
             class="chatbot-message__video"
-            @click="$emit('file-click', { type: 'video', url: `data:video/mp4;base64,${video}` })"
+            @click="$emit('file-click', { type: 'video', url: video.url })"
           >
-            <video :src="`data:video/mp4;base64,${video}`" class="chatbot-message__video-player" preload="metadata" />
+            <video :src="video.url" class="chatbot-message__video-player" preload="metadata" />
             <div class="chatbot-message__video-overlay">
               <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"/>
@@ -57,19 +57,19 @@
         <!-- Audio content -->
         <div v-if="hasAudios" class="chatbot-message__audios">
           <div
-            v-for="(audio, index) in message.audios"
+            v-for="(audio, index) in audioAttachments"
             :key="`audio-${index}`"
             class="chatbot-message__audio"
-            @click="$emit('file-click', { type: 'audio', url: `data:audio/mp3;base64,${audio}` })"
+            @click="$emit('file-click', { type: 'audio', url: audio.url })"
           >
-            <audio :src="`data:audio/mp3;base64,${audio}`" controls class="chatbot-message__audio-player" />
+            <audio :src="audio.url" controls class="chatbot-message__audio-player" />
           </div>
         </div>
 
         <!-- Document content -->
         <div v-if="hasDocuments" class="chatbot-message__documents">
           <div
-            v-for="(doc, index) in message.documents"
+            v-for="(doc, index) in documentAttachments"
             :key="`doc-${index}`"
             class="chatbot-message__document"
             @click="$emit('file-click', { type: doc.type, url: doc.url, name: doc.name })"
@@ -151,7 +151,8 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Copy, Check, Trash2 } from 'lucide-vue-next'
 import type { Message } from '@/types'
 import { formatTime, copyToClipboard } from '@/utils/helpers'
-import { formatMessageContent } from '@/utils/message'
+import { formatMarkdownContent } from '@/utils/markdown'
+import { getAttachmentsByType } from '@/utils/message'
 
 interface Props {
   message: Message
@@ -197,15 +198,19 @@ const isUser = computed(() => props.message.role === 'user')
 const isError = computed(() => props.message.status === 'error')
 const isStopped = computed(() => props.message.status === 'stopped')
 const hasText = computed(() => Boolean(props.message.content))
-const hasImages = computed(() => Boolean(props.message.images?.length))
-const hasVideos = computed(() => Boolean(props.message.videos?.length))
-const hasAudios = computed(() => Boolean(props.message.audios?.length))
-const hasDocuments = computed(() => Boolean(props.message.documents?.length))
+const imageAttachments = computed(() => getAttachmentsByType(props.message, 'image'))
+const videoAttachments = computed(() => getAttachmentsByType(props.message, 'video'))
+const audioAttachments = computed(() => getAttachmentsByType(props.message, 'audio'))
+const documentAttachments = computed(() => getAttachmentsByType(props.message, 'document'))
+const hasImages = computed(() => imageAttachments.value.length > 0)
+const hasVideos = computed(() => videoAttachments.value.length > 0)
+const hasAudios = computed(() => audioAttachments.value.length > 0)
+const hasDocuments = computed(() => documentAttachments.value.length > 0)
 const canCopy = computed(() => hasText.value && !props.isStreaming)
 
 const label = computed(() => isUser.value ? 'You' : 'AI Assistant')
 const formattedTime = computed(() => formatTime(props.message.timestamp))
-const formattedContent = computed(() => formatMessageContent(props.message.content))
+const formattedContent = computed(() => formatMarkdownContent(props.message.content))
 
 // Classes
 const classes = computed(() => [

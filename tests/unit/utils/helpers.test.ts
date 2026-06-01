@@ -20,7 +20,6 @@ import {
   sleep,
   downloadFile,
   getFileExtension,
-  markdownToHTML,
 } from '@/utils/helpers'
 
 describe('utils/helpers', () => {
@@ -307,33 +306,6 @@ describe('utils/helpers', () => {
 
     it('should handle URL with query string', () => {
       expect(getFileExtension('http://example.com/image.png?token=123')).toBe('png?token=123')
-    })
-  })
-
-  describe('markdownToHTML', () => {
-    it('should convert bold text', () => {
-      const result = markdownToHTML('**bold**')
-      expect(result).toContain('<strong>bold</strong>')
-    })
-
-    it('should convert italic text', () => {
-      const result = markdownToHTML('*italic*')
-      expect(result).toContain('<em>italic</em>')
-    })
-
-    it('should convert inline code', () => {
-      const result = markdownToHTML('`code`')
-      expect(result).toContain('<code>code</code>')
-    })
-
-    it('should convert newlines to br tags', () => {
-      const result = markdownToHTML('line1\nline2')
-      expect(result).toContain('<br>')
-    })
-
-    it('should handle code blocks', () => {
-      const result = markdownToHTML('```js\nconsole.log("test")\n```')
-      expect(result).toContain('<pre><code>')
     })
   })
 })

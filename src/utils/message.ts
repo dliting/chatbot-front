@@ -4,7 +4,6 @@
 import type { Message, MessageType, MessageRole, Attachment, AttachmentType } from '@/types'
 import { generateId } from './helpers'
 import { TOPIC_DEFAULTS } from '@/constants'
-import DOMPurify from 'dompurify'
 
 /**
  * Derive message type from content and attachments.
@@ -206,44 +205,6 @@ export function getMessageStats(messages: Message[]): MessageStats {
     },
     { total: 0, user: 0, assistant: 0, withImages: 0, totalImages: 0 }
   )
-}
-
-/**
- * Sanitize message content to prevent XSS
- */
-export function sanitizeMessageContent(content: string): string {
-  // DOMPurify requires browser environment
-  if (typeof window === 'undefined') {
-    return content
-  }
-
-  if (!content) {
-    return ''
-  }
-
-  return DOMPurify.sanitize(content, {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'code', 'pre'],
-    ALLOWED_ATTR: []
-  })
-}
-
-/**
- * Format message content with markdown
- */
-export function formatMessageContent(content: string, options: { sanitize?: boolean } = {}): string {
-  let formatted = content
-
-  if (options.sanitize !== false) {
-    formatted = sanitizeMessageContent(formatted)
-  }
-
-  // Basic markdown formatting
-  // For production, consider using a proper markdown library like marked
-  return formatted
-    .replace(/\n/g, '<br>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
 }
 
 /**

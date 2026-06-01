@@ -26,7 +26,6 @@ export {
 
 export {
   formatMarkdownContent,
-  markdownToHTML,
 } from './markdown'
 
 /**

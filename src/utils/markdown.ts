@@ -51,16 +51,3 @@ export function formatMarkdownContent(content: string): string {
 
   return html
 }
-
-/**
- * Convert markdown to simple HTML (basic implementation)
- * For production, consider using a proper markdown library
- */
-export function markdownToHTML(markdown: string): string {
-  return markdown
-    .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>')
-}
