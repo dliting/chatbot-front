@@ -50,6 +50,7 @@
       :min-width="config.minWidth || 300"
       :min-height="config.minHeight || 400"
       :remember-position="config.rememberPosition !== false"
+      :labels="config.labels"
       @close="togglePanel"
       @toggle-theme="toggleTheme"
     >
@@ -90,11 +91,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch, onMounted, onUnmounted, ref } from 'vue'
+import { computed, watch, onMounted, onUnmounted, ref, provide } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
+import type { ChatActionHandlers, TopicActionHandlers, UIActionHandlers } from '@/types'
 import { defaultChatbotConfig, getDefaultLabels } from '@/types/config'
-import type { InteractionMode } from '@/types'
 import { modeToLayoutMap } from '@/types'
+import { chatActionsKey, topicActionsKey, uiActionsKey } from '@/symbols'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useChatActions } from '@/composables/useChatActions'
 import { useTopicActions } from '@/composables/useTopicActions'
@@ -136,9 +138,6 @@ const emit = defineEmits<Emits>()
 // Merge config with defaults
 const config = computed((): Required<ChatbotConfig> => {
   const merged = { ...defaultChatbotConfig, ...props.config } as Required<ChatbotConfig>
-  if (!merged.mode && merged.chatMode) {
-    merged.mode = merged.chatMode as InteractionMode
-  }
   // Use locale-aware labels when user hasn't overridden labels
   if (!props.config?.labels || Object.keys(props.config.labels).length === 0) {
     merged.labels = getDefaultLabels(merged.locale)
@@ -197,10 +196,10 @@ const {
 // Thinking state
 const thinkingEnabled = ref(config.value.thinkingDefaultEnabled ?? defaultChatbotConfig.thinkingDefaultEnabled)
 
-// Emit helper (bridges composable emits to component emits)
-function emitEvent(event: string, ...args: unknown[]) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  ;(emit as any)(event, ...args)
+// Emit helper (bridges composable string-based emits to Vue's typed defineEmits)
+function emitEvent(event: string, ...args: unknown[]): void {
+  // Vue's emit supports string event names at runtime; cast to bypass TS strictness
+  ;(emit as (event: string, ...args: unknown[]) => void)(event, ...args)
 }
 
 // Chat actions (message send/stream/delete/edit)
@@ -232,6 +231,24 @@ const topicActions = useTopicActions({
   setMessages,
 })
 
+// Provide action handlers for child components via inject
+provide(chatActionsKey, {
+  sendMessage: chatActions.sendMessage,
+  refreshMessage: chatActions.refreshMessage,
+  deleteMessage: chatActions.deleteMessage,
+  editMessage: chatActions.editMessage,
+  stopGenerating: chatActions.stopGenerating,
+  isGenerating: chatActions.isGenerating,
+  isThinkingActive: chatActions.isThinkingActive,
+} satisfies ChatActionHandlers)
+
+provide(topicActionsKey, {
+  createNewTopic: topicActions.createNewTopic,
+  switchToTopic: topicActions.switchToTopic,
+  removeTopic: topicActions.removeTopic,
+  renameTopic: topicActions.renameTopic,
+} satisfies TopicActionHandlers)
+
 // Computed
 const chatMode = computed(() => {
   if (config.value.mode === 'extended') return 'extended'
@@ -253,12 +270,12 @@ const layout = computed(() => {
 })
 
 const showAIChatHeader = computed(() => {
-  const mode = config.value.mode || config.value.chatMode
+  const mode = config.value.mode
   return mode === 'extended' || mode === 'sidebar'
 })
 
 const effectivePanelMode = computed(() => {
-  const mode = config.value.mode || config.value.chatMode || 'floating'
+  const mode = config.value.mode || 'floating'
   if (mode === 'extended' || mode === 'sidebar') return 'sidebar'
   return mode
 })
@@ -281,6 +298,13 @@ const toggleTheme = () => {
   setTheme(newTheme)
   emit('ui:theme-changed', { theme: newTheme })
 }
+
+// Provide UI action handlers
+provide(uiActionsKey, {
+  toggleTheme,
+  setThinkingEnabled: (enabled: boolean) => { thinkingEnabled.value = enabled },
+  thinkingEnabled,
+} satisfies UIActionHandlers)
 
 // Watch panel open state
 watch(

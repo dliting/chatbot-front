@@ -31,7 +31,7 @@
               <button
                 v-if="showThemeToggle"
                 class="chatbot-panel__action-btn"
-                :title="theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'"
+                :title="theme === 'light' ? (labels?.switchToDarkMode || 'Switch to dark mode') : (labels?.switchToLightMode || 'Switch to light mode')"
                 @click="$emit('toggle-theme')"
               >
                 <svg v-if="theme === 'light'" viewBox="0 0 24 24" fill="currentColor">
@@ -46,7 +46,7 @@
             <!-- Close button -->
             <button
               class="chatbot-panel__action-btn chatbot-panel__close-btn"
-              title="Close"
+              :title="labels?.close || 'Close'"
               @click="handleClose"
             >
               <svg viewBox="0 0 24 24" fill="currentColor">
@@ -82,7 +82,7 @@
             <button
               v-if="showThemeToggle"
               class="chatbot-panel__action-btn"
-              :title="theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'"
+              :title="theme === 'light' ? (labels?.switchToDarkMode || 'Switch to dark mode') : (labels?.switchToLightMode || 'Switch to light mode')"
               @click="$emit('toggle-theme')"
             >
               <svg v-if="theme === 'light'" viewBox="0 0 24 24" fill="currentColor">
@@ -97,7 +97,7 @@
           <!-- Close button -->
           <button
             class="chatbot-panel__action-btn chatbot-panel__close-btn"
-            title="Close"
+            :title="labels?.close || 'Close'"
             @click="handleClose"
           >
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -119,6 +119,7 @@
 import { computed, ref, onMounted } from 'vue'
 import DraggableWindow from './DraggableWindow.vue'
 import type { PanelMode, Position, Theme } from '@/types'
+import type { ChatbotLabels } from '@/types/config'
 
 // Swipe gesture configuration
 const SWIPE_THRESHOLD = 100 // pixels
@@ -141,6 +142,7 @@ interface Props {
   maxWidth?: number
   maxHeight?: number
   rememberPosition?: boolean
+  labels?: ChatbotLabels
 }
 
 const props = withDefaults(defineProps<Props>(), {

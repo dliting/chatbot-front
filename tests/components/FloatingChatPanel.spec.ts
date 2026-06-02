@@ -12,7 +12,7 @@ import type { Message, Topic } from '@/types'
 describe('FloatingChatPanel Component', () => {
   // Sample test data
   const mockConfig: ChatbotConfig = {
-    chatMode: 'floating',
+    mode: 'floating',
     theme: 'light',
     position: 'bottom-right',
     panelWidth: 400,

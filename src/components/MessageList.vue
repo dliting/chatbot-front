@@ -18,6 +18,7 @@
           :enable-resend="enableResend"
           :is-streaming="isStreaming && message.messageId === streamingMessageId"
           :is-last-message="index === messages.length - 1"
+          :labels="labels"
           @copy="$emit('copy', message)"
           @delete="$emit('delete', message)"
           @resend="$emit('resend', message)"
@@ -32,7 +33,7 @@
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
             </svg>
-            <p>{{ emptyMessage }}</p>
+            <p>{{ labels?.emptyMessage || 'Start a conversation...' }}</p>
           </div>
         </slot>
       </div>
@@ -56,6 +57,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted } from 'vue'
 import type { Message } from '@/types'
+import type { ChatbotLabels } from '@/types/config'
 import MessageItem from './MessageItem.vue'
 
 interface Props {
@@ -71,6 +73,7 @@ interface Props {
   streamingMessageId?: string | null
   autoScroll?: boolean
   emptyMessage?: string
+  labels?: ChatbotLabels
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -84,7 +87,7 @@ const props = withDefaults(defineProps<Props>(), {
   isStreaming: false,
   streamingMessageId: null,
   autoScroll: true,
-  emptyMessage: 'Start a conversation...',
+  emptyMessage: '',
 })
 
 interface Emits {

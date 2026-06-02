@@ -19,7 +19,7 @@ describe('useTopicsState', () => {
       const { topics } = useTopicsState()
 
       expect(topics.list.length).toBe(1)
-      expect(topics.list[0].title).toBe('新话题')
+      expect(topics.list[0].title).toBe('New Topic')
       expect(topics.currentId).toBeTruthy()
     })
 
@@ -236,7 +236,7 @@ describe('useTopicsState', () => {
 
       const newTopic = topics.list.find(t => t.topicId === newTopicId)
       expect(newTopic).toBeDefined()
-      expect(newTopic?.title).toBe('新话题')
+      expect(newTopic?.title).toBe('New Topic')
     })
 
     it('should create new topic with custom title', () => {

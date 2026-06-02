@@ -95,13 +95,19 @@ describe('ThinkingBlock', () => {
       const label = wrapper.find('.thinking-block__label')
       expect(label.text()).toContain('0.5')
     })
+
+    it('should show "Thought deeply" label when done', () => {
+      const wrapper = createWrapper({ thinkingTime: 2000, isThinking: false })
+      const label = wrapper.find('.thinking-block__label')
+      expect(label.text()).toContain('Thought deeply')
+    })
   })
 
   describe('Thinking state', () => {
     it('should show thinking text when isThinking is true', () => {
       const wrapper = createWrapper({ isThinking: true })
       const label = wrapper.find('.thinking-block__label')
-      expect(label.text()).toBe('思考中...')
+      expect(label.text()).toBe('Thinking...')
     })
 
     it('should add active class to icon when isThinking', () => {

@@ -3,6 +3,7 @@
  */
 import { computed } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
+import type { Topic, Message } from '@/types'
 import { useUIState } from './useUIState'
 import { useMessagesState } from './useMessagesState'
 import { useTopicsState } from './useTopicsState'
@@ -43,7 +44,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   })
 
   // Wrapped actions that coordinate between sub-composables
-  const addMessage = (message: import('@/types').Message) => {
+  const addMessage = (message: Message) => {
     const { topicId } = message
 
     messagesState.addMessage(message)
@@ -53,7 +54,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     )
   }
 
-  const updateMessage = (messageId: string, updates: Partial<import('@/types').Message>) => {
+  const updateMessage = (messageId: string, updates: Partial<Message>) => {
     messagesState.updateMessage(messageId, messagesState.messages.currentTopicId, updates)
   }
 
@@ -68,19 +69,19 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   }
 
   /** Insert a message at a specific index in a topic */
-  const insertMessage = (topicId: string, index: number, message: import('@/types').Message) => {
+  const insertMessage = (topicId: string, index: number, message: Message) => {
     const msgs = messagesState.messages.byTopic[topicId]
     if (!msgs) return
     msgs.splice(index, 0, message)
   }
 
   /** Replace all messages for a topic */
-  const setMessages = (topicId: string, messages: import('@/types').Message[]) => {
+  const setMessages = (topicId: string, messages: Message[]) => {
     messagesState.messages.byTopic[topicId] = messages
   }
 
   /** Ensure a messages array exists for a topic, return it */
-  const ensureMessages = (topicId: string): import('@/types').Message[] => {
+  const ensureMessages = (topicId: string): Message[] => {
     if (!messagesState.messages.byTopic[topicId]) {
       messagesState.messages.byTopic[topicId] = []
     }
@@ -88,7 +89,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   }
 
   /** Replace the entire topic list (used after backend reload) */
-  const setTopicList = (topics: import('@/types').Topic[]) => {
+  const setTopicList = (topics: Topic[]) => {
     topicsState.topics.list.length = 0
     topicsState.topics.list.push(...topics)
   }
@@ -100,7 +101,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   }
 
   /** Add a topic to the front of the list */
-  const addTopicToFront = (topic: import('@/types').Topic) => {
+  const addTopicToFront = (topic: Topic) => {
     topicsState.topics.list.unshift(topic)
   }
 

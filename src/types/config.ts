@@ -73,8 +73,6 @@ export interface ChatbotConfig {
   mode?: InteractionMode
   // Layout (auto-derived from mode if not specified)
   layout?: Layout
-  // Legacy: Chat mode (for backward compatibility)
-  chatMode?: 'extended' | 'compact' | 'floating'
 
   // Layout configuration
   position?: Position
@@ -94,7 +92,6 @@ export interface ChatbotConfig {
 
   // Feature toggles
   enableImageUpload?: boolean
-  enableTopicManager?: boolean
   enableVoiceInput?: boolean
   enableCopyMessage?: boolean
   enableDeleteMessage?: boolean
@@ -157,9 +154,48 @@ export interface ChatbotLabels {
   networkError: string
   serverError: string
   generationStopped: string
+  sendFailed: string
+  responseFailed: string
+  userLabel: string
+  assistantLabel: string
   close: string
   expand: string
   collapse: string
+  // Dialog & confirmation
+  cancel?: string
+  confirm?: string
+  deleteConfirmTitle?: string
+  deleteConfirm?: string
+  deleteMessageTitle?: string
+  messageDeleted?: string
+  // Copy feedback
+  noContentToCopy?: string
+  copiedToClipboard?: string
+  copyFailed?: string
+  // Header tooltips
+  historyTooltip?: string
+  switchToDarkMode?: string
+  switchToLightMode?: string
+  // Voice
+  recording?: string
+  // Layout tabs
+  topicsTab?: string
+  chatTab?: string
+  // Topic management
+  unnamedTopic?: string
+  searchTopics?: string
+  rename?: string
+  done?: string
+  batchSelect?: string
+  deleteSelected?: string
+  noResults?: string
+  noTopics?: string
+  noTopicsHint?: string
+  deleteTopicConfirmTitle?: string
+  deleteTopicConfirmMessage?: string
+  batchDeleteTopicConfirmMessage?: string
+  selectedCountFormat?: string
+  messageCountFormat?: string
   // Welcome screen labels
   welcomeTitle?: string
   welcomeSubtitle?: string
@@ -178,6 +214,8 @@ export interface ChatbotLabels {
   quickAction4Text?: string
   // Copy button labels
   copied?: string
+  // Empty message list
+  emptyMessage?: string
   // Thinking labels
   thinking?: {
     toggle?: string
@@ -206,9 +244,48 @@ export const zhCNLabels: ChatbotLabels = {
   networkError: '网络连接失败，请检查网络',
   serverError: '服务器错误',
   generationStopped: '已停止生成',
+  sendFailed: '发送失败',
+  responseFailed: '响应失败',
+  userLabel: '你',
+  assistantLabel: 'AI助手',
   close: '关闭',
   expand: '展开',
   collapse: '收起',
+  // Dialog & confirmation
+  cancel: '取消',
+  confirm: '确定',
+  deleteConfirmTitle: '删除确认',
+  deleteConfirm: '确定要删除这条消息吗？',
+  deleteMessageTitle: '删除消息',
+  messageDeleted: '消息已删除',
+  // Copy feedback
+  noContentToCopy: '无内容可复制',
+  copiedToClipboard: '已复制到剪贴板',
+  copyFailed: '复制失败',
+  // Header tooltips
+  historyTooltip: '历史话题',
+  switchToDarkMode: '切换到深色模式',
+  switchToLightMode: '切换到浅色模式',
+  // Voice
+  recording: '正在录音...',
+  // Layout tabs
+  topicsTab: '话题',
+  chatTab: '聊天',
+  // Topic management
+  unnamedTopic: '未命名话题',
+  searchTopics: '搜索话题...',
+  rename: '重命名',
+  done: '完成',
+  batchSelect: '批量选择',
+  deleteSelected: '删除选中',
+  noResults: '未找到匹配的话题',
+  noTopics: '暂无历史话题',
+  noTopicsHint: '点击上方按钮开始新话题',
+  deleteTopicConfirmTitle: '删除话题?',
+  deleteTopicConfirmMessage: '确定要删除此话题吗?',
+  batchDeleteTopicConfirmMessage: '确定要删除选中的话题吗?',
+  selectedCountFormat: '已选择 {count} 个',
+  messageCountFormat: '{count} 条消息',
   welcomeTitle: '智能助手',
   welcomeSubtitle: '有什么可以帮助您的吗？',
   quickAction1Title: '写邮件',
@@ -224,6 +301,7 @@ export const zhCNLabels: ChatbotLabels = {
   quickAction4Desc: '智能分析数据',
   quickAction4Text: '帮我分析数据',
   copied: '已复制',
+  emptyMessage: '开始对话...',
   thinking: {
     toggle: '思考',
     thinking: '思考中...',
@@ -251,9 +329,48 @@ export const enUSLabels: ChatbotLabels = {
   networkError: 'Network connection failed',
   serverError: 'Server error',
   generationStopped: 'Generation stopped',
+  sendFailed: 'Send failed',
+  responseFailed: 'Response failed',
+  userLabel: 'You',
+  assistantLabel: 'AI Assistant',
   close: 'Close',
   expand: 'Expand',
   collapse: 'Collapse',
+  // Dialog & confirmation
+  cancel: 'Cancel',
+  confirm: 'Confirm',
+  deleteConfirmTitle: 'Delete Confirmation',
+  deleteConfirm: 'Are you sure you want to delete this message?',
+  deleteMessageTitle: 'Delete Message',
+  messageDeleted: 'Message deleted',
+  // Copy feedback
+  noContentToCopy: 'No content to copy',
+  copiedToClipboard: 'Copied to clipboard',
+  copyFailed: 'Copy failed',
+  // Header tooltips
+  historyTooltip: 'Topic History',
+  switchToDarkMode: 'Switch to dark mode',
+  switchToLightMode: 'Switch to light mode',
+  // Voice
+  recording: 'Recording...',
+  // Layout tabs
+  topicsTab: 'Topics',
+  chatTab: 'Chat',
+  // Topic management
+  unnamedTopic: 'Unnamed Topic',
+  searchTopics: 'Search topics...',
+  rename: 'Rename',
+  done: 'Done',
+  batchSelect: 'Batch Select',
+  deleteSelected: 'Delete Selected',
+  noResults: 'No matching topics found',
+  noTopics: 'No topics yet',
+  noTopicsHint: 'Click the button above to start a new topic',
+  deleteTopicConfirmTitle: 'Delete Topic?',
+  deleteTopicConfirmMessage: 'Are you sure you want to delete this topic?',
+  batchDeleteTopicConfirmMessage: 'Are you sure you want to delete the selected topics?',
+  selectedCountFormat: '{count} selected',
+  messageCountFormat: '{count} messages',
   welcomeTitle: 'AI Assistant',
   welcomeSubtitle: 'How can I help you?',
   quickAction1Title: 'Write Email',
@@ -269,6 +386,7 @@ export const enUSLabels: ChatbotLabels = {
   quickAction4Desc: 'Smart data analysis',
   quickAction4Text: 'Help me analyze this data',
   copied: 'Copied',
+  emptyMessage: 'Start a conversation...',
   thinking: {
     toggle: 'Think',
     thinking: 'Thinking...',
@@ -287,16 +405,10 @@ export function getDefaultLabels(locale: Locale = 'zh-CN'): ChatbotLabels {
   return localeLabelsMap[locale] ?? zhCNLabels
 }
 
-/** @deprecated Use getDefaultLabels(locale) instead */
-export const defaultChatbotLabels: ChatbotLabels = zhCNLabels
-
 export const defaultChatbotConfig: Required<ChatbotConfig> = {
   // Interaction mode
   mode: 'floating',
   layout: 'single',
-
-  // Legacy: Chat mode
-  chatMode: 'floating',
 
   // Layout
   position: 'bottom-right',
@@ -316,7 +428,6 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
 
   // Features
   enableImageUpload: true,
-  enableTopicManager: true,
   enableVoiceInput: false,
   enableCopyMessage: true,
   enableDeleteMessage: true,
@@ -351,7 +462,7 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   allowedOrigins: [],
 
   // i18n
-  locale: 'en-US',
+  locale: 'zh-CN',
 
   // Messages
   maxMessagesInMemory: 1000,

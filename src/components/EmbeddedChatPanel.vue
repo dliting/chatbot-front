@@ -27,9 +27,10 @@
       <main class="ai-chat__main">
         <ChatHeader
           v-if="!hideHeader"
-          :title="config.labels?.title || '智能助手'"
+          :title="config.labels?.title || 'AI Assistant'"
           :theme="config.theme || 'light'"
           :show-theme-toggle="true"
+          :labels="config.labels"
           @toggle-theme="$emit('toggle-theme')"
         />
         <ChatContent
@@ -37,6 +38,7 @@
           :welcome-visible="!hideWelcome && messages.length === 0"
           :quick-actions-visible="!hideQuickActions"
           :is-streaming="isStreaming"
+          :labels="configRef.labels"
           :enable-thinking="enableThinking"
           :thinking-enabled="thinkingEnabled"
           :is-thinking="isThinking"
@@ -58,10 +60,11 @@
     <template v-else>
       <ChatHeader
         v-if="!hideHeader && viewState.currentView === 'chat'"
-        :title="config.labels?.title || '智能助手'"
+        :title="config.labels?.title || 'AI Assistant'"
         :theme="config.theme || 'light'"
         :show-topics-button="true"
         :show-theme-toggle="true"
+        :labels="config.labels"
         @topics="showTopicsView"
         @toggle-theme="$emit('toggle-theme')"
       />
@@ -72,6 +75,7 @@
         :welcome-visible="!hideWelcome && messages.length === 0"
         :quick-actions-visible="!hideQuickActions"
         :is-streaming="isStreaming"
+        :labels="configRef.labels"
         :enable-thinking="enableThinking"
         :thinking-enabled="thinkingEnabled"
         :is-thinking="isThinking"

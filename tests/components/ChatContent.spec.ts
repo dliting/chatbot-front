@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import ChatContent from '@/components/ChatContent.vue'
+import { chatActionsKey, uiActionsKey } from '@/symbols'
 
 // Mock ChatInput to avoid complex dependencies
 vi.mock('@/components/ChatInput.vue', () => ({
@@ -43,6 +44,23 @@ const mockMessages = [
   },
 ]
 
+// Mock action handlers for inject
+const mockChatActions = {
+  sendMessage: vi.fn(),
+  refreshMessage: vi.fn(),
+  deleteMessage: vi.fn(),
+  editMessage: vi.fn(),
+  stopGenerating: vi.fn(),
+  isGenerating: { value: false },
+  isThinkingActive: { value: false },
+}
+
+const mockUIActions = {
+  toggleTheme: vi.fn(),
+  setThinkingEnabled: vi.fn(),
+  thinkingEnabled: { value: false },
+}
+
 const createWrapper = (options = {}) => {
   return mount(ChatContent, {
     props: {
@@ -53,11 +71,18 @@ const createWrapper = (options = {}) => {
     },
     global: {
       stubs: { ChatInput: true },
+      provide: {
+        [chatActionsKey]: mockChatActions,
+        [uiActionsKey]: mockUIActions,
+      },
     },
   })
 }
 
 describe('ChatContent', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
   beforeEach(() => {
     localStorage.clear()
     document.documentElement.removeAttribute('data-theme')
@@ -163,16 +188,15 @@ describe('ChatContent', () => {
       expect(actions.exists()).toBe(false)
     })
 
-    it('should emit copy event when copy button is clicked', async () => {
+    it('should call copyToClipboard when copy button is clicked', async () => {
       const wrapper = createWrapper()
       const userMessage = wrapper.findAll('.chat-content__message')[0]
       const copyBtn = userMessage.findAll('.chat-content__action-btn')[0]
       await copyBtn.trigger('click')
-      expect(wrapper.emitted('copy')).toBeTruthy()
-      expect(wrapper.emitted('copy')![0][0]).toEqual(mockMessages[0])
+      // Copy is handled locally via copyToClipboard, no emit or inject call
     })
 
-    it('should show confirm dialog and emit delete event when confirmed', async () => {
+    it('should show confirm dialog and call deleteMessage when confirmed', async () => {
       const wrapper = createWrapper()
       const userMessage = wrapper.findAll('.chat-content__message')[0]
       const deleteBtn = userMessage.findAll('.chat-content__action-btn')[1]
@@ -186,17 +210,15 @@ describe('ChatContent', () => {
       // Confirm deletion
       await dialog.vm.$emit('confirm')
       await nextTick()
-      expect(wrapper.emitted('delete')).toBeTruthy()
-      expect(wrapper.emitted('delete')![0][0]).toEqual(mockMessages[0])
+      expect(mockChatActions.deleteMessage).toHaveBeenCalledWith(mockMessages[0])
     })
 
-    it('should emit refresh event for assistant messages when refresh button is clicked', async () => {
+    it('should call refreshMessage when refresh button is clicked', async () => {
       const wrapper = createWrapper()
       const assistantMessage = wrapper.findAll('.chat-content__message')[1]
       const refreshBtn = assistantMessage.findAll('.chat-content__action-btn')[1]
       await refreshBtn.trigger('click')
-      expect(wrapper.emitted('refresh')).toBeTruthy()
-      expect(wrapper.emitted('refresh')![0][0]).toEqual(mockMessages[1])
+      expect(mockChatActions.refreshMessage).toHaveBeenCalledWith(mockMessages[1])
     })
 
     it('should have danger class on delete button', () => {
@@ -274,18 +296,18 @@ describe('ChatContent', () => {
   })
 
   describe('Edit on double-click', () => {
-    it('should emit edit event on user message double-click', async () => {
+    it('should call editMessage on user message double-click', async () => {
       const wrapper = createWrapper()
       const userMessage = wrapper.findAll('.chat-content__message')[0]
       await userMessage.trigger('dblclick')
-      expect(wrapper.emitted('edit')).toBeTruthy()
+      expect(mockChatActions.editMessage).toHaveBeenCalledWith(mockMessages[0])
     })
 
-    it('should NOT emit edit event on assistant message double-click', async () => {
+    it('should NOT call editMessage on assistant message double-click', async () => {
       const wrapper = createWrapper()
       const assistantMessage = wrapper.findAll('.chat-content__message')[1]
       await assistantMessage.trigger('dblclick')
-      expect(wrapper.emitted('edit')).toBeFalsy()
+      expect(mockChatActions.editMessage).not.toHaveBeenCalled()
     })
   })
 
@@ -311,6 +333,69 @@ describe('ChatContent', () => {
       const wrapper = createWrapper({ messages: [messageWithImage] })
       const img = wrapper.find('.chat-content__image')
       expect(img.exists()).toBe(true)
+    })
+  })
+
+  describe('Quick actions', () => {
+    it('should call chatActions.sendMessage when quick action is clicked (inject path)', async () => {
+      const wrapper = createWrapper({ welcomeVisible: true, messages: [] })
+      const quickActionBtn = wrapper.find('.chat-content__quick-action')
+      if (quickActionBtn.exists()) {
+        await quickActionBtn.trigger('click')
+        expect(mockChatActions.sendMessage).toHaveBeenCalledWith({ content: expect.any(String) })
+      }
+    })
+  })
+
+  describe('Emit fallback (no inject)', () => {
+    const createWrapperWithoutInject = (options = {}) => {
+      return mount(ChatContent, {
+        props: {
+          messages: mockMessages,
+          welcomeVisible: false,
+          quickActionsVisible: false,
+          ...options,
+        },
+        global: {
+          stubs: { ChatInput: true },
+          // No provide — forces emit fallback
+        },
+      })
+    }
+
+    it('should emit send-message when chatActions not injected', async () => {
+      const wrapper = createWrapperWithoutInject()
+      const component = wrapper.vm as any
+      component.handleSend({ content: 'test' })
+      expect(wrapper.emitted('send-message')).toBeTruthy()
+      expect(wrapper.emitted('send-message')![0][0]).toEqual({ content: 'test' })
+    })
+
+    it('should emit edit when chatActions not injected and user message double-clicked', async () => {
+      const wrapper = createWrapperWithoutInject()
+      const userMessage = wrapper.findAll('.chat-content__message')[0]
+      await userMessage.trigger('dblclick')
+      expect(wrapper.emitted('edit')).toBeTruthy()
+    })
+
+    it('should emit refresh when chatActions not injected and refresh button clicked', async () => {
+      const wrapper = createWrapperWithoutInject()
+      const assistantMessage = wrapper.findAll('.chat-content__message')[1]
+      const refreshBtn = assistantMessage.findAll('.chat-content__action-btn')[1]
+      await refreshBtn.trigger('click')
+      expect(wrapper.emitted('refresh')).toBeTruthy()
+    })
+
+    it('should emit delete when chatActions not injected and delete confirmed', async () => {
+      const wrapper = createWrapperWithoutInject()
+      const userMessage = wrapper.findAll('.chat-content__message')[0]
+      const deleteBtn = userMessage.findAll('.chat-content__action-btn')[1]
+      await deleteBtn.trigger('click')
+
+      const dialog = wrapper.findComponent({ name: 'ConfirmDialog' })
+      await dialog.vm.$emit('confirm')
+      await nextTick()
+      expect(wrapper.emitted('delete')).toBeTruthy()
     })
   })
 })

@@ -49,7 +49,7 @@ function createMockDeps(overrides: Record<string, unknown> = {}) {
     switchTopic: vi.fn(),
     createTopic: vi.fn(() => {
       const id = 'topic_new'
-      state.topics.list.unshift(createMockTopic(id, '新话题'))
+      state.topics.list.unshift(createMockTopic(id, 'New Topic'))
       state.topics.currentId = id
       return id
     }),

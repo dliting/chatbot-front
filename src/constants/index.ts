@@ -59,6 +59,6 @@ export const STORAGE_KEYS = {
  * Topic defaults
  */
 export const TOPIC_DEFAULTS = {
-  TITLE: '新话题',
+  TITLE: 'New Topic',
   STORAGE_KEY: 'chatbot-topics',
 } as const

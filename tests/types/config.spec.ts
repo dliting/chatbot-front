@@ -25,13 +25,6 @@ describe('ChatbotConfig Type', () => {
       }
       expect(config.layout).toBe('single')
     })
-
-    it('should accept legacy chatMode field for backward compatibility', () => {
-      const config: ChatbotConfig = {
-        chatMode: 'floating'
-      }
-      expect(config.chatMode).toBe('floating')
-    })
   })
 
   describe('Default Configuration', () => {
@@ -43,10 +36,6 @@ describe('ChatbotConfig Type', () => {
       expect(defaultChatbotConfig.layout).toBe('single')
     })
 
-    it('should have floating chatMode as default for backward compatibility', () => {
-      expect(defaultChatbotConfig.chatMode).toBe('floating')
-    })
-
     it('should have reasonable default panel dimensions', () => {
       expect(defaultChatbotConfig.panelWidth).toBe(400)
       expect(defaultChatbotConfig.panelHeight).toBe(600)
@@ -56,7 +45,6 @@ describe('ChatbotConfig Type', () => {
 
     it('should have sensible default feature flags', () => {
       expect(defaultChatbotConfig.enableImageUpload).toBe(true)
-      expect(defaultChatbotConfig.enableTopicManager).toBe(true)
       expect(defaultChatbotConfig.draggable).toBe(true)
       expect(defaultChatbotConfig.resizable).toBe(true)
       expect(defaultChatbotConfig.rememberPosition).toBe(true)
@@ -121,30 +109,13 @@ describe('ChatbotConfig Type', () => {
     })
   })
 
-  describe('Backward Compatibility', () => {
-    it('should support legacy chatMode values', () => {
-      const legacyModes: ('extended' | 'compact' | 'floating' | 'fullscreen')[] =
-        ['extended', 'compact', 'floating', 'fullscreen']
-      expect(legacyModes).toHaveLength(4)
-    })
-
-    it('should allow both mode and chatMode to coexist', () => {
-      const config: ChatbotConfig = {
-        mode: 'floating',
-        chatMode: 'floating'
-      }
-      expect(config.mode).toBe('floating')
-      expect(config.chatMode).toBe('floating')
-    })
-  })
-
   describe('Required Fields', () => {
     it('should have all required fields in default config', () => {
       const requiredFields = [
-        'mode', 'layout', 'chatMode', 'position', 'panelWidth', 'panelHeight',
+        'mode', 'layout', 'position', 'panelWidth', 'panelHeight',
         'panelMinWidth', 'panelMaxWidth', 'defaultExpanded', 'panelMode',
         'draggable', 'resizable', 'minWidth', 'minHeight', 'rememberPosition',
-        'enableImageUpload', 'enableTopicManager', 'enableVoiceInput',
+        'enableImageUpload', 'enableVoiceInput',
         'enableCopyMessage', 'enableDeleteMessage', 'enableResend', 'enableClearAll',
         'maxImageCount', 'maxImageSize', 'theme', 'primaryColor',
         'apiBaseUrl', 'streamEnabled', 'streamTimeout',

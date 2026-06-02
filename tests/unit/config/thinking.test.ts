@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { defaultChatbotConfig, defaultChatbotLabels } from '@/types/config'
+import { defaultChatbotConfig, getDefaultLabels } from '@/types/config'
 import type { ChatbotConfig, ChatbotLabels } from '@/types/config'
 
 describe('Thinking config extensions', () => {
@@ -21,8 +21,9 @@ describe('Thinking config extensions', () => {
     expect(defaultChatbotConfig.thinkingAutoCollapse).toBe(true)
   })
 
-  it('defaultChatbotLabels should have thinking labels', () => {
-    expect(defaultChatbotLabels.thinking).toBeDefined()
-    expect(defaultChatbotLabels.thinking?.toggle).toBe('思考')
+  it('getDefaultLabels should have thinking labels', () => {
+    const labels = getDefaultLabels()
+    expect(labels.thinking).toBeDefined()
+    expect(labels.thinking?.toggle).toBe('思考')
   })
 })

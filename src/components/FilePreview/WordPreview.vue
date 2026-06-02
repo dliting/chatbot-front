@@ -16,8 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import VueOfficeDocx from '@vue-office/docx'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
+const VueOfficeDocx = defineAsyncComponent(() => import('@vue-office/docx'))
 
 interface Props {
   file?: File | { name: string; url: string; data?: string }

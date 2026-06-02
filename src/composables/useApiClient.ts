@@ -126,7 +126,7 @@ export function useApiClient(options: ApiClientOptions) {
         return
       }
       if ((err as Error).name === 'TimeoutError') {
-        const timeoutError = new Error('请求超时') as Error & { code: string }
+        const timeoutError = new Error('Request timeout') as Error & { code: string }
         timeoutError.code = 'TIMEOUT'
         throw timeoutError
       }

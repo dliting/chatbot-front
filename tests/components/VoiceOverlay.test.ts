@@ -21,13 +21,13 @@ describe('VoiceOverlay', () => {
     it('should render recording text', () => {
       const wrapper = mount(VoiceOverlay)
       expect(wrapper.find('.voice-overlay__text').exists()).toBe(true)
-      expect(wrapper.find('.voice-overlay__text').text()).toBe('正在录音...')
+      expect(wrapper.find('.voice-overlay__text').text()).toBe('Recording...')
     })
 
     it('should render cancel button', () => {
       const wrapper = mount(VoiceOverlay)
       expect(wrapper.find('.voice-overlay__cancel').exists()).toBe(true)
-      expect(wrapper.find('.voice-overlay__cancel').text()).toBe('取消')
+      expect(wrapper.find('.voice-overlay__cancel').text()).toBe('Cancel')
     })
 
     it('should render SVG icon', () => {

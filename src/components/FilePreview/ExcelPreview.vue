@@ -16,8 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import VueOfficeExcel from '@vue-office/excel'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
+const VueOfficeExcel = defineAsyncComponent(() => import('@vue-office/excel'))
 
 interface Props {
   file?: File | { name: string; url: string; data?: string }

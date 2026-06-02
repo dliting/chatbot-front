@@ -18,12 +18,13 @@
   >
     <template #header>
       <ChatHeader
-        :title="configRef.labels?.title || '智能助手'"
+        :title="configRef.labels?.title || 'AI Assistant'"
         :theme="configRef.theme || 'light'"
         :show-topics-button="true"
         :show-theme-toggle="true"
         :show-close-button="true"
         :unread-count="0"
+        :labels="configRef.labels"
         @topics="showTopicsView"
         @toggle-theme="handleToggleTheme"
         @close="closePanel"
@@ -37,6 +38,7 @@
         :welcome-visible="!hideWelcome && messages.length === 0"
         :quick-actions-visible="!hideQuickActions"
         :is-streaming="isStreaming"
+        :labels="configRef.labels"
         :enable-thinking="enableThinking"
         :thinking-enabled="thinkingEnabled"
         :is-thinking="isThinking"

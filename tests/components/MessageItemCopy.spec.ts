@@ -73,7 +73,7 @@ describe('MessageItem Copy and Delete', () => {
       })
 
       // Find and click the copy button by Chinese title
-      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="复制"]')
+      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="Copy"]')
       await copyBtn.trigger('click')
       await nextTick()
 
@@ -90,7 +90,7 @@ describe('MessageItem Copy and Delete', () => {
         },
       })
 
-      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="复制"]')
+      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="Copy"]')
       await copyBtn.trigger('click')
       await nextTick()
 
@@ -107,7 +107,7 @@ describe('MessageItem Copy and Delete', () => {
       })
 
       // Copy button should not exist
-      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="复制"]')
+      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="Copy"]')
       expect(copyBtn.exists()).toBe(false)
     })
 
@@ -122,7 +122,7 @@ describe('MessageItem Copy and Delete', () => {
       })
 
       // Copy button should not exist for streaming messages
-      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="复制"]')
+      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="Copy"]')
       expect(copyBtn.exists()).toBe(false)
     })
 
@@ -135,7 +135,7 @@ describe('MessageItem Copy and Delete', () => {
         },
       })
 
-      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="复制"]')
+      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="Copy"]')
       await copyBtn.trigger('click')
       await nextTick()
 
@@ -154,16 +154,16 @@ describe('MessageItem Copy and Delete', () => {
         },
       })
 
-      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="删除"]')
+      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="Delete"]')
       await deleteBtn.trigger('click')
       await nextTick()
 
       expect(ElMessageBox.confirm).toHaveBeenCalledWith(
-        '确定要删除这条消息吗？',
-        '删除消息',
+        'Are you sure you want to delete this message?',
+        'Delete Message',
         expect.objectContaining({
-          confirmButtonText: '删除',
-          cancelButtonText: '取消',
+          confirmButtonText: 'Delete',
+          cancelButtonText: 'Cancel',
           type: 'warning'
         })
       )
@@ -178,7 +178,7 @@ describe('MessageItem Copy and Delete', () => {
         },
       })
 
-      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="删除"]')
+      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="Delete"]')
       await deleteBtn.trigger('click')
       await nextTick()
 
@@ -199,7 +199,7 @@ describe('MessageItem Copy and Delete', () => {
         },
       })
 
-      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="删除"]')
+      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="Delete"]')
       await deleteBtn.trigger('click')
       await nextTick()
 
@@ -219,7 +219,7 @@ describe('MessageItem Copy and Delete', () => {
         },
       })
 
-      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="删除"]')
+      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="Delete"]')
       expect(deleteBtn.exists()).toBe(false)
     })
   })

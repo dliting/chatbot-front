@@ -92,12 +92,12 @@
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
           </svg>
-          <span>{{ message.errorMessage || (isUser ? '发送失败' : '响应失败') }}</span>
+          <span>{{ message.errorMessage || (isUser ? (labels?.sendFailed || 'Send failed') : (labels?.responseFailed || 'Response failed')) }}</span>
         </div>
 
         <!-- Stopped indicator -->
         <div v-if="isStopped" class="chatbot-message__stopped">
-          <span>{{ message.errorMessage || '已停止生成' }}</span>
+          <span>{{ message.errorMessage || (labels?.generationStopped || 'Generation stopped') }}</span>
         </div>
       </div>
 
@@ -112,7 +112,7 @@
         <button
           v-if="enableCopy && canCopy"
           :class="['chatbot-message__action-btn', { 'chatbot-message__action-btn--copied': isCopied }]"
-          title="复制"
+          :title="labels?.copy || 'Copy'"
           @click="handleCopy"
         >
           <Check v-if="isCopied" :size="14" />
@@ -123,7 +123,7 @@
         <button
           v-if="isError && enableResend"
           class="chatbot-message__action-btn chatbot-message__action-btn--danger"
-          title="重新发送"
+          :title="labels?.resend || 'Resend'"
           @click="$emit('resend')"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
@@ -135,7 +135,7 @@
         <button
           v-if="enableDelete"
           class="chatbot-message__action-btn chatbot-message__action-btn--danger"
-          title="删除"
+          :title="labels?.delete || 'Delete'"
           @click="handleDelete"
         >
           <Trash2 :size="14" />
@@ -150,6 +150,7 @@ import { computed, ref, onUnmounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Copy, Check, Trash2 } from 'lucide-vue-next'
 import type { Message } from '@/types'
+import type { ChatbotLabels } from '@/types/config'
 import { formatTime, copyToClipboard } from '@/utils/helpers'
 import { formatMarkdownContent } from '@/utils/markdown'
 import { getAttachmentsByType } from '@/utils/message'
@@ -166,7 +167,8 @@ interface Props {
   enableResend?: boolean
   isStreaming?: boolean
   copyTimeout?: number
-  isLastMessage?: boolean  // AI 最后一条消息时，默认显示操作按钮
+  isLastMessage?: boolean
+  labels?: ChatbotLabels
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -208,7 +210,7 @@ const hasAudios = computed(() => audioAttachments.value.length > 0)
 const hasDocuments = computed(() => documentAttachments.value.length > 0)
 const canCopy = computed(() => hasText.value && !props.isStreaming)
 
-const label = computed(() => isUser.value ? 'You' : 'AI Assistant')
+const label = computed(() => isUser.value ? (props.labels?.userLabel || 'You') : (props.labels?.assistantLabel || 'AI Assistant'))
 const formattedTime = computed(() => formatTime(props.message.timestamp))
 const formattedContent = computed(() => formatMarkdownContent(props.message.content))
 
@@ -258,13 +260,13 @@ onUnmounted(() => {
 
 const handleCopy = async () => {
   if (!props.message.content || props.isStreaming) {
-    ElMessage({ message: '无内容可复制', type: 'error', duration: 3000 })
+    ElMessage({ message: props.labels?.noContentToCopy || 'No content to copy', type: 'error', duration: 3000 })
     return
   }
 
   try {
     await copyToClipboard(props.message.content)
-    ElMessage({ message: '已复制到剪贴板', type: 'success', duration: 3000 })
+    ElMessage({ message: props.labels?.copiedToClipboard || 'Copied to clipboard', type: 'success', duration: 3000 })
     isCopied.value = true
 
     // Reset icon after timeout
@@ -278,18 +280,22 @@ const handleCopy = async () => {
 
     emit('copy')
   } catch {
-    ElMessage({ message: '复制失败', type: 'error', duration: 3000 })
+    ElMessage({ message: props.labels?.copyFailed || 'Copy failed', type: 'error', duration: 3000 })
   }
 }
 
 const handleDelete = () => {
-  ElMessageBox.confirm('确定要删除这条消息吗？', '删除消息', {
-    confirmButtonText: '删除',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
+  ElMessageBox.confirm(
+    props.labels?.deleteConfirm || 'Are you sure you want to delete this message?',
+    props.labels?.deleteMessageTitle || 'Delete Message',
+    {
+      confirmButtonText: props.labels?.delete || 'Delete',
+      cancelButtonText: props.labels?.cancel || 'Cancel',
+      type: 'warning'
+    }
+  ).then(() => {
     emit('delete')
-    ElMessage({ message: '消息已删除', type: 'success', duration: 3000 })
+    ElMessage({ message: props.labels?.messageDeleted || 'Message deleted', type: 'success', duration: 3000 })
   }).catch(() => {
     // User cancelled, do nothing
   })

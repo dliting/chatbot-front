@@ -283,7 +283,7 @@ describe('MessageItem Component', () => {
       const wrapper = createWrapper(message, { isStreaming: true })
 
       // Copy button should not be visible during streaming
-      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '复制')
+      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Copy')
       expect(copyBtn).toBeUndefined()
     })
 
@@ -291,7 +291,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message, { enableCopy: false })
 
-      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '复制')
+      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Copy')
       expect(copyBtn).toBeUndefined()
     })
 
@@ -299,7 +299,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message)
 
-      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '删除')
+      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Delete')
       expect(deleteBtn).toBeTruthy()
     })
 
@@ -307,7 +307,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message, { enableDelete: false })
 
-      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '删除')
+      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Delete')
       expect(deleteBtn).toBeUndefined()
     })
 
@@ -315,7 +315,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage({ status: 'error' })
       const wrapper = createWrapper(message, { enableResend: true })
 
-      const resendBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '重新发送')
+      const resendBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Resend')
       expect(resendBtn).toBeTruthy()
     })
   })
@@ -325,7 +325,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message)
 
-      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '复制')
+      const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Copy')
       if (copyBtn) {
         await copyBtn.trigger('click')
         expect(wrapper.emitted('copy')).toBeTruthy()
@@ -336,7 +336,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message)
 
-      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '删除')
+      const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Delete')
       if (deleteBtn) {
         await deleteBtn.trigger('click')
         expect(wrapper.emitted('delete')).toBeTruthy()
@@ -347,7 +347,7 @@ describe('MessageItem Component', () => {
       const message = createUserMessage({ status: 'error' })
       const wrapper = createWrapper(message, { enableResend: true })
 
-      const resendBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === '重新发送')
+      const resendBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Resend')
       if (resendBtn) {
         await resendBtn.trigger('click')
         expect(wrapper.emitted('resend')).toBeTruthy()
@@ -369,7 +369,7 @@ describe('MessageItem Component', () => {
       const wrapper = createWrapper(message)
 
       expect(wrapper.find('.chatbot-message__error').exists()).toBe(true)
-      expect(wrapper.find('.chatbot-message__error').text()).toContain('发送失败')
+      expect(wrapper.find('.chatbot-message__error').text()).toContain('Send failed')
     })
 
     it('should apply streaming class for streaming messages', () => {

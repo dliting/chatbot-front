@@ -1,11 +1,19 @@
 /**
  * Comprehensive unit tests for ChatHeader component
  * Tests all modes: Extended, Compact, Floating
+ * Covers: inject/emit fallback for toggle-theme
  */
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ChatHeader from '@/components/ChatHeader.vue'
 import type { Theme } from '@/types'
+import { uiActionsKey } from '@/symbols'
+
+const mockUIActions = {
+  toggleTheme: vi.fn(),
+  setThinkingEnabled: vi.fn(),
+  thinkingEnabled: { value: false },
+}
 
 describe('ChatHeader Component', () => {
   describe('Props and Defaults', () => {
@@ -120,6 +128,10 @@ describe('ChatHeader Component', () => {
   })
 
   describe('Events', () => {
+    beforeEach(() => {
+      vi.clearAllMocks()
+    })
+
     it('should emit back event when back button is clicked', async () => {
       const wrapper = mount(ChatHeader, {
         props: { showBackButton: true },
@@ -141,7 +153,7 @@ describe('ChatHeader Component', () => {
       expect(wrapper.emitted('topics')).toBeTruthy()
     })
 
-    it('should emit toggle-theme event when theme button is clicked', async () => {
+    it('should emit toggle-theme event when theme button is clicked (fallback)', async () => {
       const wrapper = mount(ChatHeader, {
         props: { showThemeToggle: true },
       })
@@ -151,6 +163,22 @@ describe('ChatHeader Component', () => {
       await buttons[0].trigger('click')
 
       expect(wrapper.emitted('toggle-theme')).toBeTruthy()
+    })
+
+    it('should call uiActions.toggleTheme when injected (inject path)', async () => {
+      const wrapper = mount(ChatHeader, {
+        props: { showThemeToggle: true },
+        global: {
+          provide: { [uiActionsKey]: mockUIActions },
+        },
+      })
+
+      const buttons = wrapper.findAll('.chat-header__btn')
+      await buttons[0].trigger('click')
+
+      expect(mockUIActions.toggleTheme).toHaveBeenCalled()
+      // Should NOT emit when inject is available
+      expect(wrapper.emitted('toggle-theme')).toBeFalsy()
     })
 
     it('should emit close event when close button is clicked', async () => {
@@ -224,8 +252,8 @@ describe('ChatHeader Component', () => {
       // Check for title attributes
       const html = wrapper.html()
       // Check for title attributes using escaped quotes
-      expect(html).toMatch(/title=["']历史话题["']/)
-      expect(html).toMatch(/title=["']切换到/)
+      expect(html).toMatch(/title=["']History["']/)
+      expect(html).toMatch(/title=["']Switch to/)
     })
 
   })
@@ -364,7 +392,7 @@ describe('ChatHeader Component', () => {
         })
 
         const topicsBtn = wrapper.findAll('.chat-header__btn').filter(btn => {
-          return btn.attributes('title')?.includes('历史话题')
+          return btn.attributes('title')?.includes('History')
         })
         expect(topicsBtn.length).toBe(0)
       })

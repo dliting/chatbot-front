@@ -20,7 +20,7 @@
       <button
         v-if="showTopicsButton"
         class="chat-header__btn"
-        title="历史话题"
+        :title="labels?.historyTooltip || 'History'"
         @click="$emit('topics')"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -32,8 +32,8 @@
       <button
         v-if="showThemeToggle"
         class="chat-header__btn"
-        :title="theme === 'light' ? '切换到深色模式' : '切换到浅色模式'"
-        @click="$emit('toggle-theme')"
+        :title="theme === 'light' ? (labels?.switchToDarkMode || 'Switch to dark mode') : (labels?.switchToLightMode || 'Switch to light mode')"
+        @click="handleToggleTheme"
       >
         <svg v-if="theme === 'light'" viewBox="0 0 24 24" fill="currentColor">
           <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-2.98 0-5.4-2.42-5.4-5.4 0-1.81.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
@@ -47,7 +47,7 @@
       <button
         v-if="showCloseButton"
         class="chat-header__btn chat-header__close"
-        title="关闭"
+        :title="labels?.close || 'Close'"
         @click="$emit('close')"
       >
         <svg viewBox="0 0 24 24" fill="currentColor">
@@ -59,7 +59,10 @@
 </template>
 
 <script setup lang="ts">
+import { inject } from 'vue'
 import type { Theme } from '@/types'
+import type { ChatbotLabels } from '@/types/config'
+import { uiActionsKey } from '@/symbols'
 
 interface Props {
   title?: string
@@ -69,6 +72,7 @@ interface Props {
   showThemeToggle?: boolean
   showCloseButton?: boolean
   unreadCount?: number
+  labels?: ChatbotLabels
 }
 
 withDefaults(defineProps<Props>(), {
@@ -88,7 +92,14 @@ interface Emits {
   (e: 'close'): void
 }
 
-defineEmits<Emits>()
+const emit = defineEmits<Emits>()
+
+// Inject UI action handlers from AIChatbot (fallback to emit when not provided)
+const uiActions = inject(uiActionsKey)
+
+const handleToggleTheme = () => {
+  if (uiActions) { uiActions.toggleTheme() } else { emit('toggle-theme') }
+}
 </script>
 
 <style scoped lang="scss">

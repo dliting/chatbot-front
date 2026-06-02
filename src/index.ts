@@ -17,6 +17,9 @@ export { default as MessageItem } from './components/MessageItem.vue'
 export type * from './types'
 export type { ChatbotConfig, ChatbotCallbacks, SendMessageParams } from './types/config'
 
+// Export injection keys (for advanced usage with provide/inject)
+export { chatActionsKey, topicActionsKey, uiActionsKey } from './symbols'
+
 // Export composables
 export { useChatbotState } from './composables/useChatbotState'
 export { useResponsive } from './composables/useResponsive'

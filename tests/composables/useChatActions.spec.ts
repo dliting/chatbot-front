@@ -42,7 +42,15 @@ function createMockDeps(overrides: Record<string, unknown> = {}) {
       if (!msgs) return
       msgs.splice(index, 0, message)
     },
-    updateMessage: vi.fn(),
+    updateMessage: (messageId: string, updates: Partial<Message>) => {
+      for (const [topicId, msgs] of Object.entries(state.messages.byTopic)) {
+        const index = msgs.findIndex(m => m.messageId === messageId)
+        if (index > -1) {
+          msgs.splice(index, 1, { ...msgs[index], ...updates })
+          break
+        }
+      }
+    },
     setCurrentTopicId: (topicId: string) => {
       state.messages.currentTopicId = topicId
     },

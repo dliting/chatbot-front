@@ -2,8 +2,8 @@
   <div :class="containerClasses">
     <!-- Header with close button -->
     <header v-if="showCloseButton" class="chatbot-topics__header topic-list-view__header">
-      <h1 class="chatbot-topics__header-title topic-list-view__title">{{ config.labels?.history || '历史话题' }}</h1>
-      <button class="chatbot-topics__header-close topic-list-view__close" :aria-label="cancelLabel" @click="$emit('close')">
+      <h1 class="chatbot-topics__header-title topic-list-view__title">{{ config.labels?.historyTooltip || config.labels?.history || 'History' }}</h1>
+      <button class="chatbot-topics__header-close topic-list-view__close" :aria-label="labels.cancelLabel" @click="$emit('close')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -13,7 +13,7 @@
     <!-- Search bar -->
     <TopicSearch
       v-model="searchQuery"
-      :placeholder="searchPlaceholder"
+      :placeholder="labels.searchPlaceholder"
       class="chatbot-topics__search"
     />
 
@@ -28,13 +28,13 @@
             class="chatbot-topics__batch-btn chatbot-topics__batch-btn--cancel"
             @click="clearSelection"
           >
-            {{ cancelLabel }}
+            {{ labels.cancelLabel }}
           </button>
           <button
             class="chatbot-topics__batch-btn chatbot-topics__batch-btn--delete"
             @click="handleBatchDelete"
           >
-            {{ deleteSelectedLabel }}
+            {{ labels.deleteSelectedLabel }}
           </button>
         </div>
       </div>
@@ -44,12 +44,12 @@
     <button
       v-if="!isBatchMode"
       class="chatbot-topics__new-btn topic-list-view__new-btn"
-      @click="$emit('create-topic')"
+      @click="handleCreateTopic"
     >
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
       </svg>
-      <span>{{ newTopicLabel }}</span>
+      <span>{{ labels.newTopicLabel }}</span>
     </button>
 
     <!-- Batch mode toggle -->
@@ -62,7 +62,7 @@
         <path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <span>{{ doneLabel }}</span>
+      <span>{{ labels.doneLabel }}</span>
     </button>
 
     <!-- Topics list -->
@@ -70,8 +70,8 @@
       <TopicActionMenu
         v-for="topic in filteredTopics"
         :key="topic.topicId"
-        :edit-label="editLabel"
-        :delete-label="deleteLabel"
+        :edit-label="labels.editLabel"
+        :delete-label="labels.deleteLabel"
         @edit="startEditTitle(topic)"
         @delete="handleDelete(topic.topicId)"
       >
@@ -118,7 +118,7 @@
             <!-- Display mode with highlight -->
             <div v-else class="chatbot-topics__item-title">
               <!-- eslint-disable-next-line vue/no-v-html -- Sanitized input for text highlighting -->
-              <span v-html="highlightText(topic.title || '未命名话题', searchQuery)" />
+              <span v-html="highlightText(topic.title || unnamedTopicText, searchQuery)" />
             </div>
             <div class="chatbot-topics__item-meta">
               {{ formatTopicMeta(topic) }}
@@ -137,8 +137,8 @@
           <button
             v-if="!isBatchMode"
             class="chatbot-topics__item-delete topic-list-view__item-delete"
-            :title="deleteLabel"
-            :aria-label="deleteLabel"
+            :title="labels.deleteLabel"
+            :aria-label="labels.deleteLabel"
             @click.stop="handleDelete(topic.topicId)"
           >
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -153,7 +153,7 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <p>{{ searchQuery ? noResultsLabel : noTopicsLabel }}</p>
+        <p>{{ searchQuery ? labels.noResultsLabel : labels.noTopicsLabel }}</p>
         <p v-if="!searchQuery">{{ noTopicsHint }}</p>
       </div>
     </div>
@@ -173,8 +173,8 @@
     <button
       v-if="!isBatchMode && topics.length > 0"
       class="chatbot-topics__batch-mode-btn"
-      :title="batchModeLabel"
-      :aria-label="batchModeLabel"
+      :title="labels.batchModeLabel"
+      :aria-label="labels.batchModeLabel"
       @click="toggleBatchMode"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -188,11 +188,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, inject } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import type { Topic } from '@/types'
+import { topicActionsKey } from '@/symbols'
 import { formatTime, escapeHTML } from '@/utils/helpers'
-import { TOPIC_DEFAULTS } from '@/constants'
 import TopicSearch from './TopicSearch.vue'
 import TopicActionMenu from './TopicActionMenu.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
@@ -227,22 +227,29 @@ const props = withDefaults(defineProps<Props>(), {
   isEmbedded: false,
   layout: 'dual',
   enableClose: false,
-  newTopicLabel: TOPIC_DEFAULTS.TITLE,
-  searchPlaceholder: '搜索话题...',
-  editLabel: '重命名',
-  deleteLabel: '删除',
-  cancelLabel: '取消',
-  doneLabel: '完成',
-  batchModeLabel: '批量选择',
-  deleteSelectedLabel: '删除选中',
-  noResultsLabel: '未找到匹配的话题',
-  noTopicsLabel: '暂无历史话题',
-  noTopicsHint: `点击上方按钮开始${TOPIC_DEFAULTS.TITLE}`,
-  deleteConfirmTitle: '删除话题?',
-  deleteConfirmMessage: '确定要删除此话题吗?',
-  batchDeleteConfirmTitle: '删除话题?',
-  batchDeleteConfirmMessage: '确定要删除选中的话题吗?',
-  selectedCountFormat: '已选择 {count} 个',
+})
+
+// Resolve labels: explicit prop > config.labels > English fallback
+const labels = computed(() => {
+  const cfg = props.config?.labels
+  return {
+    newTopicLabel: props.newTopicLabel || cfg?.newTopic || 'New Topic',
+    searchPlaceholder: props.searchPlaceholder || cfg?.searchTopics || 'Search topics...',
+    editLabel: props.editLabel || cfg?.rename || 'Rename',
+    deleteLabel: props.deleteLabel || cfg?.delete || 'Delete',
+    cancelLabel: props.cancelLabel || cfg?.cancel || 'Cancel',
+    doneLabel: props.doneLabel || cfg?.done || 'Done',
+    batchModeLabel: props.batchModeLabel || cfg?.batchSelect || 'Batch Select',
+    deleteSelectedLabel: props.deleteSelectedLabel || cfg?.deleteSelected || 'Delete Selected',
+    noResultsLabel: props.noResultsLabel || cfg?.noResults || 'No matching topics found',
+    noTopicsLabel: props.noTopicsLabel || cfg?.noTopics || 'No topics yet',
+    noTopicsHint: props.noTopicsHint || cfg?.noTopicsHint || 'Click the button above to start a new topic',
+    deleteConfirmTitle: props.deleteConfirmTitle || cfg?.deleteTopicConfirmTitle || 'Delete Topic?',
+    deleteConfirmMessage: props.deleteConfirmMessage || cfg?.deleteTopicConfirmMessage || 'Are you sure you want to delete this topic?',
+    batchDeleteConfirmTitle: props.batchDeleteConfirmTitle || cfg?.deleteTopicConfirmTitle || 'Delete Topic?',
+    batchDeleteConfirmMessage: props.batchDeleteConfirmMessage || cfg?.batchDeleteTopicConfirmMessage || 'Are you sure you want to delete the selected topics?',
+    selectedCountFormat: props.selectedCountFormat || cfg?.selectedCountFormat || '{count} selected',
+  }
 })
 
 interface Emits {
@@ -255,6 +262,14 @@ interface Emits {
 }
 
 const emit = defineEmits<Emits>()
+
+// Inject topic action handlers from AIChatbot (fallback to emit when not provided)
+const topicActions = inject(topicActionsKey)
+
+// Action handlers with inject/emit fallback
+const handleCreateTopic = () => {
+  if (topicActions) { topicActions.createNewTopic() } else { emit('create-topic') }
+}
 
 // Container classes for backward compatibility
 const containerClasses = computed(() => [
@@ -283,12 +298,12 @@ const pendingDeleteIds = ref<string[]>([])
 const deleteDialog = computed(() => {
   const isBatch = pendingDeleteIds.value.length > 1
   return {
-    title: isBatch ? props.batchDeleteConfirmTitle : props.deleteConfirmTitle,
+    title: isBatch ? labels.value.batchDeleteConfirmTitle : labels.value.deleteConfirmTitle,
     message: isBatch
-      ? `${props.batchDeleteConfirmMessage} (${pendingDeleteIds.value.length})`
-      : props.deleteConfirmMessage,
-    confirmText: props.deleteLabel,
-    cancelText: props.cancelLabel,
+      ? `${labels.value.batchDeleteConfirmMessage} (${pendingDeleteIds.value.length})`
+      : labels.value.deleteConfirmMessage,
+    confirmText: labels.value.deleteLabel,
+    cancelText: labels.value.cancelLabel,
   }
 })
 
@@ -304,14 +319,14 @@ const filteredTopics = computed(() => {
   }
   const query = searchQuery.value.toLowerCase()
   return props.topics.filter(topic =>
-    (topic.title || '未命名话题').toLowerCase().includes(query)
+    (topic.title || props.config?.labels?.unnamedTopic || 'Unnamed Topic').toLowerCase().includes(query)
   )
 })
 
 // Selected count text
 const selectedCountText = computed(() => {
   const count = selectedTopicIds.value.length
-  return props.selectedCountFormat.replace('{count}', String(count))
+  return labels.value.selectedCountFormat.replace('{count}', String(count))
 })
 
 // Toggle batch mode
@@ -342,7 +357,7 @@ const handleTopicClick = (topicId: string) => {
   if (isBatchMode.value) {
     toggleSelection(topicId)
   } else {
-    emit('select-topic', topicId)
+    if (topicActions) { topicActions.switchToTopic(topicId) } else { emit('select-topic', topicId) }
   }
 }
 
@@ -363,7 +378,7 @@ const handleBatchDelete = () => {
 // Confirm delete
 const confirmDelete = () => {
   if (pendingDeleteIds.value.length === 1) {
-    emit('delete-topic', pendingDeleteIds.value[0])
+    if (topicActions) { topicActions.removeTopic(pendingDeleteIds.value[0]) } else { emit('delete-topic', pendingDeleteIds.value[0]) }
   } else {
     emit('delete-topics', pendingDeleteIds.value)
   }
@@ -405,7 +420,7 @@ const saveTitle = (topicId: string) => {
   const trimmedTitle = editingTitle.value.trim()
   const originalTopic = props.topics.find(t => t.topicId === topicId)
   if (trimmedTitle && originalTopic && trimmedTitle !== (originalTopic.title || '')) {
-    emit('update-topic-title', topicId, trimmedTitle)
+    if (topicActions) { topicActions.renameTopic(topicId, trimmedTitle) } else { emit('update-topic-title', topicId, trimmedTitle) }
   }
   cancelEdit()
 }
@@ -428,9 +443,12 @@ const topicClasses = (topic: Topic) => [
 ]
 
 // Format topic metadata
+const unnamedTopicText = computed(() => props.config?.labels?.unnamedTopic || 'Unnamed Topic')
+
 const formatTopicMeta = (topic: Topic): string => {
   const timeStr = formatTime(topic.updatedAt)
-  const countStr = topic.messageCount === 1 ? '1 条消息' : `${topic.messageCount} 条消息`
+  const fmt = props.config?.labels?.messageCountFormat || '{count} messages'
+  const countStr = topic.messageCount === 1 ? fmt.replace('{count}', '1') : fmt.replace('{count}', String(topic.messageCount))
   return `${timeStr} • ${countStr}`
 }
 </script>

@@ -74,20 +74,6 @@ export interface Size {
   height: number
 }
 
-// Send message data
-export interface SendMessageData {
-  type: MessageType
-  content: string
-  attachments?: Attachment[]
-}
-
-// Message success data
-export interface MessageSuccessData {
-  topicId: string
-  messageId: string
-  message: string
-}
-
 // Panel toggle data
 export interface PanelToggleData {
   isOpen: boolean
@@ -112,6 +98,30 @@ export interface ApiResponse<T = unknown> {
   code: number
   message: string
   data?: T
+}
+
+// Action handler interfaces for provide/inject
+export interface ChatActionHandlers {
+  sendMessage: (data: { content: string; attachments?: Attachment[] }) => void
+  refreshMessage: (message: Message) => void
+  deleteMessage: (message: Message) => void
+  editMessage: (message: Message) => void
+  stopGenerating: () => void
+  isGenerating: { value: boolean }
+  isThinkingActive: { value: boolean }
+}
+
+export interface TopicActionHandlers {
+  createNewTopic: () => void
+  switchToTopic: (topicId: string) => void
+  removeTopic: (topicId: string) => void
+  renameTopic: (topicId: string, title: string) => void
+}
+
+export interface UIActionHandlers {
+  toggleTheme: () => void
+  setThinkingEnabled: (enabled: boolean) => void
+  thinkingEnabled: { value: boolean }
 }
 
 // Upload result

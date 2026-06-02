@@ -253,12 +253,12 @@ describe('utils/message', () => {
 
     it('should return default for empty messages', () => {
       const title = extractTopicTitle([])
-      expect(title).toBe('新话题')
+      expect(title).toBe('New Topic')
     })
 
     it('should return default for user-only messages', () => {
       const title = extractTopicTitle([mockUserMessage])
-      expect(title).toBe('新话题')
+      expect(title).toBe('New Topic')
     })
 
     it('should truncate long AI responses', () => {

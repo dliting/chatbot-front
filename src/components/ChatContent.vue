@@ -13,7 +13,7 @@
             v-for="action in quickActions"
             :key="action.id"
             class="chat-content__quick-action"
-            @click="$emit('quick-action', action.text)"
+            @click="handleQuickAction(action.text)"
           >
             <div class="chat-content__quick-action-icon">
               <component :is="action.icon" />
@@ -38,6 +38,7 @@
             :content="message.thinkingContent"
             :thinking-time="message.thinkingTime || 0"
             :is-thinking="isThinking && lastAiMessageIds.has(message.messageId)"
+            :labels="mergedLabels.thinking"
             @copy="(content) => handleCopyThinking(content)"
           />
           <div class="chat-content__bubble">
@@ -72,7 +73,7 @@
                 class="chat-content__error-retry"
                 @click.stop="handleRefreshMessage(message)"
               >
-                重试
+                {{ mergedLabels.retry || 'Retry' }}
               </button>
             </div>
           </div>
@@ -80,7 +81,7 @@
           <div v-if="message.status !== 'loading' && message.status !== 'error' && message.content" :class="['chat-content__message-actions', { 'chat-content__message-actions--visible': lastAiMessageIds.has(message.messageId) }]">
             <button
               :class="['chat-content__action-btn', { 'chat-content__action-btn--copied': copyFeedbackMap[message.messageId] }]"
-              :title="mergedLabels.copy || '复制'"
+              :title="mergedLabels.copy || 'Copy'"
               @click.stop="handleCopyMessage(message)"
             >
               <Check v-if="copyFeedbackMap[message.messageId]" :size="14" class="chat-content__action-icon--copied" />
@@ -89,14 +90,14 @@
             <button
               v-if="message.role === 'assistant'"
               class="chat-content__action-btn"
-              :title="mergedLabels.refresh || '重新生成'"
+              :title="mergedLabels.refresh || 'Regenerate'"
               @click.stop="handleRefreshMessage(message)"
             >
               <RefreshCw :size="14" />
             </button>
             <button
               class="chat-content__action-btn chat-content__action-btn--danger"
-              :title="mergedLabels.delete || '删除'"
+              :title="mergedLabels.delete || 'Delete'"
               @click.stop="handleDeleteMessage(message)"
             >
               <Trash2 :size="14" />
@@ -113,20 +114,21 @@
         :enable-thinking="enableThinking"
         :thinking-enabled="thinkingEnabled"
         :enable-voice-input="enableVoiceInput"
+        :placeholder="mergedLabels.placeholder"
         @send="handleSend"
-        @stop="$emit('stop-generating')"
+        @stop="chatActions ? chatActions.stopGenerating() : $emit('stop-generating')"
         @file-click="$emit('file-click', $event)"
-        @update:thinking-enabled="$emit('thinking-toggle', $event)"
+        @update:thinking-enabled="uiActions ? uiActions.setThinkingEnabled($event) : $emit('thinking-toggle', $event)"
       />
     </div>
 
     <!-- Delete Confirmation Dialog -->
     <ConfirmDialog
       :show="showDeleteDialog"
-      :title="mergedLabels.deleteTitle || '删除确认'"
-      :message="mergedLabels.deleteConfirm || '确定要删除这条消息吗？'"
-      :confirm-text="mergedLabels.confirm || '确定'"
-      :cancel-text="mergedLabels.cancel || '取消'"
+      :title="mergedLabels.deleteConfirmTitle || 'Delete Confirmation'"
+      :message="mergedLabels.deleteConfirm || 'Are you sure you want to delete this message?'"
+      :confirm-text="mergedLabels.confirm || 'Confirm'"
+      :cancel-text="mergedLabels.cancel || 'Cancel'"
       type="danger"
       @confirm="confirmDeleteMessage"
       @cancel="showDeleteDialog = false"
@@ -136,12 +138,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, nextTick, h, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, watch, nextTick, h, onMounted, onUnmounted, computed, inject } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Copy, Check, RefreshCw, Trash2 } from 'lucide-vue-next'
 import type { Message } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
-import { defaultChatbotLabels } from '@/types/config'
+import { getDefaultLabels } from '@/types/config'
+import { chatActionsKey, uiActionsKey } from '@/symbols'
 import ChatInput from './ChatInput.vue'
 import ThinkingBlock from './ThinkingBlock.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
@@ -190,7 +193,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 // Merge default labels with prop labels
 const mergedLabels = computed(() => ({
-  ...defaultChatbotLabels,
+  ...getDefaultLabels(),
   ...props.labels,
 }))
 
@@ -204,9 +207,7 @@ const quickActions = computed(() => [
 
 interface Emits {
   (e: 'send-message', data: { content: string; attachments?: import('@/types').Attachment[] }): void
-  (e: 'quick-action', text: string): void
   (e: 'edit', message: Message): void
-  (e: 'copy', message: Message): void
   (e: 'refresh', message: Message): void
   (e: 'delete', message: Message): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
@@ -216,16 +217,32 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
+// Inject action handlers from AIChatbot (fallback to emit when not provided)
+const chatActions = inject(chatActionsKey)
+const uiActions = inject(uiActionsKey)
+
+// Handle quick action click (sends the action text as a message)
+const handleQuickAction = (text: string) => {
+  if (chatActions) { chatActions.sendMessage({ content: text }) } else { emit('send-message', { content: text }) }
+}
+
 // Handle send event from ChatInput
 const handleSend = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {
-  emit('send-message', data)
+  if (chatActions) {
+    chatActions.sendMessage(data)
+  } else {
+    emit('send-message', data)
+  }
 }
 
 // Handle message double-click for editing (only for user messages)
 const handleMessageDblClick = (message: Message) => {
-  // Only allow editing user messages that are not streaming
   if (message.role === 'user' && message.status !== 'loading') {
-    emit('edit', message)
+    if (chatActions) {
+      chatActions.editMessage(message)
+    } else {
+      emit('edit', message)
+    }
   }
 }
 
@@ -238,8 +255,7 @@ const handleCopyMessage = async (message: Message) => {
   const success = await copyToClipboard(message.content)
   if (success) {
     copyFeedbackMap[message.messageId] = true
-    ElMessage.success(mergedLabels.value.copied || '已复制')
-    emit('copy', message)
+    ElMessage.success(mergedLabels.value.copied || 'Copied')
     setTimeout(() => {
       copyFeedbackMap[message.messageId] = false
     }, 2000)
@@ -249,12 +265,12 @@ const handleCopyMessage = async (message: Message) => {
 const handleCopyThinking = async (content: string) => {
   const success = await copyToClipboard(content)
   if (success) {
-    ElMessage.success(mergedLabels.value.copied || '已复制')
+    ElMessage.success(mergedLabels.value.copied || 'Copied')
   }
 }
 
 const handleRefreshMessage = (message: Message) => {
-  emit('refresh', message)
+  if (chatActions) { chatActions.refreshMessage(message) } else { emit('refresh', message) }
 }
 
 const showDeleteDialog = ref(false)
@@ -267,7 +283,7 @@ const handleDeleteMessage = (message: Message) => {
 
 const confirmDeleteMessage = () => {
   if (pendingDeleteMessage.value) {
-    emit('delete', pendingDeleteMessage.value)
+    if (chatActions) { chatActions.deleteMessage(pendingDeleteMessage.value) } else { emit('delete', pendingDeleteMessage.value) }
     pendingDeleteMessage.value = null
   }
   showDeleteDialog.value = false
@@ -304,12 +320,23 @@ const handleCodeCopy = async (e: Event) => {
   const code = pre.textContent || ''
   await navigator.clipboard.writeText(code)
 
-  target.textContent = mergedLabels.value.copied || '已复制'
+  target.textContent = mergedLabels.value.copied || 'Copied'
   target.classList.add('copied')
   setTimeout(() => {
-    target.textContent = mergedLabels.value.copy || '复制'
+    target.textContent = mergedLabels.value.copy || 'Copy'
     target.classList.remove('copied')
   }, 1000)
+}
+
+// Initialize code block copy button text with current locale
+const initCodeButtonLabels = () => {
+  const container = messagesRef.value
+  if (!container) return
+  container.querySelectorAll('.code-copy-btn').forEach(btn => {
+    if (btn.getAttribute('data-i18n') === 'copy') {
+      btn.textContent = mergedLabels.value.copy || 'Copy'
+    }
+  })
 }
 
 onMounted(() => {
@@ -317,6 +344,7 @@ onMounted(() => {
   if (!container) return
 
   container.addEventListener('click', handleCodeCopy)
+  initCodeButtonLabels()
 })
 
 onUnmounted(() => {
@@ -336,6 +364,7 @@ const scrollToBottom = () => {
 
 watch(() => props.messages, () => {
   scrollToBottom()
+  nextTick(initCodeButtonLabels)
 }, { deep: true })
 </script>
 

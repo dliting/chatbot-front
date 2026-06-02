@@ -9,13 +9,6 @@ export default defineConfig({
       '@': resolve(__dirname, 'src'),
     },
   },
-  css: {
-    preprocessorOptions: {
-      scss: {
-        api: 'modern-compiler',
-      },
-    },
-  },
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
@@ -24,7 +17,7 @@ export default defineConfig({
       fileName: (format) => `ai-chatbot.${format}.js`,
     },
     rollupOptions: {
-      external: ['vue', 'element-plus'],
+      external: ['vue', 'element-plus', '@vue-office/docx', '@vue-office/excel', '@vue-office/pdf'],
       output: {
         globals: {
           vue: 'Vue',
@@ -33,7 +26,5 @@ export default defineConfig({
         assetFileNames: 'style.[ext]',
       },
     },
-    cssCodeSplit: false,
-    sourcemap: true,
   },
 })

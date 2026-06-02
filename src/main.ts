@@ -1,25 +1,22 @@
 /**
- * Main entry for development/demo
- * 使用通用 AI 聊天组件（独立模式）
+ * Development entry point
  */
 import { createApp } from 'vue'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
 import AIChatPanel from './components/AIChatPanel.vue'
+import { getDefaultLabels } from './types/config'
+import './styles/chatbot.scss'
 
-// Local Fonts - Noto Sans SC (for offline deployment)
-const fontLink = document.createElement('link')
-fontLink.rel = 'stylesheet'
-fontLink.href = '/fonts/noto-sans-sc.css'
-document.head.appendChild(fontLink)
+const labels = getDefaultLabels('zh-CN')
 
 const app = createApp(AIChatPanel, {
   config: {
-    labels: {
-      title: '智能助手',
-      placeholder: '输入消息...',
-    },
+    labels,
     enableImageUpload: true,
     maxImageCount: 3,
   },
 })
 
+app.use(ElementPlus)
 app.mount('#app')

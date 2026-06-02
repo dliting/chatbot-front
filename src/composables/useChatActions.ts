@@ -54,7 +54,7 @@ export function useChatActions(deps: ChatActionsDeps) {
         if (!thinkingStartTime) thinkingStartTime = Date.now()
         isThinkingActive.value = true
         fullThinkingContent += chunk.reasoningContent
-        updateAssistantMessage(assistantMessageId, {
+        deps.updateMessage(assistantMessageId, {
           thinkingContent: fullThinkingContent,
           thinkingTime: Date.now() - thinkingStartTime,
         })
@@ -65,11 +65,11 @@ export function useChatActions(deps: ChatActionsDeps) {
         if (thinkingStartTime) {
           updates.thinkingTime = Date.now() - thinkingStartTime
         }
-        updateAssistantMessage(assistantMessageId, updates)
+        deps.updateMessage(assistantMessageId, updates)
       } else if (chunk.type === 'end') {
         if (controller.signal.aborted) break
         isThinkingActive.value = false
-        updateAssistantMessage(assistantMessageId, { status: 'sent' })
+        deps.updateMessage(assistantMessageId, { status: 'sent' })
       }
     }
 
@@ -92,8 +92,8 @@ export function useChatActions(deps: ChatActionsDeps) {
     // Finalize user message
     if (userMessageId) {
       const userMsg = msgs.find(m => m.messageId === userMessageId)
-      if (userMsg && userMsg.status === 'sending') {
-        userMsg.status = 'sent'
+      if (userMsg?.status === 'sending') {
+        deps.updateMessage(userMessageId, { status: 'sent' })
       }
     }
 
@@ -102,13 +102,16 @@ export function useChatActions(deps: ChatActionsDeps) {
     if (!assistantMsg) return
 
     if (controller.signal.aborted) {
-      assistantMsg.status = assistantMsg.content ? 'stopped' : 'error'
-      assistantMsg.errorMessage = config.value.labels?.generationStopped || 'Generation stopped'
+      deps.updateMessage(assistantMessageId, {
+        status: assistantMsg.content ? 'stopped' : 'error',
+        errorMessage: config.value.labels?.generationStopped || 'Generation stopped',
+      })
     } else if (assistantMsg.status === 'loading') {
-      assistantMsg.status = (assistantMsg.content || assistantMsg.thinkingContent) ? 'sent' : 'error'
-      if (assistantMsg.status === 'error') {
-        assistantMsg.errorMessage = config.value.labels?.serverError || 'Stream ended unexpectedly'
-      }
+      const hasContent = !!(assistantMsg.content || assistantMsg.thinkingContent)
+      deps.updateMessage(assistantMessageId, {
+        status: hasContent ? 'sent' : 'error',
+        ...(hasContent ? {} : { errorMessage: config.value.labels?.serverError || 'Stream ended unexpectedly' }),
+      })
     }
   }
 
@@ -130,18 +133,6 @@ export function useChatActions(deps: ChatActionsDeps) {
         : `Server error (HTTP ${err.status})`
     }
     return err.message || 'Send failed, please retry'
-  }
-
-  /**
-   * Update an assistant message in the current topic
-   */
-  function updateAssistantMessage(messageId: string, updates: Partial<Message>) {
-    const msgs = state.messages.byTopic[state.topics.currentId]
-    if (!msgs) return
-    const msg = msgs.find(m => m.messageId === messageId)
-    if (msg) {
-      Object.assign(msg, updates)
-    }
   }
 
   /**
@@ -178,12 +169,12 @@ export function useChatActions(deps: ChatActionsDeps) {
         status: 'sending',
       }
       userMessageId = userMessage.messageId
-      state.messages.byTopic[topicId].push(userMessage)
+      deps.insertMessage(topicId, state.messages.byTopic[topicId].length, userMessage)
       emit('message:sent', { message: userMessage })
 
       // Add assistant placeholder
       assistantMessageId = generateId('msg')
-      state.messages.byTopic[topicId].push({
+      deps.insertMessage(topicId, state.messages.byTopic[topicId].length, {
         messageId: assistantMessageId,
         topicId,
         role: 'assistant',
@@ -291,11 +282,10 @@ export function useChatActions(deps: ChatActionsDeps) {
       } catch (error) {
         console.error('Failed to regenerate message:', error)
         isThinkingActive.value = false
-        const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
-        if (assistantMsg) {
-          assistantMsg.status = 'error'
-          assistantMsg.errorMessage = (error as Error).message || 'Regeneration failed'
-        }
+        deps.updateMessage(assistantMessageId, {
+          status: 'error',
+          errorMessage: (error as Error).message || 'Regeneration failed',
+        })
       } finally {
         isGenerating.value = false
         abortController.value = null
@@ -317,21 +307,21 @@ export function useChatActions(deps: ChatActionsDeps) {
 
     if (error.name === 'AbortError') {
       // Defense-in-depth: normally unreachable via useApiClient
-      const userMsg = msgs.find(m => m.messageId === userMessageId)
-      if (userMsg) userMsg.status = 'sent'
+      deps.updateMessage(userMessageId, { status: 'sent' })
       const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
-      if (assistantMsg) {
-        assistantMsg.status = assistantMsg.content ? 'stopped' : 'error'
-        assistantMsg.errorMessage = config.value.labels?.generationStopped || 'Generation stopped'
-      }
+      deps.updateMessage(assistantMessageId, {
+        status: assistantMsg?.content ? 'stopped' : 'error',
+        errorMessage: config.value.labels?.generationStopped || 'Generation stopped',
+      })
     } else {
       console.error('Failed to send message:', error)
-      const userMsg = msgs.find(m => m.messageId === userMessageId)
-      if (userMsg) userMsg.status = 'error'
+      deps.updateMessage(userMessageId, { status: 'error' })
       const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
       if (assistantMsg) {
-        assistantMsg.status = 'error'
-        assistantMsg.errorMessage = getErrorMessage(error)
+        deps.updateMessage(assistantMessageId, {
+          status: 'error',
+          errorMessage: getErrorMessage(error),
+        })
         emit('message:error', { message: assistantMsg, error })
       }
     }

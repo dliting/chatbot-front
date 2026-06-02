@@ -96,7 +96,7 @@
         ref="inputRef"
         v-model="inputText"
         class="chat-input__field"
-        placeholder="输入消息..."
+        :placeholder="placeholder || 'Type your message...'"
         rows="1"
         :disabled="disabled"
         @input="autoResize"
@@ -163,6 +163,7 @@ interface Props {
   enableThinking?: boolean
   thinkingEnabled?: boolean
   enableVoiceInput?: boolean
+  placeholder?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {

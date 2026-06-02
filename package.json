@@ -24,6 +24,7 @@
     "dev:iframe": "vite --config vite.config.iframe.ts",
     "build": "vite build",
     "build:lib": "vite build --config vite.config.lib.ts",
+    "build:lib": "vite build --config vite.config.lib.ts",
     "build:iframe": "vite build --config vite.config.iframe.ts",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
@@ -40,14 +41,17 @@
     "test:e2e:lib": "playwright test --project=lib"
   },
   "dependencies": {
-    "@vue-office/docx": "1.6.3",
-    "@vue-office/excel": "1.7.14",
-    "@vue-office/pdf": "1.6.5",
     "dompurify": "3.3.2",
     "element-plus": "^2.5.0",
     "highlight.js": "11.11.1",
     "lucide-vue-next": "1.0.0",
     "markdown-it": "14.1.1",
+    "vue": "^3.4.0"
+  },
+  "peerDependencies": {
+    "@vue-office/docx": ">=1.6.0",
+    "@vue-office/excel": ">=1.7.0",
+    "@vue-office/pdf": ">=1.6.0",
     "vue": "^3.4.0"
   },
   "devDependencies": {

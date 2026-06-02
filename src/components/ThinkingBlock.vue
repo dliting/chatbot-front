@@ -53,6 +53,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import type { ChatbotLabels } from '@/types/config'
 import { formatMarkdownContent } from '@/utils/helpers'
 
 interface Props {
@@ -60,12 +61,7 @@ interface Props {
   thinkingTime: number
   isThinking?: boolean
   autoCollapse?: boolean
-  labels?: {
-    thinking?: string
-    deeplyThought?: string
-    showThinking?: string
-    hideThinking?: string
-  }
+  labels?: ChatbotLabels['thinking']
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -82,10 +78,10 @@ const expanded = ref(false)
 
 // Merged labels with defaults
 const mergedLabels = computed(() => ({
-  thinking: '思考中...',
-  deeplyThought: '已深度思考 {seconds}s',
-  showThinking: '复制',
-  hideThinking: '收起思考过程',
+  thinking: 'Thinking...',
+  deeplyThought: 'Thought deeply for {seconds}s',
+  showThinking: 'Show thinking process',
+  hideThinking: 'Hide thinking process',
   ...props.labels,
 }))
 
