@@ -33,6 +33,7 @@ pnpm-debug.log*
 # Environment
 .env.local
 .env.*.local
+examples/chatapp/backend-real/.env
 
 # Testing
 coverage/

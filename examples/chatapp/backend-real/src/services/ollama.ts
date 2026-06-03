@@ -3,6 +3,7 @@ import type { ChatMessage } from '../types'
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen3.5:9b'
 const OLLAMA_THINKING_ENABLED = process.env.OLLAMA_THINKING_ENABLED !== 'false'
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || ''
 
 export interface OllamaMessage {
   role: 'user' | 'assistant' | 'system'
@@ -106,11 +107,16 @@ export async function* streamChat(
   // reasoning content when the parameter is omitted
   requestBody.enable_thinking = options?.thinking?.enabled !== false && OLLAMA_THINKING_ENABLED
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  }
+  if (OPENAI_API_KEY) {
+    headers['Authorization'] = `Bearer ${OPENAI_API_KEY}`
+  }
+
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    headers,
     body: JSON.stringify(requestBody)
   })
 
@@ -170,11 +176,16 @@ export async function chat(messages: OllamaMessage[]): Promise<string> {
   // Convert messages to OpenAI format
   const openAIMessages = messages.map(convertToOpenAIMessage)
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json'
+  }
+  if (OPENAI_API_KEY) {
+    headers['Authorization'] = `Bearer ${OPENAI_API_KEY}`
+  }
+
   const response = await fetch(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
+    headers,
     body: JSON.stringify({
       model: OLLAMA_MODEL,
       messages: openAIMessages,
