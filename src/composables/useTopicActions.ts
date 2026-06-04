@@ -186,16 +186,19 @@ export function useTopicActions(deps: TopicActionsDeps) {
    * Load initial topics from backend on mount
    */
   async function loadInitialTopics() {
-    if (config.value.callbacks?.onLoadTopics) {
-      try {
-        const topics = await config.value.callbacks.onLoadTopics()
-        if (topics.length > 0) {
-          deps.setTopicList(topics)
-          deps.setCurrentTopicId(topics[0].topicId)
-        }
-      } catch (error) {
-        console.error('Failed to load topics:', error)
+    try {
+      let topics: import('@/types').Topic[] = []
+      if (config.value.callbacks?.onLoadTopics) {
+        topics = await config.value.callbacks.onLoadTopics()
+      } else if (apiClient.value) {
+        topics = await apiClient.value.getTopics()
       }
+      if (topics.length > 0) {
+        deps.setTopicList(topics)
+        deps.setCurrentTopicId(topics[0].topicId)
+      }
+    } catch (error) {
+      console.error('Failed to load initial topics:', error)
     }
   }
 
