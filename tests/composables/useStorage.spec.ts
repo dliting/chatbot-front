@@ -235,5 +235,15 @@ describe('useStorage', () => {
 
       mockRemoveItem.mockRestore()
     })
+
+    it('should handle window being undefined (SSR)', () => {
+      const origWindow = globalThis.window
+      vi.stubGlobal('window', undefined)
+
+      // Should not throw when window is undefined
+      expect(() => clearTopicsFromStorage()).not.toThrow()
+
+      vi.stubGlobal('window', origWindow)
+    })
   })
 })

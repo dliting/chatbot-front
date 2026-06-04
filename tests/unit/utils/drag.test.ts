@@ -2,7 +2,7 @@
  * Unit tests for drag utilities
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { getInitialPosition, snapToEdge } from '@/utils/drag'
+import { getInitialPosition, snapToEdge, makeDraggable } from '@/utils/drag'
 
 describe('utils/drag', () => {
   describe('getInitialPosition', () => {
@@ -98,6 +98,163 @@ describe('utils/drag', () => {
 
       expect(snapped.x).toBe(500)
       expect(snapped.y).toBe(500)
+    })
+  })
+
+  describe('makeDraggable', () => {
+    it('should add mousedown listener to element', () => {
+      const el = document.createElement('div')
+      const addSpy = vi.spyOn(el, 'addEventListener')
+
+      makeDraggable(el)
+
+      expect(addSpy).toHaveBeenCalledWith('mousedown', expect.any(Function))
+    })
+
+    it('should set element cursor to grab', () => {
+      const el = document.createElement('div')
+
+      makeDraggable(el)
+
+      expect(el.style.cursor).toBe('grab')
+    })
+
+    it('should set element position to fixed', () => {
+      const el = document.createElement('div')
+
+      makeDraggable(el)
+
+      expect(el.style.position).toBe('fixed')
+    })
+
+    it('should call onDragStart on mousedown', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      const onDragStart = vi.fn()
+
+      makeDraggable(el, { onDragStart })
+
+      el.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, clientY: 100, bubbles: true, button: 0 }))
+
+      expect(onDragStart).toHaveBeenCalled()
+      document.body.removeChild(el)
+    })
+
+    it('should not call onDragStart for non-left button', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      const onDragStart = vi.fn()
+
+      makeDraggable(el, { onDragStart })
+
+      el.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, clientY: 100, bubbles: true, button: 2 }))
+
+      expect(onDragStart).not.toHaveBeenCalled()
+      document.body.removeChild(el)
+    })
+
+    it('should call onDragMove during drag', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      const onDragMove = vi.fn()
+
+      makeDraggable(el, { onDragMove, throttleMs: 0 })
+
+      el.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, clientY: 100, bubbles: true, button: 0 }))
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 150, clientY: 150 }))
+
+      expect(onDragMove).toHaveBeenCalled()
+      document.dispatchEvent(new MouseEvent('mouseup'))
+      document.body.removeChild(el)
+    })
+
+    it('should call onDragEnd on mouseup', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      const onDragEnd = vi.fn()
+
+      makeDraggable(el, { onDragEnd, throttleMs: 0 })
+
+      el.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, clientY: 100, bubbles: true, button: 0 }))
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 150, clientY: 150 }))
+      document.dispatchEvent(new MouseEvent('mouseup'))
+
+      expect(onDragEnd).toHaveBeenCalled()
+      document.body.removeChild(el)
+    })
+
+    it('should not call onDragMove when not dragging', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      const onDragMove = vi.fn()
+
+      makeDraggable(el, { onDragMove, throttleMs: 0 })
+
+      // Mouse move without mousedown should not trigger drag
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 150, clientY: 150 }))
+
+      expect(onDragMove).not.toHaveBeenCalled()
+      document.body.removeChild(el)
+    })
+
+    it('should set cursor to grabbing during drag', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+
+      makeDraggable(el, { throttleMs: 0 })
+
+      el.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, clientY: 100, bubbles: true, button: 0 }))
+
+      expect(el.style.cursor).toBe('grabbing')
+
+      document.dispatchEvent(new MouseEvent('mouseup'))
+
+      expect(el.style.cursor).toBe('grab')
+      document.body.removeChild(el)
+    })
+
+    it('should clean up event listeners via returned function', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      const onDragMove = vi.fn()
+
+      const cleanup = makeDraggable(el, { onDragMove, throttleMs: 0 })
+
+      // Start drag
+      el.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, clientY: 100, bubbles: true, button: 0 }))
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 150, clientY: 150 }))
+      expect(onDragMove).toHaveBeenCalledTimes(1)
+
+      // Cleanup
+      cleanup()
+
+      // Drag events after cleanup should not fire
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 200, clientY: 200 }))
+      expect(onDragMove).toHaveBeenCalledTimes(1)
+
+      document.body.removeChild(el)
+    })
+
+    it('should constrain position when boundary is provided', () => {
+      const el = document.createElement('div')
+      document.body.appendChild(el)
+      const boundary = document.createElement('div')
+      boundary.style.width = '500px'
+      boundary.style.height = '500px'
+      document.body.appendChild(boundary)
+
+      const onDragMove = vi.fn()
+      makeDraggable(el, { onDragMove, boundary, throttleMs: 0 })
+
+      el.dispatchEvent(new MouseEvent('mousedown', { clientX: 100, clientY: 100, bubbles: true, button: 0 }))
+      document.dispatchEvent(new MouseEvent('mousemove', { clientX: 600, clientY: 600 }))
+
+      // Position should be constrained within boundary
+      expect(onDragMove).toHaveBeenCalled()
+
+      document.dispatchEvent(new MouseEvent('mouseup'))
+      document.body.removeChild(el)
+      document.body.removeChild(boundary)
     })
   })
 })

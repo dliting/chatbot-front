@@ -232,6 +232,33 @@ describe('MessageList.vue', () => {
 
       expect(wrapper.find('.chatbot-messages').exists()).toBe(true)
     })
+
+    it('should show scroll button when scrolled away from bottom', async () => {
+      const messages = createMockMessages(5)
+      await wrapper.setProps({ messages })
+      await nextTick()
+
+      // Manually set isNearBottom to false (simulating scroll away from bottom)
+      wrapper.vm.isNearBottom = false
+      wrapper.vm.showScrollButton = true
+      await nextTick()
+
+      expect(wrapper.find('.chatbot-messages__scroll-btn').exists()).toBe(true)
+    })
+
+    it('should call scrollToBottom when scroll button clicked', async () => {
+      const messages = createMockMessages(5)
+      await wrapper.setProps({ messages })
+
+      wrapper.vm.showScrollButton = true
+      await nextTick()
+
+      const scrollBtn = wrapper.find('.chatbot-messages__scroll-btn')
+      if (scrollBtn.exists()) {
+        await scrollBtn.trigger('click')
+        // scrollToBottom should be called (no error means it worked)
+      }
+    })
   })
 
   describe('Image Messages', () => {

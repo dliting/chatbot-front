@@ -256,6 +256,18 @@ describe('utils/helpers', () => {
       // In test environment, window.top === window.self
       expect(isInIframe()).toBe(false)
     })
+
+    it('should return true when cross-origin access throws SecurityError', () => {
+      const origTop = window.top
+      Object.defineProperty(window, 'top', {
+        get: () => { throw new DOMException('Blocked', 'SecurityError') },
+        configurable: true,
+      })
+
+      expect(isInIframe()).toBe(true)
+
+      Object.defineProperty(window, 'top', { get: () => origTop, configurable: true })
+    })
   })
 
   describe('downloadFile', () => {

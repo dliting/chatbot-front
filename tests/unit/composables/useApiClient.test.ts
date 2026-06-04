@@ -50,19 +50,22 @@ describe('useApiClient (unit)', () => {
   })
 
   describe('getTopics', () => {
-    it('should fetch and return topics', async () => {
-      const topics = [
-        { topicId: '1', title: 'T1', createdAt: '2024-01-01' },
-        { topicId: '2', title: 'T2', createdAt: '2024-01-02' },
+    it('should fetch topics and map sessionId to topicId', async () => {
+      const sessions = [
+        { sessionId: '1', title: 'T1', createdAt: 1000, updatedAt: 1000, messageCount: 0 },
+        { sessionId: '2', title: 'T2', createdAt: 2000, updatedAt: 2000, messageCount: 3 },
       ]
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ code: 0, data: { sessions: topics } }),
+        json: async () => ({ code: 0, data: { sessions } }),
       })
 
       const client = useApiClient(defaultOptions)
       const result = await client.getTopics()
-      expect(result).toEqual(topics)
+      expect(result).toEqual([
+        { topicId: '1', title: 'T1', createdAt: 1000, updatedAt: 1000, messageCount: 0, unreadCount: 0 },
+        { topicId: '2', title: 'T2', createdAt: 2000, updatedAt: 2000, messageCount: 3, unreadCount: 0 },
+      ])
     })
 
     it('should throw on non-zero code', async () => {
@@ -77,18 +80,19 @@ describe('useApiClient (unit)', () => {
   })
 
   describe('createTopic', () => {
-    it('should create and return normalized topic', async () => {
+    it('should create topic and map sessionId to topicId', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           code: 0,
-          data: { topicId: 't1', title: 'New', createdAt: '2024-01-01T00:00:00Z' },
+          data: { sessionId: 'new-1', title: 'New', createdAt: 1700000000000 },
         }),
       })
 
       const client = useApiClient(defaultOptions)
       const result = await client.createTopic('New')
-      expect(result.topicId).toBe('t1')
+      expect(result.topicId).toBe('new-1')
+      expect(result.title).toBe('New')
       expect(result.messageCount).toBe(0)
       expect(result.unreadCount).toBe(0)
     })
@@ -136,16 +140,21 @@ describe('useApiClient (unit)', () => {
   })
 
   describe('sendMessage', () => {
-    it('should send POST with message data', async () => {
-      const msg = { messageId: 'm1', content: 'Reply', role: 'assistant' }
+    it('should send message and map sessionId to topicId in response', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ code: 0, data: msg }),
+        json: async () => ({
+          code: 0,
+          data: { messageId: 'm1', sessionId: 's1', content: 'Reply', role: 'assistant', timestamp: 1000 },
+        }),
       })
 
       const client = useApiClient(defaultOptions)
       const result = await client.sendMessage('s1', 'Hello')
-      expect(result).toEqual(msg)
+      expect(result.topicId).toBe('s1')
+      expect(result.messageId).toBe('m1')
+      expect(result.type).toBe('text')
+      expect(result.status).toBe('sent')
     })
   })
 
@@ -165,12 +174,13 @@ describe('useApiClient (unit)', () => {
   })
 
   describe('getTopicMessages', () => {
-    it('should convert backend fields to attachments', async () => {
+    it('should map sessionId to topicId and convert backend fields to attachments', async () => {
       const msgs = [{
         messageId: 'm1',
+        sessionId: 't1',
         content: 'test',
         role: 'user',
-        type: 'text',
+        timestamp: 1000,
         images: ['http://img.jpg'],
         videos: ['http://vid.mp4'],
         audios: ['http://aud.mp3'],
@@ -184,6 +194,9 @@ describe('useApiClient (unit)', () => {
       const client = useApiClient(defaultOptions)
       const result = await client.getTopicMessages('t1')
 
+      expect(result[0].topicId).toBe('t1')
+      expect(result[0].type).toBe('text')
+      expect(result[0].status).toBe('sent')
       expect(result[0].attachments).toEqual([
         { name: '', url: 'http://img.jpg', type: 'image' },
         { name: '', url: 'http://vid.mp4', type: 'video' },
