@@ -67,7 +67,7 @@ watch(() => props.visible, (val) => {
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }
-})
+}, { immediate: true })
 </script>
 
 <style scoped lang="scss">

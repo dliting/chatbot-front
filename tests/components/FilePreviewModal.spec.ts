@@ -134,6 +134,19 @@ describe('FilePreviewModal', () => {
       expect(wrapper.emitted('close')).toBeTruthy()
     })
 
+    it('should emit close when Escape key is pressed with visible initially true', async () => {
+      // This tests the { immediate: true } fix — modal mounted with visible=true
+      const wrapper = mountModal({ visible: true, file: { name: 'test.jpg', url: 'http://example.com/test.jpg' } })
+      await nextTick()
+      await nextTick()
+
+      const escapeEvent = new KeyboardEvent('keydown', { key: 'Escape' })
+      document.dispatchEvent(escapeEvent)
+      await nextTick()
+
+      expect(wrapper.emitted('close')).toBeTruthy()
+    })
+
     it('should not emit close for non-Escape keys', async () => {
       const wrapper = mountModal({ visible: true, file: { name: 'test.jpg', url: 'http://example.com/test.jpg' } })
       await nextTick()

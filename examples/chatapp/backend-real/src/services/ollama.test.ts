@@ -65,6 +65,32 @@ describe('ollama service', () => {
     })
   })
 
+  describe('URL construction', () => {
+    it('should append /v1/chat/completions to base URL without version path', async () => {
+      const { buildChatUrl } = await import('./ollama')
+      expect(buildChatUrl('http://localhost:11434')).toBe('http://localhost:11434/v1/chat/completions')
+    })
+
+    it('should append only /chat/completions to base URL with version path', async () => {
+      const { buildChatUrl } = await import('./ollama')
+      expect(buildChatUrl('https://api.example.com/v2')).toBe('https://api.example.com/v2/chat/completions')
+      expect(buildChatUrl('http://localhost:11434/v1')).toBe('http://localhost:11434/v1/chat/completions')
+    })
+
+    it('should strip trailing slashes from base URL', async () => {
+      const { buildChatUrl } = await import('./ollama')
+      expect(buildChatUrl('http://localhost:11434/')).toBe('http://localhost:11434/v1/chat/completions')
+      expect(buildChatUrl('https://api.example.com/v2/')).toBe('https://api.example.com/v2/chat/completions')
+    })
+
+    it('should not produce double version paths', async () => {
+      const { buildChatUrl } = await import('./ollama')
+      const url = buildChatUrl('https://api.example.com/v2')
+      expect(url).not.toContain('/v2/v1/')
+      expect(url).not.toContain('/v2/v2/')
+    })
+  })
+
   describe('reasoning content parsing', () => {
     it('should parse reasoning content from Ollama delta.reasoning field', async () => {
       const { streamChat } = await import('./ollama')

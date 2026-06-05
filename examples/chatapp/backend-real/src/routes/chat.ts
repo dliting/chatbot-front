@@ -15,6 +15,18 @@ import { v4 as uuidv4 } from 'uuid'
 
 const router = Router()
 
+// Build Ollama message list from session history + current user message
+function buildOllamaMessages(sessionId: string, content: string, images?: string[]): OllamaMessage[] {
+  const messages = getMessages(sessionId)
+  const ollamaMessages: OllamaMessage[] = messages.map((m) => ({
+    role: m.role,
+    content: m.content,
+    ...(m.images && m.images.length > 0 ? { images: m.images } : {})
+  }))
+  ollamaMessages.push({ role: 'user', content, ...(images && images.length > 0 ? { images } : {}) })
+  return ollamaMessages
+}
+
 // POST /chat/stream - Stream chat
 router.post('/chat/stream', async (req: Request, res: Response) => {
   try {
@@ -28,16 +40,7 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
     // Save user message
     addMessage(sessionId, 'user', content, images)
 
-    // Get conversation history
-    const messages = getMessages(sessionId)
-    const ollamaMessages: OllamaMessage[] = messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-      ...(m.images && m.images.length > 0 ? { images: m.images } : {})
-    }))
-
-    // Add current message
-    ollamaMessages.push({ role: 'user', content, ...(images && images.length > 0 ? { images } : {}) })
+    const ollamaMessages = buildOllamaMessages(sessionId, content, images)
 
     if (stream) {
       res.setHeader('Content-Type', 'text/event-stream')
@@ -112,16 +115,7 @@ router.post('/chat/message', async (req: Request, res: Response) => {
     // Save user message
     addMessage(sessionId, 'user', content, images)
 
-    // Get conversation history
-    const messages = getMessages(sessionId)
-    const ollamaMessages: OllamaMessage[] = messages.map((m) => ({
-      role: m.role,
-      content: m.content,
-      ...(m.images && m.images.length > 0 ? { images: m.images } : {})
-    }))
-
-    // Add current message
-    ollamaMessages.push({ role: 'user', content, ...(images && images.length > 0 ? { images } : {}) })
+    const ollamaMessages = buildOllamaMessages(sessionId, content, images)
 
     // Get response
     const response = await chat(ollamaMessages)
