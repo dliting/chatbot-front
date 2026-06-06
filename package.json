@@ -24,7 +24,6 @@
     "dev:iframe": "vite --config vite.config.iframe.ts",
     "build": "vite build",
     "build:lib": "vite build --config vite.config.lib.ts",
-    "build:lib": "vite build --config vite.config.lib.ts",
     "build:iframe": "vite build --config vite.config.iframe.ts",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit",
