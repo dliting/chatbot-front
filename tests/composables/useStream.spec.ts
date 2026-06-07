@@ -483,6 +483,9 @@ describe('useStream', () => {
       expect(stream.streamedThinkingContent.value).toBe('')
       expect(stream.isThinking.value).toBe(false)
 
+      // Clean up the pending stream to avoid resource leak
+      stream.cancel()
+
       vi.unstubAllGlobals()
     })
 

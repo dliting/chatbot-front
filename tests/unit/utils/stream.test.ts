@@ -690,12 +690,15 @@ describe('utils/stream', () => {
     })
 
     it('should return a cleanup function that aborts the request', async () => {
-      mockReader.read.mockResolvedValue({ done: false, value: new TextEncoder().encode('data') })
+      // Must use mockResolvedValueOnce so the read loop terminates
+      // mockResolvedValue (infinite) causes while(true) in fetchStream to never exit → OOM
+      mockReader.read
+        .mockResolvedValueOnce({ done: false, value: new TextEncoder().encode('data') })
+        .mockResolvedValueOnce({ done: true, value: undefined })
 
       const cleanup = await fetchStream('/api/stream', {}, vi.fn(), vi.fn(), vi.fn())
 
       expect(typeof cleanup).toBe('function')
-      // Calling cleanup should not throw
       cleanup()
     })
 
@@ -705,7 +708,7 @@ describe('utils/stream', () => {
         headers: { 'Content-Type': 'application/json' },
       }
 
-      mockReader.read.mockResolvedValue({ done: true, value: undefined })
+      mockReader.read.mockResolvedValueOnce({ done: true, value: undefined })
 
       await fetchStream('/api/stream', options, vi.fn(), vi.fn(), vi.fn())
 
