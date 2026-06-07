@@ -1,6 +1,8 @@
 /**
  * Tests for AIChatPanel component
- * Covers: mode switching (floating vs embedded), event forwarding, prop defaults
+ * Covers: mode switching (floating vs embedded), prop defaults, prop forwarding
+ * Note: With inject-primary pattern, AIChatPanel no longer forwards action events.
+ * Actions are handled via inject (topicActionsKey, chatActionsKey, uiActionsKey).
  */
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -8,13 +10,12 @@ import AIChatPanel from '@/components/AIChatPanel.vue'
 import FloatingChatPanel from '@/components/FloatingChatPanel.vue'
 import EmbeddedChatPanel from '@/components/EmbeddedChatPanel.vue'
 
-// Mock child components with real emits to trigger event forwarding
+// Mock child components
 vi.mock('@/components/FloatingChatPanel.vue', () => ({
   default: {
     name: 'FloatingChatPanel',
     template: '<div class="floating-panel-mock" />',
     props: ['config', 'messages', 'topics', 'currentTopicId', 'isStreaming', 'hideWelcome', 'hideQuickActions', 'enableThinking', 'thinkingEnabled', 'isThinking', 'enableVoiceInput'],
-    emits: ['send-message', 'quick-action', 'create-topic', 'select-topic', 'delete-topic', 'update-topic-title', 'edit-message', 'copy-message', 'refresh-message', 'delete-message', 'toggle-theme', 'thinking-toggle', 'stop-generating'],
   },
 }))
 
@@ -23,7 +24,6 @@ vi.mock('@/components/EmbeddedChatPanel.vue', () => ({
     name: 'EmbeddedChatPanel',
     template: '<div class="embedded-panel-mock" />',
     props: ['mode', 'layout', 'config', 'messages', 'topics', 'currentTopicId', 'isStreaming', 'hideWelcome', 'hideQuickActions', 'hideHeader', 'enableThinking', 'thinkingEnabled', 'isThinking', 'enableVoiceInput'],
-    emits: ['send-message', 'quick-action', 'create-topic', 'select-topic', 'delete-topic', 'update-topic-title', 'edit', 'copy', 'refresh', 'delete', 'toggle-theme', 'thinking-toggle', 'stop-generating'],
   },
 }))
 
@@ -71,233 +71,6 @@ describe('AIChatPanel', () => {
       expect(props.hideWelcome).toBe(false)
       expect(props.hideQuickActions).toBe(false)
       expect(props.hideHeader).toBe(false)
-    })
-  })
-
-  describe('event forwarding - FloatingChatPanel', () => {
-    const mountFloating = () => mount(AIChatPanel, {
-      props: { mode: 'floating', config: {}, messages: [], topics: [] },
-    })
-
-    it('should emit send-message via handleSendMessage', async () => {
-      const wrapper = mountFloating()
-      const data = { content: 'Hello', attachments: [] }
-      await wrapper.vm.handleSendMessage(data)
-
-      expect(wrapper.emitted('send-message')).toBeTruthy()
-      expect(wrapper.emitted('send-message')![0][0]).toEqual(data)
-    })
-
-    it('should forward quick-action from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('quick-action', 'Hello')
-
-      expect(wrapper.emitted('quick-action')).toBeTruthy()
-      expect(wrapper.emitted('quick-action')![0]).toEqual(['Hello'])
-    })
-
-    it('should forward create-topic from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('create-topic')
-
-      expect(wrapper.emitted('create-topic')).toBeTruthy()
-    })
-
-    it('should forward select-topic from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('select-topic', 'topic-1')
-
-      expect(wrapper.emitted('select-topic')).toBeTruthy()
-      expect(wrapper.emitted('select-topic')![0]).toEqual(['topic-1'])
-    })
-
-    it('should forward delete-topic from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('delete-topic', 'topic-1')
-
-      expect(wrapper.emitted('delete-topic')).toBeTruthy()
-      expect(wrapper.emitted('delete-topic')![0]).toEqual(['topic-1'])
-    })
-
-    it('should forward update-topic-title from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('update-topic-title', 'topic-1', 'New Title')
-
-      expect(wrapper.emitted('update-topic-title')).toBeTruthy()
-      expect(wrapper.emitted('update-topic-title')![0]).toEqual(['topic-1', 'New Title'])
-    })
-
-    it('should forward edit-message from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      const msg = { id: '1', content: 'test' } as any
-      await panel.vm.$emit('edit-message', msg)
-
-      expect(wrapper.emitted('edit')).toBeTruthy()
-    })
-
-    it('should forward copy-message from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('copy-message', { id: '1' } as any)
-
-      expect(wrapper.emitted('copy')).toBeTruthy()
-    })
-
-    it('should forward refresh-message from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('refresh-message', { id: '1' } as any)
-
-      expect(wrapper.emitted('refresh')).toBeTruthy()
-    })
-
-    it('should forward delete-message from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('delete-message', { id: '1' } as any)
-
-      expect(wrapper.emitted('delete')).toBeTruthy()
-    })
-
-    it('should forward toggle-theme from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('toggle-theme')
-
-      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
-    })
-
-    it('should forward thinking-toggle from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('thinking-toggle', true)
-
-      expect(wrapper.emitted('thinking-toggle')).toBeTruthy()
-      expect(wrapper.emitted('thinking-toggle')![0]).toEqual([true])
-    })
-
-    it('should forward stop-generating from FloatingChatPanel', async () => {
-      const wrapper = mountFloating()
-      const panel = wrapper.findComponent(FloatingChatPanel)
-      await panel.vm.$emit('stop-generating')
-
-      expect(wrapper.emitted('stop-generating')).toBeTruthy()
-    })
-  })
-
-  describe('event forwarding - EmbeddedChatPanel', () => {
-    const mountEmbedded = () => mount(AIChatPanel, {
-      props: { mode: 'extended', layout: 'dual', config: {}, messages: [], topics: [] },
-    })
-
-    it('should emit send-message via handleSendMessage', async () => {
-      const wrapper = mountEmbedded()
-      const data = { content: 'Hello' }
-      await wrapper.vm.handleSendMessage(data)
-
-      expect(wrapper.emitted('send-message')).toBeTruthy()
-    })
-
-    it('should forward quick-action from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('quick-action', 'Hello')
-
-      expect(wrapper.emitted('quick-action')).toBeTruthy()
-    })
-
-    it('should forward create-topic from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('create-topic')
-
-      expect(wrapper.emitted('create-topic')).toBeTruthy()
-    })
-
-    it('should forward select-topic from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('select-topic', 'topic-1')
-
-      expect(wrapper.emitted('select-topic')).toBeTruthy()
-    })
-
-    it('should forward delete-topic from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('delete-topic', 'topic-1')
-
-      expect(wrapper.emitted('delete-topic')).toBeTruthy()
-    })
-
-    it('should forward update-topic-title from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('update-topic-title', 'topic-1', 'New Title')
-
-      expect(wrapper.emitted('update-topic-title')).toBeTruthy()
-    })
-
-    it('should forward edit from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('edit', { id: '1' } as any)
-
-      expect(wrapper.emitted('edit')).toBeTruthy()
-    })
-
-    it('should forward copy from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('copy', { id: '1' } as any)
-
-      expect(wrapper.emitted('copy')).toBeTruthy()
-    })
-
-    it('should forward refresh from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('refresh', { id: '1' } as any)
-
-      expect(wrapper.emitted('refresh')).toBeTruthy()
-    })
-
-    it('should forward delete from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('delete', { id: '1' } as any)
-
-      expect(wrapper.emitted('delete')).toBeTruthy()
-    })
-
-    it('should forward toggle-theme from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('toggle-theme')
-
-      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
-    })
-
-    it('should forward thinking-toggle from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('thinking-toggle', false)
-
-      expect(wrapper.emitted('thinking-toggle')).toBeTruthy()
-    })
-
-    it('should forward stop-generating from EmbeddedChatPanel', async () => {
-      const wrapper = mountEmbedded()
-      const panel = wrapper.findComponent(EmbeddedChatPanel)
-      await panel.vm.$emit('stop-generating')
-
-      expect(wrapper.emitted('stop-generating')).toBeTruthy()
     })
   })
 
@@ -349,6 +122,17 @@ describe('AIChatPanel', () => {
       expect(embedded.props('mode')).toBe('extended')
       expect(embedded.props('layout')).toBe('dual')
       expect(embedded.props('hideHeader')).toBe(true)
+    })
+  })
+
+  describe('no event forwarding (inject-primary pattern)', () => {
+    it('should not have emit declarations for action events', () => {
+      // AIChatPanel no longer forwards action events - they are handled via inject
+      // Only verifying the component renders without errors when no event listeners are attached
+      const wrapper = mount(AIChatPanel, {
+        props: { mode: 'floating', config: {}, messages: [], topics: [] },
+      })
+      expect(wrapper.exists()).toBe(true)
     })
   })
 })

@@ -25,8 +25,6 @@
         :show-close-button="true"
         :unread-count="0"
         :labels="configRef.labels"
-        @topics="showTopicsView"
-        @toggle-theme="handleToggleTheme"
         @close="closePanel"
       />
     </template>
@@ -43,15 +41,7 @@
         :thinking-enabled="thinkingEnabled"
         :is-thinking="isThinking"
         :enable-voice-input="enableVoiceInput"
-        @send-message="handleSend"
-        @quick-action="handleQuickAction"
-        @edit="handleMessageEdit"
-        @copy="handleMessageCopy"
-        @refresh="handleMessageRefresh"
-        @delete="handleMessageDelete"
         @file-click="handleFileClick"
-        @thinking-toggle="$emit('thinking-toggle', $event)"
-        @stop-generating="$emit('stop-generating')"
       />
       <TopicListView
         v-else
@@ -60,10 +50,6 @@
         :config="configRef"
         :layout="'single'"
         @close="showChatView"
-        @create-topic="handleCreateTopic"
-        @select-topic="handleSelectTopic"
-        @delete-topic="handleDeleteTopic"
-        @update-topic-title="(topicId, title) => $emit('update-topic-title', topicId, title)"
       />
     </div>
 
@@ -88,11 +74,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject, provide } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
+import type { UIActionHandlers } from '@/types'
 import { defaultChatbotConfig } from '@/types/config'
 import type { Message, Topic } from '@/types'
 import { useChatView } from '@/composables/useChatView'
+import { uiActionsKey } from '@/symbols'
 
 // Components
 import DraggableWindow from './DraggableWindow.vue'
@@ -122,21 +110,9 @@ const props = withDefaults(defineProps<Props>(), {
   hideQuickActions: false,
 })
 
-// Emits
+// Emits - reserved for external-facing events only
 interface Emits {
-  (e: 'send-message', data: { content: string; attachments?: import('@/types').Attachment[] }): void
-  (e: 'quick-action', text: string): void
-  (e: 'create-topic'): void
-  (e: 'select-topic', topicId: string): void
-  (e: 'delete-topic', topicId: string): void
-  (e: 'update-topic-title', topicId: string, title: string): void
-  (e: 'edit-message', message: Message): void
-  (e: 'copy-message', message: Message): void
-  (e: 'refresh-message', message: Message): void
-  (e: 'delete-message', message: Message): void
-  (e: 'toggle-theme'): void
-  (e: 'thinking-toggle', enabled: boolean): void
-  (e: 'stop-generating'): void
+  (e: 'close'): void
 }
 
 const emit = defineEmits<Emits>()
@@ -149,6 +125,16 @@ const configRef = computed(() => ({
 
 // View state
 const { viewState, showChatView, showTopicsView } = useChatView('floating')
+
+// Inject parent UI actions and provide enhanced version with view navigation
+// Enhanced provide chain: panel adds showChatView/showTopicsView so child
+// components can navigate views via inject (inject-primary pattern)
+const parentUiActions = inject(uiActionsKey, null)
+provide(uiActionsKey, {
+  ...parentUiActions,
+  showChatView,
+  showTopicsView,
+} satisfies UIActionHandlers)
 
 // Panel state
 const isPanelOpen = ref(configRef.value.defaultExpanded)
@@ -164,7 +150,7 @@ const windowState = ref({
 // Preview state
 const previewFile = ref<{ type: string; url: string; name?: string } | null>(null)
 
-// Unified file click handler for all file types
+// File click handler for file preview
 const handleFileClick = (file: { type: string; url: string; name?: string }) => {
   previewFile.value = file
 }
@@ -176,48 +162,6 @@ const openPanel = () => {
 
 const closePanel = () => {
   isPanelOpen.value = false
-}
-
-const handleToggleTheme = () => {
-  // Note: theme is managed externally through config
-  emit('toggle-theme')
-}
-
-const handleSend = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {
-  emit('send-message', data)
-}
-
-const handleQuickAction = (text: string) => {
-  emit('quick-action', text)
-}
-
-const handleCreateTopic = () => {
-  emit('create-topic')
-}
-
-const handleSelectTopic = (topicId: string) => {
-  emit('select-topic', topicId)
-  showChatView()
-}
-
-const handleDeleteTopic = (topicId: string) => {
-  emit('delete-topic', topicId)
-}
-
-const handleMessageEdit = (message: Message) => {
-  emit('edit-message', message)
-}
-
-const handleMessageCopy = (message: Message) => {
-  emit('copy-message', message)
-}
-
-const handleMessageRefresh = (message: Message) => {
-  emit('refresh-message', message)
-}
-
-const handleMessageDelete = (message: Message) => {
-  emit('delete-message', message)
 }
 
 // Initialize floating window position on mount
@@ -236,7 +180,8 @@ onMounted(() => {
 defineExpose({
   openPanel,
   closePanel,
-  handleToggleTheme,
+  showChatView,
+  showTopicsView,
 })
 </script>
 

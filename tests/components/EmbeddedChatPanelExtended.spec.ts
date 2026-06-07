@@ -1,8 +1,7 @@
 /**
  * Extended unit tests for EmbeddedChatPanel component
- * Covers untested branches: file preview, handleSendMessage, thinking props,
- * stop-generating event, dual layout header, configRef with reactive config,
- * single layout events, delete-topics event
+ * Covers: file preview, thinking props, dual layout, configRef,
+ * single layout view switching, effectiveLayout computed
  */
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -159,26 +158,6 @@ describe('EmbeddedChatPanel Extended Tests', () => {
     })
   })
 
-  describe('handleSendMessage', () => {
-    it('should emit send-message when ChatContent emits send-message in dual layout', async () => {
-      const wrapper = createDualWrapper()
-
-      const chatContent = wrapper.findComponent(ChatContent)
-      await chatContent.vm.$emit('send-message', { content: 'Test', attachments: [] })
-
-      expect(wrapper.emitted('send-message')).toBeTruthy()
-    })
-
-    it('should emit send-message when ChatContent emits send-message in single layout', async () => {
-      const wrapper = createSingleWrapper()
-
-      const chatContent = wrapper.findComponent(ChatContent)
-      await chatContent.vm.$emit('send-message', { content: 'Test', attachments: [] })
-
-      expect(wrapper.emitted('send-message')).toBeTruthy()
-    })
-  })
-
   describe('Thinking Props', () => {
     it('should pass enableThinking to ChatContent', async () => {
       const wrapper = createDualWrapper({ enableThinking: true })
@@ -207,25 +186,6 @@ describe('EmbeddedChatPanel Extended Tests', () => {
       const chatContent = wrapper.findComponent(ChatContent)
       expect(chatContent.props('enableVoiceInput')).toBe(true)
     })
-
-    it('should emit thinking-toggle when ChatContent emits thinking-toggle', async () => {
-      const wrapper = createDualWrapper()
-
-      const chatContent = wrapper.findComponent(ChatContent)
-      await chatContent.vm.$emit('thinking-toggle', true)
-
-      expect(wrapper.emitted('thinking-toggle')).toBeTruthy()
-      expect(wrapper.emitted('thinking-toggle')?.[0]).toEqual([true])
-    })
-
-    it('should emit stop-generating when ChatContent emits stop-generating', async () => {
-      const wrapper = createDualWrapper({ isStreaming: true })
-
-      const chatContent = wrapper.findComponent(ChatContent)
-      await chatContent.vm.$emit('stop-generating')
-
-      expect(wrapper.emitted('stop-generating')).toBeTruthy()
-    })
   })
 
   describe('Dual Layout - Header', () => {
@@ -252,19 +212,6 @@ describe('EmbeddedChatPanel Extended Tests', () => {
 
       const chatContent = wrapper.findComponent(ChatContent)
       expect(chatContent.exists()).toBe(true)
-    })
-  })
-
-  describe('delete-topics Event', () => {
-    it('should emit delete-topics from dual layout TopicListView', async () => {
-      const wrapper = createDualWrapper()
-
-      const topicListView = wrapper.findComponent(TopicListView)
-      const topicIds = ['topic-1', 'topic-2']
-      await topicListView.vm.$emit('delete-topics', topicIds)
-
-      expect(wrapper.emitted('delete-topics')).toBeTruthy()
-      expect(wrapper.emitted('delete-topics')?.[0]).toEqual([topicIds])
     })
   })
 
@@ -312,6 +259,35 @@ describe('EmbeddedChatPanel Extended Tests', () => {
       await topicListView.vm.$emit('close')
 
       expect(wrapper.emitted('close')).toBeTruthy()
+    })
+  })
+
+  describe('View Switch on Topic Selection', () => {
+    it('should switch to chat view when uiActions.showChatView is called after topic selection', async () => {
+      // With inject-primary pattern, view switching is handled by uiActions.showChatView
+      // which is provided by EmbeddedChatPanel's useChatView
+      const wrapper = createSingleWrapper()
+
+      // The view starts at 'chat'
+      expect(wrapper.vm.viewState.currentView).toBe('chat')
+
+      // Navigate to topics view by calling showTopicsView
+      wrapper.vm.showTopicsView()
+      await wrapper.vm.$nextTick()
+      expect(wrapper.vm.viewState.currentView).toBe('topics')
+
+      // TopicListView should be visible
+      const topicListView = wrapper.findComponent(TopicListView)
+      expect(topicListView.exists()).toBe(true)
+
+      // Call showChatView (which is what uiActions.showChatView does)
+      wrapper.vm.showChatView()
+      await wrapper.vm.$nextTick()
+
+      // Should be back to chat view
+      expect(wrapper.vm.viewState.currentView).toBe('chat')
+      const chatContent = wrapper.findComponent(ChatContent)
+      expect(chatContent.exists()).toBe(true)
     })
   })
 })

@@ -335,7 +335,7 @@ describe('ChatContent', () => {
     })
   })
 
-  describe('Emit fallback (no inject)', () => {
+  describe('No-inject graceful handling', () => {
     const createWrapperWithoutInject = (options = {}) => {
       return mount(ChatContent, {
         props: {
@@ -346,44 +346,21 @@ describe('ChatContent', () => {
         },
         global: {
           stubs: { ChatInput: true },
-          // No provide — forces emit fallback
+          // No provide — actions simply don't fire (no emit fallback in inject-primary pattern)
         },
       })
     }
 
-    it('should emit send-message when chatActions not injected', async () => {
+    it('should not throw when chatActions not injected and handleSend called', async () => {
       const wrapper = createWrapperWithoutInject()
       const component = wrapper.vm as any
-      component.handleSend({ content: 'test' })
-      expect(wrapper.emitted('send-message')).toBeTruthy()
-      expect(wrapper.emitted('send-message')![0][0]).toEqual({ content: 'test' })
+      expect(() => component.handleSend({ content: 'test' })).not.toThrow()
     })
 
-    it('should emit edit when chatActions not injected and user message double-clicked', async () => {
+    it('should not throw when chatActions not injected and handleQuickAction called', async () => {
       const wrapper = createWrapperWithoutInject()
-      const userMessage = wrapper.findAll('.chat-content__message')[0]
-      await userMessage.trigger('dblclick')
-      expect(wrapper.emitted('edit')).toBeTruthy()
-    })
-
-    it('should emit refresh when chatActions not injected and refresh button clicked', async () => {
-      const wrapper = createWrapperWithoutInject()
-      const assistantMessage = wrapper.findAll('.chat-content__message')[1]
-      const refreshBtn = assistantMessage.findAll('.chat-content__action-btn')[1]
-      await refreshBtn.trigger('click')
-      expect(wrapper.emitted('refresh')).toBeTruthy()
-    })
-
-    it('should emit delete when chatActions not injected and delete confirmed', async () => {
-      const wrapper = createWrapperWithoutInject()
-      const userMessage = wrapper.findAll('.chat-content__message')[0]
-      const deleteBtn = userMessage.findAll('.chat-content__action-btn')[1]
-      await deleteBtn.trigger('click')
-
-      const dialog = wrapper.findComponent({ name: 'ConfirmDialog' })
-      await dialog.vm.$emit('confirm')
-      await nextTick()
-      expect(wrapper.emitted('delete')).toBeTruthy()
+      const component = wrapper.vm as any
+      expect(() => component.handleQuickAction('test')).not.toThrow()
     })
   })
 })

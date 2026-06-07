@@ -1,7 +1,7 @@
 /**
  * Comprehensive unit tests for ChatHeader component
  * Tests all modes: Extended, Compact, Floating
- * Covers: inject/emit fallback for toggle-theme
+ * Architecture: inject-primary — no emit fallback for data operations
  */
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -121,21 +121,30 @@ describe('ChatHeader Component', () => {
       expect(wrapper.emitted('back').length).toBe(1)
     })
 
-    it('should emit topics event when topics button is clicked', async () => {
+    it('should call uiActions.showTopicsView when topics button is clicked (inject path)', async () => {
       const wrapper = mountChatHeader({ showTopicsButton: true })
 
       await wrapper.find('.chat-header__btn').trigger('click')
 
-      expect(wrapper.emitted('topics')).toBeTruthy()
+      expect(mockUIActions.showTopicsView).toHaveBeenCalled()
     })
 
-    it('should emit toggle-theme event when theme button is clicked (fallback)', async () => {
+    it('should not emit topics event when uiActions is injected', async () => {
+      const wrapper = mountChatHeader({ showTopicsButton: true })
+
+      await wrapper.find('.chat-header__btn').trigger('click')
+
+      expect(wrapper.emitted('topics')).toBeFalsy()
+    })
+
+    it('should NOT emit toggle-theme — uses inject path only', async () => {
       const wrapper = mountChatHeader({ showThemeToggle: true }, { omitUIActions: true })
 
       const buttons = wrapper.findAll('.chat-header__btn')
       await buttons[0].trigger('click')
 
-      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
+      // No emit fallback in inject-primary pattern
+      expect(wrapper.emitted('toggle-theme')).toBeFalsy()
     })
 
     it('should call uiActions.toggleTheme when injected (inject path)', async () => {
@@ -156,20 +165,22 @@ describe('ChatHeader Component', () => {
       expect(wrapper.emitted('close')).toBeTruthy()
     })
 
-    it('should emit multiple events correctly', async () => {
+    it('should emit back and close events correctly (no toggle-theme emit in inject-primary)', async () => {
       const wrapper = mountChatHeader(
         { showBackButton: true, showTopicsButton: true, showThemeToggle: true, showCloseButton: true },
         { omitUIActions: true },
       )
 
       await wrapper.find('.chat-header__back').trigger('click')
+      // topics button: no inject, no emit fallback (inject-primary)
       await wrapper.findAll('.chat-header__btn')[0].trigger('click')
+      // theme button: no inject, no emit fallback (inject-primary)
       await wrapper.findAll('.chat-header__btn')[1].trigger('click')
       await wrapper.find('.chat-header__close').trigger('click')
 
       expect(wrapper.emitted('back')).toBeTruthy()
-      expect(wrapper.emitted('topics')).toBeTruthy()
-      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
+      // toggle-theme no longer emitted in inject-primary pattern
+      expect(wrapper.emitted('toggle-theme')).toBeFalsy()
       expect(wrapper.emitted('close')).toBeTruthy()
     })
   })

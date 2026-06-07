@@ -148,6 +148,26 @@ export function useTopicActions(deps: TopicActionsDeps) {
   }
 
   /**
+   * Delete multiple topics (batch)
+   */
+  async function removeTopics(topicIds: string[]) {
+    for (const topicId of topicIds) {
+      try {
+        if (config.value.callbacks?.onDeleteTopic) {
+          await config.value.callbacks.onDeleteTopic(topicId)
+        } else if (apiClient.value) {
+          await apiClient.value.deleteTopic(topicId)
+        }
+        deps.deleteTopic(topicId)
+        emit('topic:deleted', { topicId })
+      } catch (error) {
+        console.error(`Failed to delete topic ${topicId}:`, error)
+      }
+    }
+    await reloadTopics()
+  }
+
+  /**
    * Update topic title (with optimistic update and rollback)
    */
   async function renameTopic(topicId: string, title: string) {
@@ -206,6 +226,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
     createNewTopic,
     switchToTopic,
     removeTopic,
+    removeTopics,
     renameTopic,
     reloadTopics,
     loadTopicMessages,

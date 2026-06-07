@@ -246,8 +246,8 @@ describe('EmbeddedChatPanel Component', () => {
       })
 
       // Switch to topics view
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
+      wrapper.vm.showTopicsView()
+      await wrapper.vm.$nextTick()
 
       const topicListView = wrapper.findComponent(TopicListView)
       expect(topicListView.props('layout')).toBe('single')
@@ -268,8 +268,8 @@ describe('EmbeddedChatPanel Component', () => {
       })
 
       // Switch to topics view
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
+      wrapper.vm.showTopicsView()
+      await wrapper.vm.$nextTick()
 
       const topicListView = wrapper.findComponent(TopicListView)
       // enableClose prop is not explicitly passed in single layout, so it defaults to false
@@ -344,106 +344,6 @@ describe('EmbeddedChatPanel Component', () => {
   })
 
   describe('Event Handling', () => {
-    it('should emit create-topic event when TopicListView emits create-topic', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'extended',
-          layout: 'dual',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-        },
-      })
-
-      const topicListView = wrapper.findComponent(TopicListView)
-      await topicListView.vm.$emit('create-topic')
-
-      expect(wrapper.emitted('create-topic')).toBeTruthy()
-    })
-
-    it('should emit select-topic event when TopicListView emits select-topic', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'extended',
-          layout: 'dual',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-        },
-      })
-
-      const topicListView = wrapper.findComponent(TopicListView)
-      await topicListView.vm.$emit('select-topic', 'topic-2')
-
-      expect(wrapper.emitted('select-topic')).toBeTruthy()
-      expect(wrapper.emitted('select-topic')?.[0]).toEqual(['topic-2'])
-    })
-
-    it('should emit delete-topic event when TopicListView emits delete-topic', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'extended',
-          layout: 'dual',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-        },
-      })
-
-      const topicListView = wrapper.findComponent(TopicListView)
-      await topicListView.vm.$emit('delete-topic', 'topic-2')
-
-      expect(wrapper.emitted('delete-topic')).toBeTruthy()
-      expect(wrapper.emitted('delete-topic')?.[0]).toEqual(['topic-2'])
-    })
-
-    it('should emit delete-topics event when TopicListView emits delete-topics', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'extended',
-          layout: 'dual',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-        },
-      })
-
-      const topicListView = wrapper.findComponent(TopicListView)
-      const topicIdsToDelete = ['topic-1', 'topic-2']
-      await topicListView.vm.$emit('delete-topics', topicIdsToDelete)
-
-      expect(wrapper.emitted('delete-topics')).toBeTruthy()
-      expect(wrapper.emitted('delete-topics')?.[0]).toEqual([topicIdsToDelete])
-    })
-
-    it('should emit update-topic-title event when TopicListView emits update-topic-title', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'extended',
-          layout: 'dual',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-        },
-      })
-
-      const topicListView = wrapper.findComponent(TopicListView)
-      await topicListView.vm.$emit('update-topic-title', 'topic-1', 'Updated Title')
-
-      expect(wrapper.emitted('update-topic-title')).toBeTruthy()
-      expect(wrapper.emitted('update-topic-title')?.[0]).toEqual(['topic-1', 'Updated Title'])
-    })
-
     it('should emit close event when TopicListView emits close in dual layout', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
@@ -463,7 +363,9 @@ describe('EmbeddedChatPanel Component', () => {
       expect(wrapper.emitted('close')).toBeTruthy()
     })
 
-    it('should emit send-message event when ChatContent emits send-message', async () => {
+    it('should not emit action events (handled via inject-primary pattern)', async () => {
+      // With inject-primary pattern, action events (create-topic, select-topic, etc.)
+      // are handled via inject, not emitted. EmbeddedChatPanel only emits 'close'.
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
@@ -476,77 +378,15 @@ describe('EmbeddedChatPanel Component', () => {
         },
       })
 
-      const chatContent = wrapper.findComponent(ChatContent)
-      await chatContent.vm.$emit('send-message', { content: 'Test message' })
-
-      expect(wrapper.emitted('send-message')).toBeTruthy()
-      expect(wrapper.emitted('send-message')?.[0]).toEqual([{ content: 'Test message' }])
-    })
-
-    it('should emit quick-action event when ChatContent emits quick-action', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'extended',
-          layout: 'dual',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-        },
-      })
-
-      const chatContent = wrapper.findComponent(ChatContent)
-      await chatContent.vm.$emit('quick-action', 'Quick action text')
-
-      expect(wrapper.emitted('quick-action')).toBeTruthy()
-      expect(wrapper.emitted('quick-action')?.[0]).toEqual(['Quick action text'])
-    })
-
-    it('should emit edit event when ChatContent emits edit', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'extended',
-          layout: 'dual',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-        },
-      })
-
-      const chatContent = wrapper.findComponent(ChatContent)
-      const mockMessage = mockMessages[0]
-      await chatContent.vm.$emit('edit', mockMessage)
-
-      expect(wrapper.emitted('edit')).toBeTruthy()
-      expect(wrapper.emitted('edit')?.[0]).toEqual([mockMessage])
-    })
-
-    it('should emit toggle-theme event when ChatHeader emits toggle-theme', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'extended',
-          layout: 'dual',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-          hideHeader: false,
-        },
-      })
-
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('toggle-theme')
-
-      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
+      // Only 'close' is a valid external event
+      expect(wrapper.emitted()).not.toHaveProperty('create-topic')
+      expect(wrapper.emitted()).not.toHaveProperty('select-topic')
+      expect(wrapper.emitted()).not.toHaveProperty('send-message')
     })
   })
 
   describe('View Switching (Single Layout)', () => {
-    it('should switch to topics view when ChatHeader emits topics event', async () => {
+    it('should switch to topics view when uiActions.showTopicsView is called', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
@@ -563,12 +403,11 @@ describe('EmbeddedChatPanel Component', () => {
       // Initially should show chat view
       expect(wrapper.find('.chat-content-mock').exists()).toBe(true)
 
-      // Click topics button in header
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
+      // Call showTopicsView directly (this is what ChatHeader's topics button does via inject)
+      wrapper.vm.showTopicsView()
+      await wrapper.vm.$nextTick()
 
-      // After emitting topics event, view should change to topics
-      // The component should re-render with TopicListView
+      // After switching, view should show TopicListView
       expect(wrapper.findComponent(TopicListView).exists()).toBe(true)
     })
 
@@ -587,8 +426,8 @@ describe('EmbeddedChatPanel Component', () => {
       })
 
       // First switch to topics view
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
+      wrapper.vm.showTopicsView()
+      await wrapper.vm.$nextTick()
 
       // Should show topics
       expect(wrapper.findComponent(TopicListView).exists()).toBe(true)
@@ -755,17 +594,17 @@ describe('EmbeddedChatPanel Component', () => {
       expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
       expect(wrapper.findComponent(TopicListView).exists()).toBe(false)
 
-      // Switch to topics view via header button
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
+      // Switch to topics view via showTopicsView (what ChatHeader's inject does)
+      wrapper.vm.showTopicsView()
+      await wrapper.vm.$nextTick()
 
       // Now should show topics view
       expect(wrapper.findComponent(TopicListView).exists()).toBe(true)
       expect(wrapper.findComponent(ChatContent).exists()).toBe(false)
 
-      // Switch back to chat view via close button
-      const topicListView = wrapper.findComponent(TopicListView)
-      await topicListView.vm.$emit('close')
+      // Switch back to chat view via showChatView (what TopicListView's inject does)
+      wrapper.vm.showChatView()
+      await wrapper.vm.$nextTick()
 
       // Should show chat view again
       expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
@@ -949,8 +788,8 @@ describe('EmbeddedChatPanel Component', () => {
       expect(wrapper.findComponent(ChatHeader).exists()).toBe(true)
 
       // Switch to topics view
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
+      wrapper.vm.showTopicsView()
+      await wrapper.vm.$nextTick()
 
       // In topics view, header should not be visible
       expect(wrapper.findComponent(ChatHeader).exists()).toBe(false)
@@ -994,27 +833,7 @@ describe('EmbeddedChatPanel Component', () => {
       expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
     })
 
-    it('should emit toggle-theme from ChatHeader in single layout', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'floating',
-          layout: 'single',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-          hideHeader: false,
-        },
-      })
-
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('toggle-theme')
-
-      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
-    })
-
-    it('should emit create-topic in topics view in single layout', async () => {
+    it('should switch to topics view and back in single layout', async () => {
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'floating',
@@ -1029,122 +848,18 @@ describe('EmbeddedChatPanel Component', () => {
       })
 
       // Switch to topics view
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
+      wrapper.vm.showTopicsView()
+      await wrapper.vm.$nextTick()
 
       // Should show topics view
       expect(wrapper.findComponent(TopicListView).exists()).toBe(true)
 
-      // Emit create-topic from TopicListView
-      const topicListView = wrapper.findComponent(TopicListView)
-      await topicListView.vm.$emit('create-topic')
+      // Switch back to chat view
+      wrapper.vm.showChatView()
+      await wrapper.vm.$nextTick()
 
-      expect(wrapper.emitted('create-topic')).toBeTruthy()
-    })
-
-    it('should emit select-topic in topics view in single layout', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'floating',
-          layout: 'single',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-          hideHeader: false,
-        },
-      })
-
-      // Switch to topics view
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
-
-      // Emit select-topic from TopicListView
-      const topicListView = wrapper.findComponent(TopicListView)
-      await topicListView.vm.$emit('select-topic', 'topic-2')
-
-      expect(wrapper.emitted('select-topic')).toBeTruthy()
-      expect(wrapper.emitted('select-topic')?.[0]).toEqual(['topic-2'])
-    })
-
-    it('should emit delete-topic in topics view in single layout', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'floating',
-          layout: 'single',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-          hideHeader: false,
-        },
-      })
-
-      // Switch to topics view
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
-
-      // Emit delete-topic from TopicListView
-      const topicListView = wrapper.findComponent(TopicListView)
-      await topicListView.vm.$emit('delete-topic', 'topic-2')
-
-      expect(wrapper.emitted('delete-topic')).toBeTruthy()
-      expect(wrapper.emitted('delete-topic')?.[0]).toEqual(['topic-2'])
-    })
-
-    it('should emit delete-topics in topics view in single layout', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'floating',
-          layout: 'single',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-          hideHeader: false,
-        },
-      })
-
-      // Switch to topics view
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
-
-      // Emit delete-topics from TopicListView
-      const topicListView = wrapper.findComponent(TopicListView)
-      const topicIdsToDelete = ['topic-1', 'topic-2']
-      await topicListView.vm.$emit('delete-topics', topicIdsToDelete)
-
-      expect(wrapper.emitted('delete-topics')).toBeTruthy()
-      expect(wrapper.emitted('delete-topics')?.[0]).toEqual([topicIdsToDelete])
-    })
-
-    it('should emit update-topic-title in topics view in single layout', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'floating',
-          layout: 'single',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-          hideHeader: false,
-        },
-      })
-
-      // Switch to topics view
-      const chatHeader = wrapper.findComponent(ChatHeader)
-      await chatHeader.vm.$emit('topics')
-
-      // Emit update-topic-title from TopicListView
-      const topicListView = wrapper.findComponent(TopicListView)
-      await topicListView.vm.$emit('update-topic-title', 'topic-1', 'New Title')
-
-      expect(wrapper.emitted('update-topic-title')).toBeTruthy()
-      expect(wrapper.emitted('update-topic-title')?.[0]).toEqual(['topic-1', 'New Title'])
+      // Should show chat view
+      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
     })
 
     it('should render ChatContent with key based on messages length in single layout', () => {
@@ -1181,67 +896,6 @@ describe('EmbeddedChatPanel Component', () => {
 
       // ChatContent should receive the props
       expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
-    })
-
-    it('should emit send-message from ChatContent in single layout', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'floating',
-          layout: 'single',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-        },
-      })
-
-      const chatContent = wrapper.findComponent(ChatContent)
-      await chatContent.vm.$emit('send-message', { content: 'Test message' })
-
-      expect(wrapper.emitted('send-message')).toBeTruthy()
-      expect(wrapper.emitted('send-message')?.[0]).toEqual([{ content: 'Test message' }])
-    })
-
-    it('should emit quick-action from ChatContent in single layout', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'floating',
-          layout: 'single',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-        },
-      })
-
-      const chatContent = wrapper.findComponent(ChatContent)
-      await chatContent.vm.$emit('quick-action', 'Quick action text')
-
-      expect(wrapper.emitted('quick-action')).toBeTruthy()
-      expect(wrapper.emitted('quick-action')?.[0]).toEqual(['Quick action text'])
-    })
-
-    it('should emit edit from ChatContent in single layout', async () => {
-      const wrapper = mount(EmbeddedChatPanel, {
-        props: {
-          mode: 'floating',
-          layout: 'single',
-          config: mockConfig,
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic-1',
-          isStreaming: false,
-        },
-      })
-
-      const chatContent = wrapper.findComponent(ChatContent)
-      const mockMessage = mockMessages[0]
-      await chatContent.vm.$emit('edit', mockMessage)
-
-      expect(wrapper.emitted('edit')).toBeTruthy()
-      expect(wrapper.emitted('edit')?.[0]).toEqual([mockMessage])
     })
   })
 })

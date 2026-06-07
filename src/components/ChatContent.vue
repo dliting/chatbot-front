@@ -116,9 +116,9 @@
         :enable-voice-input="enableVoiceInput"
         :placeholder="mergedLabels.placeholder"
         @send="handleSend"
-        @stop="chatActions ? chatActions.stopGenerating() : $emit('stop-generating')"
+        @stop="chatActions?.stopGenerating()"
         @file-click="$emit('file-click', $event)"
-        @update:thinking-enabled="uiActions ? uiActions.setThinkingEnabled($event) : $emit('thinking-toggle', $event)"
+        @update:thinking-enabled="uiActions?.setThinkingEnabled($event)"
       />
     </div>
 
@@ -205,44 +205,36 @@ const quickActions = computed(() => [
   { id: 4, title: mergedLabels.value.quickAction4Title, desc: mergedLabels.value.quickAction4Desc, text: mergedLabels.value.quickAction4Text, icon: CubeIcon },
 ])
 
+/**
+ * Emits - reserved for external-facing UI events only
+ * Data actions (send/edit/refresh/delete) are handled via inject (chatActionsKey)
+ * UI state (thinking/stop) is handled via inject (chatActionsKey/uiActionsKey)
+ */
 interface Emits {
-  (e: 'send-message', data: { content: string; attachments?: import('@/types').Attachment[] }): void
-  (e: 'edit', message: Message): void
-  (e: 'refresh', message: Message): void
-  (e: 'delete', message: Message): void
+  /** File preview requested — UI event, not a data action */
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
-  (e: 'thinking-toggle', enabled: boolean): void
-  (e: 'stop-generating'): void
 }
 
 const emit = defineEmits<Emits>()
 
-// Inject action handlers from AIChatbot (fallback to emit when not provided)
+// Inject action handlers — inject-primary pattern: data ops via inject, only file-click uses emit
 const chatActions = inject(chatActionsKey)
 const uiActions = inject(uiActionsKey)
 
 // Handle quick action click (sends the action text as a message)
 const handleQuickAction = (text: string) => {
-  if (chatActions) { chatActions.sendMessage({ content: text }) } else { emit('send-message', { content: text }) }
+  if (chatActions) { chatActions.sendMessage({ content: text }) }
 }
 
 // Handle send event from ChatInput
 const handleSend = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {
-  if (chatActions) {
-    chatActions.sendMessage(data)
-  } else {
-    emit('send-message', data)
-  }
+  if (chatActions) { chatActions.sendMessage(data) }
 }
 
 // Handle message double-click for editing (only for user messages)
 const handleMessageDblClick = (message: Message) => {
   if (message.role === 'user' && message.status !== 'loading') {
-    if (chatActions) {
-      chatActions.editMessage(message)
-    } else {
-      emit('edit', message)
-    }
+    if (chatActions) { chatActions.editMessage(message) }
   }
 }
 
@@ -270,7 +262,7 @@ const handleCopyThinking = async (content: string) => {
 }
 
 const handleRefreshMessage = (message: Message) => {
-  if (chatActions) { chatActions.refreshMessage(message) } else { emit('refresh', message) }
+  if (chatActions) { chatActions.refreshMessage(message) }
 }
 
 const showDeleteDialog = ref(false)
@@ -283,7 +275,7 @@ const handleDeleteMessage = (message: Message) => {
 
 const confirmDeleteMessage = () => {
   if (pendingDeleteMessage.value) {
-    if (chatActions) { chatActions.deleteMessage(pendingDeleteMessage.value) } else { emit('delete', pendingDeleteMessage.value) }
+    if (chatActions) { chatActions.deleteMessage(pendingDeleteMessage.value) }
     pendingDeleteMessage.value = null
   }
   showDeleteDialog.value = false

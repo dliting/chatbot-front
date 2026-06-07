@@ -13,19 +13,6 @@
     :thinking-enabled="thinkingEnabled"
     :is-thinking="isThinking"
     :enable-voice-input="enableVoiceInput"
-    @send-message="handleSendMessage"
-    @quick-action="$emit('quick-action', $event)"
-    @create-topic="$emit('create-topic')"
-    @select-topic="$emit('select-topic', $event)"
-    @delete-topic="$emit('delete-topic', $event)"
-    @update-topic-title="(topicId, title) => $emit('update-topic-title', topicId, title)"
-    @edit-message="$emit('edit', $event)"
-    @copy-message="$emit('copy', $event)"
-    @refresh-message="$emit('refresh', $event)"
-    @delete-message="$emit('delete', $event)"
-    @toggle-theme="$emit('toggle-theme')"
-    @thinking-toggle="$emit('thinking-toggle', $event)"
-    @stop-generating="$emit('stop-generating')"
   />
 
   <!-- Embedded Modes (extended/sidebar) -->
@@ -45,23 +32,15 @@
     :thinking-enabled="thinkingEnabled"
     :is-thinking="isThinking"
     :enable-voice-input="enableVoiceInput"
-    @send-message="handleSendMessage"
-    @quick-action="$emit('quick-action', $event)"
-    @create-topic="$emit('create-topic')"
-    @select-topic="$emit('select-topic', $event)"
-    @delete-topic="$emit('delete-topic', $event)"
-    @update-topic-title="(topicId, title) => $emit('update-topic-title', topicId, title)"
-    @edit="$emit('edit', $event)"
-    @copy="$emit('copy', $event)"
-    @refresh="$emit('refresh', $event)"
-    @delete="$emit('delete', $event)"
-    @toggle-theme="$emit('toggle-theme')"
-    @thinking-toggle="$emit('thinking-toggle', $event)"
-    @stop-generating="$emit('stop-generating')"
   />
 </template>
 
 <script setup lang="ts">
+/**
+ * AIChatPanel - Intermediate component that delegates to FloatingChatPanel or EmbeddedChatPanel.
+ * With the inject-primary pattern, action events no longer need to be forwarded through this layer.
+ * All data actions are handled via inject (topicActionsKey, chatActionsKey, uiActionsKey).
+ */
 import type { InteractionMode, Layout, ChatbotConfig, Message, Topic } from '@/types'
 
 // Components
@@ -98,28 +77,4 @@ withDefaults(defineProps<Props>(), {
   hideQuickActions: false,
   hideHeader: false,
 })
-
-// Emits
-interface Emits {
-  (e: 'create-topic'): void
-  (e: 'select-topic', topicId: string): void
-  (e: 'delete-topic', topicId: string): void
-  (e: 'update-topic-title', topicId: string, title: string): void
-  (e: 'send-message', data: { content: string; attachments?: import('@/types').Attachment[] }): void
-  (e: 'quick-action', text: string): void
-  (e: 'edit', message: Message): void
-  (e: 'copy', message: Message): void
-  (e: 'refresh', message: Message): void
-  (e: 'delete', message: Message): void
-  (e: 'toggle-theme'): void
-  (e: 'thinking-toggle', enabled: boolean): void
-  (e: 'stop-generating'): void
-}
-
-const emit = defineEmits<Emits>()
-
-// Handle send message
-const handleSendMessage = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {
-  emit('send-message', data)
-}
 </script>

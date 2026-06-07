@@ -1,13 +1,13 @@
 /**
  * Tests for TopicListView component
- * Covers: rendering, selection, batch mode, events, inject fallback
+ * Covers: rendering, selection, batch mode, inject actions, view navigation
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import TopicListView from '@/components/TopicListView.vue'
-import { topicActionsKey } from '@/symbols'
-import { createMockTopicActions } from '../utils/mockActions'
+import { topicActionsKey, uiActionsKey } from '@/symbols'
+import { createMockTopicActions, createMockUIActions } from '../utils/mockActions'
 
 const mockTopics = [
   { topicId: 't1', title: 'Topic 1', messageCount: 5, unreadCount: 0, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
@@ -16,6 +16,7 @@ const mockTopics = [
 ]
 
 const defaultTopicActions = createMockTopicActions()
+const defaultUIActions = createMockUIActions()
 
 function mountTopicListView(props: Record<string, any> = {}, provide: Record<string, any> = {}) {
   return mount(TopicListView, {
@@ -27,6 +28,7 @@ function mountTopicListView(props: Record<string, any> = {}, provide: Record<str
     global: {
       provide: {
         [topicActionsKey]: defaultTopicActions,
+        [uiActionsKey]: defaultUIActions,
         ...provide,
       },
       stubs: {
@@ -88,22 +90,29 @@ describe('TopicListView', () => {
     })
   })
 
-  describe('topic selection', () => {
-    it('should use injected topicActions.switchToTopic when clicking a topic', async () => {
+  describe('topic selection via inject', () => {
+    it('should call topicActions.switchToTopic when clicking a topic', async () => {
       const wrapper = mountTopicListView()
       const items = wrapper.findAll('.chatbot-topics__item')
       await items[1].trigger('click')
       expect(defaultTopicActions.switchToTopic).toHaveBeenCalledWith('t2')
     })
 
-    it('should emit select-topic as fallback when no inject available', async () => {
+    it('should call uiActions.showChatView when clicking a topic', async () => {
+      const wrapper = mountTopicListView()
+      const items = wrapper.findAll('.chatbot-topics__item')
+      await items[1].trigger('click')
+      expect(defaultUIActions.showChatView).toHaveBeenCalled()
+    })
+
+    it('should not call showChatView when no uiActions injected', async () => {
       const wrapper = mountTopicListView({}, {
-        [topicActionsKey as symbol]: null,
+        [uiActionsKey as symbol]: null,
       })
       const items = wrapper.findAll('.chatbot-topics__item')
       await items[1].trigger('click')
-      expect(wrapper.emitted('select-topic')).toBeTruthy()
-      expect(wrapper.emitted('select-topic')![0][0]).toBe('t2')
+      // No error thrown, topicActions still called
+      expect(defaultTopicActions.switchToTopic).toHaveBeenCalledWith('t2')
     })
   })
 
@@ -152,6 +161,16 @@ describe('TopicListView', () => {
       expect(mockRemove).toHaveBeenCalledWith('t2')
     })
 
+    it('should use topicActions.removeTopics for batch delete', async () => {
+      const mockRemoveTopics = vi.fn()
+      const wrapper = mountTopicListView({}, {
+        [topicActionsKey as symbol]: createMockTopicActions({ removeTopics: mockRemoveTopics }),
+      })
+      wrapper.vm.pendingDeleteIds = ['t1', 't2']
+      wrapper.vm.confirmDelete()
+      expect(mockRemoveTopics).toHaveBeenCalledWith(['t1', 't2'])
+    })
+
     it('should use topicActions.renameTopic when saving title', async () => {
       const mockRename = vi.fn()
       const wrapper = mountTopicListView({}, {
@@ -185,27 +204,6 @@ describe('TopicListView', () => {
       expect(mockRename).not.toHaveBeenCalled()
     })
 
-    it('should emit delete-topic when no inject (fallback)', async () => {
-      const wrapper = mountTopicListView({}, { [topicActionsKey as symbol]: null })
-      wrapper.vm.pendingDeleteIds = ['t2']
-      wrapper.vm.confirmDelete()
-      expect(wrapper.emitted('delete-topic')).toBeTruthy()
-    })
-
-    it('should emit update-topic-title when no inject (fallback)', async () => {
-      const wrapper = mountTopicListView({}, { [topicActionsKey as symbol]: null })
-      wrapper.vm.editingTopicId = 't1'
-      wrapper.vm.editingTitle = 'New Title'
-      wrapper.vm.saveTitle('t1')
-      expect(wrapper.emitted('update-topic-title')).toBeTruthy()
-    })
-
-    it('should emit create-topic when no inject (fallback)', async () => {
-      const wrapper = mountTopicListView({}, { [topicActionsKey as symbol]: null })
-      wrapper.vm.handleCreateTopic()
-      expect(wrapper.emitted('create-topic')).toBeTruthy()
-    })
-
     it('should use topicActions.createNewTopic when available', async () => {
       const mockCreate = vi.fn()
       const wrapper = mountTopicListView({}, {
@@ -224,14 +222,6 @@ describe('TopicListView', () => {
         await deleteBtn.trigger('click')
         expect(wrapper.vm.showDeleteDialog).toBe(true)
       }
-    })
-
-    it('should emit delete-topics for batch delete', async () => {
-      const wrapper = mountTopicListView()
-      wrapper.vm.pendingDeleteIds = ['t1', 't2']
-      wrapper.vm.confirmDelete()
-      expect(wrapper.emitted('delete-topics')).toBeTruthy()
-      expect(wrapper.emitted('delete-topics')![0][0]).toEqual(['t1', 't2'])
     })
   })
 

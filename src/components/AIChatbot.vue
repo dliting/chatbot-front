@@ -18,19 +18,6 @@
       :thinking-enabled="thinkingEnabled"
       :is-thinking="chatActions.isThinkingActive.value"
       :enable-voice-input="config.enableVoiceInput"
-      @send-message="chatActions.sendMessage"
-      @quick-action="(text: string) => chatActions.sendMessage({ content: text })"
-      @create-topic="topicActions.createNewTopic"
-      @select-topic="topicActions.switchToTopic"
-      @delete-topic="topicActions.removeTopic"
-      @update-topic-title="topicActions.renameTopic"
-      @edit="chatActions.editMessage"
-      @copy="() => {}"
-      @refresh="chatActions.refreshMessage"
-      @delete="chatActions.deleteMessage"
-      @toggle-theme="toggleTheme"
-      @thinking-toggle="thinkingEnabled = $event"
-      @stop-generating="chatActions.stopGenerating"
     />
 
     <!-- Sidebar/Dialog modes: wrapped in ChatPanel for window management -->
@@ -72,19 +59,6 @@
         :thinking-enabled="thinkingEnabled"
         :is-thinking="chatActions.isThinkingActive.value"
         :enable-voice-input="config.enableVoiceInput"
-        @send-message="chatActions.sendMessage"
-        @quick-action="(text: string) => chatActions.sendMessage({ content: text })"
-        @create-topic="topicActions.createNewTopic"
-        @select-topic="topicActions.switchToTopic"
-        @delete-topic="topicActions.removeTopic"
-        @update-topic-title="topicActions.renameTopic"
-        @edit="chatActions.editMessage"
-        @copy="() => {}"
-        @refresh="chatActions.refreshMessage"
-        @delete="chatActions.deleteMessage"
-        @toggle-theme="toggleTheme"
-        @thinking-toggle="thinkingEnabled = $event"
-        @stop-generating="chatActions.stopGenerating"
       />
     </ChatPanel>
   </div>
@@ -246,6 +220,7 @@ provide(topicActionsKey, {
   createNewTopic: topicActions.createNewTopic,
   switchToTopic: topicActions.switchToTopic,
   removeTopic: topicActions.removeTopic,
+  removeTopics: topicActions.removeTopics,
   renameTopic: topicActions.renameTopic,
 } satisfies TopicActionHandlers)
 

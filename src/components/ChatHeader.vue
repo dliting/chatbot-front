@@ -21,7 +21,7 @@
         v-if="showTopicsButton"
         class="chat-header__btn"
         :title="labels?.historyTooltip || 'History'"
-        @click="$emit('topics')"
+        @click="handleTopicsClick"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/>
@@ -87,18 +87,22 @@ withDefaults(defineProps<Props>(), {
 
 interface Emits {
   (e: 'back'): void
-  (e: 'topics'): void
-  (e: 'toggle-theme'): void
   (e: 'close'): void
 }
 
 const emit = defineEmits<Emits>()
 
-// Inject UI action handlers from AIChatbot (fallback to emit when not provided)
+// Inject UI action handlers — inject-primary: no emit fallback for data operations
 const uiActions = inject(uiActionsKey)
 
+// Inject-primary: theme toggle via inject, no emit
 const handleToggleTheme = () => {
-  if (uiActions) { uiActions.toggleTheme() } else { emit('toggle-theme') }
+  if (uiActions) { uiActions.toggleTheme() }
+}
+
+// Inject-primary: topics button navigates via inject, no emit
+const handleTopicsClick = () => {
+  if (uiActions) { uiActions.showTopicsView() }
 }
 </script>
 

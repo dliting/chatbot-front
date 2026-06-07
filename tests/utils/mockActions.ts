@@ -20,6 +20,7 @@ export function createMockTopicActions(overrides?: Partial<TopicActionHandlers>)
     createNewTopic: vi.fn(),
     switchToTopic: vi.fn(),
     removeTopic: vi.fn(),
+    removeTopics: vi.fn(),
     renameTopic: vi.fn(),
     ...overrides,
   }
@@ -30,6 +31,8 @@ export function createMockUIActions(overrides?: Partial<UIActionHandlers>): UIAc
     toggleTheme: vi.fn(),
     setThinkingEnabled: vi.fn(),
     thinkingEnabled: ref(false),
+    showChatView: vi.fn(),
+    showTopicsView: vi.fn(),
     ...overrides,
   }
 }

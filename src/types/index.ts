@@ -100,6 +100,8 @@ export interface ApiResponse<T = unknown> {
 }
 
 // Action handler interfaces for provide/inject
+// Architecture: inject-primary pattern — internal actions use inject, emits are external-only
+// See docs/design/component-communication-architecture.md
 export interface ChatActionHandlers {
   sendMessage: (data: { content: string; attachments?: Attachment[] }) => void
   refreshMessage: (message: Message) => void
@@ -114,6 +116,7 @@ export interface TopicActionHandlers {
   createNewTopic: () => void
   switchToTopic: (topicId: string) => void
   removeTopic: (topicId: string) => void
+  removeTopics: (topicIds: string[]) => void
   renameTopic: (topicId: string, title: string) => void
 }
 
@@ -121,6 +124,10 @@ export interface UIActionHandlers {
   toggleTheme: () => void
   setThinkingEnabled: (enabled: boolean) => void
   thinkingEnabled: { value: boolean }
+  /** Switch to chat view (only effective in single-layout modes: floating, sidebar) */
+  showChatView: () => void
+  /** Switch to topics view (only effective in single-layout modes: floating, sidebar) */
+  showTopicsView: () => void
 }
 
 // Upload result

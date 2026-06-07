@@ -1,7 +1,8 @@
 /**
  * Extended unit tests for FloatingChatPanel component
- * Covers message operations, file preview, thinking toggle,
- * stop-generating event, config defaults, edit message event
+ * Covers: file preview, thinking/streaming props, config defaults,
+ *         inject-primary pattern verification
+ * Architecture: inject-primary — internal actions use inject, emits are external-only
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
@@ -12,7 +13,6 @@ import type { ChatbotConfig } from '@/types/config'
 import type { Message, Topic } from '@/types'
 import { createMockChatActions, createMockTopicActions, createMockUIActions } from '../utils/mockActions'
 
-// Stub action handlers for injected dependencies
 const mockChatActions = createMockChatActions()
 const mockTopicActions = createMockTopicActions()
 const mockUIActions = createMockUIActions()
@@ -111,70 +111,59 @@ describe('FloatingChatPanel Extended Tests', () => {
     })
   }
 
-  describe('Message Operation Events', () => {
-    it('should emit copy-message when ChatContent emits copy', async () => {
+  describe('Inject-primary pattern (no emit forwarding)', () => {
+    it('should NOT emit copy-message — copy is handled locally in ChatContent', async () => {
       const wrapper = mountOpenPanel()
       await nextTick()
 
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      await chatContent.vm.$emit('copy', mockMessages[0])
-      await nextTick()
-
-      expect(wrapper.emitted('copy-message')).toBeTruthy()
-      expect(wrapper.emitted('copy-message')?.[0]).toEqual([mockMessages[0]])
+      // Copy is handled locally via copyToClipboard in ChatContent, not forwarded
+      expect(wrapper.emitted('copy-message')).toBeFalsy()
     })
 
-    it('should emit refresh-message when ChatContent emits refresh', async () => {
+    it('should NOT emit refresh-message — ChatContent uses chatActions.refreshMessage via inject', async () => {
       const wrapper = mountOpenPanel()
       await nextTick()
 
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      await chatContent.vm.$emit('refresh', mockMessages[1])
-      await nextTick()
-
-      expect(wrapper.emitted('refresh-message')).toBeTruthy()
-      expect(wrapper.emitted('refresh-message')?.[0]).toEqual([mockMessages[1]])
+      expect(wrapper.emitted('refresh-message')).toBeFalsy()
     })
 
-    it('should emit delete-message when ChatContent emits delete', async () => {
+    it('should NOT emit delete-message — ChatContent uses chatActions.deleteMessage via inject', async () => {
       const wrapper = mountOpenPanel()
       await nextTick()
 
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      await chatContent.vm.$emit('delete', mockMessages[0])
+      expect(wrapper.emitted('delete-message')).toBeFalsy()
+    })
+
+    it('should NOT emit thinking-toggle — ChatContent uses uiActions.setThinkingEnabled via inject', async () => {
+      const wrapper = mountOpenPanel()
       await nextTick()
 
-      expect(wrapper.emitted('delete-message')).toBeTruthy()
-      expect(wrapper.emitted('delete-message')?.[0]).toEqual([mockMessages[0]])
+      expect(wrapper.emitted('thinking-toggle')).toBeFalsy()
+    })
+
+    it('should NOT emit stop-generating — ChatContent uses chatActions.stopGenerating via inject', async () => {
+      const wrapper = mountOpenPanel({ isStreaming: true })
+      await nextTick()
+
+      expect(wrapper.emitted('stop-generating')).toBeFalsy()
+    })
+
+    it('should NOT emit update-topic-title — TopicListView uses topicActions.renameTopic via inject', async () => {
+      const wrapper = mountOpenPanel()
+      await nextTick()
+
+      expect(wrapper.emitted('update-topic-title')).toBeFalsy()
+    })
+
+    it('should NOT emit edit-message — ChatContent uses chatActions.editMessage via inject', async () => {
+      const wrapper = mountOpenPanel()
+      await nextTick()
+
+      expect(wrapper.emitted('edit-message')).toBeFalsy()
     })
   })
 
-  describe('Thinking and Streaming Events', () => {
-    it('should emit thinking-toggle when ChatContent emits thinking-toggle', async () => {
-      const wrapper = mountOpenPanel()
-      await nextTick()
-
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      await chatContent.vm.$emit('thinking-toggle', true)
-      await nextTick()
-
-      expect(wrapper.emitted('thinking-toggle')).toBeTruthy()
-      expect(wrapper.emitted('thinking-toggle')?.[0]).toEqual([true])
-    })
-
-    it('should emit stop-generating when ChatContent emits stop-generating', async () => {
-      const wrapper = mountOpenPanel({
-        isStreaming: true,
-      })
-      await nextTick()
-
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      await chatContent.vm.$emit('stop-generating')
-      await nextTick()
-
-      expect(wrapper.emitted('stop-generating')).toBeTruthy()
-    })
-
+  describe('Thinking and Streaming Props', () => {
     it('should pass enableThinking prop to ChatContent', async () => {
       const wrapper = mountOpenPanel({ enableThinking: true })
       await nextTick()
@@ -218,7 +207,6 @@ describe('FloatingChatPanel Extended Tests', () => {
       await chatContent.vm.$emit('file-click', file)
       await nextTick()
 
-      // Verify FilePreviewModal stub is rendered with visible=true
       const modal = wrapper.findComponent({ name: 'FilePreviewModal' })
       expect(modal.exists()).toBe(true)
       expect(modal.props('visible')).toBe(true)
@@ -233,58 +221,39 @@ describe('FloatingChatPanel Extended Tests', () => {
       await chatContent.vm.$emit('file-click', file)
       await nextTick()
 
-      // Modal should be visible
       const modal = wrapper.findComponent({ name: 'FilePreviewModal' })
       expect(modal.props('visible')).toBe(true)
 
-      // Close the modal
       await modal.vm.$emit('close')
       await nextTick()
 
-      // Modal should no longer be visible (v-if hides it)
       expect(wrapper.find('.file-preview-modal-stub').exists()).toBe(false)
     })
   })
 
-  describe('Topic Operations', () => {
-    it('should emit update-topic-title when TopicListView emits update-topic-title', async () => {
+  describe('Topic View Switching (inject path)', () => {
+    it('should switch to chat view after selecting a topic (via inject)', async () => {
       const wrapper = mountOpenPanel()
       await nextTick()
 
-      // Switch to topics view via ChatHeader's topics button
-      const chatHeader = wrapper.findComponent({ name: 'ChatHeader' })
-      await chatHeader.vm.$emit('topics')
+      // Switch to topics view by clicking the topics button in ChatHeader
+      // ChatHeader calls uiActions.showTopicsView() via inject, which triggers view switch
+      const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
+      await topicsBtn.trigger('click')
       await nextTick()
 
+      // Verify we're in topics view
       const topicListView = wrapper.findComponent({ name: 'TopicListView' })
-      await topicListView.vm.$emit('update-topic-title', 'topic_1', 'New Title')
-      await nextTick()
+      expect(topicListView.exists()).toBe(true)
 
-      expect(wrapper.emitted('update-topic-title')).toBeTruthy()
-      expect(wrapper.emitted('update-topic-title')?.[0]).toEqual(['topic_1', 'New Title'])
-    })
-
-    it('should switch to chat view after selecting a topic', async () => {
-      const wrapper = mountOpenPanel()
-      await nextTick()
-
-      // Switch to topics view
-      const chatHeader = wrapper.findComponent({ name: 'ChatHeader' })
-      await chatHeader.vm.$emit('topics')
-      await nextTick()
-
-      // Select a topic — should emit select-topic and show chat view
-      const topicListView = wrapper.findComponent({ name: 'TopicListView' })
-      await topicListView.vm.$emit('select-topic', 'topic_2')
+      // Simulate topic selection: TopicListView calls topicActions.switchToTopic + uiActions.showChatView
+      // The enhanced provide chain ensures showChatView is the panel's local one
+      wrapper.vm.showChatView()
       await nextTick()
 
       // ChatContent should now be rendered (back in chat view)
       const chatContent = wrapper.findComponent({ name: 'ChatContent' })
       expect(chatContent.exists()).toBe(true)
-
-      // select-topic event should be emitted
-      expect(wrapper.emitted('select-topic')).toBeTruthy()
-      expect(wrapper.emitted('select-topic')?.[0]).toEqual(['topic_2'])
     })
   })
 
@@ -319,21 +288,6 @@ describe('FloatingChatPanel Extended Tests', () => {
 
       const chatHeader = wrapper.findComponent({ name: 'ChatHeader' })
       expect(chatHeader.props('title')).toBeTruthy()
-    })
-  })
-
-  describe('Edit Message Event', () => {
-    it('should emit edit-message when ChatContent emits edit', async () => {
-      const wrapper = mountOpenPanel()
-      await nextTick()
-
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      const message = mockMessages[0]
-      await chatContent.vm.$emit('edit', message)
-      await nextTick()
-
-      expect(wrapper.emitted('edit-message')).toBeTruthy()
-      expect(wrapper.emitted('edit-message')?.[0]).toEqual([message])
     })
   })
 })

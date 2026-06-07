@@ -14,11 +14,6 @@
           :is-embedded="true"
           :layout="effectiveLayout"
           :enable-close="true"
-          @create-topic="$emit('create-topic')"
-          @select-topic="$emit('select-topic', $event)"
-          @delete-topic="$emit('delete-topic', $event)"
-          @delete-topics="$emit('delete-topics', $event)"
-          @update-topic-title="(topicId, title) => $emit('update-topic-title', topicId, title)"
           @close="$emit('close')"
         />
       </aside>
@@ -31,7 +26,6 @@
           :theme="config.theme || 'light'"
           :show-theme-toggle="true"
           :labels="config.labels"
-          @toggle-theme="$emit('toggle-theme')"
         />
         <ChatContent
           :messages="messages"
@@ -43,15 +37,7 @@
           :thinking-enabled="thinkingEnabled"
           :is-thinking="isThinking"
           :enable-voice-input="enableVoiceInput"
-          @send-message="handleSendMessage"
-          @quick-action="$emit('quick-action', $event)"
-          @edit="$emit('edit', $event)"
-          @copy="$emit('copy', $event)"
-          @refresh="$emit('refresh', $event)"
-          @delete="$emit('delete', $event)"
           @file-click="handleFileClick"
-          @thinking-toggle="$emit('thinking-toggle', $event)"
-          @stop-generating="$emit('stop-generating')"
         />
       </main>
     </template>
@@ -65,8 +51,6 @@
         :show-topics-button="true"
         :show-theme-toggle="true"
         :labels="config.labels"
-        @topics="showTopicsView"
-        @toggle-theme="$emit('toggle-theme')"
       />
       <ChatContent
         v-if="viewState.currentView === 'chat'"
@@ -80,15 +64,7 @@
         :thinking-enabled="thinkingEnabled"
         :is-thinking="isThinking"
         :enable-voice-input="enableVoiceInput"
-        @send-message="handleSendMessage"
-        @quick-action="$emit('quick-action', $event)"
-        @edit="$emit('edit', $event)"
-        @copy="$emit('copy', $event)"
-        @refresh="$emit('refresh', $event)"
-        @delete="$emit('delete', $event)"
         @file-click="handleFileClick"
-        @thinking-toggle="$emit('thinking-toggle', $event)"
-        @stop-generating="$emit('stop-generating')"
       />
       <TopicListView
         v-else
@@ -97,11 +73,6 @@
         :config="config"
         :layout="effectiveLayout"
         @close="showChatView"
-        @create-topic="$emit('create-topic')"
-        @select-topic="$emit('select-topic', $event)"
-        @delete-topic="$emit('delete-topic', $event)"
-        @delete-topics="$emit('delete-topics', $event)"
-        @update-topic-title="(topicId, title) => $emit('update-topic-title', topicId, title)"
       />
     </template>
 
@@ -116,11 +87,12 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { InteractionMode, Layout, ChatbotConfig } from '@/types'
+import { computed, ref, inject, provide } from 'vue'
+import type { InteractionMode, Layout, ChatbotConfig, UIActionHandlers } from '@/types'
 import { defaultChatbotConfig } from '@/types/config'
 import { modeToLayoutMap } from '@/types'
 import { useChatView } from '@/composables/useChatView'
+import { uiActionsKey } from '@/symbols'
 
 // Components
 import TopicListView from './TopicListView.vue'
@@ -158,23 +130,10 @@ const props = withDefaults(defineProps<Props>(), {
   hideHeader: false,
 })
 
-// Emits
+// Emits - reserved for external-facing events only
+// Internal actions are handled via inject (topicActionsKey, chatActionsKey, uiActionsKey)
 interface Emits {
-  (e: 'create-topic'): void
-  (e: 'select-topic', topicId: string): void
-  (e: 'delete-topic', topicId: string): void
-  (e: 'delete-topics', topicIds: string[]): void
-  (e: 'update-topic-title', topicId: string, title: string): void
-  (e: 'send-message', data: { content: string; attachments?: import('@/types').Attachment[] }): void
-  (e: 'quick-action', text: string): void
-  (e: 'edit', message: import('@/types').Message): void
-  (e: 'copy', message: import('@/types').Message): void
-  (e: 'refresh', message: import('@/types').Message): void
-  (e: 'delete', message: import('@/types').Message): void
-  (e: 'toggle-theme'): void
   (e: 'close'): void
-  (e: 'thinking-toggle', enabled: boolean): void
-  (e: 'stop-generating'): void
 }
 
 const emit = defineEmits<Emits>()
@@ -182,14 +141,9 @@ const emit = defineEmits<Emits>()
 // Preview state
 const previewFile = ref<{ type: string; url: string; name?: string } | null>(null)
 
-// Unified file click handler for all file types
+// File click handler for file preview
 const handleFileClick = (file: { type: string; url: string; name?: string }) => {
   previewFile.value = file
-}
-
-// Handle send message
-const handleSendMessage = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {
-  emit('send-message', data)
 }
 
 // Merge config
@@ -207,6 +161,16 @@ const effectiveLayout = computed(() => {
 
 // View state management using useChatView - pass mode as reactive ref
 const { viewState, showChatView, showTopicsView } = useChatView(computed(() => props.mode))
+
+// Inject parent UI actions and provide enhanced version with view navigation
+// Enhanced provide chain: panel adds showChatView/showTopicsView so child
+// components can navigate views via inject (inject-primary pattern)
+const parentUiActions = inject(uiActionsKey, null)
+provide(uiActionsKey, {
+  ...parentUiActions,
+  showChatView,
+  showTopicsView,
+} satisfies UIActionHandlers)
 
 // Container classes
 const containerClasses = computed(() => [

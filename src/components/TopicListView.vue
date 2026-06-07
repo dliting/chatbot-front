@@ -191,7 +191,7 @@
 import { ref, computed, nextTick, inject } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import type { Topic } from '@/types'
-import { topicActionsKey } from '@/symbols'
+import { topicActionsKey, uiActionsKey } from '@/symbols'
 import { formatTime, escapeHTML } from '@/utils/helpers'
 import TopicSearch from './TopicSearch.vue'
 import TopicActionMenu from './TopicActionMenu.vue'
@@ -252,23 +252,35 @@ const labels = computed(() => {
   }
 })
 
+/**
+ * Emits - reserved for external-facing events only
+ * Internal actions (create/switch/delete/rename) are handled via inject (topicActionsKey)
+ * View navigation is handled via inject (uiActionsKey)
+ */
 interface Emits {
+  /** Emitted when close button is clicked (external UI event, not a data action) */
   (e: 'close'): void
-  (e: 'create-topic'): void
-  (e: 'select-topic', topicId: string): void
-  (e: 'delete-topic', topicId: string): void
-  (e: 'delete-topics', topicIds: string[]): void
-  (e: 'update-topic-title', topicId: string, title: string): void
 }
 
 const emit = defineEmits<Emits>()
 
-// Inject topic action handlers from AIChatbot (fallback to emit when not provided)
+// Inject action handlers from AIChatbot
+// - topicActions: data operations (create/switch/delete/rename)
+// - uiActions: UI operations (showChatView/showTopicsView for view navigation)
 const topicActions = inject(topicActionsKey)
+const uiActions = inject(uiActionsKey)
 
-// Action handlers with inject/emit fallback
+/**
+ * Action handlers using inject-primary pattern:
+ * - Inject handles the actual operation (data mutation, view navigation)
+ * - Emit is reserved for external consumers only (e.g., close event)
+ * This eliminates the dual-path problem where inject and emit could get out of sync.
+ */
+
+// Create topic - uses inject for data operation
 const handleCreateTopic = () => {
-  if (topicActions) { topicActions.createNewTopic() } else { emit('create-topic') }
+  if (topicActions) { topicActions.createNewTopic() }
+  // No emit: action handled by inject, external consumers listen to AIChatbot's topic:created event
 }
 
 // Container classes for backward compatibility
@@ -352,12 +364,13 @@ const toggleSelection = (topicId: string) => {
   }
 }
 
-// Handle topic click
+// Handle topic click — inject-primary: both data switch and view navigation via inject
 const handleTopicClick = (topicId: string) => {
   if (isBatchMode.value) {
     toggleSelection(topicId)
   } else {
-    if (topicActions) { topicActions.switchToTopic(topicId) } else { emit('select-topic', topicId) }
+    if (topicActions) { topicActions.switchToTopic(topicId) }
+    if (uiActions) { uiActions.showChatView() }
   }
 }
 
@@ -378,9 +391,9 @@ const handleBatchDelete = () => {
 // Confirm delete
 const confirmDelete = () => {
   if (pendingDeleteIds.value.length === 1) {
-    if (topicActions) { topicActions.removeTopic(pendingDeleteIds.value[0]) } else { emit('delete-topic', pendingDeleteIds.value[0]) }
+    if (topicActions) { topicActions.removeTopic(pendingDeleteIds.value[0]) }
   } else {
-    emit('delete-topics', pendingDeleteIds.value)
+    if (topicActions) { topicActions.removeTopics(pendingDeleteIds.value) }
   }
   clearSelection()
   isBatchMode.value = false
@@ -420,7 +433,7 @@ const saveTitle = (topicId: string) => {
   const trimmedTitle = editingTitle.value.trim()
   const originalTopic = props.topics.find(t => t.topicId === topicId)
   if (trimmedTitle && originalTopic && trimmedTitle !== (originalTopic.title || '')) {
-    if (topicActions) { topicActions.renameTopic(topicId, trimmedTitle) } else { emit('update-topic-title', topicId, trimmedTitle) }
+    if (topicActions) { topicActions.renameTopic(topicId, trimmedTitle) }
   }
   cancelEdit()
 }
