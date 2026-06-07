@@ -5,6 +5,7 @@
  * Entry: examples/chatapp/frontend (port 5180, mock backend on port 3001)
  */
 import { test, expect } from '@playwright/test'
+import { cleanState } from './helpers'
 
 test.describe('Extended Mode - ChatApp', () => {
   test('should navigate to extended demo from landing page', async ({ page }) => {
@@ -12,7 +13,6 @@ test.describe('Extended Mode - ChatApp', () => {
 
     await expect(page.locator('h1')).toContainText('AI Chatbot')
 
-    // Click the extended mode card
     const extendedCard = page.locator('a[href="/extended"], .mode-card:has-text("扩展")')
     if (await extendedCard.isVisible()) {
       await extendedCard.click()
@@ -22,7 +22,6 @@ test.describe('Extended Mode - ChatApp', () => {
 
     await expect(page).toHaveURL(/\/extended/)
 
-    // Extended page shows sidebar with "历史话题" and chat area with "智能助手"
     await expect(page.getByRole('heading', { name: '历史话题' })).toBeVisible()
     await expect(page.locator('.chat-header__title')).toContainText('智能助手')
   })
@@ -30,7 +29,6 @@ test.describe('Extended Mode - ChatApp', () => {
   test('should show dual layout with session list and chat area', async ({ page }) => {
     await page.goto('/extended')
 
-    // Extended mode uses sidebar (complementary role) + main area
     const sidebar = page.getByRole('complementary')
     const main = page.locator('main')
     await expect(sidebar).toBeVisible({ timeout: 10000 })
@@ -50,6 +48,8 @@ test.describe('Extended Mode - ChatApp', () => {
       if (msg.type() === 'error') errors.push(msg.text())
     })
 
+    await page.goto('/')
+    await cleanState(page)
     await page.goto('/extended')
     await page.waitForTimeout(3000)
 
