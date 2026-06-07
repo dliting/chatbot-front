@@ -633,6 +633,7 @@ interface FloatingModeConfig {
 ### Design Documents
 Detailed design documents are available in the [`design/`](./design/) directory:
 
+- [Component Communication Architecture](./design/component-communication-architecture.md) — inject-primary pattern for internal actions, emit for external events
 - [Session List Enhancement Design](./design/session-list-enhancement.md)
 
 ### Feature Documents
