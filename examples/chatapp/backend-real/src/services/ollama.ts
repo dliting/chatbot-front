@@ -1,16 +1,12 @@
 import type { ChatMessage } from '../types'
-
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'qwen3.5:9b'
-const OLLAMA_THINKING_ENABLED = process.env.OLLAMA_THINKING_ENABLED !== 'false'
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY || ''
+import { OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_THINKING_ENABLED, OPENAI_API_KEY } from '../config'
 
 export interface OllamaMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
   images?: string[]
-  videos?: string[]  // 新增
-  audios?: string[]  // 新增
+  videos?: string[]
+  audios?: string[]
 }
 
 // Convert OllamaMessage format to OpenAI format
@@ -110,6 +106,13 @@ export async function* streamChat(
   messages: OllamaMessage[],
   options?: OllamaChatOptions
 ): AsyncGenerator<ChatMessage, void, unknown> {
+  if (!OLLAMA_BASE_URL) {
+    throw new Error('OLLAMA_BASE_URL is not configured. Set it in real.env or environment variables.')
+  }
+  if (!OLLAMA_MODEL) {
+    throw new Error('OLLAMA_MODEL is not configured. Set it in real.env or environment variables.')
+  }
+
   const url = buildChatUrl()
 
   // Convert messages to OpenAI format
@@ -181,6 +184,13 @@ export async function* streamChat(
 }
 
 export async function chat(messages: OllamaMessage[]): Promise<string> {
+  if (!OLLAMA_BASE_URL) {
+    throw new Error('OLLAMA_BASE_URL is not configured. Set it in real.env or environment variables.')
+  }
+  if (!OLLAMA_MODEL) {
+    throw new Error('OLLAMA_MODEL is not configured. Set it in real.env or environment variables.')
+  }
+
   const url = buildChatUrl()
 
   // Convert messages to OpenAI format

@@ -1,11 +1,12 @@
-import 'dotenv/config'
 import express from 'express'
 import { corsMiddleware } from './middleware/cors'
 import chatRoutes from './routes/chat'
 import { initDatabase } from './services/database'
+// config.ts loads env and validates HOST/PORT before anything else
+import './config'
 
-const HOST = process.env.HOST || 'localhost'
-const PORT = process.env.PORT || 3000
+import { HOST, PORT } from './config'
+
 const app = express()
 
 // Middleware

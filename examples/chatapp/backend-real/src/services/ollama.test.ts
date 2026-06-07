@@ -1,5 +1,15 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, vi, beforeAll, afterEach } from 'vitest'
 import type { ReadableStream } from 'stream'
+
+// Mock config module to avoid loading real.env file
+vi.mock('../config', () => ({
+  HOST: 'localhost',
+  PORT: 3000,
+  OLLAMA_BASE_URL: 'http://localhost:11434',
+  OLLAMA_MODEL: 'test-model',
+  OLLAMA_THINKING_ENABLED: true,
+  OPENAI_API_KEY: '',
+}))
 
 // Mock fetch
 global.fetch = vi.fn()
@@ -254,6 +264,52 @@ describe('ollama service', () => {
       const callArgs = vi.mocked(fetch).mock.calls[0]
       const body = JSON.parse(callArgs[1]?.body as string)
       expect(body.enable_thinking).toBe(false)
+    })
+  })
+
+  describe('missing configuration', () => {
+    it('should throw error when OLLAMA_BASE_URL is not configured', async () => {
+      vi.doMock('../config', () => ({
+        HOST: 'localhost',
+        PORT: 3000,
+        OLLAMA_BASE_URL: '',
+        OLLAMA_MODEL: 'test-model',
+        OLLAMA_THINKING_ENABLED: true,
+        OPENAI_API_KEY: '',
+      }))
+      vi.resetModules()
+
+      const { streamChat: freshStreamChat } = await import('./ollama')
+      const messages = [{ role: 'user' as const, content: 'Hello' }]
+
+      await expect(async () => {
+        const gen = freshStreamChat(messages)
+        for await (const _ of gen) { /* consume */ }
+      }).rejects.toThrow('OLLAMA_BASE_URL is not configured')
+
+      vi.doUnmock('../config')
+    })
+
+    it('should throw error when OLLAMA_MODEL is not configured', async () => {
+      vi.doMock('../config', () => ({
+        HOST: 'localhost',
+        PORT: 3000,
+        OLLAMA_BASE_URL: 'http://localhost:11434',
+        OLLAMA_MODEL: '',
+        OLLAMA_THINKING_ENABLED: true,
+        OPENAI_API_KEY: '',
+      }))
+      vi.resetModules()
+
+      const { streamChat: freshStreamChat } = await import('./ollama')
+      const messages = [{ role: 'user' as const, content: 'Hello' }]
+
+      await expect(async () => {
+        const gen = freshStreamChat(messages)
+        for await (const _ of gen) { /* consume */ }
+      }).rejects.toThrow('OLLAMA_MODEL is not configured')
+
+      vi.doUnmock('../config')
     })
   })
 })

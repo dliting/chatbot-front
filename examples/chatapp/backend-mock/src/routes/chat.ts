@@ -10,6 +10,7 @@ import {
   deleteMessage
 } from '../services/database'
 import { streamMockChat, mockChat } from '../services/mockChat'
+import { HOST, PORT } from '../config'
 import type { ApiResponse } from '../types'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -138,8 +139,6 @@ router.post('/chat/message', async (req: Request, res: Response) => {
 
 // POST /upload/images - Upload images (mock)
 router.post('/upload/images', (_req: Request, res: Response) => {
-  const HOST = process.env.HOST || 'localhost'
-  const PORT = process.env.PORT || 3001
   const urls = [`http://${HOST}:${PORT}/uploads/${uuidv4()}.jpg`]
 
   const apiResponse: ApiResponse = {

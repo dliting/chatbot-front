@@ -123,7 +123,7 @@ rem Create frontend .env (no longer needs VITE_API_BASE_URL — proxy is in vite
 
 rem Start frontend
 echo Starting frontend...
-start "ChatApp Frontend" cmd /k "cd /d "%CHATAPP_DIR%" && echo Frontend running on http://localhost:5180 && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
+start "ChatApp Frontend" cmd /k "cd /d "%CHATAPP_DIR%" && set MOCK_PORT=%MOCK_PORT% && set REAL_PORT=%REAL_PORT% && echo Frontend running on http://localhost:5180 && echo. && echo Press Ctrl+C to stop. && echo. && npm run dev"
 
 echo.
 echo === ChatApp Started ===

@@ -95,14 +95,14 @@ export default defineConfig({
     },
     proxy: {
       '/api/mock': {
-        target: 'http://localhost:3001',
+        target: `http://localhost:${process.env.MOCK_PORT || '3001'}`,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/mock/, ''),
         selfResponding: false,
         configure: createProxyErrorHandler('Mock'),
       },
       '/api/real': {
-        target: 'http://localhost:3000',
+        target: `http://localhost:${process.env.REAL_PORT || '3000'}`,
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/real/, ''),
         selfResponding: false,

@@ -26,8 +26,8 @@ function getMockResponse(input: string): string {
 3. **代码示例**：
 \`\`\`javascript
 const response = await ai.chat({
-  model: 'qwen3.5:9b',
-  messages: [{ role: 'user', content: '${input}' }]
+  model: '<your-configured-model>',
+  messages: [{ role: 'user', content: '<user-input>' }]
 });
 console.log(response);
 **功能说明**：
