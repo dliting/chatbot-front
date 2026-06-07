@@ -62,8 +62,7 @@ examples/chatapp/backend-real/data/*.db
 
 # Test screenshots and artifacts
 tests/screenshots/
-tests/e2e/results/screenshots/
-tests/e2e/results/artifacts/
+tests/e2e/results/
 
 # Runtime temp files
 scripts/chatapp.pid
