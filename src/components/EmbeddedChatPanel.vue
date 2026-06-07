@@ -236,7 +236,7 @@ const containerClasses = computed(() => [
     --text-primary: #e5e5e5;
   }
 
-  // Extended mode
+  // Extended mode (dual layout)
   &--extended {
     display: flex;
     flex-direction: row;
@@ -244,17 +244,7 @@ const containerClasses = computed(() => [
     height: 100vh;
   }
 
-  // Dual layout (same as extended)
-  &--dual {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
-    height: 100vh;
-  }
-
-  // Single layout / compact mode / floating / sidebar
-  &--single,
-  &--compact,
+  // Floating / sidebar (single layout)
   &--floating,
   &--sidebar {
     width: 100%;
