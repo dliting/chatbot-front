@@ -10,7 +10,7 @@ import EmbeddedChatPanel from '@/components/EmbeddedChatPanel.vue'
 import TopicListView from '@/components/TopicListView.vue'
 import ChatHeader from '@/components/ChatHeader.vue'
 import ChatContent from '@/components/ChatContent.vue'
-import type { ChatMode, Layout, ChatbotConfig } from '@/types'
+import type { InteractionMode, Layout, ChatbotConfig } from '@/types'
 import type { Message, Topic } from '@/types'
 
 // Mock child components

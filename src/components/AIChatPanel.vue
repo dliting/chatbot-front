@@ -62,14 +62,14 @@
 </template>
 
 <script setup lang="ts">
-import type { ChatMode, Layout, ChatbotConfig, Message, Topic } from '@/types'
+import type { InteractionMode, Layout, ChatbotConfig, Message, Topic } from '@/types'
 
 // Components
 import FloatingChatPanel from './FloatingChatPanel.vue'
 import EmbeddedChatPanel from './EmbeddedChatPanel.vue'
 
 interface Props {
-  mode?: ChatMode
+  mode?: InteractionMode
   layout?: Layout
   config?: ChatbotConfig
   apiClient?: ReturnType<typeof import('@/composables/useApiClient')['useApiClient']>

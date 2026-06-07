@@ -2,8 +2,8 @@
   <div class="ai-chatbot" :data-theme="resolvedTheme">
     <!-- Self-contained modes (floating/extended): AIChatPanel manages its own layout/window -->
     <AIChatPanel
-      v-if="chatMode === 'floating' || chatMode === 'extended'"
-      :mode="chatMode"
+      v-if="config.mode === 'floating' || config.mode === 'extended'"
+      :mode="config.mode"
       :layout="layout"
       :config="themedConfig"
       :messages="currentMessages"
@@ -55,7 +55,7 @@
       @toggle-theme="toggleTheme"
     >
       <AIChatPanel
-        :mode="chatMode"
+        :mode="config.mode"
         :layout="layout"
         :panel-open="state.ui.isPanelOpen"
         :messages="currentMessages"
@@ -250,17 +250,6 @@ provide(topicActionsKey, {
 } satisfies TopicActionHandlers)
 
 // Computed
-const chatMode = computed(() => {
-  if (config.value.mode === 'extended') return 'extended'
-  if (config.value.mode === 'sidebar') return 'single'
-  if (config.value.mode === 'floating') return 'floating'
-
-  const panelMode = state.ui.panelMode
-  if (panelMode === 'floating') return 'floating'
-  if (panelMode === 'sidebar') return 'extended'
-  return 'internal'
-})
-
 const layout = computed(() => {
   const mode = config.value.mode
   if (mode === 'floating' || mode === 'sidebar' || mode === 'extended') {

@@ -117,8 +117,9 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { ChatMode, Layout, ChatbotConfig } from '@/types'
+import type { InteractionMode, Layout, ChatbotConfig } from '@/types'
 import { defaultChatbotConfig } from '@/types/config'
+import { modeToLayoutMap } from '@/types'
 import { useChatView } from '@/composables/useChatView'
 
 // Components
@@ -128,7 +129,7 @@ import ChatContent from './ChatContent.vue'
 import FilePreviewModal from './FilePreviewModal.vue'
 
 interface Props {
-  mode?: ChatMode
+  mode?: InteractionMode
   layout?: Layout
   config?: ChatbotConfig
   messages?: import('@/types').Message[]
@@ -145,7 +146,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  mode: 'floating',
+  mode: 'extended',
   layout: undefined,
   config: () => ({}),
   messages: () => [],
@@ -201,10 +202,7 @@ const configRef = computed(() => {
 // Effective layout - use prop if provided, otherwise derive from mode
 const effectiveLayout = computed(() => {
   if (props.layout) return props.layout
-  // Derive layout from mode if not explicitly provided
-  if (props.mode === 'extended') return 'dual'
-  if (props.mode === 'floating') return 'single'
-  return 'single'
+  return modeToLayoutMap[props.mode ?? 'extended']
 })
 
 // View state management using useChatView - pass mode as reactive ref

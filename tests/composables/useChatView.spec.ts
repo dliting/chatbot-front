@@ -5,12 +5,12 @@
 import { describe, it, expect } from 'vitest'
 import { ref, computed } from 'vue'
 import { useChatView } from '@/composables/useChatView'
-import type { ChatMode } from '@/types'
+import type { InteractionMode } from '@/types'
 
 describe('useChatView Composable', () => {
   describe('Extended mode (dual layout)', () => {
     it('should show topic sidebar in extended mode', () => {
-      const mode: ChatMode = 'extended'
+      const mode: InteractionMode = 'extended'
       const { showTopicSidebar, useViewNavigation, viewState } = useChatView(mode)
 
       expect(showTopicSidebar.value).toBe(true)
@@ -19,7 +19,7 @@ describe('useChatView Composable', () => {
     })
 
     it('should not change view in extended mode when showChatView is called', () => {
-      const mode: ChatMode = 'extended'
+      const mode: InteractionMode = 'extended'
       const { showChatView, viewState } = useChatView(mode)
 
       showChatView()
@@ -28,7 +28,7 @@ describe('useChatView Composable', () => {
     })
 
     it('should not change view in extended mode when showTopicsView is called', () => {
-      const mode: ChatMode = 'extended'
+      const mode: InteractionMode = 'extended'
       const { showTopicsView, viewState } = useChatView(mode)
 
       showTopicsView()
@@ -37,7 +37,7 @@ describe('useChatView Composable', () => {
     })
 
     it('should not toggle view in extended mode', () => {
-      const mode: ChatMode = 'extended'
+      const mode: InteractionMode = 'extended'
       const { toggleView, viewState } = useChatView(mode)
 
       toggleView()
@@ -48,7 +48,7 @@ describe('useChatView Composable', () => {
 
   describe('Floating mode (single layout)', () => {
     it('should not show topic sidebar in floating mode', () => {
-      const mode: ChatMode = 'floating'
+      const mode: InteractionMode = 'floating'
       const { showTopicSidebar, useViewNavigation } = useChatView(mode)
 
       expect(showTopicSidebar.value).toBe(false)
@@ -56,7 +56,7 @@ describe('useChatView Composable', () => {
     })
 
     it('should change to chat view when showChatView is called', () => {
-      const mode: ChatMode = 'floating'
+      const mode: InteractionMode = 'floating'
       const { showChatView, showTopicsView, viewState } = useChatView(mode)
 
       // First switch to topics view
@@ -69,7 +69,7 @@ describe('useChatView Composable', () => {
     })
 
     it('should change to topics view when showTopicsView is called', () => {
-      const mode: ChatMode = 'floating'
+      const mode: InteractionMode = 'floating'
       const { showTopicsView, viewState } = useChatView(mode)
 
       showTopicsView()
@@ -77,7 +77,7 @@ describe('useChatView Composable', () => {
     })
 
     it('should toggle view when toggleView is called', () => {
-      const mode: ChatMode = 'floating'
+      const mode: InteractionMode = 'floating'
       const { toggleView, viewState } = useChatView(mode)
 
       // Initially chat view
@@ -95,7 +95,7 @@ describe('useChatView Composable', () => {
 
   describe('Sidebar mode (single layout)', () => {
     it('should not show topic sidebar in sidebar mode', () => {
-      const mode: ChatMode = 'sidebar'
+      const mode: InteractionMode = 'sidebar'
       const { showTopicSidebar, useViewNavigation } = useChatView(mode)
 
       expect(showTopicSidebar.value).toBe(false)
@@ -103,7 +103,7 @@ describe('useChatView Composable', () => {
     })
 
     it('should toggle view in sidebar mode', () => {
-      const mode: ChatMode = 'sidebar'
+      const mode: InteractionMode = 'sidebar'
       const { toggleView, viewState } = useChatView(mode)
 
       expect(viewState.value.currentView).toBe('chat')
@@ -113,22 +113,9 @@ describe('useChatView Composable', () => {
     })
   })
 
-  describe('Fullscreen mode (single layout)', () => {
-    it('should handle fullscreen mode correctly', () => {
-      const mode: ChatMode = 'fullscreen'
-      const { showTopicSidebar, useViewNavigation, toggleView, viewState } = useChatView(mode)
-
-      expect(showTopicSidebar.value).toBe(false)
-      expect(useViewNavigation.value).toBe(true)
-
-      toggleView()
-      expect(viewState.value.currentView).toBe('topics')
-    })
-  })
-
   describe('Reactive mode parameter (MaybeRef)', () => {
     it('should react to mode changes when mode is a ref', () => {
-      const mode = ref<ChatMode>('floating')
+      const mode = ref<InteractionMode>('floating')
       const { showTopicSidebar, useViewNavigation } = useChatView(mode)
       expect(showTopicSidebar.value).toBe(false)
       expect(useViewNavigation.value).toBe(true)
@@ -139,7 +126,7 @@ describe('useChatView Composable', () => {
     })
 
     it('should react to mode changes when mode is a computed', () => {
-      const source = ref<ChatMode>('floating')
+      const source = ref<InteractionMode>('floating')
       const mode = computed(() => source.value)
       const { showTopicSidebar } = useChatView(mode)
       expect(showTopicSidebar.value).toBe(false)

@@ -1,5 +1,5 @@
 import { ref, computed, type Ref, unref } from 'vue'
-import type { ChatMode } from '@/types'
+import type { InteractionMode } from '@/types'
 
 export interface ChatViewState {
   currentView: 'chat' | 'topics'
@@ -7,7 +7,7 @@ export interface ChatViewState {
 
 type MaybeRef<T> = T | Ref<T>
 
-export function useChatView(mode: MaybeRef<ChatMode>) {
+export function useChatView(mode: MaybeRef<InteractionMode>) {
   const currentMode = computed(() => unref(mode))
 
   // View state (only used for non-extended modes)

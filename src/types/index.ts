@@ -47,11 +47,10 @@ export interface Topic {
 // Position Types
 export type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 export type PanelMode = 'sidebar' | 'dialog' | 'fullscreen' | 'auto'
-export type ChatMode = 'extended' | 'floating' | 'fullscreen' | 'single' | 'dual'
 export type Theme = 'light' | 'dark' | 'system'
 export type Locale = 'zh-CN' | 'en-US'
 
-// Interaction Mode Types (new dual-dimension architecture)
+// Interaction Mode Types (dual-dimension architecture)
 export type InteractionMode = 'floating' | 'extended' | 'sidebar'
 export type Layout = 'dual' | 'single'
 
