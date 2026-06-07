@@ -3,6 +3,7 @@
  * Tests view state management for single layout mode
  */
 import { describe, it, expect } from 'vitest'
+import { ref, computed } from 'vue'
 import { useChatView } from '@/composables/useChatView'
 import type { ChatMode } from '@/types'
 
@@ -122,6 +123,29 @@ describe('useChatView Composable', () => {
 
       toggleView()
       expect(viewState.value.currentView).toBe('topics')
+    })
+  })
+
+  describe('Reactive mode parameter (MaybeRef)', () => {
+    it('should react to mode changes when mode is a ref', () => {
+      const mode = ref<ChatMode>('floating')
+      const { showTopicSidebar, useViewNavigation } = useChatView(mode)
+      expect(showTopicSidebar.value).toBe(false)
+      expect(useViewNavigation.value).toBe(true)
+
+      mode.value = 'extended'
+      expect(showTopicSidebar.value).toBe(true)
+      expect(useViewNavigation.value).toBe(false)
+    })
+
+    it('should react to mode changes when mode is a computed', () => {
+      const source = ref<ChatMode>('floating')
+      const mode = computed(() => source.value)
+      const { showTopicSidebar } = useChatView(mode)
+      expect(showTopicSidebar.value).toBe(false)
+
+      source.value = 'extended'
+      expect(showTopicSidebar.value).toBe(true)
     })
   })
 })

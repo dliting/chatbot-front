@@ -1,11 +1,27 @@
-/**
- * Unit tests for AIChatPanel component
- */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import AIChatPanel from '@/components/AIChatPanel.vue'
+import { chatActionsKey, topicActionsKey, uiActionsKey } from '@/symbols'
 import type { ChatbotConfig, Message, Topic } from '@/types'
+import { createMockChatActions, createMockTopicActions, createMockUIActions } from '../utils/mockActions'
+
+const mockChatActions = createMockChatActions()
+const mockTopicActions = createMockTopicActions()
+const mockUIActions = createMockUIActions()
+
+function mountPanel(props: Record<string, unknown>) {
+  return mount(AIChatPanel, {
+    props,
+    global: {
+      provide: {
+        [chatActionsKey]: mockChatActions,
+        [topicActionsKey]: mockTopicActions,
+        [uiActionsKey]: mockUIActions,
+      },
+    },
+  })
+}
 
 describe('AIChatPanel', () => {
   // Mock data
@@ -70,14 +86,12 @@ describe('AIChatPanel', () => {
 
   describe('Component Rendering', () => {
     it('should render FloatingChatPanel in floating mode', () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -87,14 +101,12 @@ describe('AIChatPanel', () => {
     })
 
     it('should render EmbeddedChatPanel in extended mode', () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'extended',
-        },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -104,14 +116,12 @@ describe('AIChatPanel', () => {
     })
 
     it('should render EmbeddedChatPanel in sidebar mode', () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'sidebar',
-        },
       })
 
       expect(wrapper.exists()).toBe(true)
@@ -122,14 +132,12 @@ describe('AIChatPanel', () => {
 
   describe('Props Passing', () => {
     it('should pass config to FloatingChatPanel', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       await nextTick()
@@ -139,14 +147,12 @@ describe('AIChatPanel', () => {
     })
 
     it('should pass messages to FloatingChatPanel', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       await nextTick()
@@ -156,14 +162,12 @@ describe('AIChatPanel', () => {
     })
 
     it('should pass sessions to FloatingChatPanel', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       await nextTick()
@@ -173,15 +177,13 @@ describe('AIChatPanel', () => {
     })
 
     it('should pass isStreaming to FloatingChatPanel', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
           isStreaming: true,
-        },
       })
 
       await nextTick()
@@ -193,14 +195,12 @@ describe('AIChatPanel', () => {
 
   describe('Event Emission', () => {
     it('should emit send-message event', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
@@ -210,14 +210,12 @@ describe('AIChatPanel', () => {
     })
 
     it('should emit quick-action event', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
@@ -227,14 +225,12 @@ describe('AIChatPanel', () => {
     })
 
     it('should emit create-topic event', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
@@ -244,14 +240,12 @@ describe('AIChatPanel', () => {
     })
 
     it('should emit select-topic event', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
@@ -261,14 +255,12 @@ describe('AIChatPanel', () => {
     })
 
     it('should emit delete-topic event', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
@@ -278,14 +270,12 @@ describe('AIChatPanel', () => {
     })
 
     it('should emit edit event', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
@@ -296,14 +286,12 @@ describe('AIChatPanel', () => {
     })
 
     it('should emit toggle-theme event', async () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           mode: 'floating',
-        },
       })
 
       const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
@@ -315,13 +303,11 @@ describe('AIChatPanel', () => {
 
   describe('Default Props', () => {
     it('should use floating mode by default', () => {
-      const wrapper = mount(AIChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
-        },
       })
 
       const floatingChatPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })

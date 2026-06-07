@@ -7,12 +7,15 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import TopicListView from '@/components/TopicListView.vue'
 import { topicActionsKey } from '@/symbols'
+import { createMockTopicActions } from '../utils/mockActions'
 
 const mockTopics = [
   { topicId: 't1', title: 'Topic 1', messageCount: 5, unreadCount: 0, createdAt: '2024-01-01', updatedAt: '2024-01-01' },
   { topicId: 't2', title: 'Topic 2', messageCount: 3, unreadCount: 1, createdAt: '2024-01-02', updatedAt: '2024-01-02' },
   { topicId: 't3', title: 'Topic 3', messageCount: 0, unreadCount: 2, createdAt: '2024-01-03', updatedAt: '2024-01-03' },
 ]
+
+const defaultTopicActions = createMockTopicActions()
 
 function mountTopicListView(props: Record<string, any> = {}, provide: Record<string, any> = {}) {
   return mount(TopicListView, {
@@ -22,7 +25,10 @@ function mountTopicListView(props: Record<string, any> = {}, provide: Record<str
       ...props,
     },
     global: {
-      provide,
+      provide: {
+        [topicActionsKey]: defaultTopicActions,
+        ...provide,
+      },
       stubs: {
         TopicSearch: { template: '<input class="topic-search-mock" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />', props: ['modelValue', 'placeholder'], emits: ['update:modelValue'] },
         TopicActionMenu: { template: '<div class="action-menu-mock"><slot /></div>' },
@@ -83,22 +89,21 @@ describe('TopicListView', () => {
   })
 
   describe('topic selection', () => {
-    it('should emit select-topic when clicking a topic', async () => {
+    it('should use injected topicActions.switchToTopic when clicking a topic', async () => {
       const wrapper = mountTopicListView()
+      const items = wrapper.findAll('.chatbot-topics__item')
+      await items[1].trigger('click')
+      expect(defaultTopicActions.switchToTopic).toHaveBeenCalledWith('t2')
+    })
+
+    it('should emit select-topic as fallback when no inject available', async () => {
+      const wrapper = mountTopicListView({}, {
+        [topicActionsKey as symbol]: null,
+      })
       const items = wrapper.findAll('.chatbot-topics__item')
       await items[1].trigger('click')
       expect(wrapper.emitted('select-topic')).toBeTruthy()
       expect(wrapper.emitted('select-topic')![0][0]).toBe('t2')
-    })
-
-    it('should use injected topicActions.switchToTopic when available', async () => {
-      const mockSwitch = vi.fn()
-      const wrapper = mountTopicListView({}, {
-        [topicActionsKey as symbol]: { switchToTopic: mockSwitch },
-      })
-      const items = wrapper.findAll('.chatbot-topics__item')
-      await items[1].trigger('click')
-      expect(mockSwitch).toHaveBeenCalledWith('t2')
     })
   })
 
@@ -140,7 +145,7 @@ describe('TopicListView', () => {
     it('should use topicActions.removeTopic for single delete', async () => {
       const mockRemove = vi.fn()
       const wrapper = mountTopicListView({}, {
-        [topicActionsKey as symbol]: { removeTopic: mockRemove, renameTopic: vi.fn(), createNewTopic: vi.fn(), switchToTopic: vi.fn() },
+        [topicActionsKey as symbol]: createMockTopicActions({ removeTopic: mockRemove }),
       })
       wrapper.vm.pendingDeleteIds = ['t2']
       wrapper.vm.confirmDelete()
@@ -150,7 +155,7 @@ describe('TopicListView', () => {
     it('should use topicActions.renameTopic when saving title', async () => {
       const mockRename = vi.fn()
       const wrapper = mountTopicListView({}, {
-        [topicActionsKey as symbol]: { removeTopic: vi.fn(), renameTopic: mockRename, createNewTopic: vi.fn(), switchToTopic: vi.fn() },
+        [topicActionsKey as symbol]: createMockTopicActions({ renameTopic: mockRename }),
       })
       wrapper.vm.editingTopicId = 't1'
       wrapper.vm.editingTitle = 'New Title'
@@ -161,7 +166,7 @@ describe('TopicListView', () => {
     it('should not rename when title is unchanged', async () => {
       const mockRename = vi.fn()
       const wrapper = mountTopicListView({}, {
-        [topicActionsKey as symbol]: { removeTopic: vi.fn(), renameTopic: mockRename, createNewTopic: vi.fn(), switchToTopic: vi.fn() },
+        [topicActionsKey as symbol]: createMockTopicActions({ renameTopic: mockRename }),
       })
       wrapper.vm.editingTopicId = 't1'
       wrapper.vm.editingTitle = 'Topic 1'
@@ -172,7 +177,7 @@ describe('TopicListView', () => {
     it('should not rename when title is empty', async () => {
       const mockRename = vi.fn()
       const wrapper = mountTopicListView({}, {
-        [topicActionsKey as symbol]: { removeTopic: vi.fn(), renameTopic: mockRename, createNewTopic: vi.fn(), switchToTopic: vi.fn() },
+        [topicActionsKey as symbol]: createMockTopicActions({ renameTopic: mockRename }),
       })
       wrapper.vm.editingTopicId = 't1'
       wrapper.vm.editingTitle = '   '
@@ -181,14 +186,14 @@ describe('TopicListView', () => {
     })
 
     it('should emit delete-topic when no inject (fallback)', async () => {
-      const wrapper = mountTopicListView()
+      const wrapper = mountTopicListView({}, { [topicActionsKey as symbol]: null })
       wrapper.vm.pendingDeleteIds = ['t2']
       wrapper.vm.confirmDelete()
       expect(wrapper.emitted('delete-topic')).toBeTruthy()
     })
 
     it('should emit update-topic-title when no inject (fallback)', async () => {
-      const wrapper = mountTopicListView()
+      const wrapper = mountTopicListView({}, { [topicActionsKey as symbol]: null })
       wrapper.vm.editingTopicId = 't1'
       wrapper.vm.editingTitle = 'New Title'
       wrapper.vm.saveTitle('t1')
@@ -196,7 +201,7 @@ describe('TopicListView', () => {
     })
 
     it('should emit create-topic when no inject (fallback)', async () => {
-      const wrapper = mountTopicListView()
+      const wrapper = mountTopicListView({}, { [topicActionsKey as symbol]: null })
       wrapper.vm.handleCreateTopic()
       expect(wrapper.emitted('create-topic')).toBeTruthy()
     })
@@ -204,7 +209,7 @@ describe('TopicListView', () => {
     it('should use topicActions.createNewTopic when available', async () => {
       const mockCreate = vi.fn()
       const wrapper = mountTopicListView({}, {
-        [topicActionsKey as symbol]: { createNewTopic: mockCreate, removeTopic: vi.fn(), renameTopic: vi.fn(), switchToTopic: vi.fn() },
+        [topicActionsKey as symbol]: createMockTopicActions({ createNewTopic: mockCreate }),
       })
       wrapper.vm.handleCreateTopic()
       expect(mockCreate).toHaveBeenCalled()

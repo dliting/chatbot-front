@@ -7,6 +7,7 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import ChatContent from '@/components/ChatContent.vue'
 import { chatActionsKey, uiActionsKey } from '@/symbols'
+import { createMockChatActions, createMockUIActions } from '../utils/mockActions'
 
 // Mock ChatInput to avoid complex dependencies
 vi.mock('@/components/ChatInput.vue', () => ({
@@ -45,21 +46,8 @@ const mockMessages = [
 ]
 
 // Mock action handlers for inject
-const mockChatActions = {
-  sendMessage: vi.fn(),
-  refreshMessage: vi.fn(),
-  deleteMessage: vi.fn(),
-  editMessage: vi.fn(),
-  stopGenerating: vi.fn(),
-  isGenerating: { value: false },
-  isThinkingActive: { value: false },
-}
-
-const mockUIActions = {
-  toggleTheme: vi.fn(),
-  setThinkingEnabled: vi.fn(),
-  thinkingEnabled: { value: false },
-}
+const mockChatActions = createMockChatActions()
+const mockUIActions = createMockUIActions()
 
 const createWrapper = (options = {}) => {
   return mount(ChatContent, {

@@ -6,8 +6,27 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import FloatingChatPanel from '@/components/FloatingChatPanel.vue'
+import { chatActionsKey, topicActionsKey, uiActionsKey } from '@/symbols'
 import type { ChatbotConfig } from '@/types/config'
 import type { Message, Topic } from '@/types'
+import { createMockChatActions, createMockTopicActions, createMockUIActions } from '../utils/mockActions'
+
+const mockChatActions = createMockChatActions()
+const mockTopicActions = createMockTopicActions()
+const mockUIActions = createMockUIActions()
+
+function mountPanel(props: Record<string, unknown>) {
+  return mount(FloatingChatPanel, {
+    props,
+    global: {
+      provide: {
+        [chatActionsKey]: mockChatActions,
+        [topicActionsKey]: mockTopicActions,
+        [uiActionsKey]: mockUIActions,
+      },
+    },
+  })
+}
 
 describe('FloatingChatPanel Component', () => {
   // Sample test data
@@ -63,29 +82,25 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Props and Rendering', () => {
     it('should render with required props', () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
-      })
+        })
 
       expect(wrapper.exists()).toBe(true)
     })
 
     it('should render SuspendedBall when panel is closed', () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
-      })
+        })
 
       // Initially panel should be closed (defaultExpanded: false)
       const suspendedBall = wrapper.findComponent({ name: 'SuspendedBall' })
@@ -93,14 +108,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should render DraggableWindow when panel is open', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -110,14 +123,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should render ChatContent inside DraggableWindow', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -127,15 +138,13 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should accept hideWelcome prop', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: [],
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
           hideWelcome: true,
-        },
       })
 
       await nextTick()
@@ -145,15 +154,13 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should accept hideQuickActions prop', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
           hideQuickActions: true,
-        },
       })
 
       await nextTick()
@@ -165,15 +172,13 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Panel State Management', () => {
     it('should open panel when SuspendedBall is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
-      })
+        })
 
       // Find SuspendedBall and click it
       const suspendedBall = wrapper.find('.chatbot-ball')
@@ -188,14 +193,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should close panel when ChatHeader close button is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -214,14 +217,12 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Session List View', () => {
     it('should show TopicListView when topics button is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -242,14 +243,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should switch to chat view when close button is clicked in TopicListView', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -275,14 +274,12 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Theme Toggle', () => {
     it('should toggle theme when theme toggle button is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true, theme: 'light' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -302,14 +299,12 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Window State', () => {
     it('should initialize window position on mount', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -324,8 +319,7 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should pass correct props to DraggableWindow', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: {
             ...mockConfig,
             defaultExpanded: true,
@@ -339,7 +333,6 @@ describe('FloatingChatPanel Component', () => {
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -355,14 +348,12 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Streaming State', () => {
     it('should pass isStreaming to ChatContent', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: true,
-        },
       })
 
       await nextTick()
@@ -382,14 +373,12 @@ describe('FloatingChatPanel Component', () => {
         },
       }
 
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: customConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -399,14 +388,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should show all required buttons in ChatHeader', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -420,14 +407,12 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Event Emissions', () => {
     it('should emit send-message event when ChatContent sends a message', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -441,14 +426,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should emit send-message with images when ChatContent sends a message with images', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -462,14 +445,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should emit quick-action event when quick action is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -483,14 +464,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should emit edit-message event when message is edited', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -505,14 +484,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should emit toggle-theme event when theme toggle button is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -522,18 +499,16 @@ describe('FloatingChatPanel Component', () => {
       await themeBtn?.trigger('click')
       await nextTick()
 
-      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
+      expect(mockUIActions.toggleTheme).toHaveBeenCalled()
     })
 
     it('should emit create-topic event when creating new topic', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -552,14 +527,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should emit select-topic event when selecting a topic', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -579,14 +552,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should emit delete-topic event when deleting a topic', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -606,14 +577,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should switch to chat view after selecting topic', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -639,14 +608,12 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Boundary Cases', () => {
     it('should render correctly with empty messages array', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: [],
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -658,14 +625,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should render correctly with empty topics array', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: [],
           topics: [],
-          currentSessionId: '',
+          currentTopicId: '',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -681,14 +646,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should use default config values when config is empty', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: {},
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -698,14 +661,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should handle dark theme correctly', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true, theme: 'dark' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -718,14 +679,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should pass position to SuspendedBall', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, position: 'top-left' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -735,14 +694,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should handle bottom-left position', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { position: 'bottom-left' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -752,14 +709,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should handle top-right position', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { position: 'top-right' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -769,14 +724,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should start with panel open when defaultExpanded is true', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -787,14 +740,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should start with panel closed when defaultExpanded is false', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: false },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -808,14 +759,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should pass primaryColor to SuspendedBall', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, primaryColor: '#ff0000' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -827,15 +776,13 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Exposed Methods', () => {
     it('should expose openPanel method', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
-      })
+        })
 
       await nextTick()
 
@@ -851,14 +798,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should expose closePanel method', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -875,14 +820,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should expose toggleTheme method', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -904,14 +847,12 @@ describe('FloatingChatPanel Component', () => {
         panelHeight: 600,
       }
 
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: customConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()

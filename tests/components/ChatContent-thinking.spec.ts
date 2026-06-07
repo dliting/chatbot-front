@@ -1,11 +1,22 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ChatContent from '@/components/ChatContent.vue'
+import { chatActionsKey, uiActionsKey } from '@/symbols'
 import type { Message } from '@/types'
+import { createMockChatActions, createMockUIActions } from '../utils/mockActions'
+
+const mockChatActions = createMockChatActions()
+const mockUIActions = createMockUIActions()
 
 const mountChat = (props = {}) => mount(ChatContent, {
   props: { messages: [], isStreaming: false, ...props },
-  global: { stubs: { ChatInput: true, ThinkingBlock: true } },
+  global: {
+    stubs: { ChatInput: true, ThinkingBlock: true },
+    provide: {
+      [chatActionsKey]: mockChatActions,
+      [uiActionsKey]: mockUIActions,
+    },
+  },
 })
 
 describe('ChatContent - ThinkingBlock', () => {

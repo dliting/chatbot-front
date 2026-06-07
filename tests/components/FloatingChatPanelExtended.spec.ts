@@ -10,30 +10,12 @@ import FloatingChatPanel from '@/components/FloatingChatPanel.vue'
 import { chatActionsKey, topicActionsKey, uiActionsKey } from '@/symbols'
 import type { ChatbotConfig } from '@/types/config'
 import type { Message, Topic } from '@/types'
+import { createMockChatActions, createMockTopicActions, createMockUIActions } from '../utils/mockActions'
 
 // Stub action handlers for injected dependencies
-const mockChatActions = {
-  sendMessage: vi.fn(),
-  refreshMessage: vi.fn(),
-  deleteMessage: vi.fn(),
-  editMessage: vi.fn(),
-  stopGenerating: vi.fn(),
-  isGenerating: { value: false },
-  isThinkingActive: { value: false },
-}
-
-const mockTopicActions = {
-  createNewTopic: vi.fn(),
-  switchToTopic: vi.fn(),
-  removeTopic: vi.fn(),
-  renameTopic: vi.fn(),
-}
-
-const mockUIActions = {
-  toggleTheme: vi.fn(),
-  setThinkingEnabled: vi.fn(),
-  thinkingEnabled: { value: false },
-}
+const mockChatActions = createMockChatActions()
+const mockTopicActions = createMockTopicActions()
+const mockUIActions = createMockUIActions()
 
 const commonStubs = {
   DraggableWindow: {
