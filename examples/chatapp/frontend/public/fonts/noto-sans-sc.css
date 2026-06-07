@@ -1,0 +1,45 @@
+/**
+ * Noto Sans SC - Local Font Configuration
+ *
+ * This file provides local font loading for Noto Sans SC to enable offline deployment.
+ * Font files are stored in public/fonts/noto-sans-sc/
+ *
+ * License: SIL Open Font License 1.1
+ * Source: https://fonts.google.com/noto/specimen/Noto+Sans+SC
+ */
+
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: local('Noto Sans SC Light'), local('NotoSansSC-Light'),
+       url('./noto-sans-sc/NotoSansSC-Light.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: local('Noto Sans SC'), local('NotoSansSC-Regular'),
+       url('./noto-sans-sc/NotoSansSC-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: local('Noto Sans SC Medium'), local('NotoSansSC-Medium'),
+       url('./noto-sans-sc/NotoSansSC-Medium.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'Noto Sans SC';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: local('Noto Sans SC Bold'), local('NotoSansSC-Bold'),
+       url('./noto-sans-sc/NotoSansSC-Bold.ttf') format('truetype');
+}
