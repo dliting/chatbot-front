@@ -55,17 +55,22 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
       res.write(`data: ${JSON.stringify({ type: 'start', messageId })}\n\n`)
 
       let fullContent = ''
+      let fullThinkingContent = ''
+      let thinkingStartTime = 0
       for await (const chunk of streamChat(ollamaMessages, options)) {
         if (clientClosed) break
 
         if (chunk.type === 'reasoning' && chunk.reasoningContent) {
+          fullThinkingContent += chunk.reasoningContent
+          if (!thinkingStartTime) thinkingStartTime = Date.now()
           res.write(`data: ${JSON.stringify({ type: 'reasoning', reasoningContent: chunk.reasoningContent })}\n\n`)
         } else if (chunk.type === 'token' && chunk.content) {
           fullContent += chunk.content
           res.write(`data: ${JSON.stringify({ type: 'token', content: chunk.content })}\n\n`)
         } else if (chunk.type === 'end') {
-          // Save assistant message
-          const assistantMessage = addMessage(sessionId, 'assistant', fullContent)
+          // Save assistant message with thinking content
+          const thinkingTime = thinkingStartTime ? Date.now() - thinkingStartTime : undefined
+          const assistantMessage = addMessage(sessionId, 'assistant', fullContent, undefined, fullThinkingContent || undefined, thinkingTime)
           res.write(
             `data: ${JSON.stringify({ type: 'end', fullContent, messageId: assistantMessage.messageId })}\n\n`
           )
@@ -74,7 +79,8 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
 
       // If client disconnected mid-stream, save partial content
       if (clientClosed && fullContent) {
-        addMessage(sessionId, 'assistant', fullContent)
+        const thinkingTime = thinkingStartTime ? Date.now() - thinkingStartTime : undefined
+        addMessage(sessionId, 'assistant', fullContent, undefined, fullThinkingContent || undefined, thinkingTime)
       }
 
       // End SSE response to signal stream completion

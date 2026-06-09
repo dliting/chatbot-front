@@ -31,7 +31,7 @@
       :title="config.labels?.title"
       :width="config.panelWidth"
       :height="config.panelHeight || 600"
-      :show-theme-toggle="true"
+      :show-theme-toggle="false"
       :draggable="config.draggable !== false"
       :resizable="config.resizable !== false"
       :min-width="config.minWidth || 300"

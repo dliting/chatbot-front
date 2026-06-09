@@ -133,7 +133,7 @@ describe('EmbeddedChatPanel Extended Tests', () => {
       const modal = wrapper.findComponent({ name: 'FilePreviewModal' })
       expect(modal.exists()).toBe(true)
       expect(modal.props('visible')).toBe(true)
-      expect(modal.props('file')).toEqual(file)
+      expect(modal.props('file')).toEqual({ name: 'img.jpg', url: 'https://example.com/img.jpg' })
     })
 
     it('should close FilePreviewModal when close event is emitted', async () => {
@@ -248,6 +248,41 @@ describe('EmbeddedChatPanel Extended Tests', () => {
       })
 
       expect(wrapper.find('.chat-content-mock').exists()).toBe(true)
+    })
+  })
+
+  describe('Resize Handle in Dual Layout', () => {
+    it('should render resize handle element between sidebar and main in dual layout', () => {
+      const wrapper = createDualWrapper()
+      const resizeHandle = wrapper.find('.ai-chat__resize-handle')
+      expect(resizeHandle.exists()).toBe(true)
+    })
+
+    it('should NOT render resize handle in single layout', () => {
+      const wrapper = createSingleWrapper()
+      const resizeHandle = wrapper.find('.ai-chat__resize-handle')
+      expect(resizeHandle.exists()).toBe(false)
+    })
+
+    it('should apply ai-chat--resizing class when isResizing is true', async () => {
+      const wrapper = createDualWrapper()
+      // Trigger resize handle mousedown to set isResizing
+      const resizeHandle = wrapper.find('.ai-chat__resize-handle')
+      await resizeHandle.trigger('mousedown')
+      await wrapper.vm.$nextTick()
+
+      // Container should have resizing class
+      const container = wrapper.find('.ai-chat')
+      expect(container.classes()).toContain('ai-chat--resizing')
+    })
+
+    it('should bind sidebar width from useResizeHandle', () => {
+      const wrapper = createDualWrapper()
+      const sidebar = wrapper.find('.ai-chat__sidebar')
+      expect(sidebar.exists()).toBe(true)
+      // Sidebar width should be set via inline style from sidebarResize.width
+      const style = sidebar.attributes('style')
+      expect(style).toContain('width')
     })
   })
 

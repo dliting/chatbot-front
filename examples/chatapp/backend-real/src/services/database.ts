@@ -38,11 +38,29 @@ export async function initDatabase(): Promise<void> {
       sessionId TEXT NOT NULL,
       role TEXT NOT NULL,
       content TEXT NOT NULL,
+      thinkingContent TEXT,
+      thinkingTime INTEGER,
       images TEXT,
       timestamp INTEGER NOT NULL,
       FOREIGN KEY (sessionId) REFERENCES sessions(sessionId) ON DELETE CASCADE
     )
   `)
+
+  // Migration: add thinkingContent and thinkingTime columns to existing databases
+  try {
+    const columns = db.exec("PRAGMA table_info(messages)")
+    if (columns.length > 0) {
+      const columnNames = columns[0].values.map((row: any[]) => row[1] as string)
+      if (!columnNames.includes('thinkingContent')) {
+        db.run('ALTER TABLE messages ADD COLUMN thinkingContent TEXT')
+      }
+      if (!columnNames.includes('thinkingTime')) {
+        db.run('ALTER TABLE messages ADD COLUMN thinkingTime INTEGER')
+      }
+    }
+  } catch {
+    // Migration failures on fresh databases are harmless
+  }
 
   // Save to disk
   saveDatabase()
@@ -131,7 +149,9 @@ export function addMessage(
   sessionId: string,
   role: 'user' | 'assistant',
   content: string,
-  images?: string[]
+  images?: string[],
+  thinkingContent?: string,
+  thinkingTime?: number
 ): Message {
   if (!db) throw new Error('Database not initialized')
 
@@ -139,8 +159,14 @@ export function addMessage(
   const timestamp = Date.now()
 
   db.run(
-    'INSERT INTO messages (messageId, sessionId, role, content, images, timestamp) VALUES (?, ?, ?, ?, ?, ?)',
-    [messageId, sessionId, role, content, images ? JSON.stringify(images) : null, timestamp]
+    'INSERT INTO messages (messageId, sessionId, role, content, thinkingContent, thinkingTime, images, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [
+      messageId, sessionId, role, content,
+      thinkingContent || null,
+      thinkingTime || null,
+      images ? JSON.stringify(images) : null,
+      timestamp
+    ]
   )
 
   // Update session
@@ -163,6 +189,8 @@ export function addMessage(
     sessionId,
     role,
     content,
+    thinkingContent: thinkingContent || undefined,
+    thinkingTime: thinkingTime || undefined,
     images,
     timestamp
   }
@@ -171,7 +199,7 @@ export function addMessage(
 export function getMessages(sessionId: string): Message[] {
   if (!db) throw new Error('Database not initialized')
 
-  const results = db.exec('SELECT * FROM messages WHERE sessionId = ? ORDER BY timestamp ASC', [
+  const results = db.exec('SELECT messageId, sessionId, role, content, thinkingContent, thinkingTime, images, timestamp FROM messages WHERE sessionId = ? ORDER BY timestamp ASC', [
     sessionId
   ])
   if (results.length === 0) return []
@@ -181,8 +209,10 @@ export function getMessages(sessionId: string): Message[] {
     sessionId: row[1] as string,
     role: row[2] as 'user' | 'assistant',
     content: row[3] as string,
-    images: row[4] ? JSON.parse(row[4] as string) : undefined,
-    timestamp: row[5] as number
+    thinkingContent: (row[4] as string) || undefined,
+    thinkingTime: (row[5] as number) || undefined,
+    images: row[6] ? JSON.parse(row[6] as string) : undefined,
+    timestamp: row[7] as number
   }))
 }
 

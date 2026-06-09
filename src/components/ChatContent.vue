@@ -320,6 +320,17 @@ const handleCodeCopy = async (e: Event) => {
   }, 1000)
 }
 
+// Handle markdown image click via event delegation
+const handleImageClick = (e: Event) => {
+  const target = e.target as HTMLElement
+  if (target.tagName === 'IMG' && target.closest('.chat-content__text')) {
+    const src = target.getAttribute('src')
+    if (src) {
+      emit('file-click', { type: 'image', url: src })
+    }
+  }
+}
+
 // Initialize code block copy button text with current locale
 const initCodeButtonLabels = () => {
   const container = messagesRef.value
@@ -336,6 +347,7 @@ onMounted(() => {
   if (!container) return
 
   container.addEventListener('click', handleCodeCopy)
+  container.addEventListener('click', handleImageClick)
   initCodeButtonLabels()
 })
 
@@ -343,6 +355,7 @@ onUnmounted(() => {
   const container = messagesRef.value
   if (container) {
     container.removeEventListener('click', handleCodeCopy)
+    container.removeEventListener('click', handleImageClick)
   }
 })
 
@@ -566,6 +579,17 @@ watch(() => props.messages, () => {
   &__text {
     white-space: pre-wrap;
     min-width: 0;
+
+    :deep(img) {
+      max-width: 100%;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s;
+
+      &:hover {
+        transform: scale(1.02);
+      }
+    }
 
     :deep(pre) {
       max-width: 100%;

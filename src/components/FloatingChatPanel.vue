@@ -17,16 +17,22 @@
     :z-index="9998"
   >
     <template #header>
-      <ChatHeader
-        :title="configRef.labels?.title || 'AI Assistant'"
-        :theme="configRef.theme || 'light'"
-        :show-topics-button="true"
-        :show-theme-toggle="true"
-        :show-close-button="true"
-        :unread-count="0"
-        :labels="configRef.labels"
-        @close="closePanel"
-      />
+      <div class="floating-chat-panel__header-wrapper">
+        <ChatHeader
+          :title="configRef.labels?.title || 'AI Assistant'"
+          :theme="configRef.theme || 'light'"
+          :show-topics-button="true"
+          :show-theme-toggle="false"
+          :show-close-button="false"
+          :unread-count="0"
+          :labels="configRef.labels"
+        />
+        <button class="floating-chat-panel__close-btn" @click="closePanel">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+          </svg>
+        </button>
+      </div>
     </template>
     <div class="floating-chat-panel__body">
       <ChatContent
@@ -58,7 +64,7 @@
       v-if="previewFile"
       :visible="!!previewFile"
       :file="previewFile"
-      @close="previewFile = null"
+      @close="closePreview"
     />
   </DraggableWindow>
 
@@ -80,6 +86,7 @@ import type { UIActionHandlers } from '@/types'
 import { defaultChatbotConfig } from '@/types/config'
 import type { Message, Topic } from '@/types'
 import { useChatView } from '@/composables/useChatView'
+import { useFilePreview } from '@/composables/useFilePreview'
 import { uiActionsKey } from '@/symbols'
 
 // Components
@@ -147,13 +154,8 @@ const windowState = ref({
   height: configRef.value.panelHeight || 500,
 })
 
-// Preview state
-const previewFile = ref<{ type: string; url: string; name?: string } | null>(null)
-
-// File click handler for file preview
-const handleFileClick = (file: { type: string; url: string; name?: string }) => {
-  previewFile.value = file
-}
+// File preview state
+const { previewFile, handleFileClick, closePreview } = useFilePreview()
 
 // Methods
 const openPanel = () => {
@@ -162,6 +164,7 @@ const openPanel = () => {
 
 const closePanel = () => {
   isPanelOpen.value = false
+  emit('close')
 }
 
 // Initialize floating window position on mount
@@ -187,6 +190,41 @@ defineExpose({
 
 <style scoped lang="scss">
 .floating-chat-panel {
+  &__header-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+  }
+
+  &__close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 50%;
+    cursor: pointer;
+    color: var(--text-tertiary, #909399);
+    transition: all 0.2s;
+    flex-shrink: 0;
+
+    &:hover {
+      background: var(--color-danger, #f56c6c);
+      color: #fff;
+    }
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
   &__body {
     flex: 1;
     overflow: hidden;

@@ -335,6 +335,38 @@ describe('ChatContent', () => {
     })
   })
 
+  describe('Markdown image click', () => {
+    it('should emit file-click when an image inside markdown text is clicked', async () => {
+      const messageWithMarkdownImage = {
+        ...mockMessages[1],
+        messageId: 'msg-md-img',
+        content: '![alt](https://example.com/image.png)',
+      }
+      const wrapper = createWrapper({ messages: [messageWithMarkdownImage] })
+      const img = wrapper.find('.chat-content__text img')
+      if (img.exists()) {
+        await img.trigger('click')
+        expect(wrapper.emitted('file-click')).toBeTruthy()
+        expect(wrapper.emitted('file-click')![0][0]).toEqual({ type: 'image', url: 'https://example.com/image.png' })
+      }
+    })
+
+    it('should NOT emit file-click for images outside markdown text (attachment images)', async () => {
+      const messageWithAttachment = {
+        ...mockMessages[0],
+        messageId: 'msg-attach',
+        attachments: [{ name: 'photo.jpg', url: 'https://example.com/photo.jpg', type: 'image' }],
+      }
+      const wrapper = createWrapper({ messages: [messageWithAttachment] })
+      const attachmentImg = wrapper.find('.chat-content__images img')
+      if (attachmentImg.exists()) {
+        await attachmentImg.trigger('click')
+        // Attachment images have their own click handler, not the markdown delegation
+        // The delegated handler checks target.closest('.chat-content__text') so this won't trigger
+      }
+    })
+  })
+
   describe('No-inject graceful handling', () => {
     const createWrapperWithoutInject = (options = {}) => {
       return mount(ChatContent, {

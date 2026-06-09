@@ -11,6 +11,8 @@ export interface Message {
   sessionId: string
   role: 'user' | 'assistant'
   content: string
+  thinkingContent?: string
+  thinkingTime?: number
   images?: string[]
   timestamp: number
 }

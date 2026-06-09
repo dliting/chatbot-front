@@ -107,6 +107,18 @@
         </div>
       </div>
 
+      <!-- Sidebar resize handle -->
+      <div
+        v-if="isSidebarMode"
+        class="chatbot-panel__resize-handle"
+        :class="[
+          `chatbot-panel__resize-handle--${sidebarDirection.value}`,
+          { 'chatbot-panel__resize-handle--active': sidebarResize.isResizing.value }
+        ]"
+        @mousedown="sidebarResize.startResize"
+        @dblclick="sidebarResize.resetWidth"
+      />
+
       <!-- Body -->
       <div class="chatbot-panel__body">
         <slot/>
@@ -120,6 +132,7 @@ import { computed, ref, onMounted } from 'vue'
 import DraggableWindow from './DraggableWindow.vue'
 import type { PanelMode, Position, Theme } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
+import { useResizeHandle } from '@/composables/useResizeHandle'
 
 // Swipe gesture configuration
 const SWIPE_THRESHOLD = 100 // pixels
@@ -151,7 +164,7 @@ const props = withDefaults(defineProps<Props>(), {
   title: 'AI Assistant',
   width: 400,
   height: 600,
-  showThemeToggle: true,
+  showThemeToggle: false,
   showHeader: true,
   draggable: true,
   resizable: true,
@@ -171,6 +184,17 @@ const emit = defineEmits<Emits>()
 
 // Refs
 const panelRef = ref<HTMLElement>()
+
+// Sidebar mode resize handle
+const isSidebarMode = computed(() => props.mode === 'sidebar')
+const sidebarDirection = computed(() => props.position?.includes('left') ? 'right' : 'left')
+const sidebarResize = useResizeHandle({
+  initialWidth: props.width,
+  minWidth: props.minWidth,
+  maxWidth: props.maxWidth || 600,
+  storageKey: 'chatbot-sidebar-panel-width',
+  direction: sidebarDirection.value,
+})
 
 // Touch gesture state
 const touchStartX = ref(0)
@@ -209,7 +233,7 @@ const panelStyle = computed(() => {
   const baseStyle: Record<string, string> = {}
 
   if (props.mode === 'sidebar') {
-    baseStyle.width = `${props.width}px`
+    baseStyle.width = `${sidebarResize.width.value}px`
   } else if (props.mode === 'fullscreen') {
     baseStyle.width = '100%'
     baseStyle.height = '100%'
@@ -425,6 +449,35 @@ onMounted(() => {
     &:hover {
       background-color: var(--color-danger, #f56c6c);
       color: #fff;
+    }
+  }
+
+  &__resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 1;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--theme-primary, #409eff);
+    }
+
+    &--active {
+      background: var(--theme-primary, #409eff);
+    }
+
+    // Right-positioned sidebar: handle on left edge
+    &--left {
+      left: 0;
+    }
+
+    // Left-positioned sidebar: handle on right edge
+    &--right {
+      right: 0;
     }
   }
 

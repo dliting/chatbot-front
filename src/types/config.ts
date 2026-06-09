@@ -83,6 +83,11 @@ export interface ChatbotConfig {
   defaultExpanded?: boolean
   panelMode?: PanelMode // Force specific panel mode ('auto' = based on screen size)
 
+  // Sidebar width (extended dual-layout sidebar and sidebar mode)
+  sidebarWidth?: number
+  sidebarMinWidth?: number
+  sidebarMaxWidth?: number
+
   // Floating panel options
   draggable?: boolean // Enable drag for floating panel (default: true)
   resizable?: boolean // Enable resize for floating panel (default: true)
@@ -418,6 +423,11 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   panelMaxWidth: 600,
   defaultExpanded: false,
   panelMode: 'auto', // Auto-detect based on screen size
+
+  // Sidebar width
+  sidebarWidth: 280,
+  sidebarMinWidth: 200,
+  sidebarMaxWidth: 500,
 
   // Floating panel options
   draggable: true,

@@ -192,7 +192,7 @@ describe('FloatingChatPanel Component', () => {
       expect(vm.isPanelOpen).toBe(true)
     })
 
-    it('should close panel when ChatHeader close button is clicked', async () => {
+    it('should close panel when corner close button is clicked', async () => {
       const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
@@ -203,7 +203,7 @@ describe('FloatingChatPanel Component', () => {
 
       await nextTick()
 
-      const closeBtn = wrapper.find('.chat-header__close')
+      const closeBtn = wrapper.find('.floating-chat-panel__close-btn')
       expect(closeBtn.exists()).toBe(true)
       await closeBtn.trigger('click')
       await nextTick()
@@ -264,7 +264,7 @@ describe('FloatingChatPanel Component', () => {
   })
 
   describe('Theme Toggle (inject path)', () => {
-    it('should call uiActions.toggleTheme when theme toggle button is clicked', async () => {
+    it('should not show theme toggle button (hidden by default)', async () => {
       const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true, theme: 'light' },
           messages: mockMessages,
@@ -275,12 +275,8 @@ describe('FloatingChatPanel Component', () => {
 
       await nextTick()
 
-      const themeBtn = wrapper.findAll('.chat-header__btn').at(1)
-      expect(themeBtn).toBeDefined()
-      await themeBtn?.trigger('click')
-      await nextTick()
-
-      expect(mockUIActions.toggleTheme).toHaveBeenCalled()
+      const chatHeader = wrapper.findComponent({ name: 'ChatHeader' })
+      expect(chatHeader.props('showThemeToggle')).toBe(false)
     })
   })
 
@@ -387,8 +383,8 @@ describe('FloatingChatPanel Component', () => {
 
       const chatHeader = wrapper.findComponent({ name: 'ChatHeader' })
       expect(chatHeader.props('showTopicsButton')).toBe(true)
-      expect(chatHeader.props('showThemeToggle')).toBe(true)
-      expect(chatHeader.props('showCloseButton')).toBe(true)
+      expect(chatHeader.props('showThemeToggle')).toBe(false)
+      expect(chatHeader.props('showCloseButton')).toBe(false)
     })
   })
 

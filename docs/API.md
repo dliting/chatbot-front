@@ -59,6 +59,9 @@ interface ChatbotConfig {
   panelHeight?: number             // Default 600
   panelMinWidth?: number           // Default 320
   panelMaxWidth?: number           // Default 600
+  sidebarWidth?: number            // Initial sidebar width in px (default 280)
+  sidebarMinWidth?: number         // Minimum sidebar width in px (default 200)
+  sidebarMaxWidth?: number         // Maximum sidebar width in px (default 500)
   defaultExpanded?: boolean        // Default false
   panelMode?: 'sidebar' | 'dialog' | 'fullscreen' | 'auto'
 
@@ -89,7 +92,7 @@ interface ChatbotConfig {
   allowedImageTypes?: string[]     // Default: jpeg, png, gif, webp
 
   // === Style ===
-  theme?: 'light' | 'dark' | 'system'  // Default 'light'
+  theme?: 'light' | 'dark' | 'system'  // Default 'light'. Note: the theme toggle button in the header is hidden by default; host apps should control theme programmatically via config or the exposed setTheme method.
   primaryColor?: string            // Default '#409eff'
   customStyles?: Record<string, string>
 

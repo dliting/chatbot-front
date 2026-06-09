@@ -1,12 +1,12 @@
 <template>
   <!-- Embedded Modes: Main container -->
   <div
-    :class="containerClasses"
+    :class="[containerClasses, { 'ai-chat--resizing': sidebarResize.isResizing.value }]"
   >
     <!-- Dual Layout: Sidebar + Main Content -->
     <template v-if="effectiveLayout === 'dual'">
       <!-- Topic Sidebar -->
-      <aside class="ai-chat__sidebar">
+      <aside class="ai-chat__sidebar" :style="{ width: sidebarResize.width.value + 'px' }">
         <TopicListView
           :topics="topics"
           :current-topic-id="currentTopicId"
@@ -18,13 +18,21 @@
         />
       </aside>
 
+      <!-- Resize Handle -->
+      <div
+        class="ai-chat__resize-handle"
+        :class="{ 'ai-chat__resize-handle--active': sidebarResize.isResizing.value }"
+        @mousedown="sidebarResize.startResize"
+        @dblclick="sidebarResize.resetWidth"
+      />
+
       <!-- Main Chat Area -->
       <main class="ai-chat__main">
         <ChatHeader
           v-if="!hideHeader"
           :title="config.labels?.title || 'AI Assistant'"
           :theme="config.theme || 'light'"
-          :show-theme-toggle="true"
+          :show-theme-toggle="false"
           :labels="config.labels"
         />
         <ChatContent
@@ -49,7 +57,7 @@
         :title="config.labels?.title || 'AI Assistant'"
         :theme="config.theme || 'light'"
         :show-topics-button="true"
-        :show-theme-toggle="true"
+        :show-theme-toggle="false"
         :labels="config.labels"
       />
       <ChatContent
@@ -81,17 +89,19 @@
       v-if="previewFile"
       :visible="!!previewFile"
       :file="previewFile"
-      @close="previewFile = null"
+      @close="closePreview"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, inject, provide } from 'vue'
+import { computed, inject, provide } from 'vue'
 import type { InteractionMode, Layout, ChatbotConfig, UIActionHandlers } from '@/types'
 import { defaultChatbotConfig } from '@/types/config'
 import { modeToLayoutMap } from '@/types'
 import { useChatView } from '@/composables/useChatView'
+import { useResizeHandle } from '@/composables/useResizeHandle'
+import { useFilePreview } from '@/composables/useFilePreview'
 import { uiActionsKey } from '@/symbols'
 
 // Components
@@ -136,15 +146,10 @@ interface Emits {
   (e: 'close'): void
 }
 
-const emit = defineEmits<Emits>()
+defineEmits<Emits>()
 
-// Preview state
-const previewFile = ref<{ type: string; url: string; name?: string } | null>(null)
-
-// File click handler for file preview
-const handleFileClick = (file: { type: string; url: string; name?: string }) => {
-  previewFile.value = file
-}
+// File preview state
+const { previewFile, handleFileClick, closePreview } = useFilePreview()
 
 // Merge config
 const configRef = computed(() => {
@@ -161,6 +166,15 @@ const effectiveLayout = computed(() => {
 
 // View state management using useChatView - pass mode as reactive ref
 const { viewState, showChatView, showTopicsView } = useChatView(computed(() => props.mode))
+
+// Sidebar resize for dual layout
+const sidebarResize = useResizeHandle({
+  initialWidth: configRef.value.sidebarWidth,
+  minWidth: configRef.value.sidebarMinWidth,
+  maxWidth: configRef.value.sidebarMaxWidth,
+  storageKey: 'chatbot-extended-sidebar-width',
+  direction: 'right',
+})
 
 // Inject parent UI actions and provide enhanced version with view navigation
 // Enhanced provide chain: panel adds showChatView/showTopicsView so child
@@ -217,17 +231,43 @@ const containerClasses = computed(() => [
   }
 
   &__sidebar {
-    width: 280px;
     flex-shrink: 0;
     border-right: 1px solid var(--border-light, #e4e7ed);
     overflow: hidden;
 
     // Mobile: collapse sidebar to full-width
     @media (max-width: 768px) {
-      width: 100%;
+      width: 100% !important;
       border-right: none;
       border-bottom: 1px solid var(--border-light, #e4e7ed);
     }
+  }
+
+  &__resize-handle {
+    width: 4px;
+    cursor: col-resize;
+    background: transparent;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--theme-primary, #409eff);
+    }
+
+    &--active {
+      background: var(--theme-primary, #409eff);
+    }
+
+    // Hide resize handle on mobile
+    @media (max-width: 768px) {
+      display: none;
+    }
+  }
+
+  &--resizing {
+    user-select: none;
   }
 
   &__main {

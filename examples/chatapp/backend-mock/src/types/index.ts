@@ -16,6 +16,8 @@ export interface Message {
   role: 'user' | 'assistant' | 'system'
   type?: 'text' | 'image' | 'mixed'
   content: string
+  thinkingContent?: string
+  thinkingTime?: number
   images?: string[]
   videos?: string[]
   audios?: string[]
