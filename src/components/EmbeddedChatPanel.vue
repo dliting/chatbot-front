@@ -21,6 +21,9 @@
       <!-- Resize Handle -->
       <div
         class="ai-chat__resize-handle"
+        role="separator"
+        tabindex="0"
+        aria-label="Resize sidebar"
         :class="{ 'ai-chat__resize-handle--active': sidebarResize.isResizing.value }"
         @mousedown="sidebarResize.startResize"
         @dblclick="sidebarResize.resetWidth"

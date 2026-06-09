@@ -14,17 +14,6 @@ const localStorageMock = (() => {
 
 Object.defineProperty(window, 'localStorage', { value: localStorageMock })
 
-// Helper to simulate mouse drag
-function simulateDrag(startX: number, endX: number) {
-  const mouseDown = new MouseEvent('mousedown', { clientX: startX })
-  const mouseMove = new MouseEvent('mousemove', { clientX: endX })
-  const mouseUp = new MouseEvent('mouseup', { clientX: endX })
-
-  document.dispatchEvent(mouseDown)
-  document.dispatchEvent(mouseMove)
-  document.dispatchEvent(mouseUp)
-}
-
 describe('useResizeHandle', () => {
   beforeEach(() => {
     localStorageMock.clear()
@@ -178,6 +167,46 @@ describe('useResizeHandle', () => {
     expect(document.body.style.cursor).toBe('')
   })
 
+  it('should restore previous cursor value after drag', () => {
+    document.body.style.cursor = 'pointer'
+
+    const { startResize } = useResizeHandle({
+      initialWidth: 280,
+      minWidth: 200,
+      maxWidth: 500,
+    })
+
+    startResize(new MouseEvent('mousedown', { clientX: 100 }))
+    expect(document.body.style.cursor).toBe('col-resize')
+
+    document.dispatchEvent(new MouseEvent('mouseup', { clientX: 100 }))
+    expect(document.body.style.cursor).toBe('pointer')
+
+    document.body.style.cursor = ''
+  })
+
+  it('should prevent text selection during drag via selectstart', () => {
+    const { startResize } = useResizeHandle({
+      initialWidth: 280,
+      minWidth: 200,
+      maxWidth: 500,
+    })
+
+    const addSpy = vi.spyOn(document, 'addEventListener')
+
+    startResize(new MouseEvent('mousedown', { clientX: 100 }))
+    expect(addSpy).toHaveBeenCalledWith('selectstart', expect.any(Function))
+
+    addSpy.mockRestore()
+
+    // Verify selectstart is removed on mouseup
+    const removeSpy = vi.spyOn(document, 'removeEventListener')
+    document.dispatchEvent(new MouseEvent('mouseup', { clientX: 100 }))
+    expect(removeSpy).toHaveBeenCalledWith('selectstart', expect.any(Function))
+
+    removeSpy.mockRestore()
+  })
+
   it('should clean up document listeners on unmount', () => {
     const removeSpy = vi.spyOn(document, 'removeEventListener')
     const { startResize } = useResizeHandle({
@@ -193,5 +222,6 @@ describe('useResizeHandle', () => {
     // The mouseup handler removes the listeners — check that removeEventListener was called
     expect(removeSpy).toHaveBeenCalledWith('mousemove', expect.any(Function))
     expect(removeSpy).toHaveBeenCalledWith('mouseup', expect.any(Function))
+    expect(removeSpy).toHaveBeenCalledWith('selectstart', expect.any(Function))
   })
 })

@@ -14,6 +14,8 @@ export interface Message {
   thinkingContent?: string
   thinkingTime?: number
   images?: string[]
+  videos?: string[]
+  audios?: string[]
   timestamp: number
 }
 

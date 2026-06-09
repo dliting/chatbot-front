@@ -36,7 +36,7 @@
           <ThinkingBlock
             v-if="message.role === 'assistant' && message.thinkingContent"
             :content="message.thinkingContent"
-            :thinking-time="message.thinkingTime || 0"
+            :thinking-time="message.thinkingTime ?? 0"
             :is-thinking="isThinking && lastAiMessageIds.has(message.messageId)"
             :labels="mergedLabels.thinking"
             @copy="(content) => handleCopyThinking(content)"
@@ -310,14 +310,16 @@ const handleCodeCopy = async (e: Event) => {
   if (!pre) return
 
   const code = pre.textContent || ''
-  await navigator.clipboard.writeText(code)
+  const success = await copyToClipboard(code)
 
-  target.textContent = mergedLabels.value.copied || 'Copied'
-  target.classList.add('copied')
-  setTimeout(() => {
-    target.textContent = mergedLabels.value.copy || 'Copy'
-    target.classList.remove('copied')
-  }, 1000)
+  if (success) {
+    target.textContent = mergedLabels.value.copied || 'Copied'
+    target.classList.add('copied')
+    setTimeout(() => {
+      target.textContent = mergedLabels.value.copy || 'Copy'
+      target.classList.remove('copied')
+    }, 1000)
+  }
 }
 
 // Handle markdown image click via event delegation
@@ -325,7 +327,8 @@ const handleImageClick = (e: Event) => {
   const target = e.target as HTMLElement
   if (target.tagName === 'IMG' && target.closest('.chat-content__text')) {
     const src = target.getAttribute('src')
-    if (src) {
+    if (src && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('data:image/'))) {
+      e.preventDefault()
       emit('file-click', { type: 'image', url: src })
     }
   }

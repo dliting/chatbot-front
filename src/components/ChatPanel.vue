@@ -65,7 +65,7 @@
     <div
       v-else-if="isOpen"
       ref="panelRef"
-      :class="classes"
+      :class="[classes, { 'chatbot-panel--resizing': isSidebarMode && sidebarResize.isResizing.value }]"
       :style="panelStyle"
       @touchstart="handleTouchStart"
       @touchend="handleTouchEnd"
@@ -111,6 +111,9 @@
       <div
         v-if="isSidebarMode"
         class="chatbot-panel__resize-handle"
+        role="separator"
+        tabindex="0"
+        aria-label="Resize panel"
         :class="[
           `chatbot-panel__resize-handle--${sidebarDirection.value}`,
           { 'chatbot-panel__resize-handle--active': sidebarResize.isResizing.value }
@@ -479,6 +482,10 @@ onMounted(() => {
     &--right {
       right: 0;
     }
+  }
+
+  &--resizing {
+    user-select: none;
   }
 
   &__body {

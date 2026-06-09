@@ -344,10 +344,23 @@ describe('ChatContent', () => {
       }
       const wrapper = createWrapper({ messages: [messageWithMarkdownImage] })
       const img = wrapper.find('.chat-content__text img')
+      expect(img.exists()).toBe(true)
+      await img.trigger('click')
+      expect(wrapper.emitted('file-click')).toBeTruthy()
+      expect(wrapper.emitted('file-click')![0][0]).toEqual({ type: 'image', url: 'https://example.com/image.png' })
+    })
+
+    it('should NOT emit file-click for images with non-http URLs (XSS prevention)', async () => {
+      const messageWithXssImage = {
+        ...mockMessages[1],
+        messageId: 'msg-xss',
+        content: '![alt](javascript:alert(1))',
+      }
+      const wrapper = createWrapper({ messages: [messageWithXssImage] })
+      const img = wrapper.find('.chat-content__text img')
       if (img.exists()) {
         await img.trigger('click')
-        expect(wrapper.emitted('file-click')).toBeTruthy()
-        expect(wrapper.emitted('file-click')![0][0]).toEqual({ type: 'image', url: 'https://example.com/image.png' })
+        expect(wrapper.emitted('file-click')).toBeFalsy()
       }
     })
 

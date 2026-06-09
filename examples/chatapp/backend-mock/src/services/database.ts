@@ -108,7 +108,7 @@ export function createSession(title: string = '新对话'): Session {
 export function getSessions(): Session[] {
   if (!db) throw new Error('Database not initialized')
 
-  const results = db.exec('SELECT * FROM sessions ORDER BY updatedAt DESC')
+  const results = db.exec('SELECT sessionId, title, createdAt, updatedAt, messageCount FROM sessions ORDER BY updatedAt DESC')
   if (results.length === 0) return []
 
   return results[0].values.map((row: any[]) => ({
@@ -123,7 +123,7 @@ export function getSessions(): Session[] {
 export function getSession(sessionId: string): Session | null {
   if (!db) throw new Error('Database not initialized')
 
-  const results = db.exec('SELECT * FROM sessions WHERE sessionId = ?', [sessionId])
+  const results = db.exec('SELECT sessionId, title, createdAt, updatedAt, messageCount FROM sessions WHERE sessionId = ?', [sessionId])
   if (results.length === 0 || results[0].values.length === 0) return null
 
   const row = results[0].values[0]
@@ -167,7 +167,7 @@ export function addMessage(
     [
       messageId, sessionId, role, content,
       thinkingContent || null,
-      thinkingTime || null,
+      thinkingTime ?? null,
       images ? JSON.stringify(images) : null,
       videos ? JSON.stringify(videos) : null,
       audios ? JSON.stringify(audios) : null,
@@ -196,7 +196,7 @@ export function addMessage(
     role,
     content,
     thinkingContent: thinkingContent || undefined,
-    thinkingTime: thinkingTime || undefined,
+    thinkingTime: thinkingTime ?? undefined,
     images,
     videos,
     audios,
@@ -218,7 +218,7 @@ export function getMessages(sessionId: string): Message[] {
     role: row[2] as 'user' | 'assistant',
     content: row[3] as string,
     thinkingContent: (row[4] as string) || undefined,
-    thinkingTime: (row[5] as number) || undefined,
+    thinkingTime: (row[5] as number) ?? undefined,
     images: row[6] ? JSON.parse(row[6] as string) : undefined,
     videos: row[7] ? JSON.parse(row[7] as string) : undefined,
     audios: row[8] ? JSON.parse(row[8] as string) : undefined,

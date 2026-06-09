@@ -30,6 +30,9 @@ export function useResizeHandle(options: UseResizeHandleOptions) {
 
   let startX = 0
   let startWidth = 0
+  let savedCursor = ''
+
+  const preventSelect = (e: Event) => e.preventDefault()
 
   const onMouseMove = (e: MouseEvent) => {
     const delta = direction === 'right'
@@ -42,9 +45,10 @@ export function useResizeHandle(options: UseResizeHandleOptions) {
 
   const onMouseUp = () => {
     isResizing.value = false
-    document.body.style.cursor = ''
+    document.body.style.cursor = savedCursor
     document.removeEventListener('mousemove', onMouseMove)
     document.removeEventListener('mouseup', onMouseUp)
+    document.removeEventListener('selectstart', preventSelect)
 
     if (storageKey) {
       try { localStorage.setItem(storageKey, String(width.value)) } catch { /* ignore */ }
@@ -54,11 +58,13 @@ export function useResizeHandle(options: UseResizeHandleOptions) {
   const startResize = (e: MouseEvent) => {
     e.preventDefault()
     isResizing.value = true
+    savedCursor = document.body.style.cursor
     document.body.style.cursor = 'col-resize'
     startX = e.clientX
     startWidth = width.value
     document.addEventListener('mousemove', onMouseMove)
     document.addEventListener('mouseup', onMouseUp)
+    document.addEventListener('selectstart', preventSelect)
   }
 
   const resetWidth = () => {
@@ -71,6 +77,11 @@ export function useResizeHandle(options: UseResizeHandleOptions) {
   onUnmounted(() => {
     document.removeEventListener('mousemove', onMouseMove)
     document.removeEventListener('mouseup', onMouseUp)
+    document.removeEventListener('selectstart', preventSelect)
+    if (isResizing.value) {
+      isResizing.value = false
+      document.body.style.cursor = savedCursor
+    }
   })
 
   return { width, isResizing, startResize, resetWidth }
