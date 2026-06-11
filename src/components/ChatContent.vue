@@ -6,7 +6,8 @@
       <WelcomeScreen
         v-if="welcomeVisible"
         :labels="mergedLabels"
-        :show-quick-actions="quickActionsVisible"
+        :quick-actions="quickActions"
+        :icon-base="quickActionIconBase"
         @quick-action="handleQuickAction"
       />
 
@@ -53,7 +54,7 @@
 <script setup lang="ts">
 import { ref, computed, inject } from 'vue'
 import type { Message } from '@/types'
-import type { ChatbotLabels } from '@/types/config'
+import type { ChatbotLabels, QuickAction } from '@/types/config'
 import { getDefaultLabels } from '@/types/config'
 import { chatStateKey, chatActionsKey, uiActionsKey } from '@/symbols'
 import WelcomeScreen from './WelcomeScreen.vue'
@@ -64,7 +65,8 @@ import ConfirmDialog from './ConfirmDialog.vue'
 interface Props {
   messages?: Message[]
   welcomeVisible?: boolean
-  quickActionsVisible?: boolean
+  quickActions?: QuickAction[]
+  quickActionIconBase?: string
   isStreaming?: boolean
   streamingMessageId?: string | null
   labels?: Partial<ChatbotLabels>
@@ -77,7 +79,7 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   messages: () => [],
   welcomeVisible: true,
-  quickActionsVisible: true,
+  quickActions: () => [],
   isStreaming: false,
   streamingMessageId: null,
   labels: () => ({}),
@@ -107,8 +109,8 @@ const mergedLabels = computed(() => ({
   ...props.labels,
 }))
 
-const handleQuickAction = (text: string) => {
-  chatActions?.sendMessage({ content: text })
+const handleQuickAction = (action: QuickAction) => {
+  chatActions?.sendMessage({ content: action.prompt, extraInfo: action.extraInfo })
 }
 
 const handleSend = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {

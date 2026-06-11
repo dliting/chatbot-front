@@ -156,20 +156,21 @@ describe('FloatingChatPanel Component', () => {
       expect(chatContent.props('welcomeVisible')).toBe(false)
     })
 
-    it('should accept hideQuickActions prop', async () => {
+    it('should accept quickActions prop', async () => {
+      const mockActions = [{ id: '1', title: 'Test', prompt: 'Test prompt' }]
       const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-          hideQuickActions: true,
+          quickActions: mockActions,
       })
 
       await nextTick()
 
       const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      expect(chatContent.props('quickActionsVisible')).toBe(false)
+      expect(chatContent.props('quickActions')).toEqual(mockActions)
     })
   })
 

@@ -41,7 +41,8 @@
         <ChatContent
           :messages="effectiveMessages"
           :welcome-visible="!hideWelcome && effectiveMessages.length === 0"
-          :quick-actions-visible="!hideQuickActions"
+          :quick-actions="effectiveQuickActions"
+          :quick-action-icon-base="configRef.quickActionIconBase"
           :is-streaming="effectiveIsStreaming"
           :labels="configRef.labels"
           :enable-thinking="effectiveEnableThinking"
@@ -68,7 +69,8 @@
         :key="effectiveMessages.length"
         :messages="effectiveMessages"
         :welcome-visible="!hideWelcome && effectiveMessages.length === 0"
-        :quick-actions-visible="!hideQuickActions"
+        :quick-actions="effectiveQuickActions"
+        :quick-action-icon-base="configRef.quickActionIconBase"
         :is-streaming="effectiveIsStreaming"
         :labels="configRef.labels"
         :enable-thinking="effectiveEnableThinking"
@@ -100,6 +102,7 @@
 <script setup lang="ts">
 import { computed, inject, provide } from 'vue'
 import type { InteractionMode, Layout, ChatbotConfig, UIActionHandlers } from '@/types'
+import type { QuickAction } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
 import { modeToLayoutMap } from '@/types'
 import { useChatView } from '@/composables/useChatView'
@@ -122,7 +125,7 @@ interface Props {
   currentTopicId?: string
   isStreaming?: boolean
   hideWelcome?: boolean
-  hideQuickActions?: boolean
+  quickActions?: QuickAction[]
   hideHeader?: boolean
   enableThinking?: boolean
   thinkingEnabled?: boolean
@@ -139,7 +142,7 @@ const props = withDefaults(defineProps<Props>(), {
   currentTopicId: '',
   isStreaming: false,
   hideWelcome: false,
-  hideQuickActions: false,
+  quickActions: () => [],
   hideHeader: false,
 })
 
@@ -177,6 +180,12 @@ const effectiveEnableVoiceInput = computed(() => chatState?.enableVoiceInput ?? 
 const effectiveLayout = computed(() => {
   if (props.layout) return props.layout
   return modeToLayoutMap[props.mode ?? 'extended']
+})
+
+// Quick actions: prefer prop, then config
+const effectiveQuickActions = computed(() => {
+  if (props.quickActions && props.quickActions.length > 0) return props.quickActions
+  return configRef.value.quickActions ?? []
 })
 
 // View state management using useChatView

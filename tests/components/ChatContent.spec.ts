@@ -52,7 +52,7 @@ const createWrapper = (options = {}) => {
     props: {
       messages: mockMessages,
       welcomeVisible: false,
-      quickActionsVisible: false,
+      quickActions: [],
       ...options,
     },
     global: {
@@ -87,19 +87,21 @@ describe('ChatContent', () => {
       expect(wrapper.findComponent({ name: 'WelcomeScreen' }).exists()).toBe(false)
     })
 
-    it('should pass showQuickActions prop to WelcomeScreen', () => {
-      const wrapper = createWrapper({ welcomeVisible: true, quickActionsVisible: true, messages: [] })
+    it('should pass quickActions prop to WelcomeScreen', () => {
+      const mockActions = [{ id: '1', title: 'Test', prompt: 'Test prompt' }]
+      const wrapper = createWrapper({ welcomeVisible: true, quickActions: mockActions, messages: [] })
       const ws = wrapper.findComponent({ name: 'WelcomeScreen' })
-      expect(ws.props('showQuickActions')).toBe(true)
+      expect(ws.props('quickActions')).toEqual(mockActions)
     })
   })
 
   describe('Quick actions', () => {
-    it('should call sendMessage when WelcomeScreen emits quick-action', () => {
+    it('should call sendMessage with prompt when WelcomeScreen emits quick-action', () => {
       const wrapper = createWrapper({ welcomeVisible: true, messages: [] })
       const ws = wrapper.findComponent({ name: 'WelcomeScreen' })
-      ws.vm.$emit('quick-action', 'Explain quantum computing')
-      expect(mockChatActions.sendMessage).toHaveBeenCalledWith({ content: 'Explain quantum computing' })
+      const action = { id: '1', title: 'Explain', prompt: 'Explain quantum computing', extraInfo: 'info' }
+      ws.vm.$emit('quick-action', action)
+      expect(mockChatActions.sendMessage).toHaveBeenCalledWith({ content: 'Explain quantum computing', extraInfo: 'info' })
     })
   })
 

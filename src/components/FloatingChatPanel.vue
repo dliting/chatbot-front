@@ -40,7 +40,8 @@
         :key="effectiveMessages.length"
         :messages="effectiveMessages"
         :welcome-visible="!hideWelcome && effectiveMessages.length === 0"
-        :quick-actions-visible="!hideQuickActions"
+        :quick-actions="effectiveQuickActions"
+        :quick-action-icon-base="configRef.quickActionIconBase"
         :is-streaming="effectiveIsStreaming"
         :labels="configRef.labels"
         :enable-thinking="effectiveEnableThinking"
@@ -82,6 +83,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, inject, provide } from 'vue'
 import type { ChatbotConfig, UIActionHandlers } from '@/types'
+import type { QuickAction } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
 import type { Message, Topic } from '@/types'
 import { useChatView } from '@/composables/useChatView'
@@ -103,7 +105,7 @@ interface Props {
   currentTopicId?: string
   isStreaming?: boolean
   hideWelcome?: boolean
-  hideQuickActions?: boolean
+  quickActions?: QuickAction[]
   enableThinking?: boolean
   thinkingEnabled?: boolean
   isThinking?: boolean
@@ -117,7 +119,7 @@ const props = withDefaults(defineProps<Props>(), {
   currentTopicId: '',
   isStreaming: false,
   hideWelcome: false,
-  hideQuickActions: false,
+  quickActions: () => [],
 })
 
 // Emits - reserved for external-facing events only
@@ -145,6 +147,12 @@ const effectiveEnableThinking = computed(() => chatState?.enableThinking ?? prop
 const effectiveThinkingEnabled = computed(() => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled)
 const effectiveIsThinking = computed(() => chatState?.isThinking?.value ?? props.isThinking)
 const effectiveEnableVoiceInput = computed(() => chatState?.enableVoiceInput ?? props.enableVoiceInput)
+
+// Quick actions: prefer prop, then config
+const effectiveQuickActions = computed(() => {
+  if (props.quickActions && props.quickActions.length > 0) return props.quickActions
+  return configRef.value.quickActions ?? []
+})
 
 // View state
 const { viewState, showChatView, showTopicsView } = useChatView('floating')

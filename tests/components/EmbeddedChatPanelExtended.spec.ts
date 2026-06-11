@@ -42,7 +42,8 @@ vi.mock('@/components/ChatContent.vue', () => ({
     props: {
       messages: Array,
       welcomeVisible: Boolean,
-      quickActionsVisible: Boolean,
+      quickActions: Array,
+      quickActionIconBase: String,
       isStreaming: Boolean,
       labels: Object,
       enableThinking: Boolean,

@@ -5,7 +5,7 @@
       v-if="config.mode === 'floating'"
       :config="themedConfig"
       :hide-welcome="false"
-      :hide-quick-actions="false"
+      :quick-actions="config.quickActions"
     />
 
     <!-- Extended Mode (self-contained) -->
@@ -15,7 +15,7 @@
       :layout="layout"
       :config="themedConfig"
       :hide-welcome="false"
-      :hide-quick-actions="false"
+      :quick-actions="config.quickActions"
       :hide-header="!showAIChatHeader"
     />
 
@@ -44,7 +44,7 @@
         :mode="config.mode"
         :layout="layout"
         :hide-welcome="state.ui.panelMode === 'dialog'"
-        :hide-quick-actions="state.ui.panelMode === 'dialog'"
+        :quick-actions="state.ui.panelMode === 'dialog' ? [] : config.quickActions"
         :hide-header="!showAIChatHeader"
         :config="aiChatConfig"
       />

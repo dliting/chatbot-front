@@ -38,6 +38,18 @@ vi.mock('@/components/ChatContent.vue', () => ({
   default: {
     name: 'ChatContent',
     template: '<div class="chat-content-mock"></div>',
+    props: {
+      messages: Array,
+      welcomeVisible: Boolean,
+      quickActions: Array,
+      quickActionIconBase: String,
+      isStreaming: Boolean,
+      labels: Object,
+      enableThinking: Boolean,
+      thinkingEnabled: Boolean,
+      isThinking: Boolean,
+      enableVoiceInput: Boolean,
+    },
   },
 }))
 
@@ -460,7 +472,8 @@ describe('EmbeddedChatPanel Component', () => {
       expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
     })
 
-    it('should pass hideQuickActions to ChatContent', () => {
+    it('should pass quickActions to ChatContent', () => {
+      const mockActions = [{ id: '1', title: 'Test', prompt: 'Test prompt' }]
       const wrapper = mount(EmbeddedChatPanel, {
         props: {
           mode: 'extended',
@@ -470,12 +483,13 @@ describe('EmbeddedChatPanel Component', () => {
           topics: mockTopics,
           currentTopicId: 'topic-1',
           isStreaming: false,
-          hideQuickActions: true,
+          quickActions: mockActions,
         },
       })
 
-      // ChatContent should exist
-      expect(wrapper.findComponent(ChatContent).exists()).toBe(true)
+      const chatContent = wrapper.findComponent(ChatContent)
+      expect(chatContent.exists()).toBe(true)
+      expect(chatContent.props('quickActions')).toEqual(mockActions)
     })
 
     it('should pass isStreaming to ChatContent', () => {
@@ -890,7 +904,7 @@ describe('EmbeddedChatPanel Component', () => {
           currentTopicId: 'topic-1',
           isStreaming: true,
           hideWelcome: true,
-          hideQuickActions: true,
+          quickActions: [],
         },
       })
 
