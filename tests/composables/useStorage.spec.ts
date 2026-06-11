@@ -4,6 +4,10 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { loadTopicsFromStorage, saveTopicsToStorage, clearTopicsFromStorage } from '../../src/composables/useStorage'
 import type { Topic } from '../../src/types'
+import { TOPIC_DEFAULTS } from '../../src/constants'
+import { TOPICS_SCHEMA_VERSION } from '../../src/utils/storage'
+
+const STORAGE_KEY = TOPIC_DEFAULTS.STORAGE_KEY
 
 describe('useStorage', () => {
   beforeEach(() => {
@@ -41,7 +45,7 @@ describe('useStorage', () => {
         },
       ]
 
-      localStorage.setItem('chatbot-topics', JSON.stringify(mockTopics))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mockTopics))
 
       const result = loadTopicsFromStorage()
       expect(result).toEqual(mockTopics)
@@ -49,7 +53,7 @@ describe('useStorage', () => {
     })
 
     it('should return empty array when localStorage data is corrupted', () => {
-      localStorage.setItem('chatbot-topics', 'invalid-json')
+      localStorage.setItem(STORAGE_KEY, 'invalid-json')
 
       const result = loadTopicsFromStorage()
       expect(result).toEqual([])
@@ -79,7 +83,7 @@ describe('useStorage', () => {
   })
 
   describe('saveTopicsToStorage', () => {
-    it('should save topics to localStorage', () => {
+    it('should save topics to localStorage with schema versioning', () => {
       const mockTopics: Topic[] = [
         {
           topicId: 'topic-1',
@@ -93,9 +97,11 @@ describe('useStorage', () => {
 
       saveTopicsToStorage(mockTopics)
 
-      const stored = localStorage.getItem('chatbot-topics')
+      const stored = localStorage.getItem(STORAGE_KEY)
       expect(stored).toBeTruthy()
-      expect(JSON.parse(stored!)).toEqual(mockTopics)
+      const parsed = JSON.parse(stored!)
+      expect(parsed.version).toBe(TOPICS_SCHEMA_VERSION)
+      expect(parsed.data).toEqual(mockTopics)
     })
 
     it('should overwrite existing topics in localStorage', () => {
@@ -125,9 +131,10 @@ describe('useStorage', () => {
 
       saveTopicsToStorage(updatedTopics)
 
-      const stored = localStorage.getItem('chatbot-topics')
-      expect(JSON.parse(stored!)).toEqual(updatedTopics)
-      expect(JSON.parse(stored!)).not.toEqual(initialTopics)
+      const stored = localStorage.getItem(STORAGE_KEY)
+      const parsed = JSON.parse(stored!)
+      expect(parsed.data).toEqual(updatedTopics)
+      expect(parsed.data).not.toEqual(initialTopics)
     })
 
     it('should handle localStorage being disabled', () => {
@@ -214,10 +221,10 @@ describe('useStorage', () => {
       ]
 
       saveTopicsToStorage(mockTopics)
-      expect(localStorage.getItem('chatbot-topics')).toBeTruthy()
+      expect(localStorage.getItem(STORAGE_KEY)).toBeTruthy()
 
       clearTopicsFromStorage()
-      expect(localStorage.getItem('chatbot-topics')).toBeNull()
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
     })
 
     it('should handle clearing empty localStorage', () => {

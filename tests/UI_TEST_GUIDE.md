@@ -22,7 +22,7 @@
 - **Windows注意事项**：Vite默认仅绑定IPv6，Playwright的Chromium使用IPv4连接。运行E2E测试前需手动启动dev server：`npx vite --host`（加上`--host`使其同时绑定IPv4）。
 - **UI功能变更后必须运行E2E测试**：单元测试无法捕获跨组件集成问题，E2E测试是防止UI Bug漏网的最后防线。
 - **修复UI Bug后必须使用Playwright MCP进行浏览器验证**：通过Playwright MCP工具（browser_navigate, browser_snapshot, browser_click等）在真实浏览器中验证修复效果。
-- **跨组件集成变更必须补充E2E测试**：如修改AIChatbot/AIChatPanel/ChatPanel/FloatingChatPanel之间的组装关系时。
+- **跨组件集成变更必须补充E2E测试**：如修改AIChatbot/ChatPanel/FloatingChatPanel/EmbeddedChatPanel之间的组装关系时。
 
 ## E2E测试验证规则
 - **容器非空验证**：任何应该包含内容的容器元素，必须验证其内部有实质性内容（非空白）。

@@ -1,7 +1,9 @@
 /**
  * API client composable for connecting to backend
  */
-import type { Message, Topic, Attachment } from '@/types'
+import type { Message, Topic, Attachment, StreamEvent } from '@/types'
+import type { BackendSession, BackendMessage, BackendCreateSessionResponse, BackendSendMessageResponse } from '@/types/api'
+import { mapSession, mapMessage, mapCreateSessionResponse, mapSendMessageResponse } from '@/utils/mappers'
 
 export interface ApiClientOptions {
   baseUrl: string
@@ -20,7 +22,7 @@ export function useApiClient(options: ApiClientOptions) {
     content: string,
     attachments?: Attachment[],
     options?: { thinking?: { enabled?: boolean }; signal?: AbortSignal }
-  ): AsyncGenerator<{ type: string; messageId?: string; content?: string; fullContent?: string; reasoningContent?: string }> {
+  ): AsyncGenerator<StreamEvent> {
     let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
 
     try {
@@ -138,23 +140,11 @@ export function useApiClient(options: ApiClientOptions) {
     const result = await response.json()
     if (result.code !== 0) throw new Error(result.message || 'API error')
 
-    // Map backend sessionId → frontend topicId in response
-    const raw = result.data as Record<string, unknown>
-    return {
-      messageId: raw.messageId as string,
-      topicId: (raw.sessionId as string) ?? topicId,
-      role: raw.role as Message['role'],
-      type: (raw.type as Message['type']) ?? 'text',
-      content: raw.content as string,
-      timestamp: raw.timestamp as number,
-      status: (raw.status as Message['status']) ?? 'sent',
-      attachments: [],
-    }
+    return mapSendMessageResponse(result.data as BackendSendMessageResponse, topicId)
   }
 
   /**
    * Get topics
-   * Maps backend 'sessionId' to frontend 'topicId'
    */
   async function getTopics(): Promise<Topic[]> {
     const response = await fetch(`${baseUrl}/sessions`)
@@ -163,20 +153,11 @@ export function useApiClient(options: ApiClientOptions) {
     const result = await response.json()
     if (result.code !== 0) throw new Error(result.message || 'API error')
 
-    // Map backend sessionId to frontend topicId
-    return result.data.sessions.map((s: Record<string, unknown>) => ({
-      topicId: s.sessionId as string,
-      title: s.title as string,
-      createdAt: s.createdAt as number,
-      updatedAt: s.updatedAt as number,
-      messageCount: (s.messageCount as number) ?? 0,
-      unreadCount: (s.unreadCount as number) ?? 0,
-    }))
+    return (result.data.sessions as BackendSession[]).map(mapSession)
   }
 
   /**
    * Get topic messages
-   * Maps backend fields (sessionId) to frontend fields (topicId, type, status)
    */
   async function getTopicMessages(topicId: string): Promise<Message[]> {
     const response = await fetch(`${baseUrl}/sessions/${topicId}/messages`)
@@ -185,55 +166,7 @@ export function useApiClient(options: ApiClientOptions) {
     const result = await response.json()
     if (result.code !== 0) throw new Error(result.message || 'API error')
 
-    const messages: Message[] = result.data.messages.map((raw: Record<string, unknown>) => {
-      // Map backend sessionId → frontend topicId
-      const msg: Message = {
-        messageId: raw.messageId as string,
-        topicId: (raw.sessionId as string) ?? topicId,
-        role: raw.role as Message['role'],
-        type: (raw.type as Message['type']) ?? (raw.role === 'user' ? 'text' : 'text'),
-        content: raw.content as string,
-        timestamp: raw.timestamp as number,
-        status: (raw.status as Message['status']) ?? 'sent',
-        attachments: [],
-      }
-
-      // Convert backend media fields into unified attachments[] format
-      if (raw.images || raw.videos || raw.audios || raw.documents) {
-        const attachments: Attachment[] = []
-        if (Array.isArray(raw.images)) {
-          ;(raw.images as string[]).forEach((url: string) => {
-            attachments.push({ name: '', url, type: 'image' })
-          })
-        }
-        if (Array.isArray(raw.videos)) {
-          ;(raw.videos as string[]).forEach((url: string) => {
-            attachments.push({ name: '', url, type: 'video' })
-          })
-        }
-        if (Array.isArray(raw.audios)) {
-          ;(raw.audios as string[]).forEach((url: string) => {
-            attachments.push({ name: '', url, type: 'audio' })
-          })
-        }
-        if (Array.isArray(raw.documents)) {
-          ;(raw.documents as Array<{ name: string; url: string; size?: number }>).forEach((d) => {
-            attachments.push({ name: d.name, url: d.url, type: 'document', size: d.size })
-          })
-        }
-        msg.attachments = attachments
-      }
-
-      // Preserve optional fields
-      if (raw.thinkingContent) msg.thinkingContent = raw.thinkingContent as string
-      if (raw.thinkingTime) msg.thinkingTime = raw.thinkingTime as number
-      if (raw.errorMessage) msg.errorMessage = raw.errorMessage as string
-      if (raw.metadata) msg.metadata = raw.metadata as Record<string, unknown>
-
-      return msg
-    })
-
-    return messages
+    return (result.data.messages as BackendMessage[]).map(m => mapMessage(m, topicId))
   }
 
   /**
@@ -251,16 +184,7 @@ export function useApiClient(options: ApiClientOptions) {
     const result = await response.json()
     if (result.code !== 0) throw new Error(result.message || 'API error')
 
-    // Map backend sessionId to frontend topicId
-    const data = result.data as Record<string, unknown>
-    return {
-      topicId: data.sessionId as string,
-      title: data.title as string,
-      createdAt: data.createdAt as number,
-      updatedAt: data.createdAt as number,
-      messageCount: 0,
-      unreadCount: 0,
-    }
+    return mapCreateSessionResponse(result.data as BackendCreateSessionResponse)
   }
 
   /**

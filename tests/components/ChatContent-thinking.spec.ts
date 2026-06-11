@@ -11,7 +11,7 @@ const mockUIActions = createMockUIActions()
 const mountChat = (props = {}) => mount(ChatContent, {
   props: { messages: [], isStreaming: false, ...props },
   global: {
-    stubs: { ChatInput: true, ThinkingBlock: true },
+    stubs: { ChatInput: true, WelcomeScreen: true, ConfirmDialog: true },
     provide: {
       [chatActionsKey]: mockChatActions,
       [uiActionsKey]: mockUIActions,
@@ -27,7 +27,9 @@ describe('ChatContent - ThinkingBlock', () => {
       thinkingContent: 'Think...', thinkingTime: 2000,
     }]
     const wrapper = mountChat({ messages })
-    expect(wrapper.findComponent({ name: 'ThinkingBlock' }).exists()).toBe(true)
+    // ThinkingBlock is now inside MessageItem inside MessageList
+    const block = wrapper.findComponent({ name: 'ThinkingBlock' })
+    expect(block.exists()).toBe(true)
   })
 
   it('does NOT render ThinkingBlock for messages without thinkingContent', () => {
@@ -36,7 +38,8 @@ describe('ChatContent - ThinkingBlock', () => {
       content: 'Hello', timestamp: Date.now(), status: 'sent',
     }]
     const wrapper = mountChat({ messages })
-    expect(wrapper.findComponent({ name: 'ThinkingBlock' }).exists()).toBe(false)
+    const block = wrapper.findComponent({ name: 'ThinkingBlock' })
+    expect(block.exists()).toBe(false)
   })
 
   it('does NOT render ThinkingBlock for user messages', () => {
@@ -45,7 +48,8 @@ describe('ChatContent - ThinkingBlock', () => {
       content: 'Hi', timestamp: Date.now(), status: 'sent',
     }]
     const wrapper = mountChat({ messages })
-    expect(wrapper.findComponent({ name: 'ThinkingBlock' }).exists()).toBe(false)
+    const block = wrapper.findComponent({ name: 'ThinkingBlock' })
+    expect(block.exists()).toBe(false)
   })
 
   it('passes correct props to ThinkingBlock', () => {
@@ -56,6 +60,7 @@ describe('ChatContent - ThinkingBlock', () => {
     }]
     const wrapper = mountChat({ messages })
     const block = wrapper.findComponent({ name: 'ThinkingBlock' })
+    expect(block.exists()).toBe(true)
     expect(block.props('content')).toBe('Deep thought')
     expect(block.props('thinkingTime')).toBe(5000)
   })

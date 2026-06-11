@@ -5,8 +5,8 @@
 | Project | Content |
 |---------|---------|
 | Product Name | AI Chatbot Frontend |
-| Version | v1.0 |
-| Last Updated | 2026-06-07 |
+| Version | v1.1 |
+| Last Updated | 2026-06-10 |
 
 ## Overview
 
@@ -51,21 +51,19 @@ The inject-primary pattern provides:
 ┌─────────────────────────────────────────────────────────────────┐
 │                     AIChatbot.vue (Root)                        │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │  provide: chatActionsKey, topicActionsKey, uiActionsKey │   │
+│  │  provide: chatStateKey, chatActionsKey, topicActionsKey,│   │
+│  │          uiActionsKey                                   │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                              │                                  │
-│                              ▼                                  │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │              AIChatPanel.vue (Mode Router)              │   │
-│  │         Props only, no event forwarding                 │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                     │                    │                      │
-│          ┌──────────┘                    └──────────┐          │
-│          ▼                                          ▼          │
+│              ┌───────────────┴───────────────┐                  │
+│              │                               │                  │
+│          ┌───┘                               └───┐              │
+│          ▼                                       ▼              │
 │  ┌───────────────────┐                  ┌───────────────────┐  │
 │  │ FloatingChatPanel │                  │ EmbeddedChatPanel │  │
 │  │                   │                  │                   │  │
-│  │ inject: uiActions │                  │ inject: uiActions │  │
+│  │ inject: chatState,│                  │ inject: chatState,│  │
+│  │   uiActions       │                  │   uiActions       │  │
 │  │ provide: enhanced │                  │ provide: enhanced │  │
 │  │   uiActions with  │                  │   uiActions with  │  │
 │  │   showChatView,   │                  │   showChatView,   │  │
@@ -76,8 +74,8 @@ The inject-primary pattern provides:
 │  ┌───────────────────────────────────────────────────────────┐ │
 │  │              Child Components (ChatContent, etc.)         │ │
 │  │                                                           │ │
-│  │  inject: chatActions, topicActions, uiActions             │ │
-│  │  Call methods directly, NO emit for data operations       │ │
+│  │  inject: chatState, chatActions, topicActions, uiActions │ │
+│  │  Call methods directly, NO emit for data operations      │ │
 │  └───────────────────────────────────────────────────────────┘ │
 └─────────────────────────────────────────────────────────────────┘
 ```
@@ -87,6 +85,9 @@ The inject-primary pattern provides:
 Defined in `src/symbols.ts`:
 
 ```typescript
+// Reactive state (messages, topics, streaming, thinking, etc.)
+export const chatStateKey: InjectionKey<ChatState> = Symbol('chatState')
+
 // Chat operations
 export const chatActionsKey: InjectionKey<ChatActionHandlers> = Symbol('chatActions')
 

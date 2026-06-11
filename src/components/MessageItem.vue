@@ -21,9 +21,20 @@
 
       <!-- Bubble -->
       <div :class="bubbleClasses" @dblclick="handleDoubleClick">
+        <!-- Thinking block -->
+        <ThinkingBlock
+          v-if="message.thinkingContent"
+          :content="message.thinkingContent"
+          :thinking-time="message.thinkingTime"
+          :is-thinking="isStreaming && isThinkingActive"
+          :auto-collapse="true"
+          :labels="labels"
+          @toggle="thinkingCollapsed = !thinkingCollapsed"
+        />
+
         <!-- Text content -->
         <!-- eslint-disable-next-line vue/no-v-html -- Content is sanitized via DOMPurify in formatMarkdownContent -->
-        <div v-if="hasText" class="chatbot-message__text" v-html="formattedContent"/>
+        <div v-if="hasText" class="chatbot-message__text" @click="handleTextClick" v-html="formattedContent"/>
 
         <!-- Image content -->
         <div v-if="hasImages" class="chatbot-message__images">
@@ -124,7 +135,7 @@
           v-if="isError && enableResend"
           class="chatbot-message__action-btn chatbot-message__action-btn--danger"
           :title="labels?.resend || 'Resend'"
-          @click="$emit('resend')"
+          @click="handleResend"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -146,14 +157,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onUnmounted } from 'vue'
+import { computed, ref, onUnmounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Copy, Check, Trash2 } from 'lucide-vue-next'
 import type { Message } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
+import { chatActionsKey } from '@/symbols'
 import { formatTime, copyToClipboard } from '@/utils/helpers'
 import { formatMarkdownContent } from '@/utils/markdown'
 import { getAttachmentsByType } from '@/utils/message'
+import ThinkingBlock from './ThinkingBlock.vue'
 
 interface Props {
   message: Message
@@ -186,14 +199,16 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 interface Emits {
-  (e: 'copy'): void
-  (e: 'delete'): void
-  (e: 'resend'): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
-  (e: 'edit', message: Message): void
 }
 
-const emit = defineEmits<Emits>()
+defineEmits<Emits>()
+
+// Inject chat actions
+const chatActions = inject(chatActionsKey, null)
+
+// Thinking state
+const thinkingCollapsed = ref(true)
 
 // Computed
 const isUser = computed(() => props.message.role === 'user')
@@ -209,6 +224,7 @@ const hasVideos = computed(() => videoAttachments.value.length > 0)
 const hasAudios = computed(() => audioAttachments.value.length > 0)
 const hasDocuments = computed(() => documentAttachments.value.length > 0)
 const canCopy = computed(() => hasText.value && !props.isStreaming)
+const isThinkingActive = computed(() => chatActions?.isThinkingActive?.value ?? false)
 
 const label = computed(() => isUser.value ? (props.labels?.userLabel || 'You') : (props.labels?.assistantLabel || 'AI Assistant'))
 const formattedTime = computed(() => formatTime(props.message.timestamp))
@@ -226,7 +242,6 @@ const classes = computed(() => [
   },
 ])
 
-// Actions visibility: AI last message shows by default, others require hover
 const actionsClasses = computed(() => [
   'chatbot-message__actions',
   {
@@ -246,11 +261,10 @@ const bubbleClasses = computed(() => [
   },
 ])
 
-// Copy state - icon switching
+// Copy state
 const isCopied = ref(false)
 let copyTimer: ReturnType<typeof setTimeout> | null = null
 
-// Cleanup timer on component unmount
 onUnmounted(() => {
   if (copyTimer) {
     clearTimeout(copyTimer)
@@ -269,16 +283,11 @@ const handleCopy = async () => {
     ElMessage({ message: props.labels?.copiedToClipboard || 'Copied to clipboard', type: 'success', duration: 3000 })
     isCopied.value = true
 
-    // Reset icon after timeout
-    if (copyTimer) {
-      clearTimeout(copyTimer)
-    }
+    if (copyTimer) clearTimeout(copyTimer)
     copyTimer = setTimeout(() => {
       isCopied.value = false
       copyTimer = null
     }, props.copyTimeout)
-
-    emit('copy')
   } catch {
     ElMessage({ message: props.labels?.copyFailed || 'Copy failed', type: 'error', duration: 3000 })
   }
@@ -294,17 +303,39 @@ const handleDelete = () => {
       type: 'warning'
     }
   ).then(() => {
-    emit('delete')
+    chatActions?.deleteMessage(props.message)
     ElMessage({ message: props.labels?.messageDeleted || 'Message deleted', type: 'success', duration: 3000 })
   }).catch(() => {
-    // User cancelled, do nothing
+    // User cancelled
   })
 }
 
+const handleResend = () => {
+  if (isUser.value) {
+    chatActions?.sendMessage({ content: props.message.content, attachments: props.message.attachments })
+  } else {
+    chatActions?.refreshMessage(props.message)
+  }
+}
+
 const handleDoubleClick = () => {
-  // Only emit edit for user messages that are not streaming
   if (props.message.role === 'user' && !props.isStreaming) {
-    emit('edit', props.message)
+    chatActions?.editMessage(props.message)
+  }
+}
+
+/** Handle clicks on code blocks within rendered markdown */
+const handleTextClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement
+  const codeBlock = target.closest('pre')
+  if (!codeBlock) return
+
+  const codeEl = codeBlock.querySelector('code')
+  const text = codeEl?.textContent ?? codeBlock.textContent
+  if (text) {
+    copyToClipboard(text).then(() => {
+      ElMessage({ message: props.labels?.copiedToClipboard || 'Copied to clipboard', type: 'success', duration: 3000 })
+    })
   }
 }
 </script>
@@ -424,6 +455,22 @@ const handleDoubleClick = () => {
 
     :deep(br) {
       line-height: 1.8;
+    }
+
+    :deep(pre) {
+      background-color: var(--bg-code-block, #1e1e1e);
+      color: var(--text-code-block, #d4d4d4);
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 8px 0;
+      cursor: pointer;
+
+      code {
+        background: none;
+        padding: 0;
+        font-size: 0.85em;
+      }
     }
   }
 

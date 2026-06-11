@@ -1,6 +1,6 @@
 /**
  * Integration test for floating mode rendering
- * Verifies the full component chain: AIChatbot → AIChatPanel → FloatingChatPanel
+ * Verifies the full component chain: AIChatbot → FloatingChatPanel / EmbeddedChatPanel
  *
  * This test specifically guards against the double-DraggableWindow bug where
  * FloatingChatPanel was wrapped in ChatPanel, causing a blank panel on open.
@@ -153,17 +153,15 @@ describe('Floating Mode Integration', () => {
 
       await nextTick()
 
-      // Should render AIChatPanel directly
-      const aiChatPanel = wrapper.findComponent({ name: 'AIChatPanel' })
-      expect(aiChatPanel.exists()).toBe(true)
+      // Should render EmbeddedChatPanel directly (AIChatPanel layer removed)
+      const embeddedPanel = wrapper.findComponent({ name: 'EmbeddedChatPanel' })
+      expect(embeddedPanel.exists()).toBe(true)
 
       // Should NOT use ChatPanel wrapper
       const chatPanel = wrapper.findComponent({ name: 'ChatPanel' })
       expect(chatPanel.exists()).toBe(false)
 
-      // Should render EmbeddedChatPanel (not FloatingChatPanel)
-      const embeddedPanel = wrapper.findComponent({ name: 'EmbeddedChatPanel' })
-      expect(embeddedPanel.exists()).toBe(true)
+      // Should NOT render FloatingChatPanel in extended mode
       const floatingPanel = wrapper.findComponent({ name: 'FloatingChatPanel' })
       expect(floatingPanel.exists()).toBe(false)
     })

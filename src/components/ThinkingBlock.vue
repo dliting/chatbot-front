@@ -54,7 +54,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { ChatbotLabels } from '@/types/config'
-import { formatMarkdownContent } from '@/utils/helpers'
+import { formatMarkdownContent } from '@/utils/markdown'
 
 interface Props {
   content: string

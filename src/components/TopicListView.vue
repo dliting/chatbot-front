@@ -1,9 +1,9 @@
 <template>
   <div :class="containerClasses">
     <!-- Header with close button -->
-    <header v-if="showCloseButton" class="chatbot-topics__header topic-list-view__header">
-      <h1 class="chatbot-topics__header-title topic-list-view__title">{{ config.labels?.historyTooltip || config.labels?.history || 'History' }}</h1>
-      <button class="chatbot-topics__header-close topic-list-view__close" :aria-label="labels.cancelLabel" @click="$emit('close')">
+    <header v-if="showCloseButton" class="topic-list-view__header">
+      <h1 class="topic-list-view__header-title topic-list-view__title">{{ config.labels?.historyTooltip || config.labels?.history || 'History' }}</h1>
+      <button class="topic-list-view__header-close topic-list-view__close" :aria-label="labels.cancelLabel" @click="$emit('close')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -14,24 +14,24 @@
     <TopicSearch
       v-model="searchQuery"
       :placeholder="labels.searchPlaceholder"
-      class="chatbot-topics__search"
+      class="topic-list-view__search"
     />
 
     <!-- Batch operation bar (shown when items are selected) -->
     <Transition name="batch-bar">
-      <div v-if="selectedTopicIds.length > 0" class="chatbot-topics__batch-bar">
-        <span class="chatbot-topics__batch-count">
+      <div v-if="selectedTopicIds.length > 0" class="topic-list-view__batch-bar">
+        <span class="topic-list-view__batch-count">
           {{ selectedCountText }}
         </span>
-        <div class="chatbot-topics__batch-actions">
+        <div class="topic-list-view__batch-actions">
           <button
-            class="chatbot-topics__batch-btn chatbot-topics__batch-btn--cancel"
+            class="topic-list-view__batch-btn topic-list-view__batch-btn--cancel"
             @click="clearSelection"
           >
             {{ labels.cancelLabel }}
           </button>
           <button
-            class="chatbot-topics__batch-btn chatbot-topics__batch-btn--delete"
+            class="topic-list-view__batch-btn topic-list-view__batch-btn--delete"
             @click="handleBatchDelete"
           >
             {{ labels.deleteSelectedLabel }}
@@ -43,7 +43,7 @@
     <!-- New topic button -->
     <button
       v-if="!isBatchMode"
-      class="chatbot-topics__new-btn topic-list-view__new-btn"
+      class="topic-list-view__new-btn"
       @click="handleCreateTopic"
     >
       <svg viewBox="0 0 24 24" fill="currentColor">
@@ -55,7 +55,7 @@
     <!-- Batch mode toggle -->
     <button
       v-else
-      class="chatbot-topics__batch-toggle"
+      class="topic-list-view__batch-toggle"
       @click="toggleBatchMode"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -66,7 +66,7 @@
     </button>
 
     <!-- Topics list -->
-    <div class="chatbot-topics__list topic-list-view__list">
+    <div class="topic-list-view__list">
       <TopicActionMenu
         v-for="topic in filteredTopics"
         :key="topic.topicId"
@@ -82,7 +82,7 @@
           <!-- Checkbox for batch mode -->
           <div
             v-if="isBatchMode"
-            class="chatbot-topics__checkbox"
+            class="topic-list-view__checkbox"
             @click.stop="toggleSelection(topic.topicId)"
           >
             <svg
@@ -97,30 +97,30 @@
           </div>
 
           <!-- Topic icon (shown when not in batch mode) -->
-          <div v-else class="chatbot-topics__item-icon">
+          <div v-else class="topic-list-view__item-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
 
-          <div class="chatbot-topics__item-content" @dblclick.stop="startEditTitle(topic)">
+          <div class="topic-list-view__item-content" @dblclick.stop="startEditTitle(topic)">
             <!-- Editing mode -->
             <input
               v-if="editingTopicId === topic.topicId"
               ref="editInputRef"
               v-model="editingTitle"
-              class="chatbot-topics__item-title-input"
+              class="topic-list-view__item-title-input"
               @blur="saveTitle(topic.topicId)"
               @keyup.enter="saveTitle(topic.topicId)"
               @keyup.escape="cancelEdit"
               @click.stop
             />
             <!-- Display mode with highlight -->
-            <div v-else class="chatbot-topics__item-title">
+            <div v-else class="topic-list-view__item-title">
               <!-- eslint-disable-next-line vue/no-v-html -- Sanitized input for text highlighting -->
               <span v-html="highlightText(topic.title || unnamedTopicText, searchQuery)" />
             </div>
-            <div class="chatbot-topics__item-meta">
+            <div class="topic-list-view__item-meta">
               {{ formatTopicMeta(topic) }}
             </div>
           </div>
@@ -128,7 +128,7 @@
           <!-- Unread badge -->
           <span
             v-if="topic.unreadCount > 0"
-            class="chatbot-topics__item-badge"
+            class="topic-list-view__item-badge"
           >
             {{ topic.unreadCount > 99 ? '99+' : topic.unreadCount }}
           </span>
@@ -136,7 +136,7 @@
           <!-- Delete button (only in non-batch mode) -->
           <button
             v-if="!isBatchMode"
-            class="chatbot-topics__item-delete topic-list-view__item-delete"
+            class="topic-list-view__item-delete"
             :title="labels.deleteLabel"
             :aria-label="labels.deleteLabel"
             @click.stop="handleDelete(topic.topicId)"
@@ -149,7 +149,7 @@
       </TopicActionMenu>
 
       <!-- Empty state -->
-      <div v-if="filteredTopics.length === 0" class="chatbot-topics__empty topic-list-view__empty">
+      <div v-if="filteredTopics.length === 0" class="topic-list-view__empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -172,7 +172,7 @@
     <!-- Batch mode button (shown when not in batch mode) -->
     <button
       v-if="!isBatchMode && topics.length > 0"
-      class="chatbot-topics__batch-mode-btn"
+      class="topic-list-view__batch-mode-btn"
       :title="labels.batchModeLabel"
       :aria-label="labels.batchModeLabel"
       @click="toggleBatchMode"
@@ -262,7 +262,7 @@ interface Emits {
   (e: 'close'): void
 }
 
-const emit = defineEmits<Emits>()
+defineEmits<Emits>()
 
 // Inject action handlers from AIChatbot
 // - topicActions: data operations (create/switch/delete/rename)
@@ -283,13 +283,11 @@ const handleCreateTopic = () => {
   // No emit: action handled by inject, external consumers listen to AIChatbot's topic:created event
 }
 
-// Container classes for backward compatibility
+// Container classes
 const containerClasses = computed(() => [
   'topic-list-view',
-  'chatbot-topics',
   {
     'topic-list-view--embedded': props.isEmbedded,
-    'chatbot-topics--embedded': props.isEmbedded,
   },
 ])
 
@@ -446,12 +444,10 @@ const cancelEdit = () => {
 
 // Topic classes
 const topicClasses = (topic: Topic) => [
-  'chatbot-topics__item',
   'topic-list-view__item',
   {
-    'chatbot-topics__item--active': topic.topicId === props.currentTopicId,
-    'chatbot-topics__item--selected': selectedTopicIds.value.includes(topic.topicId),
     'topic-list-view__item--active': topic.topicId === props.currentTopicId,
+    'topic-list-view__item--selected': selectedTopicIds.value.includes(topic.topicId),
   },
 ]
 
@@ -467,9 +463,7 @@ const formatTopicMeta = (topic: Topic): string => {
 </script>
 
 <style scoped lang="scss">
-// Backward compatibility - merge both class styles
-.topic-list-view,
-.chatbot-topics {
+.topic-list-view {
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -684,7 +678,6 @@ const formatTopicMeta = (topic: Topic): string => {
     &:hover {
       background: var(--theme-primary-light, #ecf5ff);
 
-      .chatbot-topics__item-delete,
       .topic-list-view__item-delete {
         opacity: 1;
       }
@@ -703,7 +696,6 @@ const formatTopicMeta = (topic: Topic): string => {
     &--active {
       background: var(--theme-primary-light, #ecf5ff);
 
-      .chatbot-topics__item-title,
       .topic-list-view__item-title {
         color: var(--theme-primary, #409eff);
         font-weight: 500;
@@ -772,7 +764,6 @@ const formatTopicMeta = (topic: Topic): string => {
       color: var(--theme-primary, #409eff);
     }
 
-    .chatbot-topics__item--selected &,
     .topic-list-view__item--selected & {
       border-color: var(--theme-primary, #409eff);
       background: var(--theme-primary, #409eff);

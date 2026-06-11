@@ -1,50 +1,52 @@
 /**
- * Composable for localStorage persistence
- * Follows Single Responsibility Principle - only handles storage operations
+ * Storage composable — thin wrapper providing topic-specific load/save
+ * using the StorageAdapter abstraction.
  */
 import type { Topic } from '@/types'
+import type { StorageAdapter } from '@/utils/storage'
+import { LocalStorageAdapter, loadVersioned, saveVersioned, TOPICS_SCHEMA_VERSION } from '@/utils/storage'
 import { TOPIC_DEFAULTS } from '@/constants'
 
-/**
- * Load topics from localStorage
- */
-export function loadTopicsFromStorage(): Topic[] {
-  if (typeof window === 'undefined') return []
-
-  try {
-    const stored = localStorage.getItem(TOPIC_DEFAULTS.STORAGE_KEY)
-    if (stored) {
-      return JSON.parse(stored)
-    }
-  } catch (e) {
-    // localStorage disabled, quota exceeded, or corrupted data - silently fail
-  }
-
-  return []
+/** Default adapter instance (lazy singleton) */
+let defaultAdapter: LocalStorageAdapter | null = null
+function getDefaultAdapter(): LocalStorageAdapter {
+  if (!defaultAdapter) defaultAdapter = new LocalStorageAdapter()
+  return defaultAdapter
 }
 
 /**
- * Save topics to localStorage
+ * Load topics from storage using adapter.
+ * Handles both legacy (unversioned) and versioned formats.
  */
-export function saveTopicsToStorage(topics: Topic[]): void {
-  if (typeof window === 'undefined') return
-
-  try {
-    localStorage.setItem(TOPIC_DEFAULTS.STORAGE_KEY, JSON.stringify(topics))
-  } catch (e) {
-    // localStorage disabled or quota exceeded - silently fail
+export function loadTopicsFromStorage(adapter?: StorageAdapter): Topic[] {
+  const storage = adapter ?? getDefaultAdapter()
+  const migrations: Record<number, (data: unknown) => Topic[]> = {
+    // Version 0: legacy unversioned data (raw Topic[] array)
+    0: (data) => {
+      if (Array.isArray(data)) return data as Topic[]
+      return []
+    },
+    // Version 1+: data is a Topic[] array
+    1: (data) => {
+      if (Array.isArray(data)) return data as Topic[]
+      return []
+    },
   }
+  return loadVersioned<Topic[]>(storage, TOPIC_DEFAULTS.STORAGE_KEY, migrations) ?? []
 }
 
 /**
- * Clear topics from localStorage
+ * Save topics to storage using adapter with schema versioning.
  */
-export function clearTopicsFromStorage(): void {
-  if (typeof window === 'undefined') return
+export function saveTopicsToStorage(topics: Topic[], adapter?: StorageAdapter): void {
+  const storage = adapter ?? getDefaultAdapter()
+  saveVersioned(storage, TOPIC_DEFAULTS.STORAGE_KEY, topics, TOPICS_SCHEMA_VERSION)
+}
 
-  try {
-    localStorage.removeItem(TOPIC_DEFAULTS.STORAGE_KEY)
-  } catch (e) {
-    // Silently fail
-  }
+/**
+ * Clear topics from storage using adapter.
+ */
+export function clearTopicsFromStorage(adapter?: StorageAdapter): void {
+  const storage = adapter ?? getDefaultAdapter()
+  storage.remove(TOPIC_DEFAULTS.STORAGE_KEY)
 }

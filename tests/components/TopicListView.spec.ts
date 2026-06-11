@@ -48,59 +48,59 @@ describe('TopicListView', () => {
   describe('rendering', () => {
     it('should render all topics', () => {
       const wrapper = mountTopicListView()
-      const items = wrapper.findAll('.chatbot-topics__item')
+      const items = wrapper.findAll('.topic-list-view__item')
       expect(items.length).toBe(3)
     })
 
     it('should highlight current topic with active class', () => {
       const wrapper = mountTopicListView()
-      const items = wrapper.findAll('.chatbot-topics__item')
-      expect(items[0].classes()).toContain('chatbot-topics__item--active')
+      const items = wrapper.findAll('.topic-list-view__item')
+      expect(items[0].classes()).toContain('topic-list-view__item--active')
     })
 
     it('should show unread count badge for topics with unreadCount > 0', () => {
       const wrapper = mountTopicListView()
-      const badges = wrapper.findAll('.chatbot-topics__item-badge')
+      const badges = wrapper.findAll('.topic-list-view__item-badge')
       expect(badges.length).toBe(2) // t2 has 1, t3 has 2
     })
 
     it('should render empty state when no topics', () => {
       const wrapper = mountTopicListView({ topics: [] })
-      expect(wrapper.find('.chatbot-topics__empty').exists()).toBe(true)
+      expect(wrapper.find('.topic-list-view__empty').exists()).toBe(true)
     })
 
     it('should show new topic button', () => {
       const wrapper = mountTopicListView()
-      expect(wrapper.find('.chatbot-topics__new-btn').exists()).toBe(true)
+      expect(wrapper.find('.topic-list-view__new-btn').exists()).toBe(true)
     })
 
     it('should show batch mode button when topics exist', () => {
       const wrapper = mountTopicListView()
-      expect(wrapper.find('.chatbot-topics__batch-mode-btn').exists()).toBe(true)
+      expect(wrapper.find('.topic-list-view__batch-mode-btn').exists()).toBe(true)
     })
 
     it('should show close button when not embedded', () => {
       const wrapper = mountTopicListView()
-      expect(wrapper.find('.chatbot-topics__header-close').exists()).toBe(true)
+      expect(wrapper.find('.topic-list-view__header-close').exists()).toBe(true)
     })
 
     it('should hide close button when embedded without enableClose', () => {
       const wrapper = mountTopicListView({ isEmbedded: true })
-      expect(wrapper.find('.chatbot-topics__header-close').exists()).toBe(false)
+      expect(wrapper.find('.topic-list-view__header-close').exists()).toBe(false)
     })
   })
 
   describe('topic selection via inject', () => {
     it('should call topicActions.switchToTopic when clicking a topic', async () => {
       const wrapper = mountTopicListView()
-      const items = wrapper.findAll('.chatbot-topics__item')
+      const items = wrapper.findAll('.topic-list-view__item')
       await items[1].trigger('click')
       expect(defaultTopicActions.switchToTopic).toHaveBeenCalledWith('t2')
     })
 
     it('should call uiActions.showChatView when clicking a topic', async () => {
       const wrapper = mountTopicListView()
-      const items = wrapper.findAll('.chatbot-topics__item')
+      const items = wrapper.findAll('.topic-list-view__item')
       await items[1].trigger('click')
       expect(defaultUIActions.showChatView).toHaveBeenCalled()
     })
@@ -109,7 +109,7 @@ describe('TopicListView', () => {
       const wrapper = mountTopicListView({}, {
         [uiActionsKey as symbol]: null,
       })
-      const items = wrapper.findAll('.chatbot-topics__item')
+      const items = wrapper.findAll('.topic-list-view__item')
       await items[1].trigger('click')
       // No error thrown, topicActions still called
       expect(defaultTopicActions.switchToTopic).toHaveBeenCalledWith('t2')
@@ -119,32 +119,32 @@ describe('TopicListView', () => {
   describe('batch mode', () => {
     it('should enter batch mode when batch button clicked', async () => {
       const wrapper = mountTopicListView()
-      const batchBtn = wrapper.find('.chatbot-topics__batch-mode-btn')
+      const batchBtn = wrapper.find('.topic-list-view__batch-mode-btn')
       await batchBtn.trigger('click')
       expect(wrapper.vm.isBatchMode).toBe(true)
     })
 
     it('should show checkboxes in batch mode', async () => {
       const wrapper = mountTopicListView()
-      await wrapper.find('.chatbot-topics__batch-mode-btn').trigger('click')
+      await wrapper.find('.topic-list-view__batch-mode-btn').trigger('click')
       await nextTick()
-      expect(wrapper.findAll('.chatbot-topics__checkbox').length).toBe(3)
+      expect(wrapper.findAll('.topic-list-view__checkbox').length).toBe(3)
     })
 
     it('should toggle selection when clicking checkbox', async () => {
       const wrapper = mountTopicListView()
-      await wrapper.find('.chatbot-topics__batch-mode-btn').trigger('click')
+      await wrapper.find('.topic-list-view__batch-mode-btn').trigger('click')
       await nextTick()
-      const checkbox = wrapper.find('.chatbot-topics__checkbox')
+      const checkbox = wrapper.find('.topic-list-view__checkbox')
       await checkbox.trigger('click')
       expect(wrapper.vm.selectedTopicIds).toContain('t1')
     })
 
     it('should exit batch mode when toggle clicked again', async () => {
       const wrapper = mountTopicListView()
-      await wrapper.find('.chatbot-topics__batch-mode-btn').trigger('click')
+      await wrapper.find('.topic-list-view__batch-mode-btn').trigger('click')
       expect(wrapper.vm.isBatchMode).toBe(true)
-      const toggleBtn = wrapper.find('.chatbot-topics__batch-toggle')
+      const toggleBtn = wrapper.find('.topic-list-view__batch-toggle')
       await toggleBtn.trigger('click')
       expect(wrapper.vm.isBatchMode).toBe(false)
     })
@@ -217,7 +217,7 @@ describe('TopicListView', () => {
   describe('delete confirmation', () => {
     it('should show delete dialog when delete button clicked', async () => {
       const wrapper = mountTopicListView()
-      const deleteBtn = wrapper.find('.chatbot-topics__item-delete')
+      const deleteBtn = wrapper.find('.topic-list-view__item-delete')
       if (deleteBtn.exists()) {
         await deleteBtn.trigger('click')
         expect(wrapper.vm.showDeleteDialog).toBe(true)
@@ -231,7 +231,7 @@ describe('TopicListView', () => {
       const searchInput = wrapper.find('.topic-search-mock')
       await searchInput.setValue('Topic 2')
       await nextTick()
-      const items = wrapper.findAll('.chatbot-topics__item')
+      const items = wrapper.findAll('.topic-list-view__item')
       expect(items.length).toBe(1)
     })
 
@@ -240,7 +240,7 @@ describe('TopicListView', () => {
       const searchInput = wrapper.find('.topic-search-mock')
       await searchInput.setValue('nonexistent')
       await nextTick()
-      expect(wrapper.find('.chatbot-topics__empty').exists()).toBe(true)
+      expect(wrapper.find('.topic-list-view__empty').exists()).toBe(true)
     })
   })
 
@@ -255,23 +255,23 @@ describe('TopicListView', () => {
   describe('batch delete flow', () => {
     it('should show batch bar when items are selected', async () => {
       const wrapper = mountTopicListView()
-      await wrapper.find('.chatbot-topics__batch-mode-btn').trigger('click')
+      await wrapper.find('.topic-list-view__batch-mode-btn').trigger('click')
       await nextTick()
-      const checkbox = wrapper.find('.chatbot-topics__checkbox')
+      const checkbox = wrapper.find('.topic-list-view__checkbox')
       await checkbox.trigger('click')
       await nextTick()
-      expect(wrapper.find('.chatbot-topics__batch-bar').exists()).toBe(true)
-      expect(wrapper.find('.chatbot-topics__batch-count').exists()).toBe(true)
+      expect(wrapper.find('.topic-list-view__batch-bar').exists()).toBe(true)
+      expect(wrapper.find('.topic-list-view__batch-count').exists()).toBe(true)
     })
 
     it('should open delete dialog when batch delete button clicked', async () => {
       const wrapper = mountTopicListView()
-      await wrapper.find('.chatbot-topics__batch-mode-btn').trigger('click')
+      await wrapper.find('.topic-list-view__batch-mode-btn').trigger('click')
       await nextTick()
-      const checkbox = wrapper.find('.chatbot-topics__checkbox')
+      const checkbox = wrapper.find('.topic-list-view__checkbox')
       await checkbox.trigger('click')
       await nextTick()
-      const batchDeleteBtn = wrapper.find('.chatbot-topics__batch-btn--delete')
+      const batchDeleteBtn = wrapper.find('.topic-list-view__batch-btn--delete')
       await batchDeleteBtn.trigger('click')
       expect(wrapper.vm.showDeleteDialog).toBe(true)
       expect(wrapper.vm.pendingDeleteIds).toContain('t1')
@@ -279,12 +279,12 @@ describe('TopicListView', () => {
 
     it('should clear selection when cancel button clicked in batch bar', async () => {
       const wrapper = mountTopicListView()
-      await wrapper.find('.chatbot-topics__batch-mode-btn').trigger('click')
+      await wrapper.find('.topic-list-view__batch-mode-btn').trigger('click')
       await nextTick()
-      const checkbox = wrapper.find('.chatbot-topics__checkbox')
+      const checkbox = wrapper.find('.topic-list-view__checkbox')
       await checkbox.trigger('click')
       await nextTick()
-      const cancelBtn = wrapper.find('.chatbot-topics__batch-btn--cancel')
+      const cancelBtn = wrapper.find('.topic-list-view__batch-btn--cancel')
       await cancelBtn.trigger('click')
       expect(wrapper.vm.selectedTopicIds).toEqual([])
     })
@@ -293,7 +293,7 @@ describe('TopicListView', () => {
   describe('title editing', () => {
     it('should start editing on double-click', async () => {
       const wrapper = mountTopicListView()
-      const content = wrapper.find('.chatbot-topics__item-content')
+      const content = wrapper.find('.topic-list-view__item-content')
       await content.trigger('dblclick')
       await nextTick()
       expect(wrapper.vm.editingTopicId).toBeTruthy()
@@ -301,9 +301,9 @@ describe('TopicListView', () => {
 
     it('should not start editing in batch mode', async () => {
       const wrapper = mountTopicListView()
-      await wrapper.find('.chatbot-topics__batch-mode-btn').trigger('click')
+      await wrapper.find('.topic-list-view__batch-mode-btn').trigger('click')
       await nextTick()
-      const content = wrapper.find('.chatbot-topics__item-content')
+      const content = wrapper.find('.topic-list-view__item-content')
       await content.trigger('dblclick')
       expect(wrapper.vm.editingTopicId).toBeNull()
     })
@@ -321,7 +321,7 @@ describe('TopicListView', () => {
   describe('close button', () => {
     it('should emit close when close button clicked', async () => {
       const wrapper = mountTopicListView()
-      const closeBtn = wrapper.find('.chatbot-topics__header-close')
+      const closeBtn = wrapper.find('.topic-list-view__header-close')
       await closeBtn.trigger('click')
       expect(wrapper.emitted('close')).toBeTruthy()
     })
@@ -330,30 +330,30 @@ describe('TopicListView', () => {
   describe('search with empty topics', () => {
     it('should show noTopicsHint when no topics and no search', () => {
       const wrapper = mountTopicListView({ topics: [], noTopicsHint: 'Start a conversation' })
-      expect(wrapper.find('.chatbot-topics__empty').text()).toContain('Start a conversation')
+      expect(wrapper.find('.topic-list-view__empty').text()).toContain('Start a conversation')
     })
   })
 
   describe('topic click in batch mode', () => {
     it('should toggle selection when clicking topic in batch mode', async () => {
       const wrapper = mountTopicListView()
-      await wrapper.find('.chatbot-topics__batch-mode-btn').trigger('click')
+      await wrapper.find('.topic-list-view__batch-mode-btn').trigger('click')
       await nextTick()
-      const items = wrapper.findAll('.chatbot-topics__item')
+      const items = wrapper.findAll('.topic-list-view__item')
       await items[1].trigger('click')
       expect(wrapper.vm.selectedTopicIds).toContain('t2')
     })
 
     it('should deselect when clicking selected topic in batch mode', async () => {
       const wrapper = mountTopicListView()
-      await wrapper.find('.chatbot-topics__batch-mode-btn').trigger('click')
+      await wrapper.find('.topic-list-view__batch-mode-btn').trigger('click')
       await nextTick()
       // Select first via checkbox
-      const checkbox = wrapper.find('.chatbot-topics__checkbox')
+      const checkbox = wrapper.find('.topic-list-view__checkbox')
       await checkbox.trigger('click')
       expect(wrapper.vm.selectedTopicIds).toContain('t1')
       // Click the same topic item to deselect
-      const items = wrapper.findAll('.chatbot-topics__item')
+      const items = wrapper.findAll('.topic-list-view__item')
       await items[0].trigger('click')
       expect(wrapper.vm.selectedTopicIds).not.toContain('t1')
     })
@@ -362,7 +362,7 @@ describe('TopicListView', () => {
   describe('embedded with enableClose', () => {
     it('should show close button when embedded with enableClose=true and layout=dual', () => {
       const wrapper = mountTopicListView({ isEmbedded: true, enableClose: true, layout: 'dual' })
-      expect(wrapper.find('.chatbot-topics__header-close').exists()).toBe(true)
+      expect(wrapper.find('.topic-list-view__header-close').exists()).toBe(true)
     })
   })
 })

@@ -3,8 +3,8 @@
 | Field | Value |
 |-------|-------|
 | Product | ai-chatbot-frontend |
-| Version | v1.3 |
-| Last Updated | 2026-04-02 |
+| Version | v2.0 |
+| Last Updated | 2026-06-10 |
 
 ---
 
@@ -16,6 +16,13 @@ The component uses a **three-tier fallback** strategy for backend communication:
 1. **Callbacks** (`ChatbotCallbacks`) -- host application provides direct control
 2. **apiBaseUrl** (`useApiClient`) -- built-in REST client for standard backends
 3. **Local-only** -- in-memory state with no backend
+
+### Architecture: Inject-Primary Pattern
+
+Internal component communication uses Vue's `provide`/`inject` mechanism with Symbol keys. Component `emit` events are reserved only for external-facing UI notifications. See `docs/design/component-communication-architecture.md` for details.
+
+- **Internal actions** (data operations) → `provide`/`inject` via Symbol keys
+- **External events** (UI notifications) → component `emit` events
 
 ---
 
@@ -51,7 +58,6 @@ interface ChatbotConfig {
   // === Interaction Mode (dual-dimension architecture) ===
   mode?: 'floating' | 'extended' | 'sidebar'  // Interaction mode (default: 'floating')
   layout?: 'dual' | 'single'                   // Layout (auto-derived from mode)
-  chatMode?: 'extended' | 'compact' | 'floating'  // Legacy (backward compat)
 
   // === Layout ===
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
@@ -74,7 +80,6 @@ interface ChatbotConfig {
 
   // === Feature Toggles ===
   enableImageUpload?: boolean      // Default true
-  enableTopicManager?: boolean     // Default true
   enableVoiceInput?: boolean       // Default false
   enableCopyMessage?: boolean      // Default true
   enableDeleteMessage?: boolean    // Default true
@@ -270,8 +275,6 @@ Events use a colon-separated naming convention (`domain:action`) and carry objec
 | `message:error` | `{ message: Message, error: Error }` | Message error occurred |
 | `message:deleted` | `{ messageId: string, topicId: string }` | Message deleted (synced with backend) |
 | `message:edited` | `{ messageId: string, topicId: string }` | Message edited |
-| `message:copied` | `{ message: Message }` | Message content copied |
-| `message:resend` | `{ message: Message }` | Message resent |
 | `message:regenerated` | `{ messageId: string, topicId: string }` | AI response regenerated |
 | `message:stream-start` | `{ messageId: string }` | Streaming response started |
 | `message:stream-end` | `{ messageId: string, fullContent: string }` | Streaming response completed |
@@ -284,7 +287,6 @@ Events use a colon-separated naming convention (`domain:action`) and carry objec
 | `topic:switched` | `{ topicId: string }` | Active topic switched |
 | `topic:deleted` | `{ topicId: string }` | Topic deleted |
 | `topic:title-updated` | `{ topicId: string, title: string }` | Topic title changed |
-| `topic:cleared` | `{ topicId: string }` | All messages in topic cleared |
 
 ### UI Events
 
@@ -294,24 +296,26 @@ Events use a colon-separated naming convention (`domain:action`) and carry objec
 | `ui:theme-changed` | `{ theme: string }` | Theme changed |
 | `ui:stop-generating` | -- | User stopped generation |
 
-### Lifecycle Event
+### Lifecycle Events
 
 | Event | Payload | Description |
 |-------|---------|-------------|
 | `chatbot:ready` | -- | Component fully mounted and ready |
+| `chatbot:error` | `{ error: ChatbotError }` | Categorized error from any sub-system |
 
-### Legacy Events (backward compatible)
+### ChatbotError
 
-The following legacy events are still emitted alongside the new events:
+The `chatbot:error` event provides structured error information:
 
-| Legacy Event | New Equivalent |
-|--------------|----------------|
-| `panelToggle` | `ui:panel-toggle` |
-| `topicChange` | `topic:switched` |
-| `topicCreate` | `topic:created` |
-| `topicDelete` | `topic:deleted` |
-| `topicTitleUpdate` | `topic:title-updated` |
-| `editMessage` | `message:edited` |
+```typescript
+class ChatbotError extends Error {
+  readonly category: 'message' | 'topic' | 'stream' | 'network' | 'config'
+  readonly userMessage: string
+  readonly cause?: Error
+}
+```
+
+Use `error.category` to filter errors by domain, and `error.userMessage` for display-friendly text.
 
 ---
 
@@ -384,6 +388,24 @@ interface Topic {
   updatedAt: number
   messageCount: number
   unreadCount: number
+}
+```
+
+### ChatState
+
+Reactive state interface provided via `chatStateKey` injection. Child components inject this to access state without prop drilling.
+
+```typescript
+interface ChatState {
+  messages: ComputedRef<Message[]>         // Messages for the current topic
+  topics: ComputedRef<Topic[]>             // All topics (reactive)
+  currentTopicId: ComputedRef<string>      // Active topic ID (reactive)
+  isStreaming: ComputedRef<boolean>        // Whether a response is streaming
+  streamingMessageId: ComputedRef<string | null>  // ID of the currently streaming message
+  enableThinking: boolean                  // Thinking feature enabled in config
+  thinkingEnabled: { value: boolean }      // Current thinking toggle state
+  isThinking: { value: boolean }           // Whether currently in thinking phase
+  enableVoiceInput: boolean                // Voice input enabled in config
 }
 ```
 
@@ -464,11 +486,104 @@ type Position = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
 type PanelMode = 'sidebar' | 'dialog' | 'fullscreen' | 'auto'
 type Theme = 'light' | 'dark' | 'system'
 type Locale = 'zh-CN' | 'en-US'
+type ErrorCategory = 'message' | 'topic' | 'stream' | 'network' | 'config'
 ```
 
 ---
 
-## 8. Independent Components
+## 8. Injection Keys (provide/inject)
+
+The component uses Vue's `provide`/`inject` with Symbol keys for internal communication. Advanced consumers can use these keys to access state and actions from outside the component tree.
+
+```typescript
+import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey } from 'chatbot'
+```
+
+| Key | Type | Provided By | Description |
+|-----|------|-------------|-------------|
+| `chatStateKey` | `InjectionKey<ChatState>` | `AIChatbot` | Reactive chat state (messages, topics, streaming, thinking) |
+| `chatActionsKey` | `InjectionKey<ChatActionHandlers>` | `AIChatbot` | Chat operations (send, delete, edit, refresh, stop) |
+| `topicActionsKey` | `InjectionKey<TopicActionHandlers>` | `AIChatbot` | Topic operations (create, switch, remove, rename) |
+| `uiActionsKey` | `InjectionKey<UIActionHandlers>` | `AIChatbot` (enhanced by panels) | UI operations (theme, thinking toggle, view navigation) |
+
+### ChatActionHandlers
+
+```typescript
+interface ChatActionHandlers {
+  sendMessage: (data: { content: string; attachments?: Attachment[] }) => void
+  refreshMessage: (message: Message) => void
+  deleteMessage: (message: Message) => void
+  editMessage: (message: Message) => void
+  stopGenerating: () => void
+  isGenerating: { value: boolean }
+  isThinkingActive: { value: boolean }
+}
+```
+
+### TopicActionHandlers
+
+```typescript
+interface TopicActionHandlers {
+  createNewTopic: () => void
+  switchToTopic: (topicId: string) => void
+  removeTopic: (topicId: string) => void
+  removeTopics: (topicIds: string[]) => void
+  renameTopic: (topicId: string, title: string) => void
+}
+```
+
+### UIActionHandlers
+
+```typescript
+interface UIActionHandlers {
+  toggleTheme: () => void
+  setThinkingEnabled: (enabled: boolean) => void
+  thinkingEnabled: { value: boolean }
+  showChatView: () => void      // Navigate to chat view (single-layout modes)
+  showTopicsView: () => void    // Navigate to topics view (single-layout modes)
+}
+```
+
+### Enhanced Provide Chain
+
+Panel components (FloatingChatPanel, EmbeddedChatPanel) inject the parent `uiActionsKey` and provide an **enhanced version** that includes their local `showChatView`/`showTopicsView` methods from `useChatView`. This ensures that when child components call `uiActions.showChatView()`, they trigger the panel's local view navigation.
+
+```typescript
+// In panel components
+const parentUiActions = inject(uiActionsKey, null)
+const { viewState, showChatView, showTopicsView } = useChatView(layout)
+
+provide(uiActionsKey, {
+  ...parentUiActions,
+  showChatView,
+  showTopicsView,
+} satisfies UIActionHandlers)
+```
+
+### Example: Injecting in a Custom Child Component
+
+```vue
+<script setup lang="ts">
+import { inject } from 'vue'
+import { chatStateKey, chatActionsKey } from 'chatbot'
+
+const state = inject(chatStateKey)
+const actions = inject(chatActionsKey)
+
+const handleSend = () => {
+  actions?.sendMessage({ content: 'Hello' })
+}
+</script>
+
+<template>
+  <div v-if="state?.isStreaming.value">Generating...</div>
+  <button @click="handleSend">Send</button>
+</template>
+```
+
+---
+
+## 9. Independent Components
 
 All components can be imported independently:
 
@@ -480,9 +595,19 @@ import {
   DraggableWindow,  // Reusable draggable/resizable window
   MessageList,      // Message list container
   MessageItem,      // Single message display
-  InputArea,        // User input area
-  TopicManager,     // Topic/session management panel
 } from 'chatbot'
+```
+
+### Component Hierarchy
+
+```
+AIChatbot (root — provides state + actions)
+├── FloatingChatPanel     (floating mode — uses inject for state)
+│   └── ChatContent       (injects chatStateKey, chatActionsKey, uiActionsKey)
+├── EmbeddedChatPanel     (extended/sidebar mode — uses inject for state)
+│   └── ChatContent       (injects chatStateKey, chatActionsKey, uiActionsKey)
+└── ChatPanel             (window management wrapper)
+    └── EmbeddedChatPanel
 ```
 
 ### SuspendedBall
@@ -499,6 +624,8 @@ import {
 
 ### MessageItem
 
+MessageItem follows the inject-primary pattern. Actions (delete, copy, resend, edit) use `chatActionsKey` inject instead of emit events.
+
 ```vue
 <MessageItem
   :message="msg"
@@ -508,28 +635,82 @@ import {
   :enable-copy="true"
   :enable-delete="true"
   :enable-resend="true"
-  @copy="handleCopy"
-  @delete="handleDelete"
-  @resend="handleResend"
-  @edit="handleEdit"
 />
 ```
 
 ---
 
-## 9. Composables
+## 10. Composables
 
 ```typescript
 import {
-  useChatbotState,  // Chat state management
+  useChatbotState,  // Chat state management (factory + coordinator)
   useResponsive,    // Responsive breakpoints
-  useStream,        // Stream response handling
-  useMessages,      // Message management
-  useTopics,        // Topic management
+  useStream,        // Stream response handling (standalone utility)
 } from 'chatbot'
 ```
 
+### useChatbotState
+
+Creates the core chatbot state: initializes sub-composables (`useUIState`, `useMessagesState`, `useTopicsState`, `useInteractionState`), wires them together via `useChatbotCoordinator`, and exposes state + actions.
+
+```typescript
+const {
+  // Reactive state (sub-composable state)
+  state,              // { ui, messages, topics, interaction }
+
+  // Computed
+  currentMessages,    // ComputedRef<Message[]>
+  currentTopic,       // ComputedRef<Topic | undefined>
+  isStreaming,        // ComputedRef<boolean>
+
+  // UI Actions
+  togglePanel,
+  setTheme,
+  setCurrentView,
+  toggleView,
+  updateScreenSize,
+
+  // Message Actions
+  addMessage,
+  updateMessage,
+  removeMessage,
+  insertMessage,
+  setMessages,
+  ensureMessages,
+  clearCurrentMessages,
+  setStreamingMessage,
+
+  // Topic Actions
+  switchTopic,
+  createTopic,
+  deleteTopic,
+  updateTopicTitle,
+  setTopicList,
+  setCurrentTopicId,
+  addTopicToFront,
+
+  // Interaction Actions
+  setSelectedImages,
+  addSelectedImage,
+  removeSelectedImage,
+  clearSelectedImages,
+
+  // Lifecycle
+  init,               // Call in onMounted (defers side effects)
+  cleanup,            // Call in onUnmounted
+} = useChatbotState(config)
+```
+
+### useChatbotCoordinator
+
+**Internal composable** — not part of the public API. Handles cross-cutting sync between `useTopicsState` and `useMessagesState` using `watch`-based reactivity so that `messages.currentTopicId` automatically syncs when `topics.currentId` changes.
+
+Used internally by `useChatbotState`. Not exported; direct usage requires importing from the source module.
+
 ### useStream
+
+Standalone utility for consuming `AsyncGenerator<StreamEvent>` streams. Not used internally by the chat flow (which uses `useChatActions.processStream`); provided for consumers building custom streaming UIs.
 
 ```typescript
 const { isStreaming, streamedContent, streamFromGenerator, cancel, reset } = useStream({
@@ -541,15 +722,66 @@ const { isStreaming, streamedContent, streamFromGenerator, cancel, reset } = use
 await streamFromGenerator(myGenerator())
 ```
 
-### useChatbotState
+---
+
+## 11. Storage Adapter
+
+The storage layer uses an adapter pattern to decouple from `localStorage`. Schema versioning ensures safe migration when stored data format changes.
+
+### StorageAdapter Interface
 
 ```typescript
-const { state, togglePanel, setTheme, switchSession, createSession, deleteSession, updateSessionTitle, cleanup } = useChatbotState(config)
+interface StorageAdapter {
+  get<T>(key: string): T | null
+  set(key: string, value: unknown): void
+  remove(key: string): void
+  clear(): void
+}
+```
+
+### LocalStorageAdapter
+
+Default implementation using `localStorage`. Gracefully handles environments where localStorage is unavailable (SSR, restricted contexts).
+
+```typescript
+import { LocalStorageAdapter } from 'chatbot'
+
+const adapter = new LocalStorageAdapter()
+adapter.set('my-key', { foo: 'bar' })
+const data = adapter.get<{ foo: string }>('my-key')
+```
+
+### Versioned Storage
+
+```typescript
+import { loadVersioned, saveVersioned, TOPICS_SCHEMA_VERSION, LocalStorageAdapter } from 'chatbot'
+
+const adapter = new LocalStorageAdapter()
+
+// Save with schema version
+saveVersioned(adapter, 'my-data', myData, TOPICS_SCHEMA_VERSION)
+
+// Load with migration support
+const data = loadVersioned<MyType>(adapter, 'my-data', {
+  0: (raw) => migrateFromLegacy(raw),   // version 0 = unversioned legacy data
+  1: (data) => data as MyType,          // current version
+})
+```
+
+### Custom Storage Adapter
+
+Pass a custom adapter to `useTopicsState` for alternative storage backends (IndexedDB, sessionStorage, etc.):
+
+```typescript
+const topicsState = useTopicsState({
+  defaultTitle: 'New Topic',
+  storageAdapter: new IndexedDBAdapter(),
+})
 ```
 
 ---
 
-## 10. Backend API Endpoints
+## 12. Backend API Endpoints
 
 When using `apiBaseUrl` (without callbacks), the component expects the following REST endpoints:
 
@@ -606,7 +838,21 @@ A complete backend implementation is available at `examples/chatapp/` (both mock
 
 ---
 
-## 11. Error Handling
+## 13. Error Handling
+
+### Error Categories
+
+All errors are wrapped in `ChatbotError` with a category for structured handling:
+
+| Category | Description | Example |
+|----------|-------------|---------|
+| `message` | Message operation failed | Send/delete/edit error |
+| `topic` | Topic operation failed | Load/create/switch error |
+| `stream` | Streaming response error | Connection lost, parse error |
+| `network` | Network-level failure | Timeout, DNS failure |
+| `config` | Configuration error | Invalid API URL |
+
+### User-Facing Errors
 
 | Scenario | User Prompt | Message Status |
 |----------|-------------|----------------|
@@ -616,9 +862,26 @@ A complete backend implementation is available at `examples/chatapp/` (both mock
 | User clicked stop (partial content) | "Generation stopped" | `stopped` |
 | User clicked stop (no content) | "Generation stopped" | `error` |
 
+### Error Observation
+
+Host applications can observe all errors via the `chatbot:error` event:
+
+```vue
+<AIChatbot :config="config" @chatbot:error="handleError" />
+```
+
+```typescript
+function handleError({ error }: { error: ChatbotError }) {
+  if (error.category === 'network') {
+    // Show network-specific recovery UI
+  }
+  logToService(error)
+}
+```
+
 ---
 
-## 12. Timeout Control
+## 14. Timeout Control
 
 Default stream timeout is **2 minutes** (120000ms). Configurable via `streamTimeout`:
 
@@ -632,7 +895,7 @@ const config: ChatbotConfig = {
 
 ---
 
-## 13. Usage Examples
+## 15. Usage Examples
 
 ### Extended Mode (dual layout)
 
@@ -682,4 +945,55 @@ const config: ChatbotConfig = {
     onUploadImages: async (files) => await uploadService.upload(files),
   }
 }" />
+```
+
+### Error Monitoring
+
+```vue
+<AIChatbot
+  :config="chatConfig"
+  @chatbot:error="({ error }) => trackError(error.category, error.userMessage)"
+  @chatbot:ready="() => console.log('Chatbot loaded')"
+/>
+```
+
+---
+
+## 16. Full Export Reference
+
+```typescript
+// Components
+export { default as AIChatbot } from './components/AIChatbot.vue'
+export { default as SuspendedBall } from './components/SuspendedBall.vue'
+export { default as ChatPanel } from './components/ChatPanel.vue'
+export { default as DraggableWindow } from './components/DraggableWindow.vue'
+export { default as MessageList } from './components/MessageList.vue'
+export { default as MessageItem } from './components/MessageItem.vue'
+
+// Types (re-exported from src/types)
+export type * from './types'
+export type { ChatbotConfig, ChatbotCallbacks, SendMessageParams } from './types/config'
+
+// Injection Keys
+export { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey } from './symbols'
+
+// Composables
+export { useChatbotState } from './composables/useChatbotState'
+export { useResponsive } from './composables/useResponsive'
+export { useStream } from './composables/useStream'
+
+// Utilities
+export { generateId, throttle, debounce, copyToClipboard } from './utils/helpers'
+export { makeDraggable, getInitialPosition } from './utils/drag'
+export { StreamClient, fetchStream } from './utils/stream'
+export { IframeMessenger, HostMessenger } from './utils/postMessage'
+export { createMockUploadEndpoint } from './utils/upload'
+export { deriveMessageType, getAttachmentsByType } from './utils/message'
+export { LocalStorageAdapter, TOPICS_SCHEMA_VERSION, loadVersioned, saveVersioned } from './utils/storage'
+export type { StorageAdapter, VersionedData } from './utils/storage'
+export { ChatbotError, toChatbotError } from './utils/errors'
+export type { ErrorCategory } from './utils/errors'
+
+// Vue Plugin
+export const ChatbotPlugin = { install: (app, options?) => app.component('AIChatbot', AIChatbot) }
 ```

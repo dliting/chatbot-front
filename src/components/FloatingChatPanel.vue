@@ -37,22 +37,22 @@
     <div class="floating-chat-panel__body">
       <ChatContent
         v-if="viewState.currentView === 'chat'"
-        :key="messages.length"
-        :messages="messages"
-        :welcome-visible="!hideWelcome && messages.length === 0"
+        :key="effectiveMessages.length"
+        :messages="effectiveMessages"
+        :welcome-visible="!hideWelcome && effectiveMessages.length === 0"
         :quick-actions-visible="!hideQuickActions"
-        :is-streaming="isStreaming"
+        :is-streaming="effectiveIsStreaming"
         :labels="configRef.labels"
-        :enable-thinking="enableThinking"
-        :thinking-enabled="thinkingEnabled"
-        :is-thinking="isThinking"
-        :enable-voice-input="enableVoiceInput"
+        :enable-thinking="effectiveEnableThinking"
+        :thinking-enabled="effectiveThinkingEnabled"
+        :is-thinking="effectiveIsThinking"
+        :enable-voice-input="effectiveEnableVoiceInput"
         @file-click="handleFileClick"
       />
       <TopicListView
         v-else
-        :topics="topics"
-        :current-topic-id="currentTopicId"
+        :topics="effectiveTopics"
+        :current-topic-id="effectiveCurrentTopicId"
         :config="configRef"
         :layout="'single'"
         @close="showChatView"
@@ -81,13 +81,12 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, inject, provide } from 'vue'
-import type { ChatbotConfig } from '@/types/config'
-import type { UIActionHandlers } from '@/types'
+import type { ChatbotConfig, UIActionHandlers } from '@/types'
 import { defaultChatbotConfig } from '@/types/config'
 import type { Message, Topic } from '@/types'
 import { useChatView } from '@/composables/useChatView'
 import { useFilePreview } from '@/composables/useFilePreview'
-import { uiActionsKey } from '@/symbols'
+import { chatStateKey, uiActionsKey } from '@/symbols'
 
 // Components
 import DraggableWindow from './DraggableWindow.vue'
@@ -99,10 +98,10 @@ import FilePreviewModal from './FilePreviewModal.vue'
 
 interface Props {
   config?: ChatbotConfig
-  messages: Message[]
-  topics: Topic[]
-  currentTopicId: string
-  isStreaming: boolean
+  messages?: Message[]
+  topics?: Topic[]
+  currentTopicId?: string
+  isStreaming?: boolean
   hideWelcome?: boolean
   hideQuickActions?: boolean
   enableThinking?: boolean
@@ -113,6 +112,10 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   config: () => ({}),
+  messages: () => [],
+  topics: () => [],
+  currentTopicId: '',
+  isStreaming: false,
   hideWelcome: false,
   hideQuickActions: false,
 })
@@ -124,18 +127,29 @@ interface Emits {
 
 const emit = defineEmits<Emits>()
 
+// Inject state from parent (prefer inject over props when available)
+const chatState = inject(chatStateKey, null)
+
 // Merge config
 const configRef = computed(() => ({
   ...defaultChatbotConfig,
   ...props.config,
 }))
 
+// Resolve state from inject (preferred) or props (fallback)
+const effectiveMessages = computed(() => chatState?.messages?.value ?? props.messages)
+const effectiveTopics = computed(() => chatState?.topics?.value ?? props.topics)
+const effectiveCurrentTopicId = computed(() => chatState?.currentTopicId?.value ?? props.currentTopicId)
+const effectiveIsStreaming = computed(() => chatState?.isStreaming?.value ?? props.isStreaming)
+const effectiveEnableThinking = computed(() => chatState?.enableThinking ?? props.enableThinking)
+const effectiveThinkingEnabled = computed(() => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled)
+const effectiveIsThinking = computed(() => chatState?.isThinking?.value ?? props.isThinking)
+const effectiveEnableVoiceInput = computed(() => chatState?.enableVoiceInput ?? props.enableVoiceInput)
+
 // View state
 const { viewState, showChatView, showTopicsView } = useChatView('floating')
 
 // Inject parent UI actions and provide enhanced version with view navigation
-// Enhanced provide chain: panel adds showChatView/showTopicsView so child
-// components can navigate views via inject (inject-primary pattern)
 const parentUiActions = inject(uiActionsKey, null)
 provide(uiActionsKey, {
   ...parentUiActions,

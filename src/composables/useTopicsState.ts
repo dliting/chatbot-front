@@ -4,6 +4,7 @@
  */
 import { reactive, watch } from 'vue'
 import type { Topic } from '@/types'
+import type { StorageAdapter } from '@/utils/storage'
 import { TOPIC_DEFAULTS } from '@/constants'
 import { loadTopicsFromStorage, saveTopicsToStorage } from './useStorage'
 
@@ -21,13 +22,14 @@ export interface TopicsState {
 
 export interface UseTopicsStateOptions {
   defaultTitle?: string
+  storageAdapter?: StorageAdapter
 }
 
 export function useTopicsState(options: UseTopicsStateOptions = {}) {
-  const { defaultTitle = TOPIC_DEFAULTS.TITLE } = options
+  const { defaultTitle = TOPIC_DEFAULTS.TITLE, storageAdapter } = options
 
-  // Load from localStorage or create new
-  const storedTopics = loadTopicsFromStorage()
+  // Load from storage or create new
+  const storedTopics = loadTopicsFromStorage(storageAdapter)
   const initialTopicId = storedTopics.length > 0
     ? storedTopics[0].topicId
     : generateTopicId()
@@ -44,14 +46,14 @@ export function useTopicsState(options: UseTopicsStateOptions = {}) {
     currentId: initialTopicId,
   })
 
-  // Save initial state to localStorage
-  saveTopicsToStorage(topics.list)
+  // Save initial state to storage
+  saveTopicsToStorage(topics.list, storageAdapter)
 
-  // Auto-persist topics to localStorage on changes
+  // Auto-persist topics to storage on changes
   watch(
     () => topics.list,
     (list) => {
-      saveTopicsToStorage(list)
+      saveTopicsToStorage(list, storageAdapter)
     },
     { deep: true }
   )
@@ -103,7 +105,7 @@ export function useTopicsState(options: UseTopicsStateOptions = {}) {
     }
     topics.list.unshift(newTopic)
     topics.currentId = newTopic.topicId
-    saveTopicsToStorage(topics.list)
+    saveTopicsToStorage(topics.list, storageAdapter)
     return newTopic.topicId
   }
 
@@ -112,7 +114,7 @@ export function useTopicsState(options: UseTopicsStateOptions = {}) {
     const index = topics.list.findIndex(t => t.topicId === topicId)
     if (index > -1) {
       topics.list.splice(index, 1)
-      saveTopicsToStorage(topics.list)
+      saveTopicsToStorage(topics.list, storageAdapter)
     }
   }
 
@@ -121,7 +123,7 @@ export function useTopicsState(options: UseTopicsStateOptions = {}) {
     if (topic) {
       topic.title = title
       topic.updatedAt = Date.now()
-      saveTopicsToStorage(topics.list)
+      saveTopicsToStorage(topics.list, storageAdapter)
     }
   }
 

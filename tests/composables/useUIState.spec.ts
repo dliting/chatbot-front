@@ -51,7 +51,6 @@ describe('useUIState', () => {
     })
 
     it('should set panelMode to dialog when auto on initialization', () => {
-      // When panelMode is 'auto', the initial value is 'dialog' until updateScreenSize is called
       Object.defineProperty(window, 'innerWidth', { value: 500, writable: true, configurable: true })
 
       const { ui } = useUIState({ ...defaultOptions, panelMode: 'auto' })
@@ -73,29 +72,54 @@ describe('useUIState', () => {
       expect(ui.panelMode).toBe('dialog')
     })
 
-    it('should detect screen size on init', () => {
-      Object.defineProperty(window, 'innerWidth', { value: 800, writable: true, configurable: true })
-
+    it('should not set DOM attributes before init() is called', () => {
       const { ui } = useUIState(defaultOptions)
 
-      expect(ui.screenWidth).toBe(800)
-      expect(ui.isMobile).toBe(false) // 800 >= 768, so not mobile
+      // Theme is resolved but DOM not updated yet
+      expect(ui.theme).toBe('light')
+      expect(document.documentElement.setAttribute).not.toHaveBeenCalled()
     })
 
-    it('should set isMobile to true when width < 768', () => {
+    it('should set DOM attributes after init() is called', () => {
+      const { init, cleanup } = useUIState(defaultOptions)
+
+      init()
+      expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
+
+      cleanup()
+    })
+  })
+
+  describe('init()', () => {
+    it('should set theme on document element', () => {
+      const { init, cleanup } = useUIState(defaultOptions)
+
+      init()
+      expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
+
+      cleanup()
+    })
+
+    it('should add resize listener', () => {
+      const addSpy = vi.spyOn(window, 'addEventListener')
+      const { init, cleanup } = useUIState(defaultOptions)
+
+      init()
+      expect(addSpy).toHaveBeenCalledWith('resize', expect.any(Function))
+
+      cleanup()
+      addSpy.mockRestore()
+    })
+
+    it('should update screen size', () => {
       Object.defineProperty(window, 'innerWidth', { value: 500, writable: true, configurable: true })
+      const { init, ui, cleanup } = useUIState(defaultOptions)
 
-      const { ui } = useUIState(defaultOptions)
-
+      init()
+      expect(ui.screenWidth).toBe(500)
       expect(ui.isMobile).toBe(true)
-    })
 
-    it('should set isMobile to false when width >= 768', () => {
-      Object.defineProperty(window, 'innerWidth', { value: 1024, writable: true, configurable: true })
-
-      const { ui } = useUIState(defaultOptions)
-
-      expect(ui.isMobile).toBe(false)
+      cleanup()
     })
   })
 
@@ -108,12 +132,13 @@ describe('useUIState', () => {
         removeEventListener: vi.fn(),
       })))
 
-      const { ui, cleanupThemeListener } = useUIState({ ...defaultOptions, initialTheme: 'system' })
+      const { ui, init, cleanup } = useUIState({ ...defaultOptions, initialTheme: 'system' })
 
       expect(ui.theme).toBe('dark')
+      init()
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark')
 
-      cleanupThemeListener()
+      cleanup()
       vi.unstubAllGlobals()
     })
 
@@ -125,12 +150,13 @@ describe('useUIState', () => {
         removeEventListener: vi.fn(),
       })))
 
-      const { ui, cleanupThemeListener } = useUIState({ ...defaultOptions, initialTheme: 'system' })
+      const { ui, init, cleanup } = useUIState({ ...defaultOptions, initialTheme: 'system' })
 
       expect(ui.theme).toBe('light')
+      init()
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
 
-      cleanupThemeListener()
+      cleanup()
       vi.unstubAllGlobals()
     })
 
@@ -139,12 +165,12 @@ describe('useUIState', () => {
       // @ts-expect-error - intentionally deleting for test
       delete window.matchMedia
 
-      const { ui, cleanupThemeListener } = useUIState({ ...defaultOptions, initialTheme: 'system' })
+      const { ui, cleanup } = useUIState({ ...defaultOptions, initialTheme: 'system' })
 
       expect(ui.theme).toBe('light')
 
       window.matchMedia = originalMatchMedia
-      cleanupThemeListener()
+      cleanup()
     })
 
     it('should not add theme change listener when initialTheme is not system', () => {
@@ -155,11 +181,12 @@ describe('useUIState', () => {
         removeEventListener: vi.fn(),
       })))
 
-      const { cleanupThemeListener } = useUIState({ ...defaultOptions, initialTheme: 'light' })
+      const { init, cleanup } = useUIState({ ...defaultOptions, initialTheme: 'light' })
 
+      init()
       expect(mockAddEventListener).not.toHaveBeenCalled()
 
-      cleanupThemeListener()
+      cleanup()
       vi.unstubAllGlobals()
     })
 
@@ -168,10 +195,11 @@ describe('useUIState', () => {
       // @ts-expect-error - intentionally deleting for test
       delete window.matchMedia
 
-      const { cleanupThemeListener } = useUIState({ ...defaultOptions, initialTheme: 'system' })
+      const { init, cleanup } = useUIState({ ...defaultOptions, initialTheme: 'system' })
 
-      // Should not throw, and no listener should be registered
-      cleanupThemeListener()
+      // Should not throw
+      init()
+      cleanup()
 
       window.matchMedia = originalMatchMedia
     })
@@ -189,8 +217,9 @@ describe('useUIState', () => {
         removeEventListener: mockRemoveEventListener,
       })))
 
-      const { ui, cleanupThemeListener } = useUIState({ ...defaultOptions, initialTheme: 'system' })
+      const { ui, init, cleanup } = useUIState({ ...defaultOptions, initialTheme: 'system' })
 
+      init()
       expect(ui.theme).toBe('light')
 
       // Simulate system theme change to dark
@@ -201,7 +230,7 @@ describe('useUIState', () => {
       expect(ui.theme).toBe('dark')
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark')
 
-      cleanupThemeListener()
+      cleanup()
       vi.unstubAllGlobals()
     })
 
@@ -218,8 +247,9 @@ describe('useUIState', () => {
         removeEventListener: mockRemoveEventListener,
       })))
 
-      const { ui, cleanupThemeListener } = useUIState({ ...defaultOptions, initialTheme: 'system' })
+      const { ui, init, cleanup } = useUIState({ ...defaultOptions, initialTheme: 'system' })
 
+      init()
       expect(ui.theme).toBe('dark')
 
       // Simulate system theme change to light
@@ -230,13 +260,13 @@ describe('useUIState', () => {
       expect(ui.theme).toBe('light')
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
 
-      cleanupThemeListener()
+      cleanup()
       vi.unstubAllGlobals()
     })
   })
 
-  describe('cleanupThemeListener', () => {
-    it('should remove event listener and clear references on cleanup', () => {
+  describe('cleanup', () => {
+    it('should remove event listeners on cleanup', () => {
       const mockRemoveEventListener = vi.fn()
       vi.stubGlobal('matchMedia', vi.fn(() => ({
         matches: false,
@@ -244,20 +274,20 @@ describe('useUIState', () => {
         removeEventListener: mockRemoveEventListener,
       })))
 
-      const { cleanupThemeListener } = useUIState({ ...defaultOptions, initialTheme: 'system' })
+      const { init, cleanup } = useUIState({ ...defaultOptions, initialTheme: 'system' })
 
-      cleanupThemeListener()
+      init()
+      cleanup()
 
       expect(mockRemoveEventListener).toHaveBeenCalledWith('change', expect.any(Function))
 
       vi.unstubAllGlobals()
     })
 
-    it('should not throw when cleanupThemeListener is called without listener being active', () => {
-      // When initialTheme is not 'system', no listener is registered
-      const { cleanupThemeListener } = useUIState({ ...defaultOptions, initialTheme: 'light' })
+    it('should not throw when cleanup is called without listener being active', () => {
+      const { cleanup } = useUIState({ ...defaultOptions, initialTheme: 'light' })
 
-      expect(() => cleanupThemeListener()).not.toThrow()
+      expect(() => cleanup()).not.toThrow()
     })
   })
 
@@ -286,9 +316,10 @@ describe('useUIState', () => {
   })
 
   describe('setTheme', () => {
-    it('should set a specific theme and update document attribute', () => {
-      const { ui, setTheme } = useUIState(defaultOptions)
+    it('should set a specific theme and update document attribute after init', () => {
+      const { ui, setTheme, init, cleanup } = useUIState(defaultOptions)
 
+      init()
       setTheme('dark')
       expect(ui.theme).toBe('dark')
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark')
@@ -296,6 +327,16 @@ describe('useUIState', () => {
       setTheme('light')
       expect(ui.theme).toBe('light')
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
+
+      cleanup()
+    })
+
+    it('should update theme state but not DOM before init', () => {
+      const { ui, setTheme } = useUIState(defaultOptions)
+
+      setTheme('dark')
+      expect(ui.theme).toBe('dark')
+      expect(document.documentElement.setAttribute).not.toHaveBeenCalled()
     })
 
     it('should resolve system theme when setTheme is called with system', () => {
@@ -305,12 +346,14 @@ describe('useUIState', () => {
         removeEventListener: vi.fn(),
       })))
 
-      const { ui, setTheme } = useUIState(defaultOptions)
+      const { ui, setTheme, init, cleanup } = useUIState(defaultOptions)
 
+      init()
       setTheme('system')
       expect(ui.theme).toBe('dark')
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark')
 
+      cleanup()
       vi.unstubAllGlobals()
     })
   })

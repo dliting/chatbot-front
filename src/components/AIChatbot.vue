@@ -1,23 +1,22 @@
 <template>
   <div class="ai-chatbot" :data-theme="resolvedTheme">
-    <!-- Self-contained modes (floating/extended): AIChatPanel manages its own layout/window -->
-    <AIChatPanel
-      v-if="config.mode === 'floating' || config.mode === 'extended'"
+    <!-- Floating Mode (self-contained) -->
+    <FloatingChatPanel
+      v-if="config.mode === 'floating'"
+      :config="themedConfig"
+      :hide-welcome="false"
+      :hide-quick-actions="false"
+    />
+
+    <!-- Extended Mode (self-contained) -->
+    <EmbeddedChatPanel
+      v-else-if="config.mode === 'extended'"
       :mode="config.mode"
       :layout="layout"
       :config="themedConfig"
-      :messages="currentMessages"
-      :topics="state.topics.list"
-      :current-topic-id="state.topics.currentId"
-      :is-streaming="chatActions.isGenerating.value"
       :hide-welcome="false"
       :hide-quick-actions="false"
       :hide-header="!showAIChatHeader"
-      :api-client="apiClient"
-      :enable-thinking="config.enableThinking"
-      :thinking-enabled="thinkingEnabled"
-      :is-thinking="chatActions.isThinkingActive.value"
-      :enable-voice-input="config.enableVoiceInput"
     />
 
     <!-- Sidebar/Dialog modes: wrapped in ChatPanel for window management -->
@@ -41,24 +40,13 @@
       @close="togglePanel"
       @toggle-theme="toggleTheme"
     >
-      <AIChatPanel
+      <EmbeddedChatPanel
         :mode="config.mode"
         :layout="layout"
-        :panel-open="state.ui.isPanelOpen"
-        :messages="currentMessages"
-        :topics="state.topics.list"
-        :current-topic-id="state.topics.currentId"
-        :is-streaming="chatActions.isGenerating.value"
-        :hide-header="!showAIChatHeader"
         :hide-welcome="state.ui.panelMode === 'dialog'"
         :hide-quick-actions="state.ui.panelMode === 'dialog'"
-        :hide-input-area="false"
+        :hide-header="!showAIChatHeader"
         :config="aiChatConfig"
-        :api-client="apiClient"
-        :enable-thinking="config.enableThinking"
-        :thinking-enabled="thinkingEnabled"
-        :is-thinking="chatActions.isThinkingActive.value"
-        :enable-voice-input="config.enableVoiceInput"
       />
     </ChatPanel>
   </div>
@@ -67,17 +55,19 @@
 <script setup lang="ts">
 import { computed, watch, onMounted, onUnmounted, ref, provide } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
-import type { ChatActionHandlers, TopicActionHandlers, UIActionHandlers } from '@/types'
+import type { ChatActionHandlers, TopicActionHandlers, UIActionHandlers, ChatState } from '@/types'
 import { defaultChatbotConfig, getDefaultLabels } from '@/types/config'
 import { modeToLayoutMap } from '@/types'
-import { chatActionsKey, topicActionsKey, uiActionsKey } from '@/symbols'
+import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey } from '@/symbols'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useChatActions } from '@/composables/useChatActions'
 import { useTopicActions } from '@/composables/useTopicActions'
 import { useApiClient } from '@/composables/useApiClient'
+import { useErrorHandler } from '@/composables/useErrorHandler'
 
 import ChatPanel from './ChatPanel.vue'
-import AIChatPanel from './AIChatPanel.vue'
+import FloatingChatPanel from './FloatingChatPanel.vue'
+import EmbeddedChatPanel from './EmbeddedChatPanel.vue'
 
 // Props
 interface Props {
@@ -105,6 +95,7 @@ interface Emits {
   (e: 'ui:theme-changed', data: { theme: string }): void
   (e: 'ui:stop-generating'): void
   (e: 'chatbot:ready'): void
+  (e: 'chatbot:error', data: { error: import('@/utils/errors').ChatbotError }): void
 }
 
 const emit = defineEmits<Emits>()
@@ -164,6 +155,7 @@ const {
   setCurrentTopicId,
   addTopicToFront,
   setMessages,
+  init: stateInit,
   cleanup,
 } = useChatbotState(config.value)
 
@@ -176,12 +168,16 @@ function emitEvent(event: string, ...args: unknown[]): void {
   ;(emit as (event: string, ...args: unknown[]) => void)(event, ...args)
 }
 
+// Error handler
+const { handleError } = useErrorHandler({ emit: emitEvent })
+
 // Chat actions (message send/stream/delete/edit)
 const chatActions = useChatActions({
   config,
   state,
   apiClient,
   emit: emitEvent,
+  handleError,
   ensureMessages: ensureMessagesForTopic,
   removeMessage,
   insertMessage,
@@ -195,6 +191,7 @@ const topicActions = useTopicActions({
   state,
   apiClient,
   emit: emitEvent,
+  handleError,
   switchTopic,
   createTopic,
   deleteTopic,
@@ -204,25 +201,6 @@ const topicActions = useTopicActions({
   addTopicToFront,
   setMessages,
 })
-
-// Provide action handlers for child components via inject
-provide(chatActionsKey, {
-  sendMessage: chatActions.sendMessage,
-  refreshMessage: chatActions.refreshMessage,
-  deleteMessage: chatActions.deleteMessage,
-  editMessage: chatActions.editMessage,
-  stopGenerating: chatActions.stopGenerating,
-  isGenerating: chatActions.isGenerating,
-  isThinkingActive: chatActions.isThinkingActive,
-} satisfies ChatActionHandlers)
-
-provide(topicActionsKey, {
-  createNewTopic: topicActions.createNewTopic,
-  switchToTopic: topicActions.switchToTopic,
-  removeTopic: topicActions.removeTopic,
-  removeTopics: topicActions.removeTopics,
-  renameTopic: topicActions.renameTopic,
-} satisfies TopicActionHandlers)
 
 // Computed
 const layout = computed(() => {
@@ -256,6 +234,37 @@ const currentMessages = computed(() => {
   return state.messages.byTopic[topicId] || []
 })
 
+// Provide state for child components via inject (reduces prop drilling)
+provide(chatStateKey, {
+  messages: currentMessages,
+  topics: computed(() => state.topics.list),
+  currentTopicId: computed(() => state.topics.currentId),
+  isStreaming: computed(() => chatActions.isGenerating.value),
+  streamingMessageId: computed(() => state.messages.streamingMessageId),
+  enableThinking: config.value.enableThinking,
+  thinkingEnabled,
+  isThinking: chatActions.isThinkingActive,
+  enableVoiceInput: config.value.enableVoiceInput,
+} satisfies ChatState)
+
+provide(chatActionsKey, {
+  sendMessage: chatActions.sendMessage,
+  refreshMessage: chatActions.refreshMessage,
+  deleteMessage: chatActions.deleteMessage,
+  editMessage: chatActions.editMessage,
+  stopGenerating: chatActions.stopGenerating,
+  isGenerating: chatActions.isGenerating,
+  isThinkingActive: chatActions.isThinkingActive,
+} satisfies ChatActionHandlers)
+
+provide(topicActionsKey, {
+  createNewTopic: topicActions.createNewTopic,
+  switchToTopic: topicActions.switchToTopic,
+  removeTopic: topicActions.removeTopic,
+  removeTopics: topicActions.removeTopics,
+  renameTopic: topicActions.renameTopic,
+} satisfies TopicActionHandlers)
+
 // Methods
 const toggleTheme = () => {
   const newTheme = state.ui.theme === 'light' ? 'dark' : 'light'
@@ -280,7 +289,7 @@ watch(
 
 // Initialize
 onMounted(async () => {
-  setTheme(config.value.theme)
+  stateInit()
   await topicActions.loadInitialTopics()
   await topicActions.loadCurrentTopicMessages()
   emit('chatbot:ready')

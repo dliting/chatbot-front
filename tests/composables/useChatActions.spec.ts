@@ -7,6 +7,7 @@ import { useChatActions } from '@/composables/useChatActions'
 import type { Message, StreamEvent } from '@/types'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
+import { ChatbotError } from '@/utils/errors'
 
 function createMockDeps(overrides: Record<string, unknown> = {}) {
   const state = {
@@ -20,11 +21,20 @@ function createMockDeps(overrides: Record<string, unknown> = {}) {
     emitted.push({ event, args })
   }
 
+  const errors: ChatbotError[] = []
+  const handleError = (error: unknown, category: string, userMessage: string): ChatbotError => {
+    const chatbotError = error instanceof ChatbotError ? error : new ChatbotError(category as any, userMessage, error instanceof Error ? error : undefined)
+    errors.push(chatbotError)
+    emit('chatbot:error', { error: chatbotError })
+    return chatbotError
+  }
+
   const deps = {
     config: computed(() => ({ ...defaultChatbotConfig, ...overrides }) as Required<ChatbotConfig>),
     state,
     apiClient: ref(undefined),
     emit,
+    handleError,
     ensureMessages: (topicId: string) => {
       if (!state.messages.byTopic[topicId]) {
         state.messages.byTopic[topicId] = []
@@ -56,7 +66,7 @@ function createMockDeps(overrides: Record<string, unknown> = {}) {
     },
   }
 
-  return { deps, emitted, state }
+  return { deps, emitted, state, errors }
 }
 
 /** Create an async generator that yields given events */

@@ -18,7 +18,7 @@ export type * from './types'
 export type { ChatbotConfig, ChatbotCallbacks, SendMessageParams } from './types/config'
 
 // Export injection keys (for advanced usage with provide/inject)
-export { chatActionsKey, topicActionsKey, uiActionsKey } from './symbols'
+export { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey } from './symbols'
 
 // Export composables
 export { useChatbotState } from './composables/useChatbotState'
@@ -32,6 +32,10 @@ export { StreamClient, fetchStream } from './utils/stream'
 export { IframeMessenger, HostMessenger } from './utils/postMessage'
 export { createMockUploadEndpoint } from './utils/upload'
 export { deriveMessageType, getAttachmentsByType } from './utils/message'
+export { LocalStorageAdapter, TOPICS_SCHEMA_VERSION, loadVersioned, saveVersioned } from './utils/storage'
+export type { StorageAdapter, VersionedData } from './utils/storage'
+export { ChatbotError, toChatbotError } from './utils/errors'
+export type { ErrorCategory } from './utils/errors'
 
 // Default export
 export default AIChatbot

@@ -4,6 +4,22 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { nextTick } from 'vue'
 import { useTopicsState } from '../../src/composables/useTopicsState'
+import { TOPIC_DEFAULTS } from '../../src/constants'
+import type { Topic } from '../../src/types'
+
+const STORAGE_KEY = TOPIC_DEFAULTS.STORAGE_KEY
+
+/** Helper to extract topics data from versioned localStorage format */
+function parseStoredTopics(raw: string | null): Topic[] {
+  if (!raw) return []
+  const parsed = JSON.parse(raw)
+  // Versioned format: { version: number, data: Topic[] }
+  if (parsed.version !== undefined && parsed.data !== undefined) {
+    return parsed.data as Topic[]
+  }
+  // Legacy format: Topic[] (shouldn't happen with new code, but handle for safety)
+  return Array.isArray(parsed) ? parsed : []
+}
 
 describe('useTopicsState', () => {
   beforeEach(() => {
@@ -35,7 +51,7 @@ describe('useTopicsState', () => {
         },
       ]
 
-      localStorage.setItem('chatbot-topics', JSON.stringify(storedTopics))
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(storedTopics))
 
       const { topics } = useTopicsState()
 
@@ -55,10 +71,10 @@ describe('useTopicsState', () => {
     it('should save initial state to localStorage on mount', () => {
       const { topics } = useTopicsState()
 
-      const stored = localStorage.getItem('chatbot-topics')
+      const stored = localStorage.getItem(STORAGE_KEY)
       expect(stored).toBeTruthy()
 
-      const parsed = JSON.parse(stored!)
+      const parsed = parseStoredTopics(stored)
       expect(parsed.length).toBe(1)
       expect(parsed[0].topicId).toBe(topics.list[0].topicId)
     })
@@ -72,8 +88,7 @@ describe('useTopicsState', () => {
       createTopic()
       await nextTick() // Wait for watcher to trigger
 
-      const stored = localStorage.getItem('chatbot-topics')
-      const parsed = JSON.parse(stored!)
+      const parsed = parseStoredTopics(localStorage.getItem(STORAGE_KEY))
 
       expect(parsed.length).toBe(initialCount + 1)
     })
@@ -85,8 +100,7 @@ describe('useTopicsState', () => {
       updateTopicTitle(topicId, 'New Title')
       await nextTick() // Wait for watcher to trigger
 
-      const stored = localStorage.getItem('chatbot-topics')
-      const parsed = JSON.parse(stored!)
+      const parsed = parseStoredTopics(localStorage.getItem(STORAGE_KEY))
 
       expect(parsed[0].title).toBe('New Title')
     })
@@ -104,8 +118,7 @@ describe('useTopicsState', () => {
       deleteTopic(newTopicId)
       await nextTick() // Wait for watcher to trigger
 
-      const stored = localStorage.getItem('chatbot-topics')
-      const parsed = JSON.parse(stored!)
+      const parsed = parseStoredTopics(localStorage.getItem(STORAGE_KEY))
 
       expect(parsed.length).toBe(1)
     })
@@ -221,8 +234,7 @@ describe('useTopicsState', () => {
       const newTopicId = createTopic()
       switchTopic(newTopicId)
 
-      const stored = localStorage.getItem('chatbot-topics')
-      const parsed = JSON.parse(stored!)
+      const parsed = parseStoredTopics(localStorage.getItem(STORAGE_KEY))
 
       expect(parsed[0].topicId).toBe(newTopicId)
     })
@@ -274,8 +286,7 @@ describe('useTopicsState', () => {
 
       createTopic()
 
-      const stored = localStorage.getItem('chatbot-topics')
-      const parsed = JSON.parse(stored!)
+      const parsed = parseStoredTopics(localStorage.getItem(STORAGE_KEY))
 
       expect(parsed.length).toBe(2) // Initial topic + new topic
     })
@@ -300,8 +311,7 @@ describe('useTopicsState', () => {
       const newTopicId = createTopic()
       deleteTopic(newTopicId)
 
-      const stored = localStorage.getItem('chatbot-topics')
-      const parsed = JSON.parse(stored!)
+      const parsed = parseStoredTopics(localStorage.getItem(STORAGE_KEY))
 
       expect(parsed.length).toBe(1)
     })
@@ -351,8 +361,7 @@ describe('useTopicsState', () => {
       const topicId = topics.list[0].topicId
       updateTopicTitle(topicId, 'New Title')
 
-      const stored = localStorage.getItem('chatbot-topics')
-      const parsed = JSON.parse(stored!)
+      const parsed = parseStoredTopics(localStorage.getItem(STORAGE_KEY))
 
       const topic = parsed.find((t: any) => t.topicId === topicId)
       expect(topic.title).toBe('New Title')

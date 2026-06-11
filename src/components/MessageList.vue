@@ -19,9 +19,6 @@
           :is-streaming="isStreaming && message.messageId === streamingMessageId"
           :is-last-message="index === messages.length - 1"
           :labels="labels"
-          @copy="$emit('copy', message)"
-          @delete="$emit('delete', message)"
-          @resend="$emit('resend', message)"
           @file-click="$emit('file-click', $event)"
         />
       </div>
@@ -91,9 +88,6 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 interface Emits {
-  (e: 'copy', message: Message): void
-  (e: 'delete', message: Message): void
-  (e: 'resend', message: Message): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
   (e: 'scroll-to-top'): void
   (e: 'scroll-to-bottom'): void

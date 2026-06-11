@@ -5,8 +5,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { mount, flushPromises } from '@vue/test-utils'
 import MessageItem from '@/components/MessageItem.vue'
+import ThinkingBlock from '@/components/ThinkingBlock.vue'
 import type { Message, Theme } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { chatActionsKey } from '@/symbols'
 
 // Mock element-plus
 vi.mock('element-plus', async () => {
@@ -43,6 +45,16 @@ vi.mock('@/utils/message', () => ({
 }))
 
 describe('MessageItem Component', () => {
+  const mockChatActions = {
+    sendMessage: vi.fn(),
+    refreshMessage: vi.fn(),
+    deleteMessage: vi.fn(),
+    editMessage: vi.fn(),
+    stopGenerating: vi.fn(),
+    isGenerating: { value: false },
+    isThinkingActive: { value: false },
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -70,6 +82,14 @@ describe('MessageItem Component', () => {
       props: {
         message,
         ...props,
+      },
+      global: {
+        provide: {
+          [chatActionsKey]: mockChatActions,
+        },
+        stubs: {
+          ThinkingBlock: true,
+        },
       },
     })
   }
@@ -250,6 +270,14 @@ describe('MessageItem Component', () => {
         slots: {
           avatar: '<div class="custom-avatar">Custom</div>',
         },
+        global: {
+          provide: {
+            [chatActionsKey]: mockChatActions,
+          },
+          stubs: {
+            ThinkingBlock: true,
+          },
+        },
       })
 
       expect(wrapper.find('.custom-avatar').exists()).toBe(true)
@@ -321,36 +349,39 @@ describe('MessageItem Component', () => {
   })
 
   describe('Action Events', () => {
-    it('should emit copy event when copy button is clicked', async () => {
+    it('should call copyToClipboard when copy button is clicked', async () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message)
 
       const copyBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Copy')
       if (copyBtn) {
         await copyBtn.trigger('click')
-        expect(wrapper.emitted('copy')).toBeTruthy()
+        // Copy is handled internally via copyToClipboard, no emit
+        const { copyToClipboard } = await import('@/utils/helpers')
+        expect(copyToClipboard).toHaveBeenCalledWith(message.content)
       }
     })
 
-    it('should emit delete event when delete button is clicked', async () => {
+    it('should call chatActions.deleteMessage when delete button is clicked', async () => {
       const message = createUserMessage()
       const wrapper = createWrapper(message)
 
       const deleteBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Delete')
       if (deleteBtn) {
         await deleteBtn.trigger('click')
-        expect(wrapper.emitted('delete')).toBeTruthy()
+        await flushPromises()
+        expect(mockChatActions.deleteMessage).toHaveBeenCalledWith(message)
       }
     })
 
-    it('should emit resend event when resend button is clicked', async () => {
+    it('should call chatActions.sendMessage when resend button is clicked for user message', async () => {
       const message = createUserMessage({ status: 'error' })
       const wrapper = createWrapper(message, { enableResend: true })
 
       const resendBtn = wrapper.findAll('.chatbot-message__action-btn').find(btn => btn.attributes('title') === 'Resend')
       if (resendBtn) {
         await resendBtn.trigger('click')
-        expect(wrapper.emitted('resend')).toBeTruthy()
+        expect(mockChatActions.sendMessage).toHaveBeenCalledWith({ content: message.content, attachments: message.attachments })
       }
     })
   })
@@ -419,6 +450,14 @@ describe('MessageItem Component', () => {
         },
         slots: {
           label: '<span class="custom-label">Custom Label</span>',
+        },
+        global: {
+          provide: {
+            [chatActionsKey]: mockChatActions,
+          },
+          stubs: {
+            ThinkingBlock: true,
+          },
         },
       })
 
@@ -569,7 +608,7 @@ describe('MessageItem Component', () => {
   })
 
   describe('Copy Functionality', () => {
-    it('should emit copy event and show success message on successful copy', async () => {
+    it('should copy content and show success message on successful copy', async () => {
       const message = createUserMessage({ content: 'Copy me' })
       const wrapper = createWrapper(message)
 
@@ -578,7 +617,7 @@ describe('MessageItem Component', () => {
       await copyBtn!.trigger('click')
       await flushPromises()
 
-      expect(wrapper.emitted('copy')).toBeTruthy()
+      // Copy is handled internally, no emit
       expect(ElMessage).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'success' })
       )
@@ -646,7 +685,6 @@ describe('MessageItem Component', () => {
       expect(ElMessage).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'error', message: expect.stringContaining('Copy failed') })
       )
-      expect(wrapper.emitted('copy')).toBeFalsy()
     })
 
     it('should switch to copied icon (Check) after successful copy', async () => {
@@ -746,7 +784,7 @@ describe('MessageItem Component', () => {
   })
 
   describe('Delete Functionality', () => {
-    it('should emit delete event when confirm dialog is accepted', async () => {
+    it('should call chatActions.deleteMessage when confirm dialog is accepted', async () => {
       vi.mocked(ElMessageBox.confirm).mockResolvedValueOnce(true as any)
 
       const message = createUserMessage({ content: 'Delete me' })
@@ -756,13 +794,13 @@ describe('MessageItem Component', () => {
       await deleteBtn!.trigger('click')
       await flushPromises()
 
-      expect(wrapper.emitted('delete')).toBeTruthy()
+      expect(mockChatActions.deleteMessage).toHaveBeenCalledWith(message)
       expect(ElMessage).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'success' })
       )
     })
 
-    it('should not emit delete event when confirm dialog is cancelled', async () => {
+    it('should not call chatActions.deleteMessage when confirm dialog is cancelled', async () => {
       vi.mocked(ElMessageBox.confirm).mockRejectedValueOnce(new Error('cancel'))
 
       const message = createUserMessage({ content: 'Delete me' })
@@ -772,7 +810,7 @@ describe('MessageItem Component', () => {
       await deleteBtn!.trigger('click')
       await flushPromises()
 
-      expect(wrapper.emitted('delete')).toBeFalsy()
+      expect(mockChatActions.deleteMessage).not.toHaveBeenCalled()
     })
 
     it('should use custom labels for delete confirmation dialog', async () => {
@@ -818,35 +856,34 @@ describe('MessageItem Component', () => {
   })
 
   describe('DoubleClick Edit', () => {
-    it('should emit edit event on double-click for user messages', async () => {
+    it('should call chatActions.editMessage on double-click for user messages', async () => {
       const message = createUserMessage({ content: 'Edit me' })
       const wrapper = createWrapper(message)
 
       const bubble = wrapper.find('.chatbot-message__bubble')
       await bubble.trigger('dblclick')
 
-      expect(wrapper.emitted('edit')).toBeTruthy()
-      expect(wrapper.emitted('edit')?.[0]).toEqual([message])
+      expect(mockChatActions.editMessage).toHaveBeenCalledWith(message)
     })
 
-    it('should not emit edit event on double-click for assistant messages', async () => {
+    it('should not call chatActions.editMessage on double-click for assistant messages', async () => {
       const message = createAssistantMessage({ content: 'Cannot edit' })
       const wrapper = createWrapper(message)
 
       const bubble = wrapper.find('.chatbot-message__bubble')
       await bubble.trigger('dblclick')
 
-      expect(wrapper.emitted('edit')).toBeFalsy()
+      expect(mockChatActions.editMessage).not.toHaveBeenCalled()
     })
 
-    it('should not emit edit event on double-click for streaming messages', async () => {
+    it('should not call chatActions.editMessage on double-click for streaming messages', async () => {
       const message = createUserMessage({ content: 'Streaming' })
       const wrapper = createWrapper(message, { isStreaming: true })
 
       const bubble = wrapper.find('.chatbot-message__bubble')
       await bubble.trigger('dblclick')
 
-      expect(wrapper.emitted('edit')).toBeFalsy()
+      expect(mockChatActions.editMessage).not.toHaveBeenCalled()
     })
   })
 
@@ -1157,7 +1194,7 @@ describe('MessageItem Component', () => {
   })
 
   describe('Resend Action', () => {
-    it('should emit resend event when resend button is clicked', async () => {
+    it('should call chatActions.sendMessage when resend button is clicked for user message', async () => {
       const message = createUserMessage({ status: 'error' })
       const wrapper = createWrapper(message)
 
@@ -1165,7 +1202,7 @@ describe('MessageItem Component', () => {
       expect(resendBtn).toBeTruthy()
       await resendBtn!.trigger('click')
 
-      expect(wrapper.emitted('resend')).toBeTruthy()
+      expect(mockChatActions.sendMessage).toHaveBeenCalledWith({ content: message.content, attachments: message.attachments })
     })
 
     it('should apply danger class to resend button', () => {

@@ -4,7 +4,6 @@
 import { reactive } from 'vue'
 
 export interface InteractionState {
-  isSending: boolean
   selectedImages: string[]
 }
 
@@ -15,7 +14,6 @@ interface UseInteractionStateOptions {
 export function useInteractionState(options: UseInteractionStateOptions = {}) {
   // Interaction State
   const interaction = reactive<InteractionState>({
-    isSending: false,
     selectedImages: [],
   })
 

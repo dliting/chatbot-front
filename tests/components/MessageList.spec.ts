@@ -3,19 +3,17 @@ import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import MessageList from '@/components/MessageList.vue'
 import type { Message } from '@/types'
+import { chatActionsKey } from '@/symbols'
 
-// Mock the MessageItem component
+// Mock the MessageItem component - no longer emits copy/delete/resend
 vi.mock('@/components/MessageItem.vue', () => ({
   default: {
     name: 'MessageItem',
     props: ['message', 'theme', 'isStreaming'],
-    emits: ['copy', 'delete', 'resend', 'file-click'],
+    emits: ['file-click'],
     template: `
       <div class="chatbot-messages__item" :class="'chatbot-messages__item--' + message.role" data-testid="message-item">
         <span class="chatbot-messages__item-content">{{ message.content }}</span>
-        <button @click="$emit('copy', message)">Copy</button>
-        <button @click="$emit('delete', message)">Delete</button>
-        <button v-if="message.role === 'user'" @click="$emit('resend', message)">Resend</button>
       </div>
     `,
   },
@@ -23,6 +21,16 @@ vi.mock('@/components/MessageItem.vue', () => ({
 
 describe('MessageList.vue', () => {
   let wrapper: VueWrapper<InstanceType<typeof MessageList>>
+
+  const mockChatActions = {
+    sendMessage: vi.fn(),
+    refreshMessage: vi.fn(),
+    deleteMessage: vi.fn(),
+    editMessage: vi.fn(),
+    stopGenerating: vi.fn(),
+    isGenerating: { value: false },
+    isThinkingActive: { value: false },
+  }
 
   const defaultProps = {
     messages: [],
@@ -49,6 +57,11 @@ describe('MessageList.vue', () => {
       props: {
         ...defaultProps,
         ...props,
+      },
+      global: {
+        provide: {
+          [chatActionsKey]: mockChatActions,
+        },
       },
       attachTo: document.body,
     })
@@ -176,52 +189,6 @@ describe('MessageList.vue', () => {
       await wrapper.setProps({ theme: 'dark' })
 
       expect(wrapper.find('.chatbot-messages').exists()).toBe(true)
-    })
-  })
-
-  describe('Message Actions', () => {
-    it('should emit copy event when copy button is clicked', async () => {
-      const messages = createMockMessages(1)
-      await wrapper.setProps({ messages })
-
-      const copyButton = wrapper.find('.chatbot-messages__item button')
-      await copyButton.trigger('click')
-
-      expect(wrapper.emitted('copy')).toBeTruthy()
-      expect(wrapper.emitted('copy')?.[0]).toEqual([messages[0]])
-    })
-
-    it('should emit delete event when delete button is clicked', async () => {
-      const messages = createMockMessages(1)
-      await wrapper.setProps({ messages })
-
-      const deleteButton = wrapper.findAll('.chatbot-messages__item button')[1]
-      await deleteButton.trigger('click')
-
-      expect(wrapper.emitted('delete')).toBeTruthy()
-      expect(wrapper.emitted('delete')?.[0]).toEqual([messages[0]])
-    })
-
-    it('should emit resend event when resend button is clicked', async () => {
-      const messages = [
-        {
-          id: 'msg_1',
-          sessionId: 'session_1',
-          role: 'user',
-          type: 'text',
-          content: 'Resend me',
-          timestamp: Date.now(),
-          status: 'error',
-        },
-      ] as Message[]
-
-      await wrapper.setProps({ messages })
-
-      const resendButton = wrapper.findAll('.chatbot-messages__item button')[2]
-      await resendButton.trigger('click')
-
-      expect(wrapper.emitted('resend')).toBeTruthy()
-      expect(wrapper.emitted('resend')?.[0]).toEqual([messages[0]])
     })
   })
 

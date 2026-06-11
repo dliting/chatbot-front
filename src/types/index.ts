@@ -1,6 +1,7 @@
 /**
  * Core type definitions for AI Chatbot
  */
+import type { ComputedRef } from 'vue'
 
 // Message Types
 export type MessageRole = 'user' | 'assistant' | 'system'
@@ -128,6 +129,20 @@ export interface UIActionHandlers {
   showChatView: () => void
   /** Switch to topics view (only effective in single-layout modes: floating, sidebar) */
   showTopicsView: () => void
+}
+
+// State interface for provide/inject
+// Components inject this to access reactive state without prop drilling
+export interface ChatState {
+  messages: ComputedRef<Message[]>
+  topics: ComputedRef<Topic[]>
+  currentTopicId: ComputedRef<string>
+  isStreaming: ComputedRef<boolean>
+  streamingMessageId: ComputedRef<string | null>
+  enableThinking: boolean
+  thinkingEnabled: { value: boolean }
+  isThinking: { value: boolean }
+  enableVoiceInput: boolean
 }
 
 // Upload result

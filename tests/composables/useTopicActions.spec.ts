@@ -7,6 +7,7 @@ import { useTopicActions } from '@/composables/useTopicActions'
 import type { Message, Topic } from '@/types'
 import type { ChatbotConfig } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
+import { ChatbotError } from '@/utils/errors'
 
 function createMockTopic(id: string, title: string): Topic {
   return { topicId: id, title, createdAt: Date.now(), updatedAt: Date.now(), messageCount: 0, unreadCount: 0 }
@@ -22,6 +23,14 @@ function createMockDeps(overrides: Record<string, unknown> = {}) {
   const emitted: Array<{ event: string; args: unknown[] }> = []
   const emit = (event: string, ...args: unknown[]) => {
     emitted.push({ event, args })
+  }
+
+  const errors: ChatbotError[] = []
+  const handleError = (error: unknown, category: string, userMessage: string): ChatbotError => {
+    const chatbotError = error instanceof ChatbotError ? error : new ChatbotError(category as any, userMessage, error instanceof Error ? error : undefined)
+    errors.push(chatbotError)
+    emit('chatbot:error', { error: chatbotError })
+    return chatbotError
   }
 
   const topicListOps = {
@@ -46,6 +55,7 @@ function createMockDeps(overrides: Record<string, unknown> = {}) {
     state,
     apiClient: ref(undefined),
     emit,
+    handleError,
     switchTopic: vi.fn(),
     createTopic: vi.fn(() => {
       const id = 'topic_new'
@@ -61,7 +71,7 @@ function createMockDeps(overrides: Record<string, unknown> = {}) {
     ...topicListOps,
   }
 
-  return { deps, emitted, state }
+  return { deps, emitted, state, errors }
 }
 
 describe('composables/useTopicActions', () => {
@@ -125,8 +135,7 @@ describe('composables/useTopicActions', () => {
     })
 
     it('should handle callback error in createNewTopic', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const { deps, emitted } = createMockDeps({
+      const { deps, emitted, errors } = createMockDeps({
         callbacks: {
           onCreateTopic: vi.fn().mockRejectedValue(new Error('callback failed')),
         },
@@ -138,9 +147,9 @@ describe('composables/useTopicActions', () => {
       const actions = useTopicActions(deps)
       await actions.createNewTopic()
 
-      expect(consoleSpy).toHaveBeenCalledWith('Create topic callback failed:', expect.any(Error))
+      expect(errors.length).toBe(1)
+      expect(errors[0].category).toBe('topic')
       expect(emitted.some(e => e.event === 'topic:created')).toBe(false)
-      consoleSpy.mockRestore()
     })
 
     it('should create topic via apiClient when no callback', async () => {
@@ -158,8 +167,7 @@ describe('composables/useTopicActions', () => {
     })
 
     it('should handle apiClient error in createNewTopic', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const { deps, emitted } = createMockDeps()
+      const { deps, emitted, errors } = createMockDeps()
       deps.apiClient.value = { createTopic: vi.fn().mockRejectedValue(new Error('api failed')) }
       deps.state.messages.byTopic['topic_1'] = [
         { messageId: 'm1', topicId: 'topic_1', role: 'user', type: 'text', content: 'hi', timestamp: Date.now(), status: 'sent' },
@@ -168,9 +176,9 @@ describe('composables/useTopicActions', () => {
       const actions = useTopicActions(deps)
       await actions.createNewTopic()
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to create topic:', expect.any(Error))
+      expect(errors.length).toBe(1)
+      expect(errors[0].category).toBe('topic')
       expect(emitted.some(e => e.event === 'topic:created')).toBe(false)
-      consoleSpy.mockRestore()
     })
 
     it('should use deps.createTopic when no callback and no apiClient', async () => {
@@ -235,8 +243,7 @@ describe('composables/useTopicActions', () => {
     })
 
     it('should handle onSwitchTopic callback error', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const { deps, emitted } = createMockDeps({
+      const { deps, emitted, errors } = createMockDeps({
         callbacks: {
           onSwitchTopic: vi.fn().mockRejectedValue(new Error('switch failed')),
         },
@@ -245,11 +252,11 @@ describe('composables/useTopicActions', () => {
       const actions = useTopicActions(deps)
       await actions.switchToTopic('topic_1')
 
-      expect(consoleSpy).toHaveBeenCalledWith('Switch topic callback failed:', expect.any(Error))
+      expect(errors.length).toBe(1)
+      expect(errors[0].category).toBe('topic')
       // Should still proceed with switch and emit
       expect(deps.switchTopic).toHaveBeenCalledWith('topic_1')
       expect(emitted.some(e => e.event === 'topic:switched')).toBe(true)
-      consoleSpy.mockRestore()
     })
 
     it('should not load messages when already loaded', async () => {
@@ -328,8 +335,7 @@ describe('composables/useTopicActions', () => {
     })
 
     it('should handle delete error', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const { deps, emitted } = createMockDeps({
+      const { deps, emitted, errors } = createMockDeps({
         callbacks: {
           onDeleteTopic: vi.fn().mockRejectedValue(new Error('delete failed')),
         },
@@ -338,11 +344,11 @@ describe('composables/useTopicActions', () => {
       const actions = useTopicActions(deps)
       await actions.removeTopic('topic_1')
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to delete topic:', expect.any(Error))
+      expect(errors.length).toBe(1)
+      expect(errors[0].category).toBe('topic')
       // Should not emit or call deleteTopic on error
       expect(deps.deleteTopic).not.toHaveBeenCalled()
       expect(emitted.some(e => e.event === 'topic:deleted')).toBe(false)
-      consoleSpy.mockRestore()
     })
   })
 
@@ -461,8 +467,7 @@ describe('composables/useTopicActions', () => {
     })
 
     it('should handle callback error', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const { deps } = createMockDeps({
+      const { deps, errors } = createMockDeps({
         callbacks: {
           onLoadTopics: vi.fn().mockRejectedValue(new Error('load failed')),
         },
@@ -472,10 +477,10 @@ describe('composables/useTopicActions', () => {
       const actions = useTopicActions(deps)
       await actions.loadInitialTopics()
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to load initial topics:', expect.any(Error))
+      expect(errors.length).toBe(1)
+      expect(errors[0].category).toBe('topic')
       // Should not modify state on error
       expect(deps.state.topics.list).toEqual(originalList)
-      consoleSpy.mockRestore()
     })
 
     it('should load topics via apiClient when no callback', async () => {
@@ -583,8 +588,7 @@ describe('composables/useTopicActions', () => {
     })
 
     it('should handle error gracefully', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const { deps } = createMockDeps({
+      const { deps, errors } = createMockDeps({
         callbacks: {
           onLoadTopics: vi.fn().mockRejectedValue(new Error('reload failed')),
         },
@@ -594,9 +598,9 @@ describe('composables/useTopicActions', () => {
       const actions = useTopicActions(deps)
       await actions.reloadTopics()
 
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to reload topics:', expect.any(Error))
+      expect(errors.length).toBe(1)
+      expect(errors[0].category).toBe('topic')
       expect(deps.state.topics.list).toEqual(originalList)
-      consoleSpy.mockRestore()
     })
 
     it('should do nothing when no callback and no apiClient', async () => {
@@ -641,9 +645,8 @@ describe('composables/useTopicActions', () => {
       expect(result).toEqual(messages)
     })
 
-    it('should return empty array on 404 error without logging', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const { deps } = createMockDeps({
+    it('should return empty array on 404 error without reporting', async () => {
+      const { deps, errors } = createMockDeps({
         callbacks: {
           onLoadMessages: vi.fn().mockRejectedValue(new Error('404 Not Found')),
         },
@@ -653,14 +656,12 @@ describe('composables/useTopicActions', () => {
       const result = await actions.loadTopicMessages('topic_1')
 
       expect(result).toEqual([])
-      // 404 errors return early without logging
-      expect(consoleSpy).not.toHaveBeenCalled()
-      consoleSpy.mockRestore()
+      // 404 errors return early without error reporting
+      expect(errors.length).toBe(0)
     })
 
     it('should return empty array on non-404 error', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const { deps } = createMockDeps({
+      const { deps, errors } = createMockDeps({
         callbacks: {
           onLoadMessages: vi.fn().mockRejectedValue(new Error('Network error')),
         },
@@ -670,13 +671,12 @@ describe('composables/useTopicActions', () => {
       const result = await actions.loadTopicMessages('topic_1')
 
       expect(result).toEqual([])
-      expect(consoleSpy).toHaveBeenCalledWith('Failed to load topic messages:', expect.any(Error))
-      consoleSpy.mockRestore()
+      expect(errors.length).toBe(1)
+      expect(errors[0].category).toBe('topic')
     })
 
     it('should handle non-Error thrown values', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-      const { deps } = createMockDeps({
+      const { deps, errors } = createMockDeps({
         callbacks: {
           // Throw a non-Error value (string)
           onLoadMessages: vi.fn().mockRejectedValue('string error'),
@@ -687,7 +687,7 @@ describe('composables/useTopicActions', () => {
       const result = await actions.loadTopicMessages('topic_1')
 
       expect(result).toEqual([])
-      consoleSpy.mockRestore()
+      expect(errors.length).toBe(1)
     })
 
     it('should return empty array when no callback and no apiClient', async () => {

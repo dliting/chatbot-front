@@ -3,23 +3,12 @@
  */
 
 /**
- * Message types enumeration
+ * Message roles (aligned with MessageRole type)
  */
-export const MESSAGE_TYPES = {
+export const MESSAGE_ROLES = {
   USER: 'user',
   ASSISTANT: 'assistant',
   SYSTEM: 'system',
-  ERROR: 'error',
-} as const
-
-/**
- * Chat panel states
- */
-export const CHAT_STATE = {
-  CLOSED: 'closed',
-  OPEN: 'open',
-  MINIMIZED: 'minimized',
-  FULLSCREEN: 'fullscreen',
 } as const
 
 /**
@@ -37,22 +26,9 @@ export const ANIMATION_DURATION = {
  * Breakpoint values for responsive design
  */
 export const BREAKPOINTS = {
-  XS: 320,
-  SM: 480,
-  MD: 768,
-  LG: 1024,
-  XL: 1280,
-  XXL: 1536,
-} as const
-
-/**
- * Storage keys
- */
-export const STORAGE_KEYS = {
-  TOPIC: 'chatbot_topic',
-  HISTORY: 'chatbot_history',
-  SETTINGS: 'chatbot_settings',
-  THEME: 'chatbot_theme',
+  MOBILE: 768,
+  TABLET: 1024,
+  DESKTOP: 1440,
 } as const
 
 /**
@@ -60,5 +36,5 @@ export const STORAGE_KEYS = {
  */
 export const TOPIC_DEFAULTS = {
   TITLE: 'New Topic',
-  STORAGE_KEY: 'chatbot-topics',
+  STORAGE_KEY: 'chatbot-topic-list',
 } as const

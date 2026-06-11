@@ -90,7 +90,7 @@ interface Emits {
   (e: 'close'): void
 }
 
-const emit = defineEmits<Emits>()
+defineEmits<Emits>()
 
 // Inject UI action handlers — inject-primary: no emit fallback for data operations
 const uiActions = inject(uiActionsKey)

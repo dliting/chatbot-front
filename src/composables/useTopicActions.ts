@@ -4,6 +4,7 @@
 import type { Ref, ComputedRef } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import type { Message } from '@/types'
+import type { ChatbotError, ErrorCategory } from '@/utils/errors'
 
 interface TopicActionsDeps {
   config: ComputedRef<Required<ChatbotConfig>>
@@ -19,6 +20,7 @@ interface TopicActionsDeps {
   }
   apiClient: Ref<ReturnType<typeof import('@/composables/useApiClient')['useApiClient']> | undefined>
   emit: (event: string, ...args: unknown[]) => void
+  handleError: (error: unknown, category: ErrorCategory, userMessage: string) => ChatbotError
   switchTopic: (topicId: string) => void
   createTopic: () => string
   deleteTopic: (topicId: string) => void
@@ -48,7 +50,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
         deps.setTopicList(topics)
       }
     } catch (error) {
-      console.error('Failed to reload topics:', error)
+      deps.handleError(error, 'topic', 'Failed to reload topics')
     }
   }
 
@@ -65,7 +67,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       if (errorMessage.includes('404')) return []
-      console.error('Failed to load topic messages:', error)
+      deps.handleError(error, 'topic', 'Failed to load topic messages')
     }
     return []
   }
@@ -84,7 +86,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
           deps.setCurrentTopicId(topic.topicId)
           emit('topic:created', { topic })
         } catch (error) {
-          console.error('Create topic callback failed:', error)
+          deps.handleError(error, 'topic', 'Create topic callback failed')
         }
       } else if (apiClient.value) {
         try {
@@ -93,7 +95,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
           deps.setCurrentTopicId(topic.topicId)
           emit('topic:created', { topic })
         } catch (error) {
-          console.error('Failed to create topic:', error)
+          deps.handleError(error, 'topic', 'Failed to create topic')
         }
       } else {
         const newId = deps.createTopic()
@@ -113,7 +115,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
       try {
         await config.value.callbacks.onSwitchTopic(topicId)
       } catch (error) {
-        console.error('Switch topic callback failed:', error)
+        deps.handleError(error, 'topic', 'Switch topic callback failed')
       }
     }
 
@@ -143,7 +145,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
       emit('topic:deleted', { topicId })
       await reloadTopics()
     } catch (error) {
-      console.error('Failed to delete topic:', error)
+      deps.handleError(error, 'topic', 'Failed to delete topic')
     }
   }
 
@@ -161,7 +163,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
         deps.deleteTopic(topicId)
         emit('topic:deleted', { topicId })
       } catch (error) {
-        console.error(`Failed to delete topic ${topicId}:`, error)
+        deps.handleError(error, 'topic', `Failed to delete topic ${topicId}`)
       }
     }
     await reloadTopics()
@@ -184,7 +186,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
       }
       emit('topic:title-updated', { topicId, title })
     } catch (error) {
-      console.error('Failed to update topic title:', error)
+      deps.handleError(error, 'topic', 'Failed to update topic title')
       deps.updateTopicTitle(topicId, oldTitle)
     }
   }
@@ -218,7 +220,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
         deps.setCurrentTopicId(topics[0].topicId)
       }
     } catch (error) {
-      console.error('Failed to load initial topics:', error)
+      deps.handleError(error, 'topic', 'Failed to load initial topics')
     }
   }
 

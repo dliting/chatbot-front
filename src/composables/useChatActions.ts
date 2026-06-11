@@ -4,6 +4,7 @@
 import { ref, type Ref, type ComputedRef } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import type { Message, Attachment, StreamEvent } from '@/types'
+import type { ChatbotError, ErrorCategory } from '@/utils/errors'
 import { generateId } from '@/utils/helpers'
 
 interface ChatActionsDeps {
@@ -19,6 +20,7 @@ interface ChatActionsDeps {
   }
   apiClient: Ref<ReturnType<typeof import('@/composables/useApiClient')['useApiClient']> | undefined>
   emit: (event: string, ...args: unknown[]) => void
+  handleError: (error: unknown, category: ErrorCategory, userMessage: string) => ChatbotError
   // Mutation helpers from useChatbotState
   ensureMessages: (topicId: string) => Message[]
   removeMessage: (topicId: string, messageId: string) => void
@@ -202,7 +204,7 @@ export function useChatActions(deps: ChatActionsDeps) {
           { thinking: { enabled: thinkingRequested }, signal: controller.signal },
         )
       } else {
-        console.error('No API client or callback provided')
+        deps.handleError(new Error('No API client or callback provided'), 'config', 'No API client or callback provided')
         isGenerating.value = false
         return
       }
@@ -280,7 +282,7 @@ export function useChatActions(deps: ChatActionsDeps) {
         await processStream(stream, controller, assistantMessageId, thinkingRequested)
         finalizeStreamStatus(assistantMessageId, controller)
       } catch (error) {
-        console.error('Failed to regenerate message:', error)
+        deps.handleError(error, 'stream', 'Failed to regenerate message')
         isThinkingActive.value = false
         deps.updateMessage(assistantMessageId, {
           status: 'error',
@@ -314,7 +316,7 @@ export function useChatActions(deps: ChatActionsDeps) {
         errorMessage: config.value.labels?.generationStopped || 'Generation stopped',
       })
     } else {
-      console.error('Failed to send message:', error)
+      deps.handleError(error, 'stream', 'Failed to send message')
       deps.updateMessage(userMessageId, { status: 'error' })
       const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
       if (assistantMsg) {
@@ -347,7 +349,7 @@ export function useChatActions(deps: ChatActionsDeps) {
       deps.removeMessage(topicId, message.messageId)
       emit('message:deleted', { messageId: message.messageId, topicId })
     } catch (error) {
-      console.error('Failed to delete message:', error)
+      deps.handleError(error, 'message', 'Failed to delete message')
     }
   }
 
