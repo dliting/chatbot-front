@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ChatContent from '@/components/ChatContent.vue'
-import { chatActionsKey, uiActionsKey } from '@/symbols'
+import { chatActionsKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
 import { createMockChatActions, createMockUIActions } from '../utils/mockActions'
 
 // Mock ChatInput to avoid complex dependencies
@@ -47,7 +47,7 @@ const mockMessages = [
 const mockChatActions = createMockChatActions()
 const mockUIActions = createMockUIActions()
 
-const createWrapper = (options = {}) => {
+const createWrapper = (options: Record<string, unknown> = {}, provideOverrides: Record<string, unknown> = {}) => {
   return mount(ChatContent, {
     props: {
       messages: mockMessages,
@@ -65,6 +65,7 @@ const createWrapper = (options = {}) => {
       provide: {
         [chatActionsKey]: mockChatActions,
         [uiActionsKey]: mockUIActions,
+        ...provideOverrides,
       },
     },
   })
@@ -102,6 +103,38 @@ describe('ChatContent', () => {
       const action = { id: '1', title: 'Explain', prompt: 'Explain quantum computing', extraInfo: 'info' }
       ws.vm.$emit('quick-action', action)
       expect(mockChatActions.sendMessage).toHaveBeenCalledWith({ content: 'Explain quantum computing', extraInfo: 'info' })
+    })
+
+    it('should resolve prompt variables when promptVarResolverKey is provided', async () => {
+      const mockResolver = { resolve: vi.fn().mockResolvedValue('Explain quantum computing on 2024-01-01') }
+      const wrapper = createWrapper(
+        { welcomeVisible: true, messages: [] },
+        { [promptVarResolverKey]: mockResolver },
+      )
+      const ws = wrapper.findComponent({ name: 'WelcomeScreen' })
+      const action = { id: '1', title: 'Explain', prompt: 'Explain quantum computing on {{date}}', extraInfo: 'science' }
+      ws.vm.$emit('quick-action', action)
+      // Wait for async resolution
+      await vi.waitFor(() => {
+        expect(mockResolver.resolve).toHaveBeenCalledWith('Explain quantum computing on {{date}}')
+        expect(mockChatActions.sendMessage).toHaveBeenCalledWith({ content: 'Explain quantum computing on 2024-01-01', extraInfo: 'science' })
+      })
+    })
+
+    it('should send raw prompt when promptVarResolverKey is not provided', () => {
+      const wrapper = createWrapper({ welcomeVisible: true, messages: [] })
+      const ws = wrapper.findComponent({ name: 'WelcomeScreen' })
+      const action = { id: '1', title: 'Explain', prompt: 'Explain {{date}}', extraInfo: 'raw' }
+      ws.vm.$emit('quick-action', action)
+      expect(mockChatActions.sendMessage).toHaveBeenCalledWith({ content: 'Explain {{date}}', extraInfo: 'raw' })
+    })
+
+    it('should pass extraInfo to sendMessage even when undefined', () => {
+      const wrapper = createWrapper({ welcomeVisible: true, messages: [] })
+      const ws = wrapper.findComponent({ name: 'WelcomeScreen' })
+      const action = { id: '1', title: 'Explain', prompt: 'Hello' }
+      ws.vm.$emit('quick-action', action)
+      expect(mockChatActions.sendMessage).toHaveBeenCalledWith({ content: 'Hello', extraInfo: undefined })
     })
   })
 

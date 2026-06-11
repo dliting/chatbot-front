@@ -58,12 +58,13 @@ import type { ChatbotConfig } from '@/types/config'
 import type { ChatActionHandlers, TopicActionHandlers, UIActionHandlers, ChatState } from '@/types'
 import { defaultChatbotConfig, getDefaultLabels } from '@/types/config'
 import { modeToLayoutMap } from '@/types'
-import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey } from '@/symbols'
+import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useChatActions } from '@/composables/useChatActions'
 import { useTopicActions } from '@/composables/useTopicActions'
 import { useApiClient } from '@/composables/useApiClient'
 import { useErrorHandler } from '@/composables/useErrorHandler'
+import { usePromptVariables } from '@/composables/usePromptVariables'
 
 import ChatPanel from './ChatPanel.vue'
 import FloatingChatPanel from './FloatingChatPanel.vue'
@@ -278,6 +279,10 @@ provide(uiActionsKey, {
   setThinkingEnabled: (enabled: boolean) => { thinkingEnabled.value = enabled },
   thinkingEnabled,
 } satisfies UIActionHandlers)
+
+// Provide prompt variable resolver for QuickAction variable substitution
+const promptVarResolver = usePromptVariables(config.value.promptVariables)
+provide(promptVarResolverKey, promptVarResolver)
 
 // Watch panel open state
 watch(

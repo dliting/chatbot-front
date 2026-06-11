@@ -56,7 +56,7 @@ import { ref, computed, inject } from 'vue'
 import type { Message } from '@/types'
 import type { ChatbotLabels, QuickAction } from '@/types/config'
 import { getDefaultLabels } from '@/types/config'
-import { chatStateKey, chatActionsKey, uiActionsKey } from '@/symbols'
+import { chatStateKey, chatActionsKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
 import WelcomeScreen from './WelcomeScreen.vue'
 import MessageList from './MessageList.vue'
 import ChatInput from './ChatInput.vue'
@@ -95,6 +95,7 @@ defineEmits<Emits>()
 const chatState = inject(chatStateKey, null)
 const chatActions = inject(chatActionsKey)
 const uiActions = inject(uiActionsKey)
+const promptVarResolver = inject(promptVarResolverKey, null)
 
 // Resolve state from inject (preferred) or props (fallback)
 const effectiveMessages = computed(() => chatState?.messages?.value ?? props.messages)
@@ -109,8 +110,11 @@ const mergedLabels = computed(() => ({
   ...props.labels,
 }))
 
-const handleQuickAction = (action: QuickAction) => {
-  chatActions?.sendMessage({ content: action.prompt, extraInfo: action.extraInfo })
+const handleQuickAction = async (action: QuickAction) => {
+  const resolvedPrompt = promptVarResolver
+    ? await promptVarResolver.resolve(action.prompt)
+    : action.prompt
+  chatActions?.sendMessage({ content: resolvedPrompt, extraInfo: action.extraInfo })
 }
 
 const handleSend = (data: { content: string; attachments?: import('@/types').Attachment[] }) => {

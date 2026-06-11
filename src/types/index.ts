@@ -104,7 +104,7 @@ export interface ApiResponse<T = unknown> {
 // Architecture: inject-primary pattern — internal actions use inject, emits are external-only
 // See docs/design/component-communication-architecture.md
 export interface ChatActionHandlers {
-  sendMessage: (data: { content: string; attachments?: Attachment[] }) => void
+  sendMessage: (data: { content: string; attachments?: Attachment[]; extraInfo?: string }) => void
   refreshMessage: (message: Message) => void
   deleteMessage: (message: Message) => void
   editMessage: (message: Message) => void

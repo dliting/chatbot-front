@@ -140,7 +140,7 @@ export function useChatActions(deps: ChatActionsDeps) {
   /**
    * Send a new message and stream the AI response
    */
-  async function sendMessage(data: { content: string; attachments?: Attachment[] }) {
+  async function sendMessage(data: { content: string; attachments?: Attachment[]; extraInfo?: string }) {
     if (isGenerating.value) return
 
     const topicId = state.topics.currentId
@@ -197,6 +197,7 @@ export function useChatActions(deps: ChatActionsDeps) {
           attachments: data.attachments,
           thinking: { enabled: thinkingRequested },
           signal: controller.signal,
+          extraInfo: data.extraInfo,
         })
       } else if (apiClient.value) {
         stream = apiClient.value.streamChat(
