@@ -158,3 +158,6 @@ export interface ImageFile {
   status: 'uploading' | 'success' | 'error'
   progress: number
 }
+
+// Re-export new types from config
+export type { QuickAction, PromptVariableResolver, PromptVariableConfig } from './config'

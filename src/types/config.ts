@@ -12,8 +12,50 @@ export interface SendMessageParams {
   attachments?: Attachment[]
   thinking?: { enabled: boolean }
   signal?: AbortSignal
+  /** Extra information from QuickAction.extraInfo. Available in callbacks. */
+  extraInfo?: string
   /** For edit/regenerate: original message being modified */
   messageId?: string
+}
+
+/**
+ * Quick action for welcome screen
+ */
+export interface QuickAction {
+  /** Unique identifier */
+  id: string
+  /** Display title, e.g. "写邮件" */
+  title: string
+  /** Optional description, e.g. "帮我撰写邮件" */
+  description?: string
+  /** Prompt text sent as user message. Supports {{variable}} placeholders. */
+  prompt: string
+  /**
+   * Icon identifier or path.
+   * - Built-in name: "write", "analyze", "translate", "code", "search", "chat", "brain", "tool"
+   * - Relative path: resolved against quickActionIconBase
+   * - Absolute path/URL: used as-is
+   * - Empty/undefined: first-letter avatar
+   */
+  icon?: string
+  /**
+   * Generic extra information string. Not used by the component internally.
+   * Passed to SendMessageParams.extraInfo for host app use in callbacks.
+   */
+  extraInfo?: string
+}
+
+/**
+ * Resolver for a prompt variable. Receives the variable name, returns the replacement value.
+ */
+export type PromptVariableResolver = (variable: string) => string | Promise<string>
+
+/**
+ * Configuration for prompt variable substitution
+ */
+export interface PromptVariableConfig {
+  /** Custom variable resolvers. Key is the variable name (without {{ }}). */
+  resolvers?: Record<string, PromptVariableResolver>
 }
 
 /**
@@ -130,6 +172,15 @@ export interface ChatbotConfig {
 
   // UI Labels (can be customized)
   labels?: Partial<ChatbotLabels>
+
+  /** Quick actions list. If not configured, locale-aware defaults are used. */
+  quickActions?: QuickAction[]
+
+  /** Base path for resolving relative icon paths in QuickAction.icon */
+  quickActionIconBase?: string
+
+  /** Prompt variable substitution configuration */
+  promptVariables?: PromptVariableConfig
 }
 
 /**
@@ -191,18 +242,6 @@ export interface ChatbotLabels {
   messageCountFormat?: string
   welcomeTitle?: string
   welcomeSubtitle?: string
-  quickAction1Title?: string
-  quickAction1Desc?: string
-  quickAction1Text?: string
-  quickAction2Title?: string
-  quickAction2Desc?: string
-  quickAction2Text?: string
-  quickAction3Title?: string
-  quickAction3Desc?: string
-  quickAction3Text?: string
-  quickAction4Title?: string
-  quickAction4Desc?: string
-  quickAction4Text?: string
   copied?: string
   emptyMessage?: string
   thinking?: {
