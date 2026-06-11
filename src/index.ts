@@ -16,14 +16,16 @@ export { default as MessageItem } from './components/MessageItem.vue'
 // Export types
 export type * from './types'
 export type { ChatbotConfig, ChatbotCallbacks, SendMessageParams } from './types/config'
+export type { QuickAction, PromptVariableResolver, PromptVariableConfig } from './types/config'
 
 // Export injection keys (for advanced usage with provide/inject)
-export { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey } from './symbols'
+export { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey, promptVarResolverKey } from './symbols'
 
 // Export composables
 export { useChatbotState } from './composables/useChatbotState'
 export { useResponsive } from './composables/useResponsive'
 export { useStream } from './composables/useStream'
+export { usePromptVariables } from './composables/usePromptVariables'
 
 // Export utilities
 export { generateId, throttle, debounce, copyToClipboard } from './utils/helpers'
@@ -36,6 +38,11 @@ export { LocalStorageAdapter, TOPICS_SCHEMA_VERSION, loadVersioned, saveVersione
 export type { StorageAdapter, VersionedData } from './utils/storage'
 export { ChatbotError, toChatbotError } from './utils/errors'
 export type { ErrorCategory } from './utils/errors'
+export { resolveQuickActionIcon, isBuiltinIconName } from './utils/icons'
+export type { ResolvedIcon, BuiltinIconName } from './utils/icons'
+
+// Constants
+export { getDefaultQuickActions, defaultQuickActions } from './constants/quickActions'
 
 // Default export
 export default AIChatbot

@@ -116,6 +116,9 @@ interface ChatbotConfig {
   // === Internationalization ===
   locale?: 'zh-CN' | 'en-US'      // Default 'en-US'
   labels?: Partial<ChatbotLabels>
+  quickActions?: QuickAction[]           // Quick action list (default: locale-aware defaults)
+  quickActionIconBase?: string           // Base path for resolving custom icon paths
+  promptVariables?: PromptVariableConfig // Prompt variable substitution configuration
 
   // === Messages ===
   maxMessagesInMemory?: number     // Default 1000
@@ -190,6 +193,7 @@ interface SendMessageParams {
   thinking?: { enabled: boolean }
   signal?: AbortSignal
   messageId?: string  // For edit/regenerate: the original message ID
+  extraInfo?: string                     // Extra info from QuickAction, available in callbacks
 }
 ```
 
@@ -431,6 +435,37 @@ interface UploadResult {
   errors?: Array<{ file: string; error: string }>
 }
 ```
+
+### QuickAction
+
+```typescript
+interface QuickAction {
+  id: string                // Unique identifier
+  title: string             // Display title
+  description?: string      // Optional description
+  prompt: string            // Prompt text, supports {{variable}} placeholders
+  icon?: string             // Built-in name, path, or URL
+  extraInfo?: string        // Generic extra info, not used by component internally
+}
+```
+
+### PromptVariableResolver
+
+```typescript
+type PromptVariableResolver = (variable: string) => string | Promise<string>
+```
+
+### PromptVariableConfig
+
+```typescript
+interface PromptVariableConfig {
+  resolvers?: Record<string, PromptVariableResolver>
+}
+```
+
+Built-in variables: `{{date}}`, `{{time}}`, `{{datetime}}`, `{{weekday}}`
+
+Unresolved variables are left as-is in the prompt text.
 
 ### ChatbotLabels
 
@@ -722,6 +757,24 @@ const { isStreaming, streamedContent, streamFromGenerator, cancel, reset } = use
 await streamFromGenerator(myGenerator())
 ```
 
+### usePromptVariables
+
+Creates a prompt variable resolver with built-in and custom resolvers.
+
+```typescript
+import { usePromptVariables } from 'chatbot'
+
+const { resolve } = usePromptVariables({
+  customResolvers: {
+    username: () => 'Alice',
+    company: async () => await getCompanyName(),
+  },
+})
+
+const resolved = await resolve('Hello {{username}}, today is {{date}}')
+// "Hello Alice, today is 2026-06-11"
+```
+
 ---
 
 ## 11. Storage Adapter
@@ -957,6 +1010,23 @@ const config: ChatbotConfig = {
 />
 ```
 
+### Custom Quick Actions
+
+```vue
+<AIChatbot :config="{
+  mode: 'extended',
+  quickActions: [
+    { id: 'weekly', title: '写周报', description: '生成本周周报', prompt: '帮我写一份本周工作周报，今天是{{date}}', icon: 'write' },
+    { id: 'review', title: '代码审查', description: '审查代码质量', prompt: '请帮我审查以下代码', icon: 'code', extraInfo: 'code-review' },
+  ],
+  promptVariables: {
+    resolvers: {
+      username: () => currentUser.name,
+    },
+  },
+}" />
+```
+
 ---
 
 ## 16. Full Export Reference
@@ -973,14 +1043,16 @@ export { default as MessageItem } from './components/MessageItem.vue'
 // Types (re-exported from src/types)
 export type * from './types'
 export type { ChatbotConfig, ChatbotCallbacks, SendMessageParams } from './types/config'
+export type { QuickAction, PromptVariableResolver, PromptVariableConfig } from './types/config'
 
 // Injection Keys
-export { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey } from './symbols'
+export { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey, promptVarResolverKey } from './symbols'
 
 // Composables
 export { useChatbotState } from './composables/useChatbotState'
 export { useResponsive } from './composables/useResponsive'
 export { useStream } from './composables/useStream'
+export { usePromptVariables } from './composables/usePromptVariables'
 
 // Utilities
 export { generateId, throttle, debounce, copyToClipboard } from './utils/helpers'
@@ -993,6 +1065,11 @@ export { LocalStorageAdapter, TOPICS_SCHEMA_VERSION, loadVersioned, saveVersione
 export type { StorageAdapter, VersionedData } from './utils/storage'
 export { ChatbotError, toChatbotError } from './utils/errors'
 export type { ErrorCategory } from './utils/errors'
+export { resolveQuickActionIcon, isBuiltinIconName } from './utils/icons'
+export type { ResolvedIcon, BuiltinIconName } from './utils/icons'
+
+// Constants
+export { getDefaultQuickActions, defaultQuickActions } from './constants/quickActions'
 
 // Vue Plugin
 export const ChatbotPlugin = { install: (app, options?) => app.component('AIChatbot', AIChatbot) }
