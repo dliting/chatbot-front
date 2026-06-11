@@ -3,6 +3,7 @@
  */
 import type { ChatbotConfig, ChatbotCallbacks } from '@/types/config'
 import { getDefaultLabels } from '@/i18n/labels'
+import { defaultQuickActions } from '@/constants/quickActions'
 
 export const defaultChatbotConfig: Required<ChatbotConfig> = {
   // Interaction mode
@@ -74,4 +75,9 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
 
   // Labels
   labels: getDefaultLabels('zh-CN'),
+
+  // Quick actions
+  quickActions: defaultQuickActions,
+  quickActionIconBase: '',
+  promptVariables: {},
 }
