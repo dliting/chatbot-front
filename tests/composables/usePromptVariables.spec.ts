@@ -109,5 +109,26 @@ describe('usePromptVariables', () => {
       expect(parts[0]).toBe(parts[1])
       expect(parts[0]).not.toBe('{{date}}')
     })
+
+    it('should leave variable as-is when resolver throws', async () => {
+      const { resolve } = usePromptVariables({
+        customResolvers: {
+          failing: () => { throw new Error('resolver failed') },
+        },
+      })
+      const result = await resolve('Hello {{failing}}')
+      expect(result).toBe('Hello {{failing}}')
+    })
+
+    it('should continue resolving other variables after a resolver throws', async () => {
+      const { resolve } = usePromptVariables({
+        customResolvers: {
+          failing: () => { throw new Error('resolver failed') },
+          ok: () => 'works',
+        },
+      })
+      const result = await resolve('{{failing}} {{ok}}')
+      expect(result).toBe('{{failing}} works')
+    })
   })
 })

@@ -493,10 +493,6 @@ interface ChatbotLabels {
   collapse: string
   welcomeTitle?: string
   welcomeSubtitle?: string
-  quickAction1Title?: string
-  quickAction1Desc?: string
-  quickAction1Text?: string
-  // quickAction2-4 follow the same pattern
   copied?: string
   thinking?: {
     toggle?: string
@@ -531,7 +527,7 @@ type ErrorCategory = 'message' | 'topic' | 'stream' | 'network' | 'config'
 The component uses Vue's `provide`/`inject` with Symbol keys for internal communication. Advanced consumers can use these keys to access state and actions from outside the component tree.
 
 ```typescript
-import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey } from 'chatbot'
+import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey, promptVarResolverKey } from 'chatbot'
 ```
 
 | Key | Type | Provided By | Description |
@@ -540,12 +536,13 @@ import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey } from 'cha
 | `chatActionsKey` | `InjectionKey<ChatActionHandlers>` | `AIChatbot` | Chat operations (send, delete, edit, refresh, stop) |
 | `topicActionsKey` | `InjectionKey<TopicActionHandlers>` | `AIChatbot` | Topic operations (create, switch, remove, rename) |
 | `uiActionsKey` | `InjectionKey<UIActionHandlers>` | `AIChatbot` (enhanced by panels) | UI operations (theme, thinking toggle, view navigation) |
+| `promptVarResolverKey` | `InjectionKey<PromptVarResolver>` | `AIChatbot` | Prompt variable resolver for {{variable}} substitution in quick actions |
 
 ### ChatActionHandlers
 
 ```typescript
 interface ChatActionHandlers {
-  sendMessage: (data: { content: string; attachments?: Attachment[] }) => void
+  sendMessage: (data: { content: string; attachments?: Attachment[]; extraInfo?: string }) => void
   refreshMessage: (message: Message) => void
   deleteMessage: (message: Message) => void
   editMessage: (message: Message) => void

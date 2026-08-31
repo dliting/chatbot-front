@@ -29,8 +29,12 @@ export function usePromptVariables(options?: UsePromptVariablesOptions) {
       const varName = match[1]
       const resolver = resolvers[varName]
       if (resolver) {
-        const value = await resolver(varName)
-        result = result.replaceAll(`{{${varName}}}`, value)
+        try {
+          const value = await resolver(varName)
+          result = result.replaceAll(`{{${varName}}}`, value)
+        } catch {
+          // Resolver failed — leave variable as-is (consistent with unresolved variable behavior)
+        }
       }
     }
     return result

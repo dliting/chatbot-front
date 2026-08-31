@@ -12,7 +12,7 @@
         @click="$emit('quick-action', action)"
       >
         <div class="welcome-screen__quick-action-icon">
-          <component :is="builtinIcons[action.icon]" v-if="resolvedIcons[action.id]?.type === 'builtin'" class="welcome-screen__icon-svg" />
+          <component :is="builtinIconComponents[action.icon!]" v-if="resolvedIcons[action.id]?.type === 'builtin'" class="welcome-screen__icon-svg" />
           <img v-else-if="resolvedIcons[action.id]?.type === 'path'" :src="resolvedIcons[action.id]!.value" class="welcome-screen__icon-img" />
           <span v-else class="welcome-screen__quick-action-letter">{{ action.title.charAt(0) }}</span>
         </div>
@@ -28,26 +28,7 @@ import { computed } from 'vue'
 import type { ChatbotLabels, QuickAction } from '@/types/config'
 import { getDefaultLabels } from '@/types/config'
 import { resolveQuickActionIcon } from '@/utils/icons'
-
-import WriteIcon from '@/assets/icons/quick-actions/write.svg?component'
-import AnalyzeIcon from '@/assets/icons/quick-actions/analyze.svg?component'
-import TranslateIcon from '@/assets/icons/quick-actions/translate.svg?component'
-import CodeIcon from '@/assets/icons/quick-actions/code.svg?component'
-import SearchIcon from '@/assets/icons/quick-actions/search.svg?component'
-import ChatIcon from '@/assets/icons/quick-actions/chat.svg?component'
-import BrainIcon from '@/assets/icons/quick-actions/brain.svg?component'
-import ToolIcon from '@/assets/icons/quick-actions/tool.svg?component'
-
-const builtinIcons: Record<string, ReturnType<typeof WriteIcon>> = {
-  write: WriteIcon,
-  analyze: AnalyzeIcon,
-  translate: TranslateIcon,
-  code: CodeIcon,
-  search: SearchIcon,
-  chat: ChatIcon,
-  brain: BrainIcon,
-  tool: ToolIcon,
-}
+import { builtinIconComponents } from '@/utils/builtinIcons'
 
 interface Props {
   quickActions: QuickAction[]
@@ -153,7 +134,7 @@ const resolvedIcons = computed(() => {
 
   &__quick-action-title {
     font-size: 14px;
-    font-weight: 500;
+    font-weight:500;
     color: var(--text-primary, #1a1a2e);
     margin-bottom: 4px;
   }

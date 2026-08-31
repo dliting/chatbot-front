@@ -3,32 +3,6 @@ import { mount } from '@vue/test-utils'
 import WelcomeScreen from '@/components/WelcomeScreen.vue'
 import type { QuickAction } from '@/types/config'
 
-// Mock SVG ?component imports - vitest cannot handle ?component suffix
-vi.mock('@/assets/icons/quick-actions/write.svg?component', () => ({
-  default: { name: 'WriteIcon', template: '<svg />' },
-}))
-vi.mock('@/assets/icons/quick-actions/analyze.svg?component', () => ({
-  default: { name: 'AnalyzeIcon', template: '<svg />' },
-}))
-vi.mock('@/assets/icons/quick-actions/translate.svg?component', () => ({
-  default: { name: 'TranslateIcon', template: '<svg />' },
-}))
-vi.mock('@/assets/icons/quick-actions/code.svg?component', () => ({
-  default: { name: 'CodeIcon', template: '<svg />' },
-}))
-vi.mock('@/assets/icons/quick-actions/search.svg?component', () => ({
-  default: { name: 'SearchIcon', template: '<svg />' },
-}))
-vi.mock('@/assets/icons/quick-actions/chat.svg?component', () => ({
-  default: { name: 'ChatIcon', template: '<svg />' },
-}))
-vi.mock('@/assets/icons/quick-actions/brain.svg?component', () => ({
-  default: { name: 'BrainIcon', template: '<svg />' },
-}))
-vi.mock('@/assets/icons/quick-actions/tool.svg?component', () => ({
-  default: { name: 'ToolIcon', template: '<svg />' },
-}))
-
 const mockQuickActions: QuickAction[] = [
   { id: 'test-1', title: 'Action 1', description: 'Desc 1', prompt: 'Prompt 1', icon: 'write' },
   { id: 'test-2', title: 'Action 2', description: 'Desc 2', prompt: 'Prompt 2', icon: 'analyze' },
@@ -79,6 +53,19 @@ describe('WelcomeScreen', () => {
     expect(actions[2].find('.welcome-screen__quick-action-letter').exists()).toBe(true)
   })
 
+  it('should render builtin icon as Vue component', () => {
+    const wrapper = mount(WelcomeScreen, {
+      props: { quickActions: mockQuickActions, labels: {} },
+    })
+    const actions = wrapper.findAll('.welcome-screen__quick-action')
+    // Action 1 has icon: 'write' which is a builtin icon — renders via <component :is>
+    const svg = actions[0].find('.welcome-screen__icon-svg')
+    expect(svg.exists()).toBe(true)
+    // class merges onto the rendered svg root element (inheritAttrs)
+    expect(svg.element.tagName.toLowerCase()).toBe('svg')
+    expect(svg.find('path').exists()).toBe(true)
+  })
+
   it('should render welcome title and subtitle from labels', () => {
     const wrapper = mount(WelcomeScreen, {
       props: {
@@ -108,5 +95,18 @@ describe('WelcomeScreen', () => {
     const actions = wrapper.findAll('.welcome-screen__quick-action')
     // Action 3 has no description
     expect(actions[2].find('.welcome-screen__quick-action-desc').exists()).toBe(false)
+  })
+
+  it('should resolve relative icon paths with iconBase', () => {
+    const wrapper = mount(WelcomeScreen, {
+      props: {
+        quickActions: [{ id: 'rel', title: 'Rel', prompt: 'p', icon: 'icon.svg' }],
+        iconBase: '/assets/icons',
+        labels: {},
+      },
+    })
+    const img = wrapper.find('.welcome-screen__icon-img')
+    expect(img.exists()).toBe(true)
+    expect(img.attributes('src')).toBe('/assets/icons/icon.svg')
   })
 })

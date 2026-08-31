@@ -57,6 +57,7 @@ import { computed, watch, onMounted, onUnmounted, ref, provide } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import type { ChatActionHandlers, TopicActionHandlers, UIActionHandlers, ChatState } from '@/types'
 import { defaultChatbotConfig, getDefaultLabels } from '@/types/config'
+import { getDefaultQuickActions } from '@/constants/quickActions'
 import { modeToLayoutMap } from '@/types'
 import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
 import { useChatbotState } from '@/composables/useChatbotState'
@@ -107,6 +108,10 @@ const config = computed((): Required<ChatbotConfig> => {
   // Use locale-aware labels when user hasn't overridden labels
   if (!props.config?.labels || Object.keys(props.config.labels).length === 0) {
     merged.labels = getDefaultLabels(merged.locale)
+  }
+  // Use locale-aware quick actions when user hasn't provided custom ones
+  if (!props.config?.quickActions) {
+    merged.quickActions = getDefaultQuickActions(merged.locale)
   }
   return merged
 })
@@ -281,6 +286,7 @@ provide(uiActionsKey, {
 } satisfies UIActionHandlers)
 
 // Provide prompt variable resolver for QuickAction variable substitution
+// Note: uses config.value snapshot — resolver won't update if promptVariables changes reactively
 const promptVarResolver = usePromptVariables(config.value.promptVariables)
 provide(promptVarResolverKey, promptVarResolver)
 

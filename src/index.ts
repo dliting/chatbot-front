@@ -40,6 +40,7 @@ export { ChatbotError, toChatbotError } from './utils/errors'
 export type { ErrorCategory } from './utils/errors'
 export { resolveQuickActionIcon, isBuiltinIconName } from './utils/icons'
 export type { ResolvedIcon, BuiltinIconName } from './utils/icons'
+export { builtinIconComponents } from './utils/builtinIcons'
 
 // Constants
 export { getDefaultQuickActions, defaultQuickActions } from './constants/quickActions'
