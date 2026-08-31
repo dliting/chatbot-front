@@ -29,7 +29,7 @@ Internal component communication uses Vue's `provide`/`inject` mechanism with Sy
 ## 2. Installation / Quick Start
 
 ```bash
-npm install chatbot
+npm install ai-chatbot-frontend
 ```
 
 ```vue
@@ -38,8 +38,8 @@ npm install chatbot
 </template>
 
 <script setup lang="ts">
-import { AIChatbot } from 'chatbot'
-import type { ChatbotConfig } from 'chatbot'
+import { AIChatbot } from 'ai-chatbot-frontend'
+import type { ChatbotConfig } from 'ai-chatbot-frontend'
 
 const chatConfig: ChatbotConfig = {
   apiBaseUrl: '/api',
@@ -205,8 +205,8 @@ interface SendMessageParams {
 </template>
 
 <script setup lang="ts">
-import { AIChatbot } from 'chatbot'
-import type { ChatbotConfig, SendMessageParams, StreamEvent } from 'chatbot'
+import { AIChatbot } from 'ai-chatbot-frontend'
+import type { ChatbotConfig, SendMessageParams, StreamEvent } from 'ai-chatbot-frontend'
 
 async function* mySendMessage(params: SendMessageParams): AsyncGenerator<StreamEvent> {
   yield { type: 'start', messageId: crypto.randomUUID() }
@@ -527,7 +527,7 @@ type ErrorCategory = 'message' | 'topic' | 'stream' | 'network' | 'config'
 The component uses Vue's `provide`/`inject` with Symbol keys for internal communication. Advanced consumers can use these keys to access state and actions from outside the component tree.
 
 ```typescript
-import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey, promptVarResolverKey } from 'chatbot'
+import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey, promptVarResolverKey } from 'ai-chatbot-frontend'
 ```
 
 | Key | Type | Provided By | Description |
@@ -597,7 +597,7 @@ provide(uiActionsKey, {
 ```vue
 <script setup lang="ts">
 import { inject } from 'vue'
-import { chatStateKey, chatActionsKey } from 'chatbot'
+import { chatStateKey, chatActionsKey } from 'ai-chatbot-frontend'
 
 const state = inject(chatStateKey)
 const actions = inject(chatActionsKey)
@@ -627,7 +627,7 @@ import {
   DraggableWindow,  // Reusable draggable/resizable window
   MessageList,      // Message list container
   MessageItem,      // Single message display
-} from 'chatbot'
+} from 'ai-chatbot-frontend'
 ```
 
 ### Component Hierarchy
@@ -679,7 +679,7 @@ import {
   useChatbotState,  // Chat state management (factory + coordinator)
   useResponsive,    // Responsive breakpoints
   useStream,        // Stream response handling (standalone utility)
-} from 'chatbot'
+} from 'ai-chatbot-frontend'
 ```
 
 ### useChatbotState
@@ -759,7 +759,7 @@ await streamFromGenerator(myGenerator())
 Creates a prompt variable resolver with built-in and custom resolvers.
 
 ```typescript
-import { usePromptVariables } from 'chatbot'
+import { usePromptVariables } from 'ai-chatbot-frontend'
 
 const { resolve } = usePromptVariables({
   customResolvers: {
@@ -794,7 +794,7 @@ interface StorageAdapter {
 Default implementation using `localStorage`. Gracefully handles environments where localStorage is unavailable (SSR, restricted contexts).
 
 ```typescript
-import { LocalStorageAdapter } from 'chatbot'
+import { LocalStorageAdapter } from 'ai-chatbot-frontend'
 
 const adapter = new LocalStorageAdapter()
 adapter.set('my-key', { foo: 'bar' })
@@ -804,7 +804,7 @@ const data = adapter.get<{ foo: string }>('my-key')
 ### Versioned Storage
 
 ```typescript
-import { loadVersioned, saveVersioned, TOPICS_SCHEMA_VERSION, LocalStorageAdapter } from 'chatbot'
+import { loadVersioned, saveVersioned, TOPICS_SCHEMA_VERSION, LocalStorageAdapter } from 'ai-chatbot-frontend'
 
 const adapter = new LocalStorageAdapter()
 

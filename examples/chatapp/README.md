@@ -19,7 +19,7 @@ npm run dev
 
 ### Real 模式（连接 Ollama）- 需要本地 LLM
 - 连接本地 Ollama 服务
-- 使用 qwen3.5:9b 模型（请参考@docs\reference\qwen3.5.md）
+- 使用 qwen3.5:9b 模型
 - 需要本地安装并运行 Ollama
 
 启动命令：

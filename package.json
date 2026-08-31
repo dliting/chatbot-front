@@ -97,12 +97,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-org/ai-chatbot-frontend.git"
+    "url": "git+https://github.com/dliting/chatbot-front.git"
   },
   "bugs": {
-    "url": "https://github.com/your-org/ai-chatbot-frontend/issues"
+    "url": "https://github.com/dliting/chatbot-front/issues"
   },
-  "homepage": "https://github.com/your-org/ai-chatbot-frontend#readme",
+  "homepage": "https://github.com/dliting/chatbot-front#readme",
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
