@@ -27,6 +27,8 @@ npm run test:coverage    # Run with coverage report
 
 Tests use **Vitest** with `happy-dom` environment. Test files go in `tests/` with `.spec.ts` suffix.
 
+The root test suite covers the component library only. The `examples/chatapp` sub-projects (frontend, backend-mock, backend-real) have their own dependencies and tests — install and run them inside each sub-project directory.
+
 ### E2E Tests
 
 ```bash

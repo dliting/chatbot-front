@@ -13,16 +13,10 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     setupFiles: ['./tests/setup.ts'],
-    include: [
-      'src/**/*.{test,spec}.{js,ts}',
-      'tests/**/*.{test,spec}.{js,ts}',
-      'examples/**/*.{test,spec}.{js,ts}',
-    ],
-    exclude: [
-      'tests/e2e/**',
-      '**/node_modules/**',
-      'examples/chatapp/**/node_modules/**',
-    ],
+    // Library-only test scope: examples/chatapp is a standalone sub-project
+    // with its own dependencies and vitest setup (run tests inside it).
+    include: ['src/**/*.{test,spec}.{js,ts}', 'tests/**/*.{test,spec}.{js,ts}'],
+    exclude: ['tests/e2e/**', '**/node_modules/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
