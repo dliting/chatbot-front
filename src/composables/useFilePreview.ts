@@ -8,7 +8,9 @@ export function useFilePreview() {
     previewFile.value = { name, url: file.url }
   }
 
-  const closePreview = () => { previewFile.value = null }
+  const closePreview = () => {
+    previewFile.value = null
+  }
 
   return { previewFile, handleFileClick, closePreview }
 }

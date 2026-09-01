@@ -18,7 +18,9 @@ interface TopicActionsDeps {
       currentId: string
     }
   }
-  apiClient: Ref<ReturnType<typeof import('@/composables/useApiClient')['useApiClient']> | undefined>
+  apiClient: Ref<
+    ReturnType<(typeof import('@/composables/useApiClient'))['useApiClient']> | undefined
+  >
   emit: (event: string, ...args: unknown[]) => void
   handleError: (error: unknown, category: ErrorCategory, userMessage: string) => ChatbotError
   switchTopic: (topicId: string) => void
@@ -99,7 +101,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
         }
       } else {
         const newId = deps.createTopic()
-        const topic = state.topics.list.find(t => t.topicId === newId)
+        const topic = state.topics.list.find((t) => t.topicId === newId)
         if (topic) {
           emit('topic:created', { topic })
         }
@@ -173,7 +175,7 @@ export function useTopicActions(deps: TopicActionsDeps) {
    * Update topic title (with optimistic update and rollback)
    */
   async function renameTopic(topicId: string, title: string) {
-    const currentTopic = state.topics.list.find(t => t.topicId === topicId)
+    const currentTopic = state.topics.list.find((t) => t.topicId === topicId)
     const oldTitle = currentTopic?.title || ''
 
     deps.updateTopicTitle(topicId, title)

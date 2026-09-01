@@ -636,8 +636,9 @@ describe('ChatInput', () => {
       await wrapper.find('.chat-input__preview-media').trigger('click')
 
       expect(wrapper.emitted('file-click')).toBeTruthy()
+      // Falls back to base64 data when no preview URL was generated
       expect(wrapper.emitted('file-click')?.[0]?.[0]).toEqual({
-        type: 'video', url: undefined, name: 'test.mp4',
+        type: 'video', url: 'b64', name: 'test.mp4',
       })
     })
 

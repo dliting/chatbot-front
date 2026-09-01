@@ -19,7 +19,11 @@ export class ChatbotError extends Error {
 }
 
 /** Wrap an unknown error as a ChatbotError if it isn't one already */
-export function toChatbotError(error: unknown, category: ErrorCategory, userMessage: string): ChatbotError {
+export function toChatbotError(
+  error: unknown,
+  category: ErrorCategory,
+  userMessage: string
+): ChatbotError {
   if (error instanceof ChatbotError) return error
   const cause = error instanceof Error ? error : new Error(String(error))
   return new ChatbotError(category, userMessage, cause)

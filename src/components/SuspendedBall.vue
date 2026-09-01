@@ -11,7 +11,7 @@
       <!-- Icon slot or default icon -->
       <slot name="icon">
         <svg class="chatbot-ball__icon" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z" />
         </svg>
       </slot>
 
@@ -175,11 +175,14 @@ const setupDrag = () => {
 }
 
 // Watch position prop changes
-watch(() => props.position, () => {
-  if (!isDragging.value) {
-    initPosition()
+watch(
+  () => props.position,
+  () => {
+    if (!isDragging.value) {
+      initPosition()
+    }
   }
-})
+)
 
 // Lifecycle
 onMounted(() => {
@@ -203,7 +206,9 @@ onUnmounted(() => {
   user-select: none;
   z-index: 9999;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 
   &:hover {
     transform: scale(1.05);
@@ -245,7 +250,9 @@ onUnmounted(() => {
 // Transitions
 .chatbot-ball-fade-enter-active,
 .chatbot-ball-fade-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .chatbot-ball-fade-enter-from,

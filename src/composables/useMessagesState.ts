@@ -33,7 +33,7 @@ export function useMessagesState() {
     const topicMessages = messages.byTopic[topicId]
     if (!topicMessages) return
 
-    const index = topicMessages.findIndex(m => m.messageId === messageId)
+    const index = topicMessages.findIndex((m) => m.messageId === messageId)
     if (index > -1) {
       topicMessages.splice(index, 1, { ...topicMessages[index], ...updates })
     }

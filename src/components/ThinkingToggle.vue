@@ -5,7 +5,15 @@
     :title="tooltip"
     @click="handleClick"
   >
-    <svg class="thinking-toggle__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <svg
+      class="thinking-toggle__icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
       <!-- Lightbulb shape -->
       <path d="M9 18h6" />
       <path d="M10 22h4" />

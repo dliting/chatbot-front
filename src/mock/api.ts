@@ -11,9 +11,9 @@ import { TOPIC_DEFAULTS } from '@/constants'
 const mockResponses = [
   "That's an interesting question! Let me think about that for a moment.",
   "I understand what you're asking. Here's what I can tell you...",
-  "Great question! There are several aspects to consider here.",
+  'Great question! There are several aspects to consider here.',
   "Thanks for reaching out. I'd be happy to help with that.",
-  "Let me provide some insights on this topic.",
+  'Let me provide some insights on this topic.',
 ]
 
 /**
@@ -94,7 +94,7 @@ export const mockAPI = {
     await sleep(1000)
 
     // Create blob URLs for preview
-    const urls = files.map(file => URL.createObjectURL(file))
+    const urls = files.map((file) => URL.createObjectURL(file))
 
     return {
       code: 0,
@@ -156,7 +156,8 @@ export const mockAPI = {
         topicId,
         role: 'assistant',
         type: 'text',
-        content: 'Welcome! Just type your message in the input box and press Enter or click the send button.',
+        content:
+          'Welcome! Just type your message in the input box and press Enter or click the send button.',
         timestamp: Date.now() - 3590000,
         status: 'sent',
       },

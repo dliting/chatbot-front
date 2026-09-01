@@ -12,12 +12,24 @@
         @click="$emit('quick-action', action)"
       >
         <div class="welcome-screen__quick-action-icon">
-          <component :is="builtinIconComponents[action.icon!]" v-if="resolvedIcons[action.id]?.type === 'builtin'" class="welcome-screen__icon-svg" />
-          <img v-else-if="resolvedIcons[action.id]?.type === 'path'" :src="resolvedIcons[action.id]!.value" class="welcome-screen__icon-img" />
-          <span v-else class="welcome-screen__quick-action-letter">{{ action.title.charAt(0) }}</span>
+          <component
+            :is="builtinIconComponents[action.icon!]"
+            v-if="resolvedIcons[action.id]?.type === 'builtin'"
+            class="welcome-screen__icon-svg"
+          />
+          <img
+            v-else-if="resolvedIcons[action.id]?.type === 'path'"
+            :src="resolvedIcons[action.id]!.value"
+            class="welcome-screen__icon-img"
+          />
+          <span v-else class="welcome-screen__quick-action-letter">
+            {{ action.title.charAt(0) }}
+          </span>
         </div>
         <div class="welcome-screen__quick-action-title">{{ action.title }}</div>
-        <div v-if="action.description" class="welcome-screen__quick-action-desc">{{ action.description }}</div>
+        <div v-if="action.description" class="welcome-screen__quick-action-desc">
+          {{ action.description }}
+        </div>
       </div>
     </div>
   </div>
@@ -134,7 +146,7 @@ const resolvedIcons = computed(() => {
 
   &__quick-action-title {
     font-size: 14px;
-    font-weight:500;
+    font-weight: 500;
     color: var(--text-primary, #1a1a2e);
     margin-bottom: 4px;
   }

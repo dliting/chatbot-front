@@ -4,7 +4,12 @@
  */
 import type { Topic } from '@/types'
 import type { StorageAdapter } from '@/utils/storage'
-import { LocalStorageAdapter, loadVersioned, saveVersioned, TOPICS_SCHEMA_VERSION } from '@/utils/storage'
+import {
+  LocalStorageAdapter,
+  loadVersioned,
+  saveVersioned,
+  TOPICS_SCHEMA_VERSION,
+} from '@/utils/storage'
 import { TOPIC_DEFAULTS } from '@/constants'
 
 /** Default adapter instance (lazy singleton) */

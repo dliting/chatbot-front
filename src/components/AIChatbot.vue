@@ -59,7 +59,13 @@ import type { ChatActionHandlers, TopicActionHandlers, UIActionHandlers, ChatSta
 import { defaultChatbotConfig, getDefaultLabels } from '@/types/config'
 import { getDefaultQuickActions } from '@/constants/quickActions'
 import { modeToLayoutMap } from '@/types'
-import { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
+import {
+  chatStateKey,
+  chatActionsKey,
+  topicActionsKey,
+  uiActionsKey,
+  promptVarResolverKey,
+} from '@/symbols'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useChatActions } from '@/composables/useChatActions'
 import { useTopicActions } from '@/composables/useTopicActions'
@@ -141,7 +147,7 @@ watch(
       apiClient.value = undefined
     }
   },
-  { immediate: true },
+  { immediate: true }
 )
 
 // State
@@ -166,7 +172,9 @@ const {
 } = useChatbotState(config.value)
 
 // Thinking state
-const thinkingEnabled = ref(config.value.thinkingDefaultEnabled ?? defaultChatbotConfig.thinkingDefaultEnabled)
+const thinkingEnabled = ref(
+  config.value.thinkingDefaultEnabled ?? defaultChatbotConfig.thinkingDefaultEnabled
+)
 
 // Emit helper (bridges composable string-based emits to Vue's typed defineEmits)
 function emitEvent(event: string, ...args: unknown[]): void {
@@ -281,13 +289,17 @@ const toggleTheme = () => {
 // Provide UI action handlers
 provide(uiActionsKey, {
   toggleTheme,
-  setThinkingEnabled: (enabled: boolean) => { thinkingEnabled.value = enabled },
+  setThinkingEnabled: (enabled: boolean) => {
+    thinkingEnabled.value = enabled
+  },
   thinkingEnabled,
 } satisfies UIActionHandlers)
 
 // Provide prompt variable resolver for QuickAction variable substitution
 // Note: uses config.value snapshot — resolver won't update if promptVariables changes reactively
-const promptVarResolver = usePromptVariables(config.value.promptVariables)
+const promptVarResolver = usePromptVariables({
+  customResolvers: config.value.promptVariables?.resolvers,
+})
 provide(promptVarResolverKey, promptVarResolver)
 
 // Watch panel open state
@@ -295,7 +307,7 @@ watch(
   () => state.ui.isPanelOpen,
   (isOpen) => {
     emit('ui:panel-toggle', { isOpen, mode: state.ui.panelMode })
-  },
+  }
 )
 
 // Initialize
@@ -306,9 +318,12 @@ onMounted(async () => {
   emit('chatbot:ready')
 })
 
-watch(() => config.value.theme, (newTheme) => {
-  if (newTheme) setTheme(newTheme)
-})
+watch(
+  () => config.value.theme,
+  (newTheme) => {
+    if (newTheme) setTheme(newTheme)
+  }
+)
 
 onUnmounted(() => {
   cleanup()
@@ -323,6 +338,15 @@ defineExpose({
 <style scoped lang="scss">
 .ai-chatbot {
   --theme-primary: v-bind('config.primaryColor');
-  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family:
+    'Noto Sans SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    Oxygen,
+    Ubuntu,
+    Cantarell,
+    sans-serif;
 }
 </style>

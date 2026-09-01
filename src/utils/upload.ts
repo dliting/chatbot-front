@@ -18,7 +18,10 @@ export interface UploadEndpoint {
 /**
  * Validate file before upload
  */
-export function validateFile(file: File, options: UploadOptions): { valid: boolean; error?: string } {
+export function validateFile(
+  file: File,
+  options: UploadOptions
+): { valid: boolean; error?: string } {
   const { maxFileSize, allowedTypes } = options
 
   // Check file type
@@ -45,10 +48,7 @@ export function validateFile(file: File, options: UploadOptions): { valid: boole
 /**
  * Create image file object with preview
  */
-export async function createImageFile(
-  file: File,
-  options: UploadOptions = {}
-): Promise<ImageFile> {
+export async function createImageFile(file: File, options: UploadOptions = {}): Promise<ImageFile> {
   const validation = validateFile(file, options)
   if (!validation.valid) {
     throw new Error(validation.error)
@@ -97,7 +97,7 @@ export async function uploadFiles(
   } catch (error) {
     return {
       urls: [],
-      errors: files.map(f => ({
+      errors: files.map((f) => ({
         file: f.name,
         error: (error as Error).message,
       })),
@@ -112,10 +112,10 @@ export function createMockUploadEndpoint(delay = 1000): UploadEndpoint {
   return {
     upload: async (files: File[]) => {
       // Simulate network delay
-      await new Promise(resolve => setTimeout(resolve, delay))
+      await new Promise((resolve) => setTimeout(resolve, delay))
 
       // Simulate success (convert to blob URLs)
-      const urls = files.map(file => URL.createObjectURL(file))
+      const urls = files.map((file) => URL.createObjectURL(file))
 
       return { urls }
     },
@@ -129,7 +129,7 @@ export function createUploadEndpoint(apiUrl: string): UploadEndpoint {
   return {
     upload: async (files: File[]) => {
       const formData = new FormData()
-      files.forEach(file => {
+      files.forEach((file) => {
         formData.append('images', file)
       })
 
@@ -244,7 +244,7 @@ export async function compressImage(
       ctx.drawImage(img, 0, 0, width, height)
 
       canvas.toBlob(
-        blob => {
+        (blob) => {
           if (blob) {
             resolve(new File([blob], file.name, { type: file.type }))
           } else {
@@ -259,7 +259,7 @@ export async function compressImage(
     img.onerror = () => reject(new Error('Failed to load image'))
 
     const reader = new FileReader()
-    reader.onload = e => {
+    reader.onload = (e) => {
       img.src = e.target?.result as string
     }
     reader.onerror = () => reject(new Error('Failed to read file'))

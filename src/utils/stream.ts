@@ -76,7 +76,11 @@ export class StreamClient {
     this.disconnect(false)
 
     // Only attempt reconnect if explicitly enabled
-    if (this.options.reconnect === true && this.reconnectAttempts < this.maxReconnectAttempts && !this.isDisconnected) {
+    if (
+      this.options.reconnect === true &&
+      this.reconnectAttempts < this.maxReconnectAttempts &&
+      !this.isDisconnected
+    ) {
       this.reconnectAttempts++
       const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1)
 
@@ -235,7 +239,7 @@ export function createMockStream(
     }
 
     for (const char of content) {
-      await new Promise(resolve => setTimeout(resolve, delay))
+      await new Promise((resolve) => setTimeout(resolve, delay))
       yield { type: 'token', content: char }
     }
 

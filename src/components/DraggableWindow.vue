@@ -1,10 +1,6 @@
 <template>
   <div class="draggable-window-wrapper">
-    <div
-      ref="windowRef"
-      :class="classes"
-      :style="windowStyle"
-    >
+    <div ref="windowRef" :class="classes" :style="windowStyle">
       <!-- Header (Draggable area) -->
       <div
         v-if="$slots.header"
@@ -12,29 +8,50 @@
         :class="{ 'draggable-window__header--draggable': draggable }"
         @mousedown="startDrag"
       >
-        <slot name="header"/>
+        <slot name="header" />
       </div>
 
       <!-- Body content -->
       <div class="draggable-window__body">
-        <slot/>
+        <slot />
       </div>
     </div>
 
     <!-- Resize handles - Teleported to body for independent stacking context -->
     <Teleport v-if="resizable && modelValue" to="body">
-      <div
-        class="draggable-window__resize-overlay"
-        :style="overlayStyle"
-      >
-        <div class="draggable-window__resize-handle draggable-window__resize-handle--n" @mousedown="startResize($event, 'n')"/>
-        <div class="draggable-window__resize-handle draggable-window__resize-handle--s" @mousedown="startResize($event, 's')"/>
-        <div class="draggable-window__resize-handle draggable-window__resize-handle--e" @mousedown="startResize($event, 'e')"/>
-        <div class="draggable-window__resize-handle draggable-window__resize-handle--w" @mousedown="startResize($event, 'w')"/>
-        <div class="draggable-window__resize-handle draggable-window__resize-handle--ne" @mousedown="startResize($event, 'ne')"/>
-        <div class="draggable-window__resize-handle draggable-window__resize-handle--nw" @mousedown="startResize($event, 'nw')"/>
-        <div class="draggable-window__resize-handle draggable-window__resize-handle--se" @mousedown="startResize($event, 'se')"/>
-        <div class="draggable-window__resize-handle draggable-window__resize-handle--sw" @mousedown="startResize($event, 'sw')"/>
+      <div class="draggable-window__resize-overlay" :style="overlayStyle">
+        <div
+          class="draggable-window__resize-handle draggable-window__resize-handle--n"
+          @mousedown="startResize($event, 'n')"
+        />
+        <div
+          class="draggable-window__resize-handle draggable-window__resize-handle--s"
+          @mousedown="startResize($event, 's')"
+        />
+        <div
+          class="draggable-window__resize-handle draggable-window__resize-handle--e"
+          @mousedown="startResize($event, 'e')"
+        />
+        <div
+          class="draggable-window__resize-handle draggable-window__resize-handle--w"
+          @mousedown="startResize($event, 'w')"
+        />
+        <div
+          class="draggable-window__resize-handle draggable-window__resize-handle--ne"
+          @mousedown="startResize($event, 'ne')"
+        />
+        <div
+          class="draggable-window__resize-handle draggable-window__resize-handle--nw"
+          @mousedown="startResize($event, 'nw')"
+        />
+        <div
+          class="draggable-window__resize-handle draggable-window__resize-handle--se"
+          @mousedown="startResize($event, 'se')"
+        />
+        <div
+          class="draggable-window__resize-handle draggable-window__resize-handle--sw"
+          @mousedown="startResize($event, 'sw')"
+        />
       </div>
     </Teleport>
   </div>
@@ -42,6 +59,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
+import type { CSSProperties } from 'vue'
 
 interface Props {
   modelValue?: boolean // v-model for visibility
@@ -126,7 +144,7 @@ const windowStyle = computed(() => ({
 }))
 
 // Overlay style for resize handles (teleported to body)
-const overlayStyle = computed(() => ({
+const overlayStyle = computed<CSSProperties>(() => ({
   position: 'fixed',
   left: `${windowState.value.x}px`,
   top: `${windowState.value.y}px`,
@@ -148,8 +166,14 @@ const loadPosition = () => {
       const windowHeight = window.innerHeight
 
       windowState.value = {
-        width: Math.max(props.minWidth, Math.min(parsed.width || props.width, props.maxWidth || windowWidth - 40)),
-        height: Math.max(props.minHeight, Math.min(parsed.height || props.height, props.maxHeight || windowHeight - 40)),
+        width: Math.max(
+          props.minWidth,
+          Math.min(parsed.width || props.width, props.maxWidth || windowWidth - 40)
+        ),
+        height: Math.max(
+          props.minHeight,
+          Math.min(parsed.height || props.height, props.maxHeight || windowHeight - 40)
+        ),
         x: Math.max(0, Math.min(parsed.x || 0, windowWidth - (parsed.width || props.width))),
         y: Math.max(0, Math.min(parsed.y || 0, windowHeight - (parsed.height || props.height))),
       }
@@ -165,12 +189,15 @@ const savePosition = () => {
   if (!props.rememberPosition) return
 
   try {
-    localStorage.setItem(props.storageKey, JSON.stringify({
-      x: windowState.value.x,
-      y: windowState.value.y,
-      width: windowState.value.width,
-      height: windowState.value.height,
-    }))
+    localStorage.setItem(
+      props.storageKey,
+      JSON.stringify({
+        x: windowState.value.x,
+        y: windowState.value.y,
+        width: windowState.value.width,
+        height: windowState.value.height,
+      })
+    )
   } catch (e) {
     console.warn('Failed to save window position:', e)
   }
@@ -302,10 +329,30 @@ onMounted(() => {
 })
 
 // Watch for prop changes
-watch(() => props.x, (val) => { if (!isDragging.value && !isResizing.value) windowState.value.x = val })
-watch(() => props.y, (val) => { if (!isDragging.value && !isResizing.value) windowState.value.y = val })
-watch(() => props.width, (val) => { if (!isDragging.value && !isResizing.value) windowState.value.width = val })
-watch(() => props.height, (val) => { if (!isDragging.value && !isResizing.value) windowState.value.height = val })
+watch(
+  () => props.x,
+  (val) => {
+    if (!isDragging.value && !isResizing.value) windowState.value.x = val
+  }
+)
+watch(
+  () => props.y,
+  (val) => {
+    if (!isDragging.value && !isResizing.value) windowState.value.y = val
+  }
+)
+watch(
+  () => props.width,
+  (val) => {
+    if (!isDragging.value && !isResizing.value) windowState.value.width = val
+  }
+)
+watch(
+  () => props.height,
+  (val) => {
+    if (!isDragging.value && !isResizing.value) windowState.value.height = val
+  }
+)
 
 // Handle window resize
 const handleWindowResize = () => {

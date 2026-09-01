@@ -1,11 +1,6 @@
 <template>
   <div class="pdf-preview">
-    <VueOfficePdf
-      v-if="pdfUrl"
-      :src="pdfUrl"
-      @rendered="handleRendered"
-      @error="handleError"
-    />
+    <VueOfficePdf v-if="pdfUrl" :src="pdfUrl" @rendered="handleRendered" @error="handleError" />
     <div v-else-if="loading" class="pdf-preview__loading">
       <span>Loading PDF...</span>
     </div>

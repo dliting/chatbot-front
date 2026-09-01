@@ -1,17 +1,7 @@
 <template>
   <div class="media-preview">
-    <video
-      v-if="isVideo"
-      :src="mediaUrl"
-      controls
-      class="media-preview__video"
-    />
-    <audio
-      v-else-if="isAudio"
-      :src="mediaUrl"
-      controls
-      class="media-preview__audio"
-    />
+    <video v-if="isVideo" :src="mediaUrl" controls class="media-preview__video" />
+    <audio v-else-if="isAudio" :src="mediaUrl" controls class="media-preview__audio" />
     <div v-else class="media-preview__error">
       <span>Unsupported media type</span>
     </div>

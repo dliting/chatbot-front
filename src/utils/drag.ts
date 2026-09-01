@@ -22,10 +22,7 @@ export interface DragState {
 /**
  * Create a draggable element
  */
-export function makeDraggable(
-  element: HTMLElement,
-  options: DragOptions = {}
-): () => void {
+export function makeDraggable(element: HTMLElement, options: DragOptions = {}): () => void {
   const {
     onDragStart,
     onDragMove,

@@ -36,8 +36,7 @@ export function useChatView(mode: MaybeRef<InteractionMode>) {
 
   const toggleView = () => {
     if (useViewNavigation.value) {
-      viewState.value.currentView =
-        viewState.value.currentView === 'chat' ? 'topics' : 'chat'
+      viewState.value.currentView = viewState.value.currentView === 'chat' ? 'topics' : 'chat'
     }
   }
 

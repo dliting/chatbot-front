@@ -39,14 +39,22 @@ export const FILE_TYPE_MAP: Record<string, string> = {
   ts: 'text',
   xml: 'text',
   html: 'text',
-  css: 'text'
+  css: 'text',
 }
 
 // Document types that need special preview
 export const DOCUMENT_TYPES = ['pdf', 'word', 'excel', 'text']
 
 // Preview types
-export type PreviewType = 'image' | 'pdf' | 'word' | 'excel' | 'video' | 'audio' | 'text' | 'unknown'
+export type PreviewType =
+  | 'image'
+  | 'pdf'
+  | 'word'
+  | 'excel'
+  | 'video'
+  | 'audio'
+  | 'text'
+  | 'unknown'
 
 /**
  * Get file extension from filename
@@ -104,7 +112,7 @@ export function getMimeType(filename: string): string {
     webm: 'video/webm',
     mp3: 'audio/mpeg',
     wav: 'audio/wav',
-    ogg: 'audio/ogg'
+    ogg: 'audio/ogg',
   }
   return mimeTypes[ext] || 'application/octet-stream'
 }
@@ -122,7 +130,7 @@ export function getFileIcon(filename: string): string {
     video: 'video',
     audio: 'music',
     text: 'file',
-    unknown: 'file'
+    unknown: 'file',
   }
   return icons[type] || 'file'
 }

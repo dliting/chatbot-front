@@ -15,11 +15,13 @@ export class IframeMessenger {
   private allowedOrigins: string[]
   private boundHandleMessage: (event: MessageEvent) => void
 
-  constructor(options: {
-    allowedOrigins?: string[]
-    targetWindow?: Window | null
-    targetOrigin?: string
-  } = {}) {
+  constructor(
+    options: {
+      allowedOrigins?: string[]
+      targetWindow?: Window | null
+      targetOrigin?: string
+    } = {}
+  ) {
     const { targetWindow = null, targetOrigin = '*', allowedOrigins = [] } = options
 
     this.targetWindow = targetWindow
@@ -58,7 +60,7 @@ export class IframeMessenger {
     // Call registered handlers
     const handlers = this.handlers.get(data.type)
     if (handlers) {
-      handlers.forEach(handler => {
+      handlers.forEach((handler) => {
         try {
           handler(data.data)
         } catch (error) {
@@ -141,11 +143,13 @@ export class IframeMessenger {
 export class HostMessenger extends IframeMessenger {
   private iframe: HTMLIFrameElement | null = null
 
-  constructor(options: {
-    iframeSelector?: string
-    iframe?: HTMLIFrameElement | null
-    allowedOrigins?: string[]
-  } = {}) {
+  constructor(
+    options: {
+      iframeSelector?: string
+      iframe?: HTMLIFrameElement | null
+      allowedOrigins?: string[]
+    } = {}
+  ) {
     super({
       allowedOrigins: options.allowedOrigins,
       targetWindow: null,
@@ -197,10 +201,7 @@ export class HostMessenger extends IframeMessenger {
 /**
  * Utility to wait for iframe to be ready
  */
-export function waitForIframeReady(
-  iframe: HTMLIFrameElement,
-  timeout = 5000
-): Promise<void> {
+export function waitForIframeReady(iframe: HTMLIFrameElement, timeout = 5000): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!iframe.contentWindow) {
       reject(new Error('Iframe has no contentWindow'))
@@ -236,9 +237,7 @@ export function waitForIframeReady(
 /**
  * Create a bidirectional messenger
  */
-export function createBidirectionalMessenger(options: {
-  allowedOrigins?: string[]
-}): {
+export function createBidirectionalMessenger(options: { allowedOrigins?: string[] }): {
   sendToParent: (type: PostMessageType, data?: unknown) => void
   sendToIframe: (type: PostMessageType, data?: unknown) => void
   onFromParent: (type: PostMessageType, handler: MessageHandler) => () => void

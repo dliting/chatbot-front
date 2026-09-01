@@ -3,30 +3,13 @@
  */
 
 // Re-export from focused modules for backward compatibility
-export {
-  truncate,
-  escapeHTML,
-  getFileExtension,
-} from './string'
+export { truncate, escapeHTML, getFileExtension } from './string'
 
-export {
-  isValidUrl,
-  isImageFile,
-  safeJSONParse,
-  isInIframe,
-} from './validation'
+export { isValidUrl, isImageFile, safeJSONParse, isInIframe } from './validation'
 
-export {
-  debounce,
-  throttle,
-  sleep,
-  retry,
-  copyToClipboard,
-} from './async'
+export { debounce, throttle, sleep, retry, copyToClipboard } from './async'
 
-export {
-  formatMarkdownContent,
-} from './markdown'
+export { formatMarkdownContent } from './markdown'
 
 /**
  * Generate a unique ID
@@ -89,7 +72,7 @@ export function deepClone<T>(obj: T): T {
   }
 
   if (Array.isArray(obj)) {
-    return obj.map(item => deepClone(item)) as unknown as T
+    return obj.map((item) => deepClone(item)) as unknown as T
   }
 
   const clonedObj = {} as T

@@ -30,19 +30,22 @@ export function useTopicsState(options: UseTopicsStateOptions = {}) {
 
   // Load from storage or create new
   const storedTopics = loadTopicsFromStorage(storageAdapter)
-  const initialTopicId = storedTopics.length > 0
-    ? storedTopics[0].topicId
-    : generateTopicId()
+  const initialTopicId = storedTopics.length > 0 ? storedTopics[0].topicId : generateTopicId()
 
   const topics = reactive<TopicsState>({
-    list: storedTopics.length > 0 ? storedTopics : [{
-      topicId: initialTopicId,
-      title: defaultTitle,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      messageCount: 0,
-      unreadCount: 0,
-    }],
+    list:
+      storedTopics.length > 0
+        ? storedTopics
+        : [
+            {
+              topicId: initialTopicId,
+              title: defaultTitle,
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              messageCount: 0,
+              unreadCount: 0,
+            },
+          ],
     currentId: initialTopicId,
   })
 
@@ -59,11 +62,11 @@ export function useTopicsState(options: UseTopicsStateOptions = {}) {
   )
 
   const currentTopic = (): Topic | undefined => {
-    return topics.list.find(t => t.topicId === topics.currentId)
+    return topics.list.find((t) => t.topicId === topics.currentId)
   }
 
   const updateTopicAfterMessage = (topicId: string, messageCount: number) => {
-    const topicIndex = topics.list.findIndex(t => t.topicId === topicId)
+    const topicIndex = topics.list.findIndex((t) => t.topicId === topicId)
 
     if (topicIndex === -1) {
       // Create new topic
@@ -111,7 +114,7 @@ export function useTopicsState(options: UseTopicsStateOptions = {}) {
 
   const deleteTopic = (topicId: string) => {
     // Remove from list
-    const index = topics.list.findIndex(t => t.topicId === topicId)
+    const index = topics.list.findIndex((t) => t.topicId === topicId)
     if (index > -1) {
       topics.list.splice(index, 1)
       saveTopicsToStorage(topics.list, storageAdapter)
@@ -119,7 +122,7 @@ export function useTopicsState(options: UseTopicsStateOptions = {}) {
   }
 
   const updateTopicTitle = (topicId: string, title: string) => {
-    const topic = topics.list.find(t => t.topicId === topicId)
+    const topic = topics.list.find((t) => t.topicId === topicId)
     if (topic) {
       topic.title = title
       topic.updatedAt = Date.now()

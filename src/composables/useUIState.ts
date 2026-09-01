@@ -4,10 +4,13 @@
 import { reactive } from 'vue'
 import type { Theme, PanelMode, Locale } from '@/types'
 
+/** Stored theme is always resolved ('system' is resolved on write via setTheme) */
+export type ResolvedTheme = Exclude<Theme, 'system'>
+
 export interface UIState {
   isPanelOpen: boolean
   panelMode: PanelMode
-  theme: Theme
+  theme: ResolvedTheme
   locale: Locale
   screenWidth: number
   isMobile: boolean
@@ -26,14 +29,14 @@ export function useUIState(options: Required<UseUIStateOptions>) {
   let mediaQueryList: MediaQueryList | null = null
   let handleThemeChange: ((e: MediaQueryListEvent) => void) | null = null
 
-  const getSystemTheme = (): Theme => {
+  const getSystemTheme = (): ResolvedTheme => {
     if (typeof window === 'undefined' || !window.matchMedia) {
       return 'light'
     }
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   }
 
-  const getInitialTheme = (): Theme => {
+  const getInitialTheme = (): ResolvedTheme => {
     if (options.initialTheme === 'system') {
       return getSystemTheme()
     }

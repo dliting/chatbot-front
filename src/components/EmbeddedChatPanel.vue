@@ -1,8 +1,6 @@
 <template>
   <!-- Embedded Modes: Main container -->
-  <div
-    :class="[containerClasses, { 'ai-chat--resizing': sidebarResize.isResizing.value }]"
-  >
+  <div :class="[containerClasses, { 'ai-chat--resizing': sidebarResize.isResizing.value }]">
     <!-- Dual Layout: Sidebar + Main Content -->
     <template v-if="effectiveLayout === 'dual'">
       <!-- Topic Sidebar -->
@@ -160,21 +158,26 @@ const chatState = inject(chatStateKey, null)
 const { previewFile, handleFileClick, closePreview } = useFilePreview()
 
 // Merge config
-const configRef = computed(() => {
-  const cfg = props.config
-  const configValue = cfg?.value ?? cfg
-  return { ...defaultChatbotConfig, ...configValue }
-})
+const configRef = computed(() => ({
+  ...defaultChatbotConfig,
+  ...props.config,
+}))
 
 // Resolve state from inject (preferred) or props (fallback)
 const effectiveMessages = computed(() => chatState?.messages?.value ?? props.messages)
 const effectiveTopics = computed(() => chatState?.topics?.value ?? props.topics)
-const effectiveCurrentTopicId = computed(() => chatState?.currentTopicId?.value ?? props.currentTopicId)
+const effectiveCurrentTopicId = computed(
+  () => chatState?.currentTopicId?.value ?? props.currentTopicId
+)
 const effectiveIsStreaming = computed(() => chatState?.isStreaming?.value ?? props.isStreaming)
 const effectiveEnableThinking = computed(() => chatState?.enableThinking ?? props.enableThinking)
-const effectiveThinkingEnabled = computed(() => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled)
+const effectiveThinkingEnabled = computed(
+  () => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled
+)
 const effectiveIsThinking = computed(() => chatState?.isThinking?.value ?? props.isThinking)
-const effectiveEnableVoiceInput = computed(() => chatState?.enableVoiceInput ?? props.enableVoiceInput)
+const effectiveEnableVoiceInput = computed(
+  () => chatState?.enableVoiceInput ?? props.enableVoiceInput
+)
 
 // Effective layout - use prop if provided, otherwise derive from mode
 const effectiveLayout = computed(() => {
@@ -218,7 +221,11 @@ const containerClasses = computed(() => [
 
 <style scoped lang="scss">
 .ai-chat {
-  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'Noto Sans SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   background: var(--bg-base, #ffffff);
   color: var(--text-primary, #303133);
   display: flex;

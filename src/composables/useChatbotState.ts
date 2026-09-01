@@ -44,7 +44,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   })
 
   const currentTopic = computed(() => {
-    return topicsState.topics.list.find(t => t.topicId === topicsState.topics.currentId)
+    return topicsState.topics.list.find((t) => t.topicId === topicsState.topics.currentId)
   })
 
   const isStreaming = computed(() => {
@@ -60,7 +60,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   const removeMessage = (topicId: string, messageId: string) => {
     const msgs = messagesState.messages.byTopic[topicId]
     if (!msgs) return
-    const index = msgs.findIndex(m => m.messageId === messageId)
+    const index = msgs.findIndex((m) => m.messageId === messageId)
     if (index > -1) {
       msgs.splice(index, 1)
     }

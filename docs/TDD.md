@@ -649,8 +649,7 @@ src/
 │   ├── ThinkingBlock.vue / ThinkingToggle.vue
 │   ├── VoiceOverlay.vue / ConfirmDialog.vue
 │   ├── FilePreviewModal.vue
-│   ├── FilePreview/         # 文件预览子系统（6 种类型）
-│   └── layouts/             # DualLayout / SingleLayout
+│   └── FilePreview/         # 文件预览子系统（6 种类型）
 ├── composables/             # 组合式函数
 │   ├── useChatbotState.ts   # 全局状态（ui/topics/messages）
 │   ├── useChatActions.ts    # 发送/刷新/删除/编辑消息

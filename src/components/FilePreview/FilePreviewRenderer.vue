@@ -14,8 +14,7 @@ const props = defineProps<Props>()
 
 // Get file type from filename
 const fileType = computed(() => {
-  const filename = 'name' in props.file ? props.file.name : props.file.name
-  return getPreviewType(filename)
+  return getPreviewType(props.file.name)
 })
 
 // Async load preview components

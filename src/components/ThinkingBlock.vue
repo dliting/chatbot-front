@@ -41,7 +41,14 @@
         :title="mergedLabels.showThinking"
         @click.stop="handleCopy"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
           <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
           <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
         </svg>
@@ -58,7 +65,8 @@ import { formatMarkdownContent } from '@/utils/markdown'
 
 interface Props {
   content: string
-  thinkingTime: number
+  /** Thinking elapsed time in ms (absent while thinking is still in progress). */
+  thinkingTime?: number
   isThinking?: boolean
   autoCollapse?: boolean
   labels?: ChatbotLabels['thinking']
@@ -87,7 +95,7 @@ const mergedLabels = computed(() => ({
 
 // Format thinking time to seconds with one decimal
 const formattedTime = computed(() => {
-  const seconds = props.thinkingTime / 1000
+  const seconds = (props.thinkingTime ?? 0) / 1000
   return seconds.toFixed(1)
 })
 
@@ -110,11 +118,14 @@ const handleCopy = () => {
 }
 
 // Auto-collapse when thinking finishes
-watch(() => props.isThinking, (newVal, oldVal) => {
-  if (oldVal === true && newVal === false && props.autoCollapse) {
-    expanded.value = false
+watch(
+  () => props.isThinking,
+  (newVal, oldVal) => {
+    if (oldVal === true && newVal === false && props.autoCollapse) {
+      expanded.value = false
+    }
   }
-})
+)
 </script>
 
 <style scoped lang="scss">
@@ -235,8 +246,14 @@ watch(() => props.isThinking, (newVal, oldVal) => {
 }
 
 @keyframes thinking-pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.4; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 </style>

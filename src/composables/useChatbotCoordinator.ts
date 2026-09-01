@@ -27,16 +27,14 @@ export function useChatbotCoordinator(deps: CoordinatorDeps) {
       if (messages.currentTopicId !== newId) {
         messages.currentTopicId = newId
       }
-    },
+    }
   )
 
   // Coordinated: delete topic + its messages + auto-switch if needed
   const deleteTopic = (topicId: string) => {
     // Determine next topic BEFORE deletion (list will change after deleteTopic)
     const isCurrent = topicId === topics.currentId
-    const nextTopic = isCurrent
-      ? topics.list.find(t => t.topicId !== topicId)
-      : null
+    const nextTopic = isCurrent ? topics.list.find((t) => t.topicId !== topicId) : null
 
     // Remove messages for this topic (cross-cutting: messages domain)
     delete messages.byTopic[topicId]
@@ -75,7 +73,7 @@ export function useChatbotCoordinator(deps: CoordinatorDeps) {
     const topicId = messages.currentTopicId
     messages.byTopic[topicId] = []
 
-    const topic = topics.list.find(t => t.topicId === topicId)
+    const topic = topics.list.find((t) => t.topicId === topicId)
     if (topic) {
       topic.messageCount = 0
     }

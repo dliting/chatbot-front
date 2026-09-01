@@ -9,20 +9,20 @@
 
     <Teleport to="body">
       <Transition name="menu-popover">
-        <div
-          v-if="visible"
-          class="topic-action-menu__popover"
-          :style="popoverStyle"
-          @click.stop
-        >
+        <div v-if="visible" class="topic-action-menu__popover" :style="popoverStyle" @click.stop>
           <div class="topic-action-menu__list">
-            <button
-              class="topic-action-menu__item"
-              @click="handleAction('edit')"
-            >
+            <button class="topic-action-menu__item" @click="handleAction('edit')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke-linecap="round" stroke-linejoin="round"/>
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke-linecap="round" stroke-linejoin="round"/>
+                <path
+                  d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path
+                  d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
               <span>{{ editLabel }}</span>
             </button>
@@ -31,18 +31,18 @@
               @click="handleAction('delete')"
             >
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"/>
+                <path
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
               <span>{{ deleteLabel }}</span>
             </button>
           </div>
         </div>
       </Transition>
-      <div
-        v-if="visible"
-        class="topic-action-menu__backdrop"
-        @click="closeMenu"
-      />
+      <div v-if="visible" class="topic-action-menu__backdrop" @click="closeMenu" />
     </Teleport>
   </div>
 </template>
@@ -131,7 +131,11 @@ const closeMenu = () => {
 }
 
 const handleAction = (action: 'edit' | 'delete') => {
-  emit(action)
+  if (action === 'edit') {
+    emit('edit')
+  } else {
+    emit('delete')
+  }
   closeMenu()
 }
 
