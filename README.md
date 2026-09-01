@@ -12,6 +12,18 @@ The component has a dual-dimension interaction architecture — **interaction mo
 | **Sidebar** | Single (tab-switched) | Embedded side panel | Side panel inside an existing app |
 | **Floating** | Single | Floating ball that opens a draggable chat window | Space-saving, on-demand access |
 
+### Extended — full-page dual layout
+
+<img src="docs/screenshots/extended.png" width="800" alt="Extended mode: full-page dual layout with topic sidebar and chat area">
+
+### Sidebar — side panel docked on the host page
+
+<img src="docs/screenshots/sidebar.png" width="800" alt="Sidebar mode: single-layout side panel docked on the right of the host page">
+
+### Floating — draggable chat window
+
+<img src="docs/screenshots/floating.png" width="800" alt="Floating mode: draggable resizable chat window over the host page">
+
 ## Features
 
 - **Multi-modal input**: text and image upload, file preview (docx / excel / pdf / images)
