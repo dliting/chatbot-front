@@ -4,10 +4,14 @@
     <div v-if="showAvatar" class="chatbot-message__avatar">
       <slot name="avatar">
         <svg v-if="isUser" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+          <path
+            d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"
+          />
         </svg>
         <svg v-else viewBox="0 0 24 24" fill="currentColor">
-          <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+          <path
+            d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"
+          />
         </svg>
       </slot>
     </div>
@@ -28,13 +32,18 @@
           :thinking-time="message.thinkingTime"
           :is-thinking="isStreaming && isThinkingActive"
           :auto-collapse="true"
-          :labels="labels"
+          :labels="labels?.thinking"
           @toggle="thinkingCollapsed = !thinkingCollapsed"
         />
 
         <!-- Text content -->
         <!-- eslint-disable-next-line vue/no-v-html -- Content is sanitized via DOMPurify in formatMarkdownContent -->
-        <div v-if="hasText" class="chatbot-message__text" @click="handleTextClick" v-html="formattedContent"/>
+        <div
+          v-if="hasText"
+          class="chatbot-message__text"
+          @click="handleTextClick"
+          v-html="formattedContent"
+        />
 
         <!-- Image content -->
         <div v-if="hasImages" class="chatbot-message__images">
@@ -59,7 +68,7 @@
             <video :src="video.url" class="chatbot-message__video-player" preload="metadata" />
             <div class="chatbot-message__video-overlay">
               <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z"/>
+                <path d="M8 5v14l11-7z" />
               </svg>
             </div>
           </div>
@@ -86,29 +95,44 @@
             @click="$emit('file-click', { type: doc.type, url: doc.url, name: doc.name })"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linecap="round" stroke-linejoin="round"/>
-              <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="16" y1="13" x2="8" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
-              <line x1="16" y1="17" x2="8" y2="17" stroke-linecap="round" stroke-linejoin="round"/>
+              <path
+                d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round" />
+              <line x1="16" y1="13" x2="8" y2="13" stroke-linecap="round" stroke-linejoin="round" />
+              <line x1="16" y1="17" x2="8" y2="17" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
             <span class="chatbot-message__document-name">{{ doc.name }}</span>
           </div>
         </div>
 
         <!-- Streaming indicator -->
-        <span v-if="isStreaming" class="chatbot-message__cursor"/>
+        <span v-if="isStreaming" class="chatbot-message__cursor" />
 
         <!-- Error indicator -->
         <div v-if="isError" class="chatbot-message__error">
           <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+            <path
+              d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"
+            />
           </svg>
-          <span>{{ message.errorMessage || (isUser ? (labels?.sendFailed || 'Send failed') : (labels?.responseFailed || 'Response failed')) }}</span>
+          <span>
+            {{
+              message.errorMessage ||
+              (isUser
+                ? labels?.sendFailed || 'Send failed'
+                : labels?.responseFailed || 'Response failed')
+            }}
+          </span>
         </div>
 
         <!-- Stopped indicator -->
         <div v-if="isStopped" class="chatbot-message__stopped">
-          <span>{{ message.errorMessage || (labels?.generationStopped || 'Generation stopped') }}</span>
+          <span>
+            {{ message.errorMessage || labels?.generationStopped || 'Generation stopped' }}
+          </span>
         </div>
       </div>
 
@@ -122,7 +146,10 @@
         <!-- Copy button -->
         <button
           v-if="enableCopy && canCopy"
-          :class="['chatbot-message__action-btn', { 'chatbot-message__action-btn--copied': isCopied }]"
+          :class="[
+            'chatbot-message__action-btn',
+            { 'chatbot-message__action-btn--copied': isCopied },
+          ]"
           :title="labels?.copy || 'Copy'"
           @click="handleCopy"
         >
@@ -138,7 +165,9 @@
           @click="handleResend"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+            <path
+              d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+            />
           </svg>
         </button>
 
@@ -226,7 +255,9 @@ const hasDocuments = computed(() => documentAttachments.value.length > 0)
 const canCopy = computed(() => hasText.value && !props.isStreaming)
 const isThinkingActive = computed(() => chatActions?.isThinkingActive?.value ?? false)
 
-const label = computed(() => isUser.value ? (props.labels?.userLabel || 'You') : (props.labels?.assistantLabel || 'AI Assistant'))
+const label = computed(() =>
+  isUser.value ? props.labels?.userLabel || 'You' : props.labels?.assistantLabel || 'AI Assistant'
+)
 const formattedTime = computed(() => formatTime(props.message.timestamp))
 const formattedContent = computed(() => formatMarkdownContent(props.message.content))
 
@@ -274,13 +305,21 @@ onUnmounted(() => {
 
 const handleCopy = async () => {
   if (!props.message.content || props.isStreaming) {
-    ElMessage({ message: props.labels?.noContentToCopy || 'No content to copy', type: 'error', duration: 3000 })
+    ElMessage({
+      message: props.labels?.noContentToCopy || 'No content to copy',
+      type: 'error',
+      duration: 3000,
+    })
     return
   }
 
   try {
     await copyToClipboard(props.message.content)
-    ElMessage({ message: props.labels?.copiedToClipboard || 'Copied to clipboard', type: 'success', duration: 3000 })
+    ElMessage({
+      message: props.labels?.copiedToClipboard || 'Copied to clipboard',
+      type: 'success',
+      duration: 3000,
+    })
     isCopied.value = true
 
     if (copyTimer) clearTimeout(copyTimer)
@@ -300,19 +339,28 @@ const handleDelete = () => {
     {
       confirmButtonText: props.labels?.delete || 'Delete',
       cancelButtonText: props.labels?.cancel || 'Cancel',
-      type: 'warning'
+      type: 'warning',
     }
-  ).then(() => {
-    chatActions?.deleteMessage(props.message)
-    ElMessage({ message: props.labels?.messageDeleted || 'Message deleted', type: 'success', duration: 3000 })
-  }).catch(() => {
-    // User cancelled
-  })
+  )
+    .then(() => {
+      chatActions?.deleteMessage(props.message)
+      ElMessage({
+        message: props.labels?.messageDeleted || 'Message deleted',
+        type: 'success',
+        duration: 3000,
+      })
+    })
+    .catch(() => {
+      // User cancelled
+    })
 }
 
 const handleResend = () => {
   if (isUser.value) {
-    chatActions?.sendMessage({ content: props.message.content, attachments: props.message.attachments })
+    chatActions?.sendMessage({
+      content: props.message.content,
+      attachments: props.message.attachments,
+    })
   } else {
     chatActions?.refreshMessage(props.message)
   }
@@ -334,7 +382,11 @@ const handleTextClick = (e: MouseEvent) => {
   const text = codeEl?.textContent ?? codeBlock.textContent
   if (text) {
     copyToClipboard(text).then(() => {
-      ElMessage({ message: props.labels?.copiedToClipboard || 'Copied to clipboard', type: 'success', duration: 3000 })
+      ElMessage({
+        message: props.labels?.copiedToClipboard || 'Copied to clipboard',
+        type: 'success',
+        duration: 3000,
+      })
     })
   }
 }
@@ -655,7 +707,8 @@ const handleTextClick = (e: MouseEvent) => {
     color: var(--action-icon-color, #8c8c8c);
     transition: all 0.2s;
 
-    svg, :deep(svg) {
+    svg,
+    :deep(svg) {
       width: 14px;
       height: 14px;
     }
@@ -677,10 +730,12 @@ const handleTextClick = (e: MouseEvent) => {
 }
 
 @keyframes blink {
-  0%, 50% {
+  0%,
+  50% {
     opacity: 1;
   }
-  51%, 100% {
+  51%,
+  100% {
     opacity: 0;
   }
 }

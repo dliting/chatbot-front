@@ -70,11 +70,13 @@ const app = createApp({
     }
 
     // Listen for messages from parent
-    messenger.on('host:toggle', (data?: PanelToggleData) => {
+    messenger.on('host:toggle', (raw: unknown) => {
+      const data = raw as PanelToggleData | undefined
       chatbotRef.value?.togglePanel(data?.isOpen)
     })
 
-    messenger.on('host:setConfig', (data?: ChatbotConfig) => {
+    messenger.on('host:setConfig', (raw: unknown) => {
+      const data = raw as ChatbotConfig | undefined
       if (data) {
         Object.assign(chatbotConfig, data)
       }

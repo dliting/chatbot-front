@@ -32,7 +32,7 @@
         @send="handleSend"
         @stop="chatActions?.stopGenerating()"
         @file-click="$emit('file-click', $event)"
-        @update:thinking-enabled="uiActions?.setThinkingEnabled($event)"
+        @update:thinking-enabled="uiActions?.setThinkingEnabled?.($event)"
       />
     </div>
 
@@ -100,10 +100,16 @@ const promptVarResolver = inject(promptVarResolverKey, null)
 // Resolve state from inject (preferred) or props (fallback)
 const effectiveMessages = computed(() => chatState?.messages?.value ?? props.messages)
 const effectiveIsStreaming = computed(() => chatState?.isStreaming?.value ?? props.isStreaming)
-const effectiveStreamingMessageId = computed(() => chatState?.streamingMessageId?.value ?? props.streamingMessageId)
+const effectiveStreamingMessageId = computed(
+  () => chatState?.streamingMessageId?.value ?? props.streamingMessageId
+)
 const effectiveEnableThinking = computed(() => chatState?.enableThinking ?? props.enableThinking)
-const effectiveThinkingEnabled = computed(() => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled)
-const effectiveEnableVoiceInput = computed(() => chatState?.enableVoiceInput ?? props.enableVoiceInput)
+const effectiveThinkingEnabled = computed(
+  () => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled
+)
+const effectiveEnableVoiceInput = computed(
+  () => chatState?.enableVoiceInput ?? props.enableVoiceInput
+)
 
 const mergedLabels = computed(() => ({
   ...getDefaultLabels(),
@@ -140,7 +146,12 @@ const confirmDeleteMessage = () => {
   flex-direction: column;
   height: 100%;
   overflow: hidden;
-  background: linear-gradient(180deg, var(--content-bg-1, #f0f4ff) 0%, var(--content-bg-2, #e8f0ff) 50%, var(--content-bg-3, #f5f3ff) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--content-bg-1, #f0f4ff) 0%,
+    var(--content-bg-2, #e8f0ff) 50%,
+    var(--content-bg-3, #f5f3ff) 100%
+  );
 
   &__messages {
     flex: 1;

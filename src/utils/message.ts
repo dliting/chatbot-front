@@ -10,11 +10,12 @@ import { TOPIC_DEFAULTS } from '@/constants'
  * Returns the single attachment type if all attachments share the same type,
  * 'mixed' if there are multiple types, or 'text' if there are no attachments.
  */
-export function deriveMessageType(
-  data: { content: string; attachments?: Attachment[] }
-): MessageType {
+export function deriveMessageType(data: {
+  content: string
+  attachments?: Attachment[]
+}): MessageType {
   if (!data.attachments?.length) return 'text'
-  const types = new Set(data.attachments.map(a => a.type))
+  const types = new Set(data.attachments.map((a) => a.type))
   if (types.size === 1) return types.values().next().value as MessageType
   return 'mixed'
 }
@@ -22,11 +23,8 @@ export function deriveMessageType(
 /**
  * Get attachments from a message filtered by type.
  */
-export function getAttachmentsByType(
-  message: Message,
-  type: AttachmentType
-): Attachment[] {
-  return message.attachments?.filter(a => a.type === type) ?? []
+export function getAttachmentsByType(message: Message, type: AttachmentType): Attachment[] {
+  return message.attachments?.filter((a) => a.type === type) ?? []
 }
 
 /**
@@ -63,10 +61,7 @@ export function createMessage(
 /**
  * Update message status
  */
-export function updateMessageStatus(
-  message: Message,
-  status: Message['status']
-): Message {
+export function updateMessageStatus(message: Message, status: Message['status']): Message {
   return { ...message, status }
 }
 
@@ -147,7 +142,7 @@ export function getMessagePreview(message: Message, maxLength = 50): string {
  * Extract topic title from first AI message
  */
 export function extractTopicTitle(messages: Message[]): string {
-  const firstAIMessage = messages.find(m => m.role === 'assistant')
+  const firstAIMessage = messages.find((m) => m.role === 'assistant')
 
   if (!firstAIMessage || !firstAIMessage.content) {
     return TOPIC_DEFAULTS.TITLE
@@ -162,7 +157,7 @@ export function extractTopicTitle(messages: Message[]): string {
  * Filter messages by topic
  */
 export function filterMessagesByTopic(messages: Message[], topicId: string): Message[] {
-  return messages.filter(m => m.topicId === topicId)
+  return messages.filter((m) => m.topicId === topicId)
 }
 
 /**

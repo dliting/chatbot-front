@@ -1,5 +1,7 @@
 # AI Chatbot Frontend
 
+[![CI](https://github.com/dliting/chatbot-front/actions/workflows/ci.yml/badge.svg)](https://github.com/dliting/chatbot-front/actions/workflows/ci.yml)
+
 A Vue 3 + TypeScript + Element Plus AI chatbot component library that can be embedded in any website — as a Vue component or a framework-agnostic iframe. Ships with a full-stack example app (mock & real LLM backends) and runs fully offline.
 
 ## Modes

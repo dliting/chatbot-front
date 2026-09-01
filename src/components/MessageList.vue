@@ -28,7 +28,9 @@
         <slot name="empty">
           <div class="chatbot-messages__empty-content">
             <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+              <path
+                d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"
+              />
             </svg>
             <p>{{ labels?.emptyMessage || 'Start a conversation...' }}</p>
           </div>
@@ -41,10 +43,10 @@
       <button
         v-if="showScrollButton"
         class="chatbot-messages__scroll-btn"
-        @click="scrollToBottom"
+        @click="scrollToBottom()"
       >
         <svg viewBox="0 0 24 24" fill="currentColor">
-          <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/>
+          <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" />
         </svg>
       </button>
     </Transition>

@@ -20,7 +20,9 @@ export function useResizeHandle(options: UseResizeHandleOptions) {
             const parsed = Number(stored)
             if (parsed >= minWidth && parsed <= maxWidth) return parsed
           }
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
         return null
       })()
     : null
@@ -35,9 +37,7 @@ export function useResizeHandle(options: UseResizeHandleOptions) {
   const preventSelect = (e: Event) => e.preventDefault()
 
   const onMouseMove = (e: MouseEvent) => {
-    const delta = direction === 'right'
-      ? e.clientX - startX
-      : startX - e.clientX
+    const delta = direction === 'right' ? e.clientX - startX : startX - e.clientX
 
     const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + delta))
     width.value = newWidth
@@ -51,7 +51,11 @@ export function useResizeHandle(options: UseResizeHandleOptions) {
     document.removeEventListener('selectstart', preventSelect)
 
     if (storageKey) {
-      try { localStorage.setItem(storageKey, String(width.value)) } catch { /* ignore */ }
+      try {
+        localStorage.setItem(storageKey, String(width.value))
+      } catch {
+        /* ignore */
+      }
     }
   }
 
@@ -70,7 +74,11 @@ export function useResizeHandle(options: UseResizeHandleOptions) {
   const resetWidth = () => {
     width.value = initialWidth
     if (storageKey) {
-      try { localStorage.setItem(storageKey, String(initialWidth)) } catch { /* ignore */ }
+      try {
+        localStorage.setItem(storageKey, String(initialWidth))
+      } catch {
+        /* ignore */
+      }
     }
   }
 

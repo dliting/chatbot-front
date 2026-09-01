@@ -2,7 +2,12 @@
  * Pure mapping functions from backend API types to frontend domain types.
  * All backend → frontend field conversions are centralized here.
  */
-import type { BackendSession, BackendMessage, BackendCreateSessionResponse, BackendSendMessageResponse } from '@/types/api'
+import type {
+  BackendSession,
+  BackendMessage,
+  BackendCreateSessionResponse,
+  BackendSendMessageResponse,
+} from '@/types/api'
 import type { Topic, Message, Attachment } from '@/types'
 
 /** Map a backend session to a frontend Topic */
@@ -79,7 +84,10 @@ export function mapCreateSessionResponse(raw: BackendCreateSessionResponse): Top
 }
 
 /** Map a backend send-message response to a frontend Message */
-export function mapSendMessageResponse(raw: BackendSendMessageResponse, fallbackTopicId: string): Message {
+export function mapSendMessageResponse(
+  raw: BackendSendMessageResponse,
+  fallbackTopicId: string
+): Message {
   return {
     messageId: raw.messageId,
     topicId: raw.sessionId || fallbackTopicId,

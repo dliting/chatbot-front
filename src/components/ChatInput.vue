@@ -10,45 +10,75 @@
         <!-- Error state -->
         <div v-if="file.error" class="chat-input__preview-error">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="12" y1="8" x2="12" y2="12" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="12" y1="16" x2="12.01" y2="16" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="12" y1="8" x2="12" y2="12" stroke-linecap="round" stroke-linejoin="round" />
+            <line
+              x1="12"
+              y1="16"
+              x2="12.01"
+              y2="16"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
         </div>
 
         <!-- Image preview -->
         <img
           v-else-if="file.type === 'image'"
-          :src="file.preview"
+          :src="file.preview ?? file.data"
           class="chat-input__preview-img"
-          @click="$emit('file-click', { type: 'image', url: file.preview, name: file.name })"
+          @click="
+            $emit('file-click', { type: 'image', url: file.preview ?? file.data, name: file.name })
+          "
         />
 
         <!-- Video icon -->
         <div
           v-else-if="file.type === 'video'"
           class="chat-input__preview-media"
-          @click="$emit('file-click', { type: 'video', url: file.preview, name: file.name })"
+          @click="
+            $emit('file-click', { type: 'video', url: file.preview ?? file.data, name: file.name })
+          "
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="23 7 16 12 23 17 23 7" stroke-linecap="round" stroke-linejoin="round"/>
-            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <polygon
+              points="23 7 16 12 23 17 23 7"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <rect
+              x="1"
+              y="5"
+              width="15"
+              height="14"
+              rx="2"
+              ry="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
           </svg>
-          <span v-if="file.size" class="chat-input__preview-size">{{ formatFileSize(file.size) }}</span>
+          <span v-if="file.size" class="chat-input__preview-size">
+            {{ formatFileSize(file.size) }}
+          </span>
         </div>
 
         <!-- Audio icon -->
         <div
           v-else-if="file.type === 'audio'"
           class="chat-input__preview-media"
-          @click="$emit('file-click', { type: 'audio', url: file.preview, name: file.name })"
+          @click="
+            $emit('file-click', { type: 'audio', url: file.preview ?? file.data, name: file.name })
+          "
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 18V5l12-2v13" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="6" cy="18" r="3" stroke-linecap="round" stroke-linejoin="round"/>
-            <circle cx="18" cy="16" r="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 18V5l12-2v13" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="6" cy="18" r="3" stroke-linecap="round" stroke-linejoin="round" />
+            <circle cx="18" cy="16" r="3" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
-          <span v-if="file.size" class="chat-input__preview-size">{{ formatFileSize(file.size) }}</span>
+          <span v-if="file.size" class="chat-input__preview-size">
+            {{ formatFileSize(file.size) }}
+          </span>
         </div>
 
         <!-- Document icon -->
@@ -56,13 +86,23 @@
           v-else-if="file.type === 'document'"
           class="chat-input__preview-document"
           :title="file.name"
-          @click="$emit('file-click', { type: file.name.split('.').pop() || 'unknown', url: file.preview, name: file.name })"
+          @click="
+            $emit('file-click', {
+              type: file.name.split('.').pop() || 'unknown',
+              url: file.preview ?? file.data,
+              name: file.name,
+            })
+          "
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke-linecap="round" stroke-linejoin="round"/>
-            <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="16" y1="13" x2="8" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="16" y1="17" x2="8" y2="17" stroke-linecap="round" stroke-linejoin="round"/>
+            <path
+              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="16" y1="13" x2="8" y2="13" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="16" y1="17" x2="8" y2="17" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
           <span class="chat-input__preview-docname">{{ file.name }}</span>
         </div>
@@ -70,8 +110,8 @@
         <!-- Remove button (even for errors) -->
         <button class="chat-input__preview-remove" @click="removeFile(idx)">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-            <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round" />
+            <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
       </div>
@@ -81,7 +121,11 @@
     <div class="chat-input__row">
       <button class="chat-input__upload-btn" @click="handleUploadClick">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </button>
 
@@ -111,30 +155,30 @@
         @click="handleSend"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="22" y1="2" x2="11" y2="13" stroke-linecap="round" stroke-linejoin="round"/>
-          <polygon points="22 2 15 22 11 13 2 9 22 2" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="22" y1="2" x2="11" y2="13" stroke-linecap="round" stroke-linejoin="round" />
+          <polygon
+            points="22 2 15 22 11 13 2 9 22 2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
       </button>
-      <button
-        v-else
-        class="chat-input__stop-btn"
-        @click="emit('stop')"
-      >
+      <button v-else class="chat-input__stop-btn" @click="emit('stop')">
         <svg viewBox="0 0 24 24" fill="currentColor">
-          <rect x="6" y="6" width="12" height="12" rx="2"/>
+          <rect x="6" y="6" width="12" height="12" rx="2" />
         </svg>
       </button>
 
-      <button
-        v-if="enableVoiceInput"
-        class="chat-input__voice-btn"
-        @click="$emit('toggle-voice')"
-      >
+      <button v-if="enableVoiceInput" class="chat-input__voice-btn" @click="$emit('toggle-voice')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 1a3 3 0 013 3v8a3 3 0 01-6 0V4a3 3 0 013-3z" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M19 10v2a7 7 0 01-14 0v-2" stroke-linecap="round" stroke-linejoin="round"/>
-          <line x1="12" y1="19" x2="12" y2="23" stroke-linecap="round" stroke-linejoin="round"/>
-          <line x1="8" y1="23" x2="16" y2="23" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M12 1a3 3 0 013 3v8a3 3 0 01-6 0V4a3 3 0 013-3z"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path d="M19 10v2a7 7 0 01-14 0v-2" stroke-linecap="round" stroke-linejoin="round" />
+          <line x1="12" y1="19" x2="12" y2="23" stroke-linecap="round" stroke-linejoin="round" />
+          <line x1="8" y1="23" x2="16" y2="23" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
     </div>
@@ -153,7 +197,12 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { validateFileSize, formatFileSize, getMediaType as utilsGetMediaType, type MediaType } from '@/utils/fileValidation'
+import {
+  validateFileSize,
+  formatFileSize,
+  getMediaType as utilsGetMediaType,
+  type MediaType,
+} from '@/utils/fileValidation'
 import type { Attachment } from '@/types'
 import ThinkingToggle from './ThinkingToggle.vue'
 import { getPreviewType } from '@/utils/fileType'
@@ -175,11 +224,11 @@ type FileType = MediaType | 'document'
 
 interface MediaFile {
   type: FileType
-  data: string  // base64
+  data: string // base64
   name: string
-  preview?: string  // 预览URL
-  size?: number  // 文件大小
-  error?: string  // 错误信息
+  preview?: string // 预览URL
+  size?: number // 文件大小
+  error?: string // 错误信息
 }
 
 interface Emits {
@@ -223,7 +272,7 @@ const convertFileToBase64 = (file: File): Promise<string> => {
 // Computed
 const canSend = computed(() => {
   const hasText = inputText.value.trim().length > 0
-  const hasValidFiles = selectedFiles.value.some(f => !f.error)
+  const hasValidFiles = selectedFiles.value.some((f) => !f.error)
   return hasText || hasValidFiles
 })
 
@@ -245,21 +294,23 @@ const handleKeydown = (e: KeyboardEvent) => {
 
 const handleSend = () => {
   if (props.disabled) return
-  if (!inputText.value.trim() && !selectedFiles.value.some(f => !f.error)) return
+  if (!inputText.value.trim() && !selectedFiles.value.some((f) => !f.error)) return
 
   const content = inputText.value.trim()
-  const validFiles = selectedFiles.value.filter(f => !f.error)
+  const validFiles = selectedFiles.value.filter((f) => !f.error)
 
   // Build unified attachments array from valid files
-  const attachments: Attachment[] = validFiles.map(f => ({
+  const attachments: Attachment[] = validFiles.map((f) => ({
     name: f.name,
-    url: f.preview || (f.type === 'image'
-      ? `data:image/png;base64,${f.data}`
-      : f.type === 'video'
-        ? `data:video/mp4;base64,${f.data}`
-        : f.type === 'audio'
-          ? `data:audio/mp3;base64,${f.data}`
-          : `data:application/octet-stream;base64,${f.data}`),
+    url:
+      f.preview ||
+      (f.type === 'image'
+        ? `data:image/png;base64,${f.data}`
+        : f.type === 'video'
+          ? `data:video/mp4;base64,${f.data}`
+          : f.type === 'audio'
+            ? `data:audio/mp3;base64,${f.data}`
+            : `data:application/octet-stream;base64,${f.data}`),
     type: f.type === 'document' ? 'document' : f.type,
     size: f.size,
   }))
@@ -306,7 +357,7 @@ const handleFileSelect = async (e: Event) => {
             data: '',
             name: file.name,
             size: file.size,
-            error
+            error,
           })
           showToast(`File too large: ${error}`)
           continue
@@ -318,7 +369,7 @@ const handleFileSelect = async (e: Event) => {
           data: base64,
           name: file.name,
           size: file.size,
-          preview: `data:${file.type};base64,${base64}`
+          preview: `data:${file.type};base64,${base64}`,
         })
       } else {
         // Handle media files
@@ -335,7 +386,7 @@ const handleFileSelect = async (e: Event) => {
             data: '',
             name: file.name,
             size: file.size,
-            error
+            error,
           })
 
           // Show toast notification
@@ -353,7 +404,7 @@ const handleFileSelect = async (e: Event) => {
           size: file.size,
           preview: file.type.startsWith('image/')
             ? `data:${file.type};base64,${base64}`
-            : undefined
+            : undefined,
         })
       }
     }
@@ -441,7 +492,11 @@ const handleFileSelect = async (e: Event) => {
   &__preview-document {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, var(--chat-assistant-bg, #f5f7fa) 0%, var(--border-light, #e8e8ec) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--chat-assistant-bg, #f5f7fa) 0%,
+      var(--border-light, #e8e8ec) 100%
+    );
     border-radius: 8px;
     display: flex;
     flex-direction: column;
@@ -511,7 +566,11 @@ const handleFileSelect = async (e: Event) => {
   }
 
   &__upload-btn {
-    background: linear-gradient(135deg, var(--chat-assistant-bg, #f0f0f3) 0%, var(--border-light, #e8e8ec) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--chat-assistant-bg, #f0f0f3) 0%,
+      var(--border-light, #e8e8ec) 100%
+    );
 
     svg {
       width: 20px;
@@ -570,7 +629,11 @@ const handleFileSelect = async (e: Event) => {
   }
 
   &__voice-btn {
-    background: linear-gradient(135deg, var(--chat-assistant-bg, #f0f0f3) 0%, var(--border-light, #e8e8ec) 100%);
+    background: linear-gradient(
+      135deg,
+      var(--chat-assistant-bg, #f0f0f3) 0%,
+      var(--border-light, #e8e8ec) 100%
+    );
 
     svg {
       width: 22px;

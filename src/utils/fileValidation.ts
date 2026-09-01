@@ -6,9 +6,9 @@
  * File size limits for different media types
  */
 export const FILE_SIZE_LIMITS = {
-  image: 10 * 1024 * 1024,   // 10MB
-  video: 100 * 1024 * 1024,  // 100MB
-  audio: 20 * 1024 * 1024    // 20MB
+  image: 10 * 1024 * 1024, // 10MB
+  video: 100 * 1024 * 1024, // 100MB
+  audio: 20 * 1024 * 1024, // 20MB
 } as const
 
 export type MediaType = 'image' | 'video' | 'audio'
@@ -30,7 +30,7 @@ export function validateFileSize(file: File, mediaType: MediaType): ValidationRe
 
   return {
     valid: file.size <= limit,
-    maxSize: `${maxSizeMB}MB`
+    maxSize: `${maxSizeMB}MB`,
   }
 }
 

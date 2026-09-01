@@ -9,7 +9,11 @@ interface ErrorHandlerOptions {
 }
 
 export function useErrorHandler(options: ErrorHandlerOptions) {
-  const handleError = (error: unknown, category: ErrorCategory, userMessage: string): ChatbotError => {
+  const handleError = (
+    error: unknown,
+    category: ErrorCategory,
+    userMessage: string
+  ): ChatbotError => {
     const chatbotError = toChatbotError(error, category, userMessage)
 
     // Emit for host application observability

@@ -18,7 +18,9 @@ interface ChatActionsDeps {
       currentId: string
     }
   }
-  apiClient: Ref<ReturnType<typeof import('@/composables/useApiClient')['useApiClient']> | undefined>
+  apiClient: Ref<
+    ReturnType<(typeof import('@/composables/useApiClient'))['useApiClient']> | undefined
+  >
   emit: (event: string, ...args: unknown[]) => void
   handleError: (error: unknown, category: ErrorCategory, userMessage: string) => ChatbotError
   // Mutation helpers from useChatbotState
@@ -44,7 +46,7 @@ export function useChatActions(deps: ChatActionsDeps) {
     stream: AsyncGenerator<StreamEvent>,
     controller: AbortController,
     assistantMessageId: string,
-    thinkingRequested: boolean,
+    thinkingRequested: boolean
   ): Promise<{ fullContent: string; fullThinkingContent: string }> {
     let fullContent = ''
     let fullThinkingContent = ''
@@ -84,7 +86,7 @@ export function useChatActions(deps: ChatActionsDeps) {
   function finalizeStreamStatus(
     assistantMessageId: string,
     controller: AbortController,
-    userMessageId?: string,
+    userMessageId?: string
   ) {
     isThinkingActive.value = false
 
@@ -93,14 +95,14 @@ export function useChatActions(deps: ChatActionsDeps) {
 
     // Finalize user message
     if (userMessageId) {
-      const userMsg = msgs.find(m => m.messageId === userMessageId)
+      const userMsg = msgs.find((m) => m.messageId === userMessageId)
       if (userMsg?.status === 'sending') {
         deps.updateMessage(userMessageId, { status: 'sent' })
       }
     }
 
     // Finalize assistant message
-    const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
+    const assistantMsg = msgs.find((m) => m.messageId === assistantMessageId)
     if (!assistantMsg) return
 
     if (controller.signal.aborted) {
@@ -112,7 +114,9 @@ export function useChatActions(deps: ChatActionsDeps) {
       const hasContent = !!(assistantMsg.content || assistantMsg.thinkingContent)
       deps.updateMessage(assistantMessageId, {
         status: hasContent ? 'sent' : 'error',
-        ...(hasContent ? {} : { errorMessage: config.value.labels?.serverError || 'Stream ended unexpectedly' }),
+        ...(hasContent
+          ? {}
+          : { errorMessage: config.value.labels?.serverError || 'Stream ended unexpectedly' }),
       })
     }
   }
@@ -140,7 +144,11 @@ export function useChatActions(deps: ChatActionsDeps) {
   /**
    * Send a new message and stream the AI response
    */
-  async function sendMessage(data: { content: string; attachments?: Attachment[]; extraInfo?: string }) {
+  async function sendMessage(data: {
+    content: string
+    attachments?: Attachment[]
+    extraInfo?: string
+  }) {
     if (isGenerating.value) return
 
     const topicId = state.topics.currentId
@@ -163,7 +171,9 @@ export function useChatActions(deps: ChatActionsDeps) {
         topicId,
         role: 'user',
         type: data.attachments?.length
-          ? (data.attachments.length === 1 ? data.attachments[0].type : 'mixed')
+          ? data.attachments.length === 1
+            ? data.attachments[0].type
+            : 'mixed'
           : 'text',
         content: data.content,
         attachments: data.attachments,
@@ -200,12 +210,16 @@ export function useChatActions(deps: ChatActionsDeps) {
           extraInfo: data.extraInfo,
         })
       } else if (apiClient.value) {
-        stream = apiClient.value.streamChat(
-          topicId, data.content, data.attachments,
-          { thinking: { enabled: thinkingRequested }, signal: controller.signal },
-        )
+        stream = apiClient.value.streamChat(topicId, data.content, data.attachments, {
+          thinking: { enabled: thinkingRequested },
+          signal: controller.signal,
+        })
       } else {
-        deps.handleError(new Error('No API client or callback provided'), 'config', 'No API client or callback provided')
+        deps.handleError(
+          new Error('No API client or callback provided'),
+          'config',
+          'No API client or callback provided'
+        )
         isGenerating.value = false
         return
       }
@@ -232,7 +246,7 @@ export function useChatActions(deps: ChatActionsDeps) {
     if (!msgs) return
 
     // Remove the assistant message
-    const index = msgs.findIndex(m => m.messageId === message.messageId)
+    const index = msgs.findIndex((m) => m.messageId === message.messageId)
     if (index !== -1) {
       deps.removeMessage(topicId, message.messageId)
     }
@@ -311,7 +325,7 @@ export function useChatActions(deps: ChatActionsDeps) {
     if (error.name === 'AbortError') {
       // Defense-in-depth: normally unreachable via useApiClient
       deps.updateMessage(userMessageId, { status: 'sent' })
-      const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
+      const assistantMsg = msgs.find((m) => m.messageId === assistantMessageId)
       deps.updateMessage(assistantMessageId, {
         status: assistantMsg?.content ? 'stopped' : 'error',
         errorMessage: config.value.labels?.generationStopped || 'Generation stopped',
@@ -319,7 +333,7 @@ export function useChatActions(deps: ChatActionsDeps) {
     } else {
       deps.handleError(error, 'stream', 'Failed to send message')
       deps.updateMessage(userMessageId, { status: 'error' })
-      const assistantMsg = msgs.find(m => m.messageId === assistantMessageId)
+      const assistantMsg = msgs.find((m) => m.messageId === assistantMessageId)
       if (assistantMsg) {
         deps.updateMessage(assistantMessageId, {
           status: 'error',
@@ -338,7 +352,7 @@ export function useChatActions(deps: ChatActionsDeps) {
     const msgs = state.messages.byTopic[topicId]
     if (!msgs) return
 
-    const exists = msgs.some(m => m.messageId === message.messageId)
+    const exists = msgs.some((m) => m.messageId === message.messageId)
     if (!exists) return
 
     try {

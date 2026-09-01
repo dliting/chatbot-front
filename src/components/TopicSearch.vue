@@ -1,9 +1,15 @@
 <template>
   <div class="topic-search">
     <div class="topic-search__wrapper">
-      <svg class="topic-search__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <circle cx="11" cy="11" r="8" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M21 21l-4.35-4.35" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg
+        class="topic-search__icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <circle cx="11" cy="11" r="8" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M21 21l-4.35-4.35" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
       <input
         ref="inputRef"
@@ -13,13 +19,9 @@
         :placeholder="placeholder"
         @input="handleInput"
       />
-      <button
-        v-if="searchQuery"
-        class="topic-search__clear"
-        @click="handleClear"
-      >
+      <button v-if="searchQuery" class="topic-search__clear" @click="handleClear">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
     </div>
@@ -73,9 +75,12 @@ const focus = () => {
 }
 
 // Sync with v-model
-watch(() => props.modelValue, (newValue) => {
-  searchQuery.value = newValue
-})
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    searchQuery.value = newValue
+  }
+)
 
 watch(searchQuery, (newValue) => {
   emit('update:modelValue', newValue)

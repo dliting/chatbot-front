@@ -2,10 +2,16 @@
   <div :class="containerClasses">
     <!-- Header with close button -->
     <header v-if="showCloseButton" class="topic-list-view__header">
-      <h1 class="topic-list-view__header-title topic-list-view__title">{{ config.labels?.historyTooltip || config.labels?.history || 'History' }}</h1>
-      <button class="topic-list-view__header-close topic-list-view__close" :aria-label="labels.cancelLabel" @click="$emit('close')">
+      <h1 class="topic-list-view__header-title topic-list-view__title">
+        {{ config.labels?.historyTooltip || config.labels?.history || 'History' }}
+      </h1>
+      <button
+        class="topic-list-view__header-close topic-list-view__close"
+        :aria-label="labels.cancelLabel"
+        @click="$emit('close')"
+      >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" />
         </svg>
       </button>
     </header>
@@ -41,26 +47,22 @@
     </Transition>
 
     <!-- New topic button -->
-    <button
-      v-if="!isBatchMode"
-      class="topic-list-view__new-btn"
-      @click="handleCreateTopic"
-    >
+    <button v-if="!isBatchMode" class="topic-list-view__new-btn" @click="handleCreateTopic">
       <svg viewBox="0 0 24 24" fill="currentColor">
-        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
       </svg>
       <span>{{ labels.newTopicLabel }}</span>
     </button>
 
     <!-- Batch mode toggle -->
-    <button
-      v-else
-      class="topic-list-view__batch-toggle"
-      @click="toggleBatchMode"
-    >
+    <button v-else class="topic-list-view__batch-toggle" @click="toggleBatchMode">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round" />
+        <path
+          d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
       </svg>
       <span>{{ labels.doneLabel }}</span>
     </button>
@@ -75,10 +77,7 @@
         @edit="startEditTitle(topic)"
         @delete="handleDelete(topic.topicId)"
       >
-        <div
-          :class="topicClasses(topic)"
-          @click="handleTopicClick(topic.topicId)"
-        >
+        <div :class="topicClasses(topic)" @click="handleTopicClick(topic.topicId)">
           <!-- Checkbox for batch mode -->
           <div
             v-if="isBatchMode"
@@ -92,14 +91,18 @@
               stroke="currentColor"
               stroke-width="2"
             >
-              <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
           </div>
 
           <!-- Topic icon (shown when not in batch mode) -->
           <div v-else class="topic-list-view__item-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke-linecap="round" stroke-linejoin="round"/>
+              <path
+                d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </div>
 
@@ -126,10 +129,7 @@
           </div>
 
           <!-- Unread badge -->
-          <span
-            v-if="topic.unreadCount > 0"
-            class="topic-list-view__item-badge"
-          >
+          <span v-if="topic.unreadCount > 0" class="topic-list-view__item-badge">
             {{ topic.unreadCount > 99 ? '99+' : topic.unreadCount }}
           </span>
 
@@ -142,7 +142,9 @@
             @click.stop="handleDelete(topic.topicId)"
           >
             <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+              <path
+                d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"
+              />
             </svg>
           </button>
         </div>
@@ -151,7 +153,11 @@
       <!-- Empty state -->
       <div v-if="filteredTopics.length === 0" class="topic-list-view__empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/>
+          <path
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
         </svg>
         <p>{{ searchQuery ? labels.noResultsLabel : labels.noTopicsLabel }}</p>
         <p v-if="!searchQuery">{{ noTopicsHint }}</p>
@@ -178,10 +184,10 @@
       @click="toggleBatchMode"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="7" height="7" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="14" y="3" width="7" height="7" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="14" y="14" width="7" height="7" stroke-linecap="round" stroke-linejoin="round"/>
-        <rect x="3" y="14" width="7" height="7" stroke-linecap="round" stroke-linejoin="round"/>
+        <rect x="3" y="3" width="7" height="7" stroke-linecap="round" stroke-linejoin="round" />
+        <rect x="14" y="3" width="7" height="7" stroke-linecap="round" stroke-linejoin="round" />
+        <rect x="14" y="14" width="7" height="7" stroke-linecap="round" stroke-linejoin="round" />
+        <rect x="3" y="14" width="7" height="7" stroke-linecap="round" stroke-linejoin="round" />
       </svg>
     </button>
   </div>
@@ -243,12 +249,21 @@ const labels = computed(() => {
     deleteSelectedLabel: props.deleteSelectedLabel || cfg?.deleteSelected || 'Delete Selected',
     noResultsLabel: props.noResultsLabel || cfg?.noResults || 'No matching topics found',
     noTopicsLabel: props.noTopicsLabel || cfg?.noTopics || 'No topics yet',
-    noTopicsHint: props.noTopicsHint || cfg?.noTopicsHint || 'Click the button above to start a new topic',
+    noTopicsHint:
+      props.noTopicsHint || cfg?.noTopicsHint || 'Click the button above to start a new topic',
     deleteConfirmTitle: props.deleteConfirmTitle || cfg?.deleteTopicConfirmTitle || 'Delete Topic?',
-    deleteConfirmMessage: props.deleteConfirmMessage || cfg?.deleteTopicConfirmMessage || 'Are you sure you want to delete this topic?',
-    batchDeleteConfirmTitle: props.batchDeleteConfirmTitle || cfg?.deleteTopicConfirmTitle || 'Delete Topic?',
-    batchDeleteConfirmMessage: props.batchDeleteConfirmMessage || cfg?.batchDeleteTopicConfirmMessage || 'Are you sure you want to delete the selected topics?',
-    selectedCountFormat: props.selectedCountFormat || cfg?.selectedCountFormat || '{count} selected',
+    deleteConfirmMessage:
+      props.deleteConfirmMessage ||
+      cfg?.deleteTopicConfirmMessage ||
+      'Are you sure you want to delete this topic?',
+    batchDeleteConfirmTitle:
+      props.batchDeleteConfirmTitle || cfg?.deleteTopicConfirmTitle || 'Delete Topic?',
+    batchDeleteConfirmMessage:
+      props.batchDeleteConfirmMessage ||
+      cfg?.batchDeleteTopicConfirmMessage ||
+      'Are you sure you want to delete the selected topics?',
+    selectedCountFormat:
+      props.selectedCountFormat || cfg?.selectedCountFormat || '{count} selected',
   }
 })
 
@@ -279,7 +294,9 @@ const uiActions = inject(uiActionsKey)
 
 // Create topic - uses inject for data operation
 const handleCreateTopic = () => {
-  if (topicActions) { topicActions.createNewTopic() }
+  if (topicActions) {
+    topicActions.createNewTopic()
+  }
   // No emit: action handled by inject, external consumers listen to AIChatbot's topic:created event
 }
 
@@ -292,7 +309,9 @@ const containerClasses = computed(() => [
 ])
 
 // Show close button when layout is dual AND enableClose is true, OR when not embedded (for backward compatibility)
-const showCloseButton = computed(() => !props.isEmbedded || (props.layout === 'dual' && props.enableClose))
+const showCloseButton = computed(
+  () => !props.isEmbedded || (props.layout === 'dual' && props.enableClose)
+)
 
 // Search state - synced with v-model from TopicSearch
 const searchQuery = ref('')
@@ -328,8 +347,10 @@ const filteredTopics = computed(() => {
     return props.topics
   }
   const query = searchQuery.value.toLowerCase()
-  return props.topics.filter(topic =>
-    (topic.title || props.config?.labels?.unnamedTopic || 'Unnamed Topic').toLowerCase().includes(query)
+  return props.topics.filter((topic) =>
+    (topic.title || props.config?.labels?.unnamedTopic || 'Unnamed Topic')
+      .toLowerCase()
+      .includes(query)
   )
 })
 
@@ -367,8 +388,10 @@ const handleTopicClick = (topicId: string) => {
   if (isBatchMode.value) {
     toggleSelection(topicId)
   } else {
-    if (topicActions) { topicActions.switchToTopic(topicId) }
-    if (uiActions) { uiActions.showChatView() }
+    if (topicActions) {
+      topicActions.switchToTopic(topicId)
+    }
+    uiActions?.showChatView?.()
   }
 }
 
@@ -389,9 +412,13 @@ const handleBatchDelete = () => {
 // Confirm delete
 const confirmDelete = () => {
   if (pendingDeleteIds.value.length === 1) {
-    if (topicActions) { topicActions.removeTopic(pendingDeleteIds.value[0]) }
+    if (topicActions) {
+      topicActions.removeTopic(pendingDeleteIds.value[0])
+    }
   } else {
-    if (topicActions) { topicActions.removeTopics(pendingDeleteIds.value) }
+    if (topicActions) {
+      topicActions.removeTopics(pendingDeleteIds.value)
+    }
   }
   clearSelection()
   isBatchMode.value = false
@@ -429,9 +456,11 @@ const startEditTitle = async (topic: Topic) => {
 // Save title
 const saveTitle = (topicId: string) => {
   const trimmedTitle = editingTitle.value.trim()
-  const originalTopic = props.topics.find(t => t.topicId === topicId)
+  const originalTopic = props.topics.find((t) => t.topicId === topicId)
   if (trimmedTitle && originalTopic && trimmedTitle !== (originalTopic.title || '')) {
-    if (topicActions) { topicActions.renameTopic(topicId, trimmedTitle) }
+    if (topicActions) {
+      topicActions.renameTopic(topicId, trimmedTitle)
+    }
   }
   cancelEdit()
 }
@@ -457,7 +486,10 @@ const unnamedTopicText = computed(() => props.config?.labels?.unnamedTopic || 'U
 const formatTopicMeta = (topic: Topic): string => {
   const timeStr = formatTime(topic.updatedAt)
   const fmt = props.config?.labels?.messageCountFormat || '{count} messages'
-  const countStr = topic.messageCount === 1 ? fmt.replace('{count}', '1') : fmt.replace('{count}', String(topic.messageCount))
+  const countStr =
+    topic.messageCount === 1
+      ? fmt.replace('{count}', '1')
+      : fmt.replace('{count}', String(topic.messageCount))
   return `${timeStr} • ${countStr}`
 }
 </script>

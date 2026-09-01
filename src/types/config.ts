@@ -1,7 +1,19 @@
 /**
  * Configuration types for AI Chatbot
  */
-import type { Position, Theme, Locale, InteractionMode, Layout, PanelMode, Topic, Attachment, StreamEvent, Message, UploadResult } from './index'
+import type {
+  Position,
+  Theme,
+  Locale,
+  InteractionMode,
+  Layout,
+  PanelMode,
+  Topic,
+  Attachment,
+  StreamEvent,
+  Message,
+  UploadResult,
+} from './index'
 
 /**
  * Parameters for send-related callbacks

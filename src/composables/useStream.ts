@@ -67,10 +67,7 @@ export function useStream(options: UseStreamOptions = {}) {
   /**
    * Stream from fetch with ReadableStream
    */
-  const streamFromFetch = async (
-    url: string,
-    fetchOptions: RequestInit = {}
-  ): Promise<void> => {
+  const streamFromFetch = async (url: string, fetchOptions: RequestInit = {}): Promise<void> => {
     if (!enabled) return
 
     isStreaming.value = true
@@ -192,7 +189,7 @@ export function useMockStream() {
       yield { type: 'start', messageId: `msg_${Date.now()}` }
 
       for (const char of text) {
-        await new Promise(resolve => setTimeout(resolve, charDelay))
+        await new Promise((resolve) => setTimeout(resolve, charDelay))
         yield { type: 'token', content: char }
       }
 

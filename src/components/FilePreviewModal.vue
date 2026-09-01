@@ -8,8 +8,22 @@
             <span class="file-preview-modal__title">{{ title }}</span>
             <button class="file-preview-modal__close" @click="handleClose">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
-                <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round"/>
+                <line
+                  x1="18"
+                  y1="6"
+                  x2="6"
+                  y2="18"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <line
+                  x1="6"
+                  y1="6"
+                  x2="18"
+                  y2="18"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
             </button>
           </div>
@@ -57,17 +71,21 @@ const handleClose = () => {
 }
 
 // Handle escape key
-watch(() => props.visible, (val) => {
-  if (val) {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        handleClose()
+watch(
+  () => props.visible,
+  (val) => {
+    if (val) {
+      const handleEscape = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          handleClose()
+        }
       }
+      document.addEventListener('keydown', handleEscape)
+      return () => document.removeEventListener('keydown', handleEscape)
     }
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }
-}, { immediate: true })
+  },
+  { immediate: true }
+)
 </script>
 
 <style scoped lang="scss">

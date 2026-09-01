@@ -72,7 +72,7 @@ export class LocalStorageAdapter implements StorageAdapter {
 export function loadVersioned<T>(
   adapter: StorageAdapter,
   key: string,
-  migrations: Record<number, (data: unknown) => T>,
+  migrations: Record<number, (data: unknown) => T>
 ): T | null {
   const raw = adapter.get<VersionedData<unknown> | unknown>(key)
   if (!raw) return null
@@ -96,7 +96,7 @@ export function saveVersioned<T>(
   adapter: StorageAdapter,
   key: string,
   data: T,
-  version: number,
+  version: number
 ): void {
   adapter.set(key, { version, data } satisfies VersionedData<T>)
 }

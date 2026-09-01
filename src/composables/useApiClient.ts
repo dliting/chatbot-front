@@ -2,8 +2,18 @@
  * API client composable for connecting to backend
  */
 import type { Message, Topic, Attachment, StreamEvent } from '@/types'
-import type { BackendSession, BackendMessage, BackendCreateSessionResponse, BackendSendMessageResponse } from '@/types/api'
-import { mapSession, mapMessage, mapCreateSessionResponse, mapSendMessageResponse } from '@/utils/mappers'
+import type {
+  BackendSession,
+  BackendMessage,
+  BackendCreateSessionResponse,
+  BackendSendMessageResponse,
+} from '@/types/api'
+import {
+  mapSession,
+  mapMessage,
+  mapCreateSessionResponse,
+  mapSendMessageResponse,
+} from '@/utils/mappers'
 
 export interface ApiClientOptions {
   baseUrl: string
@@ -26,7 +36,8 @@ export function useApiClient(options: ApiClientOptions) {
     let reader: ReadableStreamDefaultReader<Uint8Array> | null = null
 
     try {
-      const { signal, ...chatOptions } = options ?? {} as { signal?: AbortSignal; thinking?: { enabled?: boolean } }
+      const { signal, ...chatOptions } =
+        options ?? ({} as { signal?: AbortSignal; thinking?: { enabled?: boolean } })
 
       // Combine user-provided signal with timeout signal
       const signals: AbortSignal[] = []
@@ -37,9 +48,9 @@ export function useApiClient(options: ApiClientOptions) {
       const combinedSignal = signals.length > 1 ? AbortSignal.any(signals) : signals[0]
 
       // Convert attachments to separate arrays for backend compatibility
-      const images = attachments?.filter(a => a.type === 'image').map(a => a.url) || []
-      const videos = attachments?.filter(a => a.type === 'video').map(a => a.url) || []
-      const audios = attachments?.filter(a => a.type === 'audio').map(a => a.url) || []
+      const images = attachments?.filter((a) => a.type === 'image').map((a) => a.url) || []
+      const videos = attachments?.filter((a) => a.type === 'video').map((a) => a.url) || []
+      const audios = attachments?.filter((a) => a.type === 'audio').map((a) => a.url) || []
 
       const response = await fetch(`${baseUrl}/chat/stream`, {
         method: 'POST',
@@ -125,9 +136,9 @@ export function useApiClient(options: ApiClientOptions) {
     content: string,
     attachments?: Attachment[]
   ): Promise<Message> {
-    const images = attachments?.filter(a => a.type === 'image').map(a => a.url) || []
-    const videos = attachments?.filter(a => a.type === 'video').map(a => a.url) || []
-    const audios = attachments?.filter(a => a.type === 'audio').map(a => a.url) || []
+    const images = attachments?.filter((a) => a.type === 'image').map((a) => a.url) || []
+    const videos = attachments?.filter((a) => a.type === 'video').map((a) => a.url) || []
+    const audios = attachments?.filter((a) => a.type === 'audio').map((a) => a.url) || []
 
     const response = await fetch(`${baseUrl}/chat/message`, {
       method: 'POST',
@@ -166,7 +177,7 @@ export function useApiClient(options: ApiClientOptions) {
     const result = await response.json()
     if (result.code !== 0) throw new Error(result.message || 'API error')
 
-    return (result.data.messages as BackendMessage[]).map(m => mapMessage(m, topicId))
+    return (result.data.messages as BackendMessage[]).map((m) => mapMessage(m, topicId))
   }
 
   /**

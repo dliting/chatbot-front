@@ -30,9 +30,9 @@ export interface Message {
   timestamp: number
   status: MessageStatus
   metadata?: Record<string, unknown>
-  thinkingContent?: string    // Thinking/reasoning process text
-  thinkingTime?: number       // Thinking elapsed time in ms
-  errorMessage?: string       // User-facing error description when status is 'error' or 'stopped'
+  thinkingContent?: string // Thinking/reasoning process text
+  thinkingTime?: number // Thinking elapsed time in ms
+  errorMessage?: string // User-facing error description when status is 'error' or 'stopped'
 }
 
 // Topic Types
@@ -57,9 +57,9 @@ export type Layout = 'dual' | 'single'
 
 // Layout auto-derivation mapping
 export const modeToLayoutMap: Record<InteractionMode, Layout> = {
-  'floating': 'single',
-  'extended': 'dual',
-  'sidebar': 'single'
+  floating: 'single',
+  extended: 'dual',
+  sidebar: 'single',
 }
 
 // Point coordinates
@@ -88,8 +88,8 @@ export interface StreamEvent {
   messageId?: string
   content?: string
   fullContent?: string
-  reasoningContent?: string   // Thinking content fragment (for reasoning events)
-  thinkingTime?: number       // Cumulative thinking time in ms (for reasoning events)
+  reasoningContent?: string // Thinking content fragment (for reasoning events)
+  thinkingTime?: number // Cumulative thinking time in ms (for reasoning events)
   error?: string
 }
 
@@ -121,14 +121,19 @@ export interface TopicActionHandlers {
   renameTopic: (topicId: string, title: string) => void
 }
 
+// All handlers are optional: availability depends on the providing layer.
+// The root component (AIChatbot) provides the full set; panel layers add
+// view-navigation handlers on top. Components must guard calls with `?.()`.
 export interface UIActionHandlers {
-  toggleTheme: () => void
-  setThinkingEnabled: (enabled: boolean) => void
-  thinkingEnabled: { value: boolean }
-  /** Switch to chat view (only effective in single-layout modes: floating, sidebar) */
-  showChatView: () => void
-  /** Switch to topics view (only effective in single-layout modes: floating, sidebar) */
-  showTopicsView: () => void
+  toggleTheme?: () => void
+  setThinkingEnabled?: (enabled: boolean) => void
+  thinkingEnabled?: { value: boolean }
+  /** Switch to chat view (only effective in single-layout modes: floating, sidebar).
+   *  Provided by the single-layout panel layer, not the root component. */
+  showChatView?: () => void
+  /** Switch to topics view (only effective in single-layout modes: floating, sidebar).
+   *  Provided by the single-layout panel layer, not the root component. */
+  showTopicsView?: () => void
 }
 
 // State interface for provide/inject
@@ -160,4 +165,9 @@ export interface ImageFile {
 }
 
 // Re-export new types from config
-export type { QuickAction, PromptVariableResolver, PromptVariableConfig } from './config'
+export type {
+  QuickAction,
+  PromptVariableResolver,
+  PromptVariableConfig,
+  ChatbotConfig,
+} from './config'

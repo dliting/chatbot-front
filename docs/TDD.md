@@ -4,9 +4,11 @@
 | 项目 | 内容 |
 |------|------|
 | 产品名称 | AI Chatbot Frontend |
-| 版本 | v1.0 |
-| 文档状态 | Draft |
-| 最后更新 | 2026-02-10 |
+| 版本 | v2.0 |
+| 文档状态 | Updated（与实现同步） |
+| 最后更新 | 2026-09-01 |
+
+> **实现基准**：本文档关键章节（组件树、Props、目录结构）已与 v2.0 实现同步；完整配置接口以 [`API.md`](./API.md) 为唯一真值，行为以 `src/` 源码为准。
 
 ---
 
@@ -60,7 +62,7 @@
 │              │  │  - SuspendedBall│  │                      │
 │              │  │  - ChatPanel    │  │                      │
 │              │  │  - MessageItem  │  │                      │
-│              │  │  - SessionMgr   │  │                      │
+│              │  │  - TopicMgr   │  │                      │
 │              │  └─────────────────┘  │                      │
 │              └───────────────────────┘                      │
 └─────────────────────────────────────────────────────────────┘
@@ -75,42 +77,41 @@
 | UIStateModule | 管理 UI 状态（展开/收起、主题、尺寸） |
 | CommunicationModule | 处理通信（SSE/WebSocket、postMessage） |
 | MessageModule | 消息处理（发送、接收、存储、操作） |
-| SessionModule | 会话管理（创建、切换、删除） |
+| TopicModule | 话题管理（创建、切换、删除、重命名、搜索） |
 
 ---
 
 ## 3. 组件设计
 
 ### 3.1 组件树结构
+
+根组件 `AIChatbot` 按 `config.mode` 分派到三条渲染路径，内部布局由 `modeToLayoutMap` 自动派生（floating/sidebar → single，extended → dual）：
+
 ```
-AIChatbot (Root)
-├── SuspendedBall
-│   ├── BallIcon
-│   └── Badge (可选)
-├── ChatPanel
-│   ├── PanelHeader
-│   │   ├── Title
-│   │   ├── ThemeToggle
-│   │   └── CloseButton
-│   ├── SessionSidebar (可选)
-│   │   ├── SessionList
-│   │   ├── SessionItem
-│   │   └── NewSessionButton
-│   ├── MessageContainer
-│   │   ├── MessageList (虚拟滚动)
-│   │   │   └── MessageItem
-│   │   │       ├── TextContent
-│   │   │       ├── ImageContent
-│   │   │       ├── MessageActions
-│   │   │       └── LoadingIndicator
-│   │   └── ScrollToBottom
-│   └── InputArea
-│       ├── TextInput
-│       ├── ImageUpload
-│       ├── SendButton
-│       └── VoiceInput (预留)
-└── ConfigProvider
-    └── ThemeConfig
+AIChatbot (Root, provide: chatStateKey/chatActionsKey/topicActionsKey/uiActionsKey/promptVarResolverKey)
+├── [mode = floating]
+│   └── FloatingChatPanel (自包含)
+│       ├── DraggableWindow (可拖拽/可缩放窗口, 位置记忆 localStorage)
+│       │   ├── ChatHeader
+│       │   ├── ChatContent (单视图切换: chat ↔ topics)
+│       │   └── SuspendedBall (窗口关闭时显示)
+├── [mode = extended]
+│   └── EmbeddedChatPanel (layout = dual)
+│       ├── aside: TopicListView (搜索/列表/重命名/批量删除)
+│       ├── resize-handle (侧栏宽度拖拽)
+│       └── main: ChatHeader + ChatContent
+└── [mode = sidebar]
+    └── ChatPanel (窗口管理: 停靠/拖拽/缩放)
+        └── EmbeddedChatPanel (layout = single)
+            ├── ChatHeader + ChatContent (chat 视图)
+            └── TopicListView (topics 视图)
+
+ChatContent (各模式共用)
+├── WelcomeScreen (空会话时)
+│   └── QuickAction 卡片 × N (内置 SVG 图标 / 首字母回退)
+├── MessageList
+│   └── MessageItem (文本/图片/视频/音频/文档, 消息操作按钮, thinking 折叠块)
+└── InputArea (文本输入 + 附件上传 + 语音输入 + 发送)
 ```
 
 ### 3.2 核心组件设计
@@ -121,35 +122,35 @@ AIChatbot (Root)
 - 管理全局状态
 - 处理配置项和事件回调
 
-**Props**:
+**Props**（单一 `config` 对象，完整定义见 [`API.md`](./API.md) v2.0）:
 ```typescript
-interface ChatbotProps {
-  // 布局配置
+interface ChatbotConfig {
+  // 交互模式（决定内部布局: floating/sidebar → single, extended → dual）
+  mode?: 'floating' | 'extended' | 'sidebar'
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
   panelWidth?: number
+  panelHeight?: number
   defaultExpanded?: boolean
 
-  // 功能配置
+  // 后端接入（三层回退: 宿主回调 → REST apiBaseUrl → 本地行为）
+  apiBaseUrl?: string
+
+  // 快捷操作（欢迎屏卡片; prompt 支持 {{variable}} 变量）
+  quickActions?: QuickAction[]
+  quickActionIconBase?: string
+  promptVariableResolvers?: Record<string, PromptVariableResolver>
+
+  // 功能开关
   enableImageUpload?: boolean
-  enableSessionManager?: boolean
   enableVoiceInput?: boolean
+  enableThinking?: boolean
   maxImageCount?: number
 
-  // 样式配置
-  theme?: 'light' | 'dark'
+  // 样式与国际化
+  theme?: 'light' | 'dark' | 'system'
   primaryColor?: string
-  customStyles?: Record<string, string>
-
-  // API 配置
-  apiBaseUrl?: string
-  streamEnabled?: boolean
-
-  // iframe 模式
-  iframeMode?: boolean
-  allowedOrigins?: string[]
-
-  // 国际化
   locale?: 'zh-CN' | 'en-US'
+  labels?: ChatbotLabels
 }
 ```
 
@@ -160,9 +161,11 @@ interface ChatbotEmits {
   messageSuccess: (data: MessageSuccessData) => void
   messageError: (error: Error) => void
   panelToggle: (data: { isOpen: boolean }) => void
-  sessionChange: (sessionId: string) => void
+  topicChange: (topicId: string) => void
 }
 ```
+
+**跨组件通信**：根组件通过 provide/inject 下发 `chatStateKey`、`chatActionsKey`、`topicActionsKey`、`uiActionsKey`、`promptVarResolverKey`，子组件注入而非逐层传 props（详见 [`design/component-communication-architecture.md`](./design/component-communication-architecture.md)）。
 
 #### 3.2.2 SuspendedBall (悬浮球组件)
 **职责**:
@@ -200,10 +203,18 @@ snapToEdge(): void
 ```typescript
 interface ChatPanelProps {
   isOpen: boolean
-  width: number
   mode: 'sidebar' | 'dialog' | 'fullscreen'
-  position: 'left' | 'right'
-  showSessionManager: boolean
+  position?: Position
+  title?: string
+  width?: number
+  height?: number
+  showHeader: boolean
+  showThemeToggle?: boolean
+  draggable?: boolean
+  resizable?: boolean
+  minWidth?: number
+  minHeight?: number
+  rememberPosition?: boolean
 }
 ```
 
@@ -226,7 +237,7 @@ interface MessageItemProps {
 ```typescript
 interface Message {
   id: string
-  sessionId: string
+  topicId: string
   role: 'user' | 'assistant' | 'system'
   type: 'text' | 'image' | 'mixed'
   content: string
@@ -236,6 +247,32 @@ interface Message {
   metadata?: Record<string, any>
 }
 ```
+
+#### 3.2.5 Quick Actions 与 Prompt 变量解析
+
+**数据结构**:
+```typescript
+interface QuickAction {
+  id: string
+  title: string
+  description?: string
+  prompt: string            // 支持 {{variable}} 占位符
+  icon?: string             // 内置图标名 (write/analyze/translate/code/...)，缺省回退首字母
+  extraInfo?: Record<string, any>  // 随消息发送，透传给后端
+}
+```
+
+**数据流**（点击卡片即发送，不填充输入框）:
+```
+WelcomeScreen --(quick-action, action)--> ChatContent.handleQuickAction
+  → promptVarResolver.resolve(action.prompt)   // usePromptVariables
+      内置变量: date / time / datetime / weekday（跟随浏览器 locale）
+      自定义: config.promptVariableResolvers 注入，可覆盖内置
+      解析失败的变量保留原样 {{var}}
+  → chatActions.sendMessage({ content: resolvedPrompt, extraInfo: action.extraInfo })
+```
+
+默认快捷操作按 locale 提供（`src/constants/quickActions.ts`），未配置时 zh-CN/en-US 各 4 张卡片；图标由 `src/utils/icons.ts` 解析为内置 SVG 组件，`quickActionIconBase` 可切换为图片 URL 前缀。
 
 ---
 
@@ -255,14 +292,13 @@ interface ChatbotState {
 
   // 消息状态
   messages: {
-    bySession: Record<string, Message[]>
-    currentSessionId: string
+    byTopic: Record<string, Message[]>
     streamingMessageId: string | null
   }
 
-  // 会话状态
-  sessions: {
-    list: Session[]
+  // 话题状态
+  topics: {
+    list: Topic[]
     currentId: string
   }
 
@@ -289,15 +325,14 @@ export function useChatbotState(initialProps: ChatbotProps) {
   })
 
   const messages = reactive<MessagesState>({
-    bySession: {},
-    currentSessionId: generateId(),
+    byTopic: {},
     streamingMessageId: null,
   })
 
   // ... actions
 
   return {
-    state: { ui, messages, sessions, interaction },
+    state: { ui, messages, topics, interaction },
     actions,
   }
 }
@@ -584,13 +619,12 @@ export function debounce<T extends (...args: any[]) => any>(
 
 ### 8.3 代码分割
 ```typescript
-// 懒加载非核心组件
-const SessionManager = defineAsyncComponent(
-  () => import('./components/SessionManager.vue')
-)
-const VoiceInput = defineAsyncComponent(
-  () => import('./components/VoiceInput.vue')
-)
+// FilePreviewRenderer 按文件类型懒加载预览器，只加载用户实际打开的类型
+const ImagePreview = defineAsyncComponent(() => import('./ImagePreview.vue'))
+const PdfPreview = defineAsyncComponent(() => import('./PdfPreview.vue'))
+
+// 重型三方库同样懒加载（@vue-office/excel 等）
+const VueOfficeExcel = defineAsyncComponent(() => import('@vue-office/excel'))
 ```
 
 ---
@@ -600,45 +634,45 @@ const VoiceInput = defineAsyncComponent(
 ### 9.1 目录结构
 ```
 src/
-├── components/              # 核心组件
-│   ├── AIChatbot.vue        # 根组件
-│   ├── SuspendedBall.vue
-│   ├── ChatPanel.vue
-│   ├── MessageItem.vue
-│   ├── SessionManager.vue
-│   ├── InputArea.vue
-│   └── shared/              # 共享子组件
-│       ├── PanelHeader.vue
-│       ├── MessageList.vue
-│       └── ImagePreview.vue
+├── components/              # 核心组件（provide/inject 通信）
+│   ├── AIChatbot.vue        # 根组件：按 mode 分派三条渲染路径
+│   ├── FloatingChatPanel.vue  # floating：DraggableWindow + 悬浮球
+│   ├── EmbeddedChatPanel.vue # extended/sidebar 内容面板（dual/single 布局）
+│   ├── ChatPanel.vue        # 窗口管理（停靠/拖拽/缩放）
+│   ├── DraggableWindow.vue  # 可复用拖拽/缩放窗口
+│   ├── SuspendedBall.vue    # 悬浮球
+│   ├── ChatContent.vue      # 消息区 + 欢迎屏 + quick actions 分发
+│   ├── WelcomeScreen.vue    # 欢迎屏（QuickAction 卡片）
+│   ├── MessageList.vue / MessageItem.vue
+│   ├── ChatHeader.vue / ChatInput.vue
+│   ├── TopicListView.vue / TopicSearch.vue / TopicActionMenu.vue
+│   ├── ThinkingBlock.vue / ThinkingToggle.vue
+│   ├── VoiceOverlay.vue / ConfirmDialog.vue
+│   ├── FilePreviewModal.vue
+│   └── FilePreview/         # 文件预览子系统（6 种类型）
 ├── composables/             # 组合式函数
-│   ├── useChatbotState.ts
-│   ├── useMessages.ts
-│   ├── useSessions.ts
-│   ├── useStream.ts
-│   └── useResponsive.ts
+│   ├── useChatbotState.ts   # 全局状态（ui/topics/messages）
+│   ├── useChatActions.ts    # 发送/刷新/删除/编辑消息
+│   ├── useTopicActions.ts   # 话题 CRUD
+│   ├── useApiClient.ts      # REST 客户端（sessionId↔topicId 适配）
+│   ├── usePromptVariables.ts# {{variable}} 解析器
+│   ├── useStream.ts         # SSE 流式消费
+│   └── ...（useChatView/useErrorHandler/useFilePreview/useResizeHandle 等）
 ├── utils/                   # 工具函数
-│   ├── drag.ts
-│   ├── upload.ts
-│   ├── stream.ts
-│   ├── postMessage.ts
-│   ├── performance.ts
-│   └── helpers.ts
+│   ├── icons.ts / builtinIcons.ts  # quick action 图标解析 + 内置 SVG
+│   ├── stream.ts / upload.ts / drag.ts / markdown.ts
+│   └── helpers.ts / mappers.ts / message.ts / fileType.ts ...
 ├── types/                   # TypeScript 类型
-│   ├── index.ts
-│   ├── message.ts
-│   ├── session.ts
-│   └── config.ts
-├── styles/                  # 样式文件
-│   ├── base/
-│   ├── components/
-│   └── themes/
-├── constants/               # 常量
-│   └── index.ts
-├── mock/                    # 模拟数据
-│   └── api.ts
-├── App.vue
-└── main.ts
+│   ├── index.ts             # InteractionMode/Layout/modeToLayoutMap 等
+│   ├── config.ts            # ChatbotConfig/QuickAction/labels
+│   ├── api.ts / events.ts
+├── styles/                  # 样式（chatbot.scss + base/ + markdown.css）
+├── constants/               # 常量（含 quickActions.ts 默认快捷操作）
+├── mock/                    # 本地 mock API
+├── entries/                 # 演示入口（extended/floating/compact）
+├── index.ts                 # 库导出（ES/UMD）
+├── iframe-entry.ts          # iframe 模式入口
+└── main.ts                  # dev 入口
 ```
 
 ### 9.2 打包配置
@@ -687,40 +721,34 @@ export default defineConfig({
 
 ## 10. API 接口设计
 
-### 10.1 后端接口
+> 完整接口契约以 [`API.md`](./API.md) v2.0 为准。接入有三层回退：**宿主回调（`config.callbacks`）→ REST API（`config.apiBaseUrl`）→ 本地行为**。
+
+### 10.1 宿主回调接口（ChatbotCallbacks）
+
 ```typescript
-// API 定义
-interface ChatAPI {
-  // 发送消息 (流式)
-  sendMessageStream: (
-    sessionId: string,
-    content: string,
-    images?: string[]
-  ) => ReadableStream<string>
+// src/types/config.ts — 宿主应用注入的控制接口（全部可选）
+interface ChatbotCallbacks {
+  // 消息流
+  onSendMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+  onEditMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+  onRegenerateMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+  onDeleteMessage?: (messageId: string, topicId: string) => Promise<void>
+  onClearMessages?: (topicId: string) => Promise<void>
 
-  // 发送消息 (非流式)
-  sendMessage: (
-    sessionId: string,
-    content: string,
-    images?: string[]
-  ) => Promise<Message>
+  // 话题
+  onLoadTopics?: (signal?: AbortSignal) => Promise<Topic[]>
+  onLoadMessages?: (topicId: string, signal?: AbortSignal) => Promise<Message[]>
+  onCreateTopic?: (title?: string) => Promise<Topic>
+  onSwitchTopic?: (topicId: string) => Promise<void>
+  onDeleteTopic?: (topicId: string) => Promise<void>
+  onUpdateTopicTitle?: (topicId: string, title: string) => Promise<void>
 
-  // 上传图片
-  uploadImages: (files: File[]) => Promise<string[]>
-
-  // 获取会话历史
-  getSessionHistory: (sessionId: string) => Promise<Message[]>
-
-  // 获取会话列表
-  getSessions: () => Promise<Session[]>
-
-  // 创建会话
-  createSession: () => Promise<Session>
-
-  // 删除会话
-  deleteSession: (sessionId: string) => Promise<void>
+  // 附件
+  onUploadImages?: (files: File[]) => Promise<UploadResult>
 }
 ```
+
+`SendMessageParams.extraInfo` 携带 QuickAction 的 `extraInfo` 字段，供宿主区分快捷操作来源。
 
 ### 10.2 模拟接口
 ```typescript
@@ -809,18 +837,18 @@ dist-iframe/
 
 ### 13.1 单元测试
 - 使用 Vitest
-- 覆盖核心工具函数
-- 测试覆盖率目标: 80%+
+- 覆盖核心工具函数与 composables
+- 测试覆盖率目标: 90%+（基线：78 个测试文件 / 1680 用例，2026-09-01 验证）
 
 ### 13.2 组件测试
 - 使用 Vue Test Utils
 - 测试组件交互逻辑
-- 测试 props/emits
+- 测试 props/emits（provide/inject 组件须提供 stub，见 `tests/components/`）
 
 ### 13.3 E2E 测试
-- 使用 Playwright
-- 测试关键用户流程
-- 跨浏览器测试
+- 使用 Playwright（`tests/e2e/`，lib + chatapp 两个 project）
+- UI 交互测试指南：[`../tests/UI_TEST_GUIDE.md`](../tests/UI_TEST_GUIDE.md)
+- 集成测试须分别跑 mock 与 real 后端（CLAUDE.md 项目规范）
 
 ---
 

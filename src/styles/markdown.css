@@ -14,7 +14,12 @@
   overflow-wrap: break-word;
 
   /* Headings */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     margin-top: 1.5em;
     margin-bottom: 0.5em;
     font-weight: 600;
@@ -135,7 +140,10 @@
   }
 
   /* Nested lists */
-  ul ul, ul ol, ol ul, ol ol {
+  ul ul,
+  ul ol,
+  ol ul,
+  ol ol {
     margin-top: 0.25em;
     margin-bottom: 0;
   }
@@ -206,7 +214,8 @@
     background-color: var(--bg-base, #1a1a1a);
   }
 
-  th, td {
+  th,
+  td {
     padding: 0.75em 1em;
     border: 1px solid var(--border-light, #dcdfe6);
     text-align: left;
@@ -464,7 +473,8 @@ pre:hover .markdown-copy-btn,
     font-size: 0.85em;
   }
 
-  th, td {
+  th,
+  td {
     padding: 0.5em;
   }
 }

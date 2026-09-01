@@ -11,7 +11,7 @@
     :min-height="configRef.minHeight || 400"
     :draggable="configRef.draggable !== false"
     :resizable="configRef.resizable !== false"
-    :theme="configRef.theme || 'light'"
+    :theme="configRef.theme === 'dark' ? 'dark' : 'light'"
     :remember-position="configRef.rememberPosition !== false"
     :rounded="true"
     :z-index="9998"
@@ -20,16 +20,23 @@
       <div class="floating-chat-panel__header-wrapper">
         <ChatHeader
           :title="configRef.labels?.title || 'AI Assistant'"
-          :theme="configRef.theme || 'light'"
+          :theme="configRef.theme === 'dark' ? 'dark' : 'light'"
           :show-topics-button="true"
           :show-theme-toggle="false"
           :show-close-button="false"
           :unread-count="0"
           :labels="configRef.labels"
         />
-        <button class="floating-chat-panel__close-btn" aria-label="Close" title="Close" @click="closePanel">
+        <button
+          class="floating-chat-panel__close-btn"
+          aria-label="Close"
+          title="Close"
+          @click="closePanel"
+        >
           <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+            <path
+              d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+            />
           </svg>
         </button>
       </div>
@@ -141,12 +148,18 @@ const configRef = computed(() => ({
 // Resolve state from inject (preferred) or props (fallback)
 const effectiveMessages = computed(() => chatState?.messages?.value ?? props.messages)
 const effectiveTopics = computed(() => chatState?.topics?.value ?? props.topics)
-const effectiveCurrentTopicId = computed(() => chatState?.currentTopicId?.value ?? props.currentTopicId)
+const effectiveCurrentTopicId = computed(
+  () => chatState?.currentTopicId?.value ?? props.currentTopicId
+)
 const effectiveIsStreaming = computed(() => chatState?.isStreaming?.value ?? props.isStreaming)
 const effectiveEnableThinking = computed(() => chatState?.enableThinking ?? props.enableThinking)
-const effectiveThinkingEnabled = computed(() => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled)
+const effectiveThinkingEnabled = computed(
+  () => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled
+)
 const effectiveIsThinking = computed(() => chatState?.isThinking?.value ?? props.isThinking)
-const effectiveEnableVoiceInput = computed(() => chatState?.enableVoiceInput ?? props.enableVoiceInput)
+const effectiveEnableVoiceInput = computed(
+  () => chatState?.enableVoiceInput ?? props.enableVoiceInput
+)
 
 // Quick actions: prefer prop, then config
 const effectiveQuickActions = computed(() => {

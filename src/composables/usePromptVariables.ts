@@ -13,8 +13,7 @@ export function usePromptVariables(options?: UsePromptVariablesOptions) {
         minute: '2-digit',
       }),
     datetime: () => new Date().toLocaleString(),
-    weekday: () =>
-      new Date().toLocaleDateString(undefined, { weekday: 'long' }),
+    weekday: () => new Date().toLocaleDateString(undefined, { weekday: 'long' }),
   }
 
   const resolvers: Record<string, PromptVariableResolver> = {

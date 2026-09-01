@@ -1,11 +1,6 @@
 <template>
   <div class="word-preview">
-    <VueOfficeDocx
-      v-if="docUrl"
-      :src="docUrl"
-      @rendered="handleRendered"
-      @error="handleError"
-    />
+    <VueOfficeDocx v-if="docUrl" :src="docUrl" @rendered="handleRendered" @error="handleError" />
     <div v-else-if="loading" class="word-preview__loading">
       <span>Loading document...</span>
     </div>
