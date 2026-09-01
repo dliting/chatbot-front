@@ -5,14 +5,17 @@
  * Entry: examples/chatapp/frontend (port 5180, mock backend on port 3001)
  */
 import { test, expect } from '@playwright/test'
+import { cleanState } from './helpers'
 
 test.describe('Sidebar Mode - ChatApp', () => {
-  test('should navigate to sidebar demo from landing page', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/')
+    await cleanState(page)
+  })
 
+  test('should navigate to sidebar demo from landing page', async ({ page }) => {
     await expect(page.locator('h1')).toContainText('AI Chatbot')
 
-    // Click the sidebar mode card
     const sidebarCard = page.locator('a[href="/sidebar"], .mode-card:has-text("边栏")')
     if (await sidebarCard.isVisible()) {
       await sidebarCard.click()
@@ -26,16 +29,13 @@ test.describe('Sidebar Mode - ChatApp', () => {
   test('should show sidebar panel with main content area', async ({ page }) => {
     await page.goto('/sidebar')
 
-    // Main content area should be visible
     await expect(page.locator('.main-content')).toBeVisible({ timeout: 10000 })
     await expect(page.locator('.main-content')).toContainText('主内容区域')
 
-    // Sidebar panel should be visible (ChatPanel renders as .chatbot-panel)
     const chatPanel = page.locator('.chatbot-panel')
     await expect(chatPanel).toBeVisible({ timeout: 10000 })
 
-    // Chat header should show the title
-    const chatHeader = page.locator('.chatbot-panel__title')
+    const chatHeader = page.locator('.chat-header__title')
     await expect(chatHeader).toContainText('智能助手')
   })
 
@@ -55,17 +55,16 @@ test.describe('Sidebar Mode - ChatApp', () => {
     const textarea = page.locator('.chat-input__field')
     await expect(textarea).toBeVisible({ timeout: 10000 })
 
-    await textarea.fill('Hi')
+    await textarea.click()
+    await textarea.type('Hi')
     const sendBtn = page.locator('.chat-input__send-btn')
     await expect(sendBtn).toBeEnabled()
     await sendBtn.click()
 
-    // User message should appear
-    const userMessage = page.locator('.chat-content__message.user .chat-content__text')
+    const userMessage = page.locator('.chat-content__message.user .chat-content__text').last()
     await expect(userMessage).toContainText('Hi', { timeout: 10000 })
 
-    // Assistant response should appear
-    const assistantMessage = page.locator('.chat-content__message.assistant .chat-content__text')
+    const assistantMessage = page.locator('.chat-content__message.assistant .chat-content__text').last()
     await expect(assistantMessage).toBeVisible({ timeout: 30000 })
   })
 

@@ -1,6 +1,6 @@
 /**
  * Comprehensive UI Test for AI Chatbot
- * Tests topic CRUD enhancements and core functionality
+ * Tests session CRUD enhancements and core functionality
  */
 
 const puppeteer = require('puppeteer');
@@ -102,27 +102,27 @@ async function checkPageLoad(page) {
   return appMounted;
 }
 
-async function testTopicListDisplay(page) {
-  log('\n=== Testing Topic List Display ===', 'blue');
+async function testSessionListDisplay(page) {
+  log('\n=== Testing Session List Display ===', 'blue');
 
-  // Wait for topic list to appear
-  await page.waitForSelector('.chatbot-topics, .topic-list-view', { timeout: 10000 })
-    .catch(() => log('Topic list selector not found', 'yellow'));
+  // Wait for session list to appear
+  await page.waitForSelector('.chatbot-sessions, .session-list-view', { timeout: 10000 })
+    .catch(() => log('Session list selector not found', 'yellow'));
 
-  const hasTopicList = await page.evaluate(() => {
-    const topicList = document.querySelector('.chatbot-topics, .topic-list-view');
-    return topicList !== null;
+  const hasSessionList = await page.evaluate(() => {
+    const sessionList = document.querySelector('.chatbot-sessions, .session-list-view');
+    return sessionList !== null;
   });
-  logTest('Topic list is displayed', hasTopicList);
+  logTest('Session list is displayed', hasSessionList);
 
-  // Check for topic items
-  const topicCount = await page.evaluate(() => {
-    const items = document.querySelectorAll('.chatbot-topics__item, .topic-list-view__item');
+  // Check for session items
+  const sessionCount = await page.evaluate(() => {
+    const items = document.querySelectorAll('.chatbot-sessions__item, .session-list-view__item');
     return items.length;
   });
-  logTest('Topic items exist', topicCount >= 0, `Found ${topicCount} topics`);
+  logTest('Session items exist', sessionCount >= 0, `Found ${sessionCount} sessions`);
 
-  return hasTopicList;
+  return hasSessionList;
 }
 
 async function testSearchFunction(page) {
@@ -130,7 +130,7 @@ async function testSearchFunction(page) {
 
   // Check if search component exists
   const hasSearch = await page.evaluate(() => {
-    const searchWrapper = document.querySelector('.topic-search');
+    const searchWrapper = document.querySelector('.session-search');
     return searchWrapper !== null;
   });
   logTest('Search component exists', hasSearch);
@@ -139,21 +139,21 @@ async function testSearchFunction(page) {
 
   // Try to input search text
   try {
-    const searchInput = await page.$('.topic-search input');
+    const searchInput = await page.$('.session-search input');
     if (searchInput) {
       await searchInput.click();
       await searchInput.type('test');
       await new Promise(resolve => setTimeout(resolve, 500));
 
       const searchWorked = await page.evaluate(() => {
-        const input = document.querySelector('.topic-search input');
+        const input = document.querySelector('.session-search input');
         return input && input.value.includes('test');
       });
       logTest('Search input accepts text', searchWorked);
 
       // Check for clear button
       const hasClearButton = await page.evaluate(() => {
-        const clearBtn = document.querySelector('.topic-search__clear');
+        const clearBtn = document.querySelector('.session-search__clear');
         return clearBtn && clearBtn.offsetParent !== null;
       });
       logTest('Clear button appears with text', hasClearButton);
@@ -171,24 +171,24 @@ async function testBatchMode(page) {
 
   // Look for batch mode button
   const hasBatchButton = await page.evaluate(() => {
-    const batchBtn = document.querySelector('.chatbot-topics__batch-mode-btn');
+    const batchBtn = document.querySelector('.chatbot-sessions__batch-mode-btn');
     return batchBtn !== null;
   });
   logTest('Batch mode button exists', hasBatchButton);
 
   if (!hasBatchButton) {
-    log('Batch mode button not found - checking if topics exist', 'yellow');
+    log('Batch mode button not found - checking if sessions exist', 'yellow');
     return false;
   }
 
   try {
     // Click batch mode button
-    await page.click('.chatbot-topics__batch-mode-btn');
+    await page.click('.chatbot-sessions__batch-mode-btn');
     await new Promise(resolve => setTimeout(resolve, 500));
 
     // Check if checkboxes appear
     const hasCheckboxes = await page.evaluate(() => {
-      const checkboxes = document.querySelectorAll('.chatbot-topics__checkbox');
+      const checkboxes = document.querySelectorAll('.chatbot-sessions__checkbox');
       return checkboxes.length > 0;
     });
     logTest('Checkboxes appear in batch mode', hasCheckboxes);
@@ -200,29 +200,29 @@ async function testBatchMode(page) {
   }
 }
 
-async function testNewTopicButton(page) {
-  log('\n=== Testing New Topic Button ===', 'blue');
+async function testNewSessionButton(page) {
+  log('\n=== Testing New Session Button ===', 'blue');
 
   const hasNewButton = await page.evaluate(() => {
-    const newBtn = document.querySelector('.chatbot-topics__new-btn');
+    const newBtn = document.querySelector('.chatbot-sessions__new-btn');
     return newBtn !== null;
   });
-  logTest('New topic button exists', hasNewButton);
+  logTest('New session button exists', hasNewButton);
 
   if (hasNewButton) {
     try {
-      await page.click('.chatbot-topics__new-btn');
+      await page.click('.chatbot-sessions__new-btn');
       await new Promise(resolve => setTimeout(resolve, 1000));
 
-      const topicCount = await page.evaluate(() => {
-        const items = document.querySelectorAll('.chatbot-topics__item');
+      const sessionCount = await page.evaluate(() => {
+        const items = document.querySelectorAll('.chatbot-sessions__item');
         return items.length;
       });
-      logTest('Can create new topic', topicCount >= 0, `Total topics: ${topicCount}`);
+      logTest('Can create new session', sessionCount >= 0, `Total sessions: ${sessionCount}`);
 
       return true;
     } catch (error) {
-      logTest('New topic button click', false, error.message);
+      logTest('New session button click', false, error.message);
       return false;
     }
   }
@@ -261,19 +261,19 @@ async function testMessageInput(page) {
 async function testRightClickMenu(page) {
   log('\n=== Testing Right-Click Context Menu ===', 'blue');
 
-  const topicExists = await page.evaluate(() => {
-    const items = document.querySelectorAll('.chatbot-topics__item');
+  const sessionExists = await page.evaluate(() => {
+    const items = document.querySelectorAll('.chatbot-sessions__item');
     return items.length > 0;
   });
 
-  if (!topicExists) {
-    log('No topics to test right-click menu', 'yellow');
+  if (!sessionExists) {
+    log('No sessions to test right-click menu', 'yellow');
     return false;
   }
 
   try {
     await page.evaluate(() => {
-      const firstItem = document.querySelector('.chatbot-topics__item');
+      const firstItem = document.querySelector('.chatbot-sessions__item');
       if (firstItem) {
         const event = new MouseEvent('contextmenu', {
           bubbles: true,
@@ -287,7 +287,7 @@ async function testRightClickMenu(page) {
     await new Promise(resolve => setTimeout(resolve, 300));
 
     const menuAppeared = await page.evaluate(() => {
-      const menu = document.querySelector('.topic-action-menu__popover');
+      const menu = document.querySelector('.session-action-menu__popover');
       return menu !== null;
     });
     logTest('Right-click menu appears', menuAppeared);
@@ -343,10 +343,10 @@ async function runTests() {
 
     // Run tests
     await checkPageLoad(page);
-    await testTopicListDisplay(page);
+    await testSessionListDisplay(page);
     await testSearchFunction(page);
     await testBatchMode(page);
-    await testNewTopicButton(page);
+    await testNewSessionButton(page);
     await testMessageInput(page);
     await testRightClickMenu(page);
 

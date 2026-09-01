@@ -1,6 +1,6 @@
 <template>
   <div class="chatbot-dual-layout">
-    <!-- 左侧会话列表 -->
+    <!-- 左侧话题列表 -->
     <aside class="chatbot-dual-layout__sidebar">
       <slot name="sidebar">
         <TopicListView />
@@ -31,14 +31,14 @@ import ChatArea from '@/components/ChatArea.vue'
   &__sidebar {
     width: 280px;
     flex-shrink: 0;
-    border-right: 1px solid var(--chatbot-border-color, #e4e7ed);
+    border-right: 1px solid var(--border-light, #e4e7ed);
     overflow: hidden;
 
     // Mobile: collapse sidebar (full-width single column on mobile)
     @media (max-width: 768px) {
       width: 100%;
       border-right: none;
-      border-bottom: 1px solid var(--chatbot-border-color, #e4e7ed);
+      border-bottom: 1px solid var(--border-light, #e4e7ed);
     }
   }
 

@@ -1,17 +1,111 @@
 /**
  * Configuration types for AI Chatbot
  */
-import type { Position, Theme, Locale, InteractionMode, Layout } from './index'
+import type { Position, Theme, Locale, InteractionMode, Layout, PanelMode, Topic, Attachment, StreamEvent, Message, UploadResult } from './index'
 
-import type { PanelMode } from './index'
+/**
+ * Parameters for send-related callbacks
+ */
+export interface SendMessageParams {
+  topicId: string
+  content: string
+  attachments?: Attachment[]
+  thinking?: { enabled: boolean }
+  signal?: AbortSignal
+  /** Extra information from QuickAction.extraInfo. Available in callbacks. */
+  extraInfo?: string
+  /** For edit/regenerate: original message being modified */
+  messageId?: string
+}
+
+/**
+ * Quick action for welcome screen
+ */
+export interface QuickAction {
+  /** Unique identifier */
+  id: string
+  /** Display title, e.g. "写邮件" */
+  title: string
+  /** Optional description, e.g. "帮我撰写邮件" */
+  description?: string
+  /** Prompt text sent as user message. Supports {{variable}} placeholders. */
+  prompt: string
+  /**
+   * Icon identifier or path.
+   * - Built-in name: "write", "analyze", "translate", "code", "search", "chat", "brain", "tool"
+   * - Relative path: resolved against quickActionIconBase
+   * - Absolute path/URL: used as-is
+   * - Empty/undefined: first-letter avatar
+   */
+  icon?: string
+  /**
+   * Generic extra information string. Not used by the component internally.
+   * Passed to SendMessageParams.extraInfo for host app use in callbacks.
+   */
+  extraInfo?: string
+}
+
+/**
+ * Resolver for a prompt variable. Receives the variable name, returns the replacement value.
+ */
+export type PromptVariableResolver = (variable: string) => string | Promise<string>
+
+/**
+ * Configuration for prompt variable substitution
+ */
+export interface PromptVariableConfig {
+  /** Custom variable resolvers. Key is the variable name (without {{ }}). */
+  resolvers?: Record<string, PromptVariableResolver>
+}
+
+/**
+ * Callback interface for host application to control operations.
+ * All callbacks are optional. If not provided, the component
+ * falls back to apiClient or local-only behavior.
+ */
+export interface ChatbotCallbacks {
+  /** Send message and get AI response via streaming.
+   *  The host MUST return an AsyncGenerator<StreamEvent>. */
+  onSendMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+
+  /** Delete a specific message. */
+  onDeleteMessage?: (messageId: string, topicId: string) => Promise<void>
+
+  /** Edit a message: replace user message content and get new AI response. */
+  onEditMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+
+  /** Regenerate AI response for a preceding user message. */
+  onRegenerateMessage?: (params: SendMessageParams) => AsyncGenerator<StreamEvent>
+
+  /** Load all topics. Called on mount and after topic create/delete. */
+  onLoadTopics?: (signal?: AbortSignal) => Promise<Topic[]>
+
+  /** Load messages for a specific topic. Called on topic switch and mount. */
+  onLoadMessages?: (topicId: string, signal?: AbortSignal) => Promise<Message[]>
+
+  /** Create a new topic. Returns the full Topic object. */
+  onCreateTopic?: (title?: string) => Promise<Topic>
+
+  /** Switch to a topic. Component calls onLoadMessages after this resolves. */
+  onSwitchTopic?: (topicId: string) => Promise<void>
+
+  /** Delete a topic and all its messages. */
+  onDeleteTopic?: (topicId: string) => Promise<void>
+
+  /** Update topic title. */
+  onUpdateTopicTitle?: (topicId: string, title: string) => Promise<void>
+
+  /** Clear all messages in a topic. */
+  onClearMessages?: (topicId: string) => Promise<void>
+
+  /** Upload image files. Returns URLs of uploaded files. */
+  onUploadImages?: (files: File[]) => Promise<UploadResult>
+}
 
 export interface ChatbotConfig {
-  // Interaction mode (new dual-dimension architecture)
+  // Interaction mode
   mode?: InteractionMode
-  // Layout (auto-derived from mode if not specified)
   layout?: Layout
-  // Legacy: Chat mode (for backward compatibility)
-  chatMode?: 'extended' | 'compact' | 'floating'
 
   // Layout configuration
   position?: Position
@@ -20,27 +114,36 @@ export interface ChatbotConfig {
   panelMinWidth?: number
   panelMaxWidth?: number
   defaultExpanded?: boolean
-  panelMode?: PanelMode // Force specific panel mode ('auto' = based on screen size)
+  panelMode?: PanelMode
+
+  // Sidebar width
+  sidebarWidth?: number
+  sidebarMinWidth?: number
+  sidebarMaxWidth?: number
 
   // Floating panel options
-  draggable?: boolean // Enable drag for floating panel (default: true)
-  resizable?: boolean // Enable resize for floating panel (default: true)
-  minWidth?: number // Minimum width for floating panel (default: 300)
-  minHeight?: number // Minimum height for floating panel (default: 400)
-  rememberPosition?: boolean // Remember position and size (default: true)
+  draggable?: boolean
+  resizable?: boolean
+  minWidth?: number
+  minHeight?: number
+  rememberPosition?: boolean
 
   // Feature toggles
   enableImageUpload?: boolean
-  enableTopicManager?: boolean
   enableVoiceInput?: boolean
   enableCopyMessage?: boolean
   enableDeleteMessage?: boolean
   enableResend?: boolean
   enableClearAll?: boolean
 
+  // Thinking / Chain-of-Thought
+  enableThinking?: boolean
+  thinkingDefaultEnabled?: boolean
+  thinkingAutoCollapse?: boolean
+
   // Upload limits
   maxImageCount?: number
-  maxImageSize?: number // in bytes
+  maxImageSize?: number
   allowedImageTypes?: string[]
 
   // Style configuration
@@ -51,7 +154,10 @@ export interface ChatbotConfig {
   // API configuration
   apiBaseUrl?: string
   streamEnabled?: boolean
-  streamTimeout?: number // in milliseconds
+  streamTimeout?: number
+
+  /** Callback interface for host application to control operations */
+  callbacks?: ChatbotCallbacks
 
   // Iframe mode
   iframeMode?: boolean
@@ -66,14 +172,26 @@ export interface ChatbotConfig {
 
   // UI Labels (can be customized)
   labels?: Partial<ChatbotLabels>
+
+  /** Quick actions list. If not configured, locale-aware defaults are used. */
+  quickActions?: QuickAction[]
+
+  /** Base path for resolving relative icon paths in QuickAction.icon */
+  quickActionIconBase?: string
+
+  /** Prompt variable substitution configuration */
+  promptVariables?: PromptVariableConfig
 }
 
+/**
+ * UI labels interface for internationalization
+ */
 export interface ChatbotLabels {
   title: string
   placeholder: string
   send: string
   newTopic: string
-  topics: string
+  history: string
   clearAll: string
   delete: string
   copy: string
@@ -82,124 +200,59 @@ export interface ChatbotLabels {
   uploading: string
   uploadFailed: string
   retry: string
+  timeout: string
+  networkError: string
+  serverError: string
+  generationStopped: string
+  sendFailed: string
+  responseFailed: string
+  userLabel: string
+  assistantLabel: string
   close: string
   expand: string
   collapse: string
-  // Welcome screen labels
+  cancel?: string
+  confirm?: string
+  deleteConfirmTitle?: string
+  deleteConfirm?: string
+  deleteMessageTitle?: string
+  messageDeleted?: string
+  noContentToCopy?: string
+  copiedToClipboard?: string
+  copyFailed?: string
+  historyTooltip?: string
+  switchToDarkMode?: string
+  switchToLightMode?: string
+  recording?: string
+  topicsTab?: string
+  chatTab?: string
+  unnamedTopic?: string
+  searchTopics?: string
+  rename?: string
+  done?: string
+  batchSelect?: string
+  deleteSelected?: string
+  noResults?: string
+  noTopics?: string
+  noTopicsHint?: string
+  deleteTopicConfirmTitle?: string
+  deleteTopicConfirmMessage?: string
+  batchDeleteTopicConfirmMessage?: string
+  selectedCountFormat?: string
+  messageCountFormat?: string
   welcomeTitle?: string
   welcomeSubtitle?: string
-  // Quick action labels (4 actions)
-  quickAction1Title?: string
-  quickAction1Desc?: string
-  quickAction1Text?: string
-  quickAction2Title?: string
-  quickAction2Desc?: string
-  quickAction2Text?: string
-  quickAction3Title?: string
-  quickAction3Desc?: string
-  quickAction3Text?: string
-  quickAction4Title?: string
-  quickAction4Desc?: string
-  quickAction4Text?: string
-  // Copy button labels
   copied?: string
+  emptyMessage?: string
+  thinking?: {
+    toggle?: string
+    thinking?: string
+    deeplyThought?: string
+    showThinking?: string
+    hideThinking?: string
+  }
 }
 
-export const defaultChatbotLabels: ChatbotLabels = {
-  title: 'AI Assistant',
-  placeholder: 'Type your message...',
-  send: 'Send',
-  newTopic: 'New Topic',
-  topics: 'Topics',
-  clearAll: 'Clear All',
-  delete: 'Delete',
-  copy: 'Copy',
-  refresh: 'Regenerate',
-  resend: 'Resend',
-  uploading: 'Uploading...',
-  uploadFailed: 'Upload Failed',
-  retry: 'Retry',
-  close: 'Close',
-  expand: 'Expand',
-  collapse: 'Collapse',
-  // Default welcome screen labels (Chinese as default since original was Chinese)
-  welcomeTitle: '智能助手',
-  welcomeSubtitle: '有什么可以帮助您的吗？',
-  quickAction1Title: '写邮件',
-  quickAction1Desc: '帮我撰写邮件',
-  quickAction1Text: '帮我写一封邮件',
-  quickAction2Title: '总结文章',
-  quickAction2Desc: '提取关键信息',
-  quickAction2Text: '帮我总结这篇文章',
-  quickAction3Title: '翻译',
-  quickAction3Desc: '多语言翻译',
-  quickAction3Text: '帮我翻译这段文字',
-  quickAction4Title: '数据分析',
-  quickAction4Desc: '智能分析数据',
-  quickAction4Text: '帮我分析数据',
-  // Copy button labels
-  copied: '已复制',
-}
-
-export const defaultChatbotConfig: Required<ChatbotConfig> = {
-  // Interaction mode
-  mode: 'floating',
-  layout: 'single',
-
-  // Legacy: Chat mode
-  chatMode: 'floating',
-
-  // Layout
-  position: 'bottom-right',
-  panelWidth: 400,
-  panelHeight: 600,
-  panelMinWidth: 320,
-  panelMaxWidth: 600,
-  defaultExpanded: false,
-  panelMode: 'auto', // Auto-detect based on screen size
-
-  // Floating panel options
-  draggable: true,
-  resizable: true,
-  minWidth: 300,
-  minHeight: 400,
-  rememberPosition: true,
-
-  // Features
-  enableImageUpload: true,
-  enableTopicManager: true,
-  enableVoiceInput: false,
-  enableCopyMessage: true,
-  enableDeleteMessage: true,
-  enableResend: true,
-  enableClearAll: true,
-
-  // Upload limits
-  maxImageCount: 8,
-  maxImageSize: 10 * 1024 * 1024, // 10MB
-  allowedImageTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-
-  // Style
-  theme: 'light',
-  primaryColor: '#409eff',
-  customStyles: {},
-
-  // API
-  apiBaseUrl: '/api',
-  streamEnabled: true,
-  streamTimeout: 60000,
-
-  // Iframe
-  iframeMode: false,
-  allowedOrigins: [],
-
-  // i18n
-  locale: 'en-US',
-
-  // Messages
-  maxMessagesInMemory: 1000,
-  autoScroll: true,
-
-  // Labels
-  labels: defaultChatbotLabels,
-}
+// Re-export from new locations for backward compatibility
+export { getDefaultLabels, zhCNLabels, enUSLabels } from '@/i18n/labels'
+export { defaultChatbotConfig } from '@/constants/config'

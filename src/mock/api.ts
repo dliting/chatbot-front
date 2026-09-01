@@ -3,6 +3,7 @@
  */
 import type { Message, Topic, StreamEvent, ApiResponse } from '@/types'
 import { generateId, sleep } from '@/utils/helpers'
+import { TOPIC_DEFAULTS } from '@/constants'
 
 /**
  * Mock chat responses
@@ -179,7 +180,7 @@ export const mockAPI = {
       message: 'success',
       data: {
         topicId: generateId('topic'),
-        title: 'New Chat',
+        title: TOPIC_DEFAULTS.TITLE,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         messageCount: 0,

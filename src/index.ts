@@ -1,6 +1,7 @@
 /**
  * AI Chatbot - Library Entry Point
  */
+import './styles/chatbot.scss'
 import AIChatbot from './components/AIChatbot.vue'
 import type { ChatbotConfig } from './types/config'
 
@@ -11,19 +12,20 @@ export { default as ChatPanel } from './components/ChatPanel.vue'
 export { default as DraggableWindow } from './components/DraggableWindow.vue'
 export { default as MessageList } from './components/MessageList.vue'
 export { default as MessageItem } from './components/MessageItem.vue'
-export { default as InputArea } from './components/InputArea.vue'
-export { default as TopicManager } from './components/TopicManager.vue'
 
 // Export types
 export type * from './types'
-export type { ChatbotConfig } from './types/config'
+export type { ChatbotConfig, ChatbotCallbacks, SendMessageParams } from './types/config'
+export type { QuickAction, PromptVariableResolver, PromptVariableConfig } from './types/config'
+
+// Export injection keys (for advanced usage with provide/inject)
+export { chatStateKey, chatActionsKey, topicActionsKey, uiActionsKey, promptVarResolverKey } from './symbols'
 
 // Export composables
 export { useChatbotState } from './composables/useChatbotState'
 export { useResponsive } from './composables/useResponsive'
 export { useStream } from './composables/useStream'
-export { useMessages } from './composables/useMessages'
-export { useTopics } from './composables/useTopics'
+export { usePromptVariables } from './composables/usePromptVariables'
 
 // Export utilities
 export { generateId, throttle, debounce, copyToClipboard } from './utils/helpers'
@@ -31,6 +33,17 @@ export { makeDraggable, getInitialPosition } from './utils/drag'
 export { StreamClient, fetchStream } from './utils/stream'
 export { IframeMessenger, HostMessenger } from './utils/postMessage'
 export { createMockUploadEndpoint } from './utils/upload'
+export { deriveMessageType, getAttachmentsByType } from './utils/message'
+export { LocalStorageAdapter, TOPICS_SCHEMA_VERSION, loadVersioned, saveVersioned } from './utils/storage'
+export type { StorageAdapter, VersionedData } from './utils/storage'
+export { ChatbotError, toChatbotError } from './utils/errors'
+export type { ErrorCategory } from './utils/errors'
+export { resolveQuickActionIcon, isBuiltinIconName } from './utils/icons'
+export type { ResolvedIcon, BuiltinIconName } from './utils/icons'
+export { builtinIconComponents } from './utils/builtinIcons'
+
+// Constants
+export { getDefaultQuickActions, defaultQuickActions } from './constants/quickActions'
 
 // Default export
 export default AIChatbot

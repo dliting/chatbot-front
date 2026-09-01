@@ -16,7 +16,7 @@ The AI Chatbot Frontend is a Vue 3-based, layout-independent chatbot component t
 | Session Management | Implemented | [Session Management Guide](./features/session-management.md) |
 | Message Streaming | Implemented | [Source](../src/components/ChatContent.vue) |
 | Quick Actions | Implemented | [Source](../src/composables/useQuickActions.ts) |
-| Theme Toggle | Implemented | [Source](../src/composables/useTheme.ts) |
+| Theme Toggle | Implemented (hidden by default, host-controlled) | [Source](../src/composables/useTheme.ts) |
 | Markdown Rendering | Implemented | [Source](../src/utils/helpers.ts) |
 
 ### Layout Modes
@@ -45,6 +45,14 @@ The AI Chatbot Frontend is a Vue 3-based, layout-independent chatbot component t
 - **Implementation Plans:** [`plans/`](./plans/)
 
 ## Changelog
+
+### 2026-06-08
+- Added resizable sidebar in extended mode (drag handle, localStorage persistence)
+- Added resizable panel width in sidebar mode
+- Added floating window corner close button (separate from header actions)
+- Hidden theme toggle in all modes (host-controlled via config)
+- Fixed image/file preview in historical messages (filename extraction from URL)
+- Added markdown image click-to-preview in chat content
 
 ### 2026-03-08
 - Added session search with text highlighting

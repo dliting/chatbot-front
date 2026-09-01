@@ -162,7 +162,7 @@ onUnmounted(() => {
 .topic-action-menu__popover {
   position: fixed;
   z-index: 10000;
-  background: var(--chatbot-bg-color, #ffffff);
+  background: var(--bg-base, #ffffff);
   border-radius: 8px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   min-width: 160px;
@@ -184,7 +184,7 @@ onUnmounted(() => {
   border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  color: var(--chatbot-text-color, #303133);
+  color: var(--text-primary, #303133);
   transition: background-color 0.2s;
 
   svg {
@@ -194,14 +194,14 @@ onUnmounted(() => {
   }
 
   &:hover {
-    background: var(--chatbot-primary-color-light, #ecf5ff);
+    background: var(--theme-primary-light, #ecf5ff);
   }
 
   &--danger {
-    color: var(--chatbot-danger-color, #f56c6c);
+    color: var(--color-danger, #f56c6c);
 
     &:hover {
-      background: var(--chatbot-danger-color-light, #fef0f0);
+      background: var(--color-danger-light, #fef0f0);
     }
   }
 }

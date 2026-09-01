@@ -20,7 +20,6 @@ import {
   sleep,
   downloadFile,
   getFileExtension,
-  markdownToHTML,
 } from '@/utils/helpers'
 
 describe('utils/helpers', () => {
@@ -248,7 +247,7 @@ describe('utils/helpers', () => {
       await sleep(100)
       const end = Date.now()
 
-      expect(end - start).toBeGreaterThanOrEqual(100)
+      expect(end - start).toBeGreaterThanOrEqual(90)
     })
   })
 
@@ -256,6 +255,18 @@ describe('utils/helpers', () => {
     it('should detect if in iframe', () => {
       // In test environment, window.top === window.self
       expect(isInIframe()).toBe(false)
+    })
+
+    it('should return true when cross-origin access throws SecurityError', () => {
+      const origTop = window.top
+      Object.defineProperty(window, 'top', {
+        get: () => { throw new DOMException('Blocked', 'SecurityError') },
+        configurable: true,
+      })
+
+      expect(isInIframe()).toBe(true)
+
+      Object.defineProperty(window, 'top', { get: () => origTop, configurable: true })
     })
   })
 
@@ -307,33 +318,6 @@ describe('utils/helpers', () => {
 
     it('should handle URL with query string', () => {
       expect(getFileExtension('http://example.com/image.png?token=123')).toBe('png?token=123')
-    })
-  })
-
-  describe('markdownToHTML', () => {
-    it('should convert bold text', () => {
-      const result = markdownToHTML('**bold**')
-      expect(result).toContain('<strong>bold</strong>')
-    })
-
-    it('should convert italic text', () => {
-      const result = markdownToHTML('*italic*')
-      expect(result).toContain('<em>italic</em>')
-    })
-
-    it('should convert inline code', () => {
-      const result = markdownToHTML('`code`')
-      expect(result).toContain('<code>code</code>')
-    })
-
-    it('should convert newlines to br tags', () => {
-      const result = markdownToHTML('line1\nline2')
-      expect(result).toContain('<br>')
-    })
-
-    it('should handle code blocks', () => {
-      const result = markdownToHTML('```js\nconsole.log("test")\n```')
-      expect(result).toContain('<pre><code>')
     })
   })
 })

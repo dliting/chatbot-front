@@ -1,12 +1,11 @@
-/**
- * Unit tests for MessageItem copy and delete functionality
- */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount } from '@vue/test-utils'
+import { mount, flushPromises } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import MessageItem from '@/components/MessageItem.vue'
+import ThinkingBlock from '@/components/ThinkingBlock.vue'
 import type { Message } from '@/types'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { chatActionsKey } from '@/symbols'
 
 // Mock element-plus
 vi.mock('element-plus', async () => {
@@ -36,12 +35,25 @@ vi.mock('@/utils/message', () => ({
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/`(.*?)`/g, '<code>$1</code>')
   },
+  getAttachmentsByType: (message: any, type: string) => {
+    return (message.attachments || []).filter((a: any) => a.type === type)
+  },
 }))
 
 // Import the mocked function
 import { copyToClipboard } from '@/utils/helpers'
 
 describe('MessageItem Copy and Delete', () => {
+  const mockChatActions = {
+    sendMessage: vi.fn(),
+    refreshMessage: vi.fn(),
+    deleteMessage: vi.fn(),
+    editMessage: vi.fn(),
+    stopGenerating: vi.fn(),
+    isGenerating: { value: false },
+    isThinkingActive: { value: false },
+  }
+
   beforeEach(() => {
     vi.clearAllMocks()
   })
@@ -59,18 +71,30 @@ describe('MessageItem Copy and Delete', () => {
     ...overrides,
   })
 
+  const createWrapper = (message: Message, props = {}) => {
+    return mount(MessageItem, {
+      props: {
+        message,
+        ...props,
+      },
+      global: {
+        provide: {
+          [chatActionsKey]: mockChatActions,
+        },
+        stubs: {
+          ThinkingBlock: true,
+        },
+      },
+    })
+  }
+
   describe('Copy Functionality', () => {
     it('should call copyToClipboard when copy button is clicked', async () => {
       const message = createMessage({ content: 'Test message' })
-      const wrapper = mount(MessageItem, {
-        props: {
-          message,
-          enableCopy: true,
-        },
-      })
+      const wrapper = createWrapper(message, { enableCopy: true })
 
-      // Find and click the copy button by Chinese title
-      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="复制"]')
+      // Find and click the copy button by title
+      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="Copy"]')
       await copyBtn.trigger('click')
       await nextTick()
 
@@ -78,63 +102,46 @@ describe('MessageItem Copy and Delete', () => {
       expect(copyToClipboard).toHaveBeenCalledWith('Test message')
     })
 
-    it('should emit copy event after successful copy', async () => {
+    it('should show success message after successful copy (no emit)', async () => {
       const message = createMessage({ content: 'Test message' })
-      const wrapper = mount(MessageItem, {
-        props: {
-          message,
-          enableCopy: true,
-        },
-      })
+      const wrapper = createWrapper(message, { enableCopy: true })
 
-      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="复制"]')
+      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="Copy"]')
       await copyBtn.trigger('click')
-      await nextTick()
+      await flushPromises()
 
-      expect(wrapper.emitted('copy')).toBeTruthy()
+      // Copy is handled internally via copyToClipboard, no emit
+      expect(wrapper.emitted('copy')).toBeFalsy()
+      expect(ElMessage).toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'success' })
+      )
     })
 
     it('should not show copy button when enableCopy is false', async () => {
       const message = createMessage({ content: 'Test message' })
-      const wrapper = mount(MessageItem, {
-        props: {
-          message,
-          enableCopy: false,
-        },
-      })
+      const wrapper = createWrapper(message, { enableCopy: false })
 
       // Copy button should not exist
-      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="复制"]')
+      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="Copy"]')
       expect(copyBtn.exists()).toBe(false)
     })
 
     it('should not show copy button for streaming messages', async () => {
       const message = createMessage({ content: 'Streaming message' })
-      const wrapper = mount(MessageItem, {
-        props: {
-          message,
-          enableCopy: true,
-          isStreaming: true,
-        },
-      })
+      const wrapper = createWrapper(message, { enableCopy: true, isStreaming: true })
 
       // Copy button should not exist for streaming messages
-      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="复制"]')
+      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="Copy"]')
       expect(copyBtn.exists()).toBe(false)
     })
 
     it('should add copied class to button after successful copy', async () => {
       const message = createMessage({ content: 'Test message' })
-      const wrapper = mount(MessageItem, {
-        props: {
-          message,
-          enableCopy: true,
-        },
-      })
+      const wrapper = createWrapper(message, { enableCopy: true })
 
-      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="复制"]')
+      const copyBtn = wrapper.find('.chatbot-message__action-btn[title="Copy"]')
       await copyBtn.trigger('click')
-      await nextTick()
+      await flushPromises()
 
       // After copy, button should have copied class
       expect(wrapper.find('.chatbot-message__action-btn--copied').exists()).toBe(true)
@@ -144,64 +151,49 @@ describe('MessageItem Copy and Delete', () => {
   describe('Delete Functionality', () => {
     it('should show confirmation dialog when delete button is clicked', async () => {
       const message = createMessage()
-      const wrapper = mount(MessageItem, {
-        props: {
-          message,
-          enableDelete: true,
-        },
-      })
+      const wrapper = createWrapper(message, { enableDelete: true })
 
-      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="删除"]')
+      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="Delete"]')
       await deleteBtn.trigger('click')
       await nextTick()
 
       expect(ElMessageBox.confirm).toHaveBeenCalledWith(
-        '确定要删除这条消息吗？',
-        '删除消息',
+        'Are you sure you want to delete this message?',
+        'Delete Message',
         expect.objectContaining({
-          confirmButtonText: '删除',
-          cancelButtonText: '取消',
+          confirmButtonText: 'Delete',
+          cancelButtonText: 'Cancel',
           type: 'warning'
         })
       )
     })
 
-    it('should emit delete event when user confirms deletion', async () => {
+    it('should call chatActions.deleteMessage when user confirms deletion', async () => {
       const message = createMessage()
-      const wrapper = mount(MessageItem, {
-        props: {
-          message,
-          enableDelete: true,
-        },
-      })
+      const wrapper = createWrapper(message, { enableDelete: true })
 
-      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="删除"]')
+      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="Delete"]')
       await deleteBtn.trigger('click')
-      await nextTick()
+      await flushPromises()
 
-      // User confirmed, so delete event should be emitted
-      expect(wrapper.emitted('delete')).toBeTruthy()
+      // User confirmed, so chatActions.deleteMessage should be called
+      expect(mockChatActions.deleteMessage).toHaveBeenCalledWith(message)
     })
 
-    it('should not emit delete event when user cancels', async () => {
+    it('should not call chatActions.deleteMessage when user cancels', async () => {
       // Mock cancel behavior - need to reset and re-mock
       ;(ElMessageBox.confirm as any).mockReset()
       ;(ElMessageBox.confirm as any).mockRejectedValueOnce(new Error('cancelled'))
 
       const message = createMessage()
-      const wrapper = mount(MessageItem, {
-        props: {
-          message,
-          enableDelete: true,
-        },
-      })
+      const wrapper = createWrapper(message, { enableDelete: true })
 
-      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="删除"]')
+      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="Delete"]')
       await deleteBtn.trigger('click')
-      await nextTick()
+      await flushPromises()
 
-      // User cancelled, so delete event should not be emitted
-      expect(wrapper.emitted('delete')).toBeFalsy()
+      // User cancelled, so chatActions.deleteMessage should not be called
+      expect(mockChatActions.deleteMessage).not.toHaveBeenCalled()
 
       // Reset mock for other tests
       ;(ElMessageBox.confirm as any).mockResolvedValue(true)
@@ -209,14 +201,9 @@ describe('MessageItem Copy and Delete', () => {
 
     it('should not show delete button when enableDelete is false', async () => {
       const message = createMessage()
-      const wrapper = mount(MessageItem, {
-        props: {
-          message,
-          enableDelete: false,
-        },
-      })
+      const wrapper = createWrapper(message, { enableDelete: false })
 
-      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="删除"]')
+      const deleteBtn = wrapper.find('.chatbot-message__action-btn[title="Delete"]')
       expect(deleteBtn.exists()).toBe(false)
     })
   })

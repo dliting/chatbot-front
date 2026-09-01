@@ -1,331 +1,190 @@
 # AI Chatbot Frontend
 
-A Vue 3 + TypeScript + Element Plus chatbot component that can be embedded in any website.
+A Vue 3 + TypeScript + Element Plus AI chatbot component library that can be embedded in any website — as a Vue component or a framework-agnostic iframe. Ships with a full-stack example app (mock & real LLM backends) and runs fully offline.
 
 ## Modes
 
-The component supports three interactive modes:
+The component has a dual-dimension interaction architecture — **interaction mode** (how it is embedded) and **layout** (derived automatically from the mode):
 
-| Mode | Description | Use Case |
-|-------|-------------|-----------|
-| **扩展模式 (Extended)** | Full desktop chat with session sidebar + chat area | Desktop-first chat application |
-| **紧凑模式 (Compact)** | Desktop sidebar or mobile full screen chat interface |
-| **悬浮模式 (Floating)** | Floating ball that opens chat dialog | Space-saving, on-demand access |
+| Mode | Layout | Description | Use Case |
+|------|--------|-------------|----------|
+| **Extended** | Dual (sidebar + chat) | Full-page chat application with topic sidebar | Desktop-first chat application |
+| **Sidebar** | Single (tab-switched) | Embedded side panel | Side panel inside an existing app |
+| **Floating** | Single | Floating ball that opens a draggable chat window | Space-saving, on-demand access |
+
+### Extended — full-page dual layout
+
+<img src="docs/screenshots/extended.png" width="800" alt="Extended mode: full-page dual layout with topic sidebar and chat area">
+
+### Sidebar — side panel docked on the host page
+
+<img src="docs/screenshots/sidebar.png" width="800" alt="Sidebar mode: single-layout side panel docked on the right of the host page">
+
+### Floating — draggable chat window
+
+<img src="docs/screenshots/floating.png" width="800" alt="Floating mode: draggable resizable chat window over the host page">
 
 ## Features
 
-- **Multi-modal Interaction**: Text and image input support
-- **Responsive Design**: Automatically adapts to PC, tablet, and mobile screens
-- **Multiple Embed Modes**: Component (Vue) or iframe (any framework)
-- **Theme Support**: Light and dark themes
-- **Session Management**: Multiple conversation sessions
-- **Streaming Responses**: Real-time typewriter effect
-- **Draggable Floating Ball**: Repositionable chat trigger
-- **Style Isolated**: No conflicts with host page styles
+- **Multi-modal input**: text and image upload, file preview (docx / excel / pdf / images)
+- **Streaming responses**: SSE with real-time typewriter effect and timeout control
+- **Thinking / Chain-of-Thought**: collapsible reasoning display
+- **Quick actions**: configurable welcome-screen actions with built-in SVG icons and `{{variable}}` prompt substitution
+- **Topic management**: multi-conversation sessions with search, rename, delete
+- **Theme support**: light / dark / system, customizable primary color
+- **Three-tier fallback**: host callbacks → REST API (`apiBaseUrl`) → local-only behavior
+- **i18n**: `zh-CN` / `en-US` with fully overridable labels
+- **Multiple embed modes**: Vue component or iframe (works with any host framework)
+- **Style isolated**: no conflicts with host page styles
 
-## Quick Start
-
-### Development
+## Installation
 
 ```bash
-# Install dependencies
-npm install
-
-# Start dev server (access examples at http://localhost:5173)
-npm run dev
-
-# Build library
-npm run build:lib
-
-# Build iframe version
-npm run build:iframe
+npm install ai-chatbot-frontend
 ```
 
-### Usage in Vue 3 Project
+Peer dependencies (optional, only needed for office file preview):
+
+```bash
+npm install @vue-office/docx @vue-office/excel @vue-office/pdf
+```
+
+Requirements: Vue >= 3.4, Node >= 18.
+
+## Quick Start (Vue 3)
 
 ```vue
 <template>
-  <AIChatbot
-    :config="{
-      position: 'bottom-right',
-      panelWidth: 400,
-      theme: 'light',
-      enableImageUpload: true,
-    }"
-    @panel-toggle="handleToggle"
-    @message-success="handleSuccess"
-  />
+  <AIChatbot :config="chatConfig" @panel-toggle="handleToggle" />
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { AIChatbot } from 'ai-chatbot-frontend'
+import type { ChatbotConfig } from 'ai-chatbot-frontend'
 import 'ai-chatbot-frontend/style.css'
+
+const chatConfig: ChatbotConfig = {
+  apiBaseUrl: '/api',
+  mode: 'floating',
+  theme: 'light',
+  streamEnabled: true,
+  enableImageUpload: true,
+  enableThinking: true,
+}
+
+const handleToggle = (open: boolean) => console.log('panel', open)
 </script>
 ```
+
+### Iframe Embedding (any framework)
+
+Build the iframe bundle and include it in any host page:
+
+```bash
+npm run build:iframe   # outputs to dist-iframe/
+```
+
+```html
+<iframe src="/dist-iframe/index.html" style="border:0"></iframe>
+```
+
+Configure `iframeMode: true` and `allowedOrigins` in the chat config for postMessage-based communication with the host page.
 
 ## Configuration
 
 ```typescript
 interface ChatbotConfig {
-  // Display mode
-  chatMode?: 'extended' | 'compact' | 'floating'
+  // Interaction mode
+  mode?: 'floating' | 'extended' | 'sidebar'   // default 'floating'
+  layout?: 'dual' | 'single'                    // auto-derived from mode
 
-  // Layout
+  // Panel / floating window
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
-  panelWidth?: number
-  panelHeight?: number
-  defaultExpanded?: boolean
+  panelWidth?: number          // default 400
+  panelHeight?: number         // default 600
+  draggable?: boolean          // default true
+  resizable?: boolean          // default true
+  rememberPosition?: boolean   // default true
 
   // Features
-  enableImageUpload?: boolean
-  enableSessionManager?: boolean
-  enableCopyMessage?: boolean
-  enableDeleteMessage?: boolean
+  enableImageUpload?: boolean  // default true
+  enableThinking?: boolean     // default false
+  streamEnabled?: boolean      // default true
+  streamTimeout?: number       // default 120000
 
-  // Upload limits
-  maxImageCount?: number
-  maxImageSize?: number
-
-  // Style
-  theme?: 'light' | 'dark'
+  // Style & i18n
+  theme?: 'light' | 'dark' | 'system'
   primaryColor?: string
+  locale?: 'zh-CN' | 'en-US'
+  labels?: Partial<ChatbotLabels>
+  quickActions?: QuickAction[]
+  promptVariables?: PromptVariableConfig
 
-  // Labels
-  labels?: {
-    title?: string
-    placeholder?: string
-    newChat?: string
-  }
-
-  // API
-  apiBaseUrl?: string
-  streamEnabled?: boolean
+  // API & callbacks
+  apiBaseUrl?: string           // default '/api'
+  callbacks?: ChatbotCallbacks  // host-controlled operations
 }
 ```
+
+See [docs/API.md](docs/API.md) for the complete configuration reference, callbacks/events API, attachment model, and injectable action keys for custom child components.
+
+## Examples
+
+A complete full-stack example lives in [`examples/chatapp`](examples/chatapp/README.md):
+
+- **Mock mode** — Express + SQLite backend with canned responses, no LLM required
+- **Real mode** — Express + SQLite + [Ollama](https://ollama.com) backend serving a local large language model
+
+```bash
+# from the repo root (Windows)
+start-chatapp.bat mock   # backend :3001 + frontend :5180
+start-chatapp.bat real   # backend :3000 (needs local Ollama) + frontend :5180
+stop-chatapp.bat         # stop everything
+```
+
+## Development & Testing
+
+```bash
+npm install
+npm run dev              # dev server at http://localhost:5173
+npm run build:lib        # build the component library (dist/)
+npm run lint             # ESLint (auto-fix)
+npm run test:run         # unit + component tests (Vitest)
+npm run test:coverage    # coverage report
+npm run test:e2e         # Playwright e2e (lib + chatapp projects)
+```
+
+UI interaction testing guide: [tests/UI_TEST_GUIDE.md](tests/UI_TEST_GUIDE.md). Unit test coverage target: > 90%.
 
 ## Project Structure
 
 ```
 src/
-├── components/       # Vue components
-├── composables/      # Composition API functions
-├── types/           # TypeScript types
-├── utils/           # Utility functions
-├── styles/          # SCSS styles
-├── entries/         # Example entry points
-│   ├── extended.ts         # Extended mode entry
-│   ├── compact.ts          # Compact mode entry
-│   └── floating.ts         # Floating mode entry
-├── index.ts         # Library entry
-└── iframe-entry.ts  # Iframe entry
+├── components/       # Vue components (chat panel, topics, input, previews)
+├── composables/      # Composition API hooks
+├── types/            # TypeScript types (config, messages, topics)
+├── utils/            # Utilities (icons, storage, markdown)
+├── styles/           # SCSS styles
+├── entries/          # Demo entry points (extended / compact / floating)
+├── constants/        # Centralized config constants
+├── index.ts          # Library entry
+└── iframe-entry.ts   # Iframe entry
+examples/chatapp/     # Full-stack example (mock + real backends)
+tests/                # Unit / component / e2e / UI tests
+docs/                 # API, architecture and design documents
 ```
 
-## Browser Support
+## Documentation
 
-- Chrome >= 88
-- Firefox >= 85
-- Safari >= 14
-- Edge >= 88
+- [API Reference (v2.0)](docs/API.md) — configuration, callbacks, events, types
+- [High-Level Design](docs/HLD.md) — architecture overview
+- [Product Requirements](docs/PRD.md) / [Technical Design](docs/TDD.md)
+- [Design notes](docs/design/) · [Feature docs](docs/features/)
+
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). Please report vulnerabilities via [SECURITY.md](SECURITY.md) instead of public issues.
 
 ## License
 
-MIT
-
-## 组件架构
-
-### 核心组件
-
-#### DraggableWindow - 通用可拖动窗口组件
-
-一个通用的可拖动、可调整大小的窗口组件，可以独立使用或作为其他窗口组件的基础。
-
-**功能特性：**
-- 8方向调整大小（上下左右四边 + 四个角）
-- 拖动标题栏移动窗口
-- 位置和尺寸记忆（localStorage）
-- 圆角矩形样式
-- 浅色/深色主题支持
-
-**Props：**
-```typescript
-interface DraggableWindowProps {
-  modelValue?: boolean           // v-model 可见性
-  x?: number                    // 窗口 x 坐标
-  y?: number                    // 窗口 y 坐标
-  width?: number                // 窗口宽度
-  height?: number               // 窗口高度
-  minWidth?: number             // 最小宽度
-  minHeight?: number            // 最小高度
-  maxWidth?: number             // 最大宽度
-  maxHeight?: number            // 最大高度
-  draggable?: boolean           // 是否可拖动 (默认: true)
-  resizable?: boolean           // 是否可调整大小 (默认: true)
-  rounded?: boolean             // 是否圆角 (默认: true)
-  theme?: 'light' | 'dark'      // 主题 (默认: 'light')
-  rememberPosition?: boolean    // 记住位置 (默认: true)
-  storageKey?: string           // localStorage 键名
-  zIndex?: number               // z-index (默认: 9998)
-}
-```
-
-**Events：**
-```typescript
-interface DraggableWindowEmits {
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'update:x', value: number): void
-  (e: 'update:y', value: number): void
-  (e: 'update:width', value: number): void
-  (e: 'update:height', value: number): void
-}
-```
-
-**Slots：**
-- `header`: 标题栏内容（可拖动区域）
-- `default`: 窗口主体内容
-
-**使用示例：**
-```vue
-<template>
-  <DraggableWindow
-    v-model:x="windowX"
-    v-model:y="windowY"
-    v-model:width="windowWidth"
-    v-model:height="windowHeight"
-    :min-width="300"
-    :min-height="400"
-    :draggable="true"
-    :resizable="true"
-    :rounded="true"
-    theme="light"
-  >
-    <template #header>
-      <div style="display: flex; justify-content: space-between; width: 100%;">
-        <span>窗口标题</span>
-        <button @click="close">关闭</button>
-      </div>
-    </template>
-    <div>
-      窗口内容
-    </div>
-  </DraggableWindow>
-</template>
-
-<script setup>
-import { ref } from 'vue'
-import { DraggableWindow } from 'ai-chatbot-frontend'
-
-const windowX = ref(100)
-const windowY = ref(100)
-const windowWidth = ref(400)
-const windowHeight = ref(500)
-
-const close = () => {
-  // 关闭逻辑
-}
-</script>
-```
-
-
-
-#### AIChatbot - 智能助手主组件
-
-组合使用 ChatPanel 和其他子组件，提供完整的 AI 聊天功能。
-
-**配置示例：**
-```typescript
-const config = {
-  // 悬浮模式配置
-  panelMode: 'floating',
-  panelWidth: 400,
-  panelHeight: 600,
-
-  // 拖动和调整大小
-  draggable: true,
-  resizable: true,
-  minWidth: 300,
-  minHeight: 400,
-  rememberPosition: true,
-
-  // 其他配置
-  theme: 'light',
-  enableImageUpload: true,
-  enableSessionManager: true,
-}
-```
-
-## 悬浮模式功能需求
-
-### 悬浮模式 (Floating Mode)
-
-悬浮模式在页面右下角显示一个悬浮球按钮，点击后打开聊天对话框。
-
-#### 核心功能需求
-
-1. **可拖动**
-   - 悬浮聊天窗口应该能够通过拖动标题栏来移动位置
-   - 拖动过程中窗口应该跟随鼠标/手指移动
-   - 拖动结束后窗口应该停留在新的位置
-
-2. **圆角矩形样式**
-   - 窗口形状应该是圆角矩形。
-
-3. **可改变尺寸**
-   - 悬浮聊天窗口应该能够通过拖动边缘或角落来改变尺寸
-   - 支持从四条边（上、下、左、右）和四个角调整大小
-   - 最小尺寸限制（默认 300px x 400px）
-
-4. **位置和尺寸记忆**
-   - 关闭悬浮聊天窗口后，应该记住上次打开的位置和尺寸
-   - 使用 localStorage 存储位置和尺寸信息
-   - 存储格式：`{ x: number, y: number, width: number, height: number }`
-
-5. **智能打开位置**
-   - 点击悬浮球，悬浮窗口应该在最后一次打开的位置显示
-   - 首次打开时，默认在浏览器界面的右侧显示
-   - 如果上次位置超出当前视口，应自动调整到可见区域
-
-#### 配置选项
-
-```typescript
-interface FloatingPanelConfig {
-  // 是否可拖动
-  draggable?: boolean;        // 默认: true
-
-  // 是否可调整大小
-  resizable?: boolean;        // 默认: true
-
-  // 最小尺寸
-  minWidth?: number;          // 默认: 300
-  minHeight?: number;         // 默认: 400
-
-  // 默认尺寸
-  defaultWidth?: number;      // 默认: 400
-  defaultHeight?: number;     // 默认: 600
-
-  // 默认位置
-  defaultPosition?: {         // 默认: { x: right, y: center }
-    x?: number | 'left' | 'center' | 'right';
-    y?: number | 'top' | 'center' | 'bottom';
-  };
-
-  // 是否记住位置和尺寸
-  rememberPosition?: boolean; // 默认: true
-}
-```
-
-#### 用户交互流程
-
-1. 用户点击悬浮球
-2. 悬浮窗口在记忆位置（或默认右侧位置）打开
-3. 用户可以拖动窗口到新位置
-4. 用户可以调整窗口大小（8个方向）
-5. 用户关闭窗口
-6. 下次打开时，窗口在上次位置和尺寸显示
-
-#### 技术实现要点
-
-- 使用 Vue 3 Composition API
-- 使用 localStorage 存储位置信息
-- 自定义 resize handles 实现8方向调整
-- 使用 `position: fixed` 定位窗口
-- 监听 `resize` 事件处理窗口边界检查
+[MIT](LICENSE)

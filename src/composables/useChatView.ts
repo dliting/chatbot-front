@@ -1,21 +1,25 @@
-import { ref, computed } from 'vue'
-import type { ChatMode } from '@/types'
+import { ref, computed, type Ref, unref } from 'vue'
+import type { InteractionMode } from '@/types'
 
 export interface ChatViewState {
   currentView: 'chat' | 'topics'
 }
 
-export function useChatView(mode: ChatMode) {
+type MaybeRef<T> = T | Ref<T>
+
+export function useChatView(mode: MaybeRef<InteractionMode>) {
+  const currentMode = computed(() => unref(mode))
+
   // View state (only used for non-extended modes)
   const viewState = ref<ChatViewState>({
     currentView: 'chat',
   })
 
   // Computed: whether topic list should be shown as sidebar (extended mode only)
-  const showTopicSidebar = computed(() => mode === 'extended')
+  const showTopicSidebar = computed(() => currentMode.value === 'extended')
 
   // Computed: whether we should use view-based navigation (non-extended modes)
-  const useViewNavigation = computed(() => mode !== 'extended')
+  const useViewNavigation = computed(() => currentMode.value !== 'extended')
 
   // Methods
   const showChatView = () => {

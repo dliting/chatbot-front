@@ -29,28 +29,30 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
-// Mock localStorage
+// Mock localStorage with actual persistence for tests
+const localStorageStore = new Map<string, string>()
 const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  getItem: vi.fn((key: string) => localStorageStore.get(key) ?? null),
+  setItem: vi.fn((key: string, value: string) => { localStorageStore.set(key, value) }),
+  removeItem: vi.fn((key: string) => { localStorageStore.delete(key) }),
+  clear: vi.fn(() => { localStorageStore.clear() }),
   get length() {
-    return 0
+    return localStorageStore.size
   },
-  key: vi.fn(),
+  key: vi.fn((index: number) => Array.from(localStorageStore.keys())[index] ?? null),
 }
-global.localStorage = localStorageMock as Storage
+global.localStorage = localStorageMock as unknown as Storage
 
-// Mock sessionStorage
+// Mock sessionStorage with actual persistence for tests
+const sessionStorageStore = new Map<string, string>()
 const sessionStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
+  getItem: vi.fn((key: string) => sessionStorageStore.get(key) ?? null),
+  setItem: vi.fn((key: string, value: string) => { sessionStorageStore.set(key, value) }),
+  removeItem: vi.fn((key: string) => { sessionStorageStore.delete(key) }),
+  clear: vi.fn(() => { sessionStorageStore.clear() }),
   get length() {
-    return 0
+    return sessionStorageStore.size
   },
-  key: vi.fn(),
+  key: vi.fn((index: number) => Array.from(sessionStorageStore.keys())[index] ?? null),
 }
-global.sessionStorage = sessionStorageMock as Storage
+global.sessionStorage = sessionStorageMock as unknown as Storage

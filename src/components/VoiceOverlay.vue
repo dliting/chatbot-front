@@ -8,12 +8,20 @@
         <line x1="8" y1="23" x2="16" y2="23" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
     </div>
-    <div class="voice-overlay__text">正在录音...</div>
-    <div class="voice-overlay__cancel" @click="$emit('cancel')">取消</div>
+    <div class="voice-overlay__text">{{ labels?.recording || 'Recording...' }}</div>
+    <div class="voice-overlay__cancel" @click="$emit('cancel')">{{ labels?.cancel || 'Cancel' }}</div>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { ChatbotLabels } from '@/types/config'
+
+interface Props {
+  labels?: ChatbotLabels
+}
+
+defineProps<Props>()
+
 interface Emits {
   (e: 'cancel'): void
 }
@@ -35,7 +43,7 @@ defineEmits<Emits>()
   &__animation {
     width: 120px;
     height: 120px;
-    background: var(--chatbot-primary-gradient);
+    background: var(--theme-primary-gradient);
     border-radius: 50%;
     display: flex;
     align-items: center;

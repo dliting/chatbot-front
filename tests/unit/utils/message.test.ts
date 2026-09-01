@@ -18,7 +18,6 @@ import {
   getLastMessage,
   getMessageStats,
   truncateMessage,
-  sanitizeMessageContent,
 } from '@/utils/message'
 import type { Message } from '@/types'
 
@@ -46,12 +45,12 @@ describe('utils/message', () => {
   }
 
   const mockImageMessage: Message = {
-    id: 'msg_3',
+    messageId: 'msg_3',
     topicId: mockTopicId,
     role: 'user',
     type: 'image',
     content: '',
-    images: ['https://example.com/image.jpg'],
+    attachments: [{ name: 'image.jpg', url: 'https://example.com/image.jpg', type: 'image' }],
     timestamp: Date.now(),
     status: 'sent',
   }
@@ -68,51 +67,47 @@ describe('utils/message', () => {
     })
 
     it('should create an image message', () => {
-      const images = ['https://example.com/img.jpg']
-      const msg = createMessage('user', '', mockTopicId, { images })
+      const attachments = [{ name: 'img.jpg', url: 'https://example.com/img.jpg', type: 'image' as const }]
+      const msg = createMessage('user', '', mockTopicId, { attachments })
 
-      expect(msg.images).toEqual(images)
+      expect(msg.attachments).toEqual(attachments)
       expect(msg.type).toBe('image')
     })
 
     it('should create a mixed message', () => {
-      const images = ['https://example.com/img.jpg']
-      const msg = createMessage('user', 'Look at this', mockTopicId, { images })
+      const attachments = [{ name: 'img.jpg', url: 'https://example.com/img.jpg', type: 'image' as const }]
+      const msg = createMessage('user', 'Look at this', mockTopicId, { attachments })
 
-      expect(msg.images).toEqual(images)
-      expect(msg.type).toBe('mixed')
+      expect(msg.attachments).toEqual(attachments)
+      expect(msg.type).toBe('image') // single attachment type => that type, not mixed
     })
 
     it('should create a video message', () => {
-      const videos = ['https://example.com/video.mp4']
-      const msg = createMessage('user', '', mockTopicId, { videos })
+      const attachments = [{ name: 'video.mp4', url: 'https://example.com/video.mp4', type: 'video' as const }]
+      const msg = createMessage('user', '', mockTopicId, { attachments })
 
-      expect(msg.videos).toEqual(videos)
+      expect(msg.attachments).toEqual(attachments)
       expect(msg.type).toBe('video')
     })
 
     it('should create an audio message', () => {
-      const audios = ['https://example.com/audio.mp3']
-      const msg = createMessage('user', '', mockTopicId, { audios })
+      const attachments = [{ name: 'audio.mp3', url: 'https://example.com/audio.mp3', type: 'audio' as const }]
+      const msg = createMessage('user', '', mockTopicId, { attachments })
 
-      expect(msg.audios).toEqual(audios)
+      expect(msg.attachments).toEqual(attachments)
       expect(msg.type).toBe('audio')
     })
 
-    it('should create message with multiple attachments', () => {
-      const videos = ['https://example.com/video.mp4']
-      const images = ['https://example.com/image.jpg']
-      const audios = ['https://example.com/audio.mp3']
-      const msg = createMessage('user', 'Check this', mockTopicId, {
-        videos,
-        images,
-        audios,
-      })
+    it('should create message with multiple attachment types', () => {
+      const attachments = [
+        { name: 'video.mp4', url: 'https://example.com/video.mp4', type: 'video' as const },
+        { name: 'image.jpg', url: 'https://example.com/image.jpg', type: 'image' as const },
+        { name: 'audio.mp3', url: 'https://example.com/audio.mp3', type: 'audio' as const },
+      ]
+      const msg = createMessage('user', 'Check this', mockTopicId, { attachments })
 
-      expect(msg.videos).toEqual(videos)
-      expect(msg.images).toEqual(images)
-      expect(msg.audios).toEqual(audios)
-      expect(msg.type).toBe('video') // video takes precedence
+      expect(msg.attachments).toEqual(attachments)
+      expect(msg.type).toBe('mixed')
     })
 
     it('should create assistant message with loading status', () => {
@@ -172,9 +167,13 @@ describe('utils/message', () => {
     })
 
     it('should handle multiple images', () => {
-      const msg = {
+      const msg: Message = {
         ...mockImageMessage,
-        images: ['a.jpg', 'b.jpg', 'c.jpg'],
+        attachments: [
+          { name: 'a.jpg', url: 'http://a', type: 'image' },
+          { name: 'b.jpg', url: 'http://b', type: 'image' },
+          { name: 'c.jpg', url: 'http://c', type: 'image' },
+        ],
       }
       const text = getMessageText(msg)
       expect(text).toContain('3')
@@ -219,9 +218,9 @@ describe('utils/message', () => {
     it('should handle video messages', () => {
       const videoMessage: Message = {
         ...mockUserMessage,
-        content: 'This is a video message', // Video messages still have text
+        content: 'This is a video message',
         type: 'video',
-        videos: ['video.mp4'],
+        attachments: [{ name: 'video.mp4', url: 'http://v', type: 'video' }],
       }
 
       const preview = getMessagePreview(videoMessage, 50)
@@ -231,9 +230,9 @@ describe('utils/message', () => {
     it('should handle audio messages', () => {
       const audioMessage: Message = {
         ...mockUserMessage,
-        content: 'This is an audio message', // Audio messages still have text
+        content: 'This is an audio message',
         type: 'audio',
-        audios: ['audio.mp3'],
+        attachments: [{ name: 'audio.mp3', url: 'http://a', type: 'audio' }],
       }
 
       const preview = getMessagePreview(audioMessage, 50)
@@ -341,70 +340,6 @@ describe('utils/message', () => {
 
       const truncated = truncateMessage(msg, 100)
       expect(truncated.length).toBeLessThanOrEqual(103)
-    })
-  })
-
-  describe('sanitizeMessageContent', () => {
-    it('should sanitize malicious script tags', () => {
-      const malicious = '<script>alert("XSS")</script>Hello'
-      const result = sanitizeMessageContent(malicious)
-      expect(result).not.toContain('<script>')
-      expect(result).toContain('Hello')
-    })
-
-    it('should sanitize event handlers', () => {
-      const malicious = '<div onclick="alert(1)">Click</div>'
-      const result = sanitizeMessageContent(malicious)
-      expect(result).not.toContain('onclick')
-    })
-
-    it('should allow safe formatting tags', () => {
-      const safe = '<p>Hello <strong>world</strong></p>'
-      const result = sanitizeMessageContent(safe)
-      expect(result).toContain('<p>')
-      expect(result).toContain('<strong>')
-    })
-
-    it('should sanitize SVG-based XSS attacks', () => {
-      const malicious = '<svg onload="alert(1)">Text</svg>'
-      const result = sanitizeMessageContent(malicious)
-      expect(result).not.toContain('onload')
-      expect(result).not.toContain('<svg>')
-    })
-
-    it('should sanitize iframe tags', () => {
-      const malicious = '<iframe src="javascript:alert(1)"></iframe>Hello'
-      const result = sanitizeMessageContent(malicious)
-      expect(result).not.toContain('<iframe>')
-      expect(result).toContain('Hello')
-    })
-
-    it('should sanitize CSS-based attacks', () => {
-      const malicious = '<div style="background:url(javascript:alert(1))">Text</div>'
-      const result = sanitizeMessageContent(malicious)
-      expect(result).not.toContain('style=')
-    })
-
-    it('should sanitize javascript: protocol', () => {
-      const malicious = '<a href="javascript:alert(1)">Click</a>'
-      const result = sanitizeMessageContent(malicious)
-      expect(result).not.toContain('javascript:')
-    })
-
-    it('should sanitize data URLs with script content', () => {
-      const malicious = '<img src="data:text/html,<script>alert(1)</script>">'
-      const result = sanitizeMessageContent(malicious)
-      expect(result).not.toContain('data:text/html')
-    })
-
-    it('should handle empty string', () => {
-      const result = sanitizeMessageContent('')
-      expect(result).toBe('')
-    })
-
-    it('should handle string with only whitespace', () => {
-      const result = sanitizeMessageContent('   ')
-      expect(result).toBe('   ')
     })
   })
 })

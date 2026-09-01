@@ -240,13 +240,13 @@ async function testSessionManagement(page) {
   log('测试: 会话管理');
   try {
     // 查找新建会话按钮
-    const newChatButton = await page.$('[class*="new-chat"], [class*="topic"], button.new');
+    const newChatButton = await page.$('[class*="new-chat"], [class*="session"], button.new');
 
     if (newChatButton) {
       await newChatButton.click();
       await page.waitForTimeout(1000);
       log('新建会话按钮已点击', 'pass');
-      await takeScreenshot(page, 'new-topic');
+      await takeScreenshot(page, 'new-session');
     } else {
       log('未找到新建会话按钮', 'info');
     }
@@ -282,7 +282,7 @@ async function testApiConnection(page) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            topicId: 'test-' + Date.now(),
+            sessionId: 'test-' + Date.now(),
             content: 'Hello API test'
           })
         });

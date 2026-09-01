@@ -43,3 +43,6 @@ docs
 
 # Public
 public
+
+# SCSS (not supported by ESLint parser)
+*.scss

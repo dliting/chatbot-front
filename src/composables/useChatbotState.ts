@@ -1,12 +1,16 @@
 /**
- * Core composable for managing chatbot state
+ * Core composable for managing chatbot state.
+ * Returns sub-composables directly + coordinator for cross-cutting sync.
  */
 import { computed } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
+import type { Topic, Message } from '@/types'
 import { useUIState } from './useUIState'
 import { useMessagesState } from './useMessagesState'
 import { useTopicsState } from './useTopicsState'
 import { useInteractionState } from './useInteractionState'
+import { useChatbotCoordinator } from './useChatbotCoordinator'
+import { TOPIC_DEFAULTS } from '@/constants'
 
 export function useChatbotState(config: Required<ChatbotConfig>) {
   // Initialize sub-composables
@@ -18,13 +22,21 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
   })
 
   const messagesState = useMessagesState()
-  const topicsState = useTopicsState()
+  const topicsState = useTopicsState({
+    defaultTitle: config.labels?.newTopic || TOPIC_DEFAULTS.TITLE,
+  })
   const interactionState = useInteractionState({
     maxImageCount: config.maxImageCount,
   })
 
   // Set initial topic ID in messages state
   messagesState.messages.currentTopicId = topicsState.topics.currentId
+
+  // Coordinator handles cross-cutting sync between topics and messages
+  const coordinator = useChatbotCoordinator({
+    messages: messagesState.messages,
+    topicsState,
+  })
 
   // Computed properties
   const currentMessages = computed(() => {
@@ -39,64 +51,70 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     return messagesState.messages.streamingMessageId !== null
   })
 
-  // Wrapped actions that coordinate between sub-composables
-  const addMessage = (message: import('@/types').Message) => {
-    const { topicId } = message
-
-    messagesState.addMessage(message)
-    topicsState.updateTopicAfterMessage(
-      topicId,
-      messagesState.messages.byTopic[topicId]?.length || 0
-    )
-  }
-
-  const updateMessage = (messageId: string, updates: Partial<import('@/types').Message>) => {
+  // Message mutation helpers (delegating to sub-composables + coordinator)
+  const updateMessage = (messageId: string, updates: Partial<Message>) => {
     messagesState.updateMessage(messageId, messagesState.messages.currentTopicId, updates)
   }
 
-  const clearCurrentMessages = () => {
-    const topicId = messagesState.messages.currentTopicId
-    messagesState.clearCurrentMessages(topicId)
-    topicsState.updateTopicAfterMessage(topicId, 0)
-  }
-
-  const switchTopic = (topicId: string) => {
-    topicsState.switchTopic(topicId)
-    messagesState.messages.currentTopicId = topicId
-  }
-
-  const createTopic = () => {
-    const newTopicId = topicsState.createTopic()
-    messagesState.messages.currentTopicId = newTopicId
-    return newTopicId
-  }
-
-  const deleteTopic = (topicId: string) => {
-    // Remove messages for this topic
-    messagesState.deleteMessagesForTopic(topicId)
-
-    // Remove topic
-    topicsState.deleteTopic(topicId)
-
-    // If deleted topic was current, switch to another
-    if (topicId === topicsState.topics.currentId) {
-      const nextTopic = topicsState.topics.list[0]
-      if (nextTopic) {
-        switchTopic(nextTopic.topicId)
-      } else {
-        createTopic()
-      }
+  /** Remove a message by ID from a topic */
+  const removeMessage = (topicId: string, messageId: string) => {
+    const msgs = messagesState.messages.byTopic[topicId]
+    if (!msgs) return
+    const index = msgs.findIndex(m => m.messageId === messageId)
+    if (index > -1) {
+      msgs.splice(index, 1)
     }
   }
 
-  // Handle resize
-  window.addEventListener('resize', uiState.updateScreenSize)
-  uiState.updateScreenSize()
+  /** Insert a message at a specific index in a topic */
+  const insertMessage = (topicId: string, index: number, message: Message) => {
+    const msgs = messagesState.messages.byTopic[topicId]
+    if (!msgs) return
+    msgs.splice(index, 0, message)
+  }
+
+  /** Replace all messages for a topic */
+  const setMessages = (topicId: string, messages: Message[]) => {
+    messagesState.messages.byTopic[topicId] = messages
+  }
+
+  /** Ensure a messages array exists for a topic, return it */
+  const ensureMessages = (topicId: string): Message[] => {
+    if (!messagesState.messages.byTopic[topicId]) {
+      messagesState.messages.byTopic[topicId] = []
+    }
+    return messagesState.messages.byTopic[topicId]
+  }
+
+  /** Replace the entire topic list (used after backend reload) */
+  const setTopicList = (topics: Topic[]) => {
+    topicsState.topics.list.length = 0
+    topicsState.topics.list.push(...topics)
+  }
+
+  /** Add a topic to the front of the list */
+  const addTopicToFront = (topic: Topic) => {
+    topicsState.topics.list.unshift(topic)
+  }
+
+  // Topic actions that delegate to topicsState (watcher syncs messages.currentTopicId)
+  const switchTopic = (topicId: string) => {
+    topicsState.switchTopic(topicId)
+  }
+
+  const createTopic = (): string => {
+    return topicsState.createTopic()
+  }
+
+  // Initialize side effects (call from onMounted)
+  const init = () => {
+    uiState.init()
+  }
 
   // Cleanup
   const cleanup = () => {
-    window.removeEventListener('resize', uiState.updateScreenSize)
-    uiState.cleanupThemeListener()
+    uiState.cleanup()
+    coordinator.stop()
   }
 
   return {
@@ -120,17 +138,24 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     toggleView: uiState.toggleView,
     updateScreenSize: uiState.updateScreenSize,
 
-    // Message Actions
-    addMessage,
+    // Message Actions (coordinated + helpers)
+    addMessage: coordinator.addMessage,
     updateMessage,
-    clearCurrentMessages,
+    removeMessage,
+    insertMessage,
+    setMessages,
+    ensureMessages,
+    clearCurrentMessages: coordinator.clearCurrentMessages,
     setStreamingMessage: messagesState.setStreamingMessage,
 
-    // Topic Actions
+    // Topic Actions (coordinator handles cross-cutting)
     switchTopic,
     createTopic,
-    deleteTopic,
+    deleteTopic: coordinator.deleteTopic,
     updateTopicTitle: topicsState.updateTopicTitle,
+    setTopicList,
+    setCurrentTopicId: coordinator.setCurrentTopicId,
+    addTopicToFront,
 
     // Interaction Actions
     setSelectedImages: interactionState.setSelectedImages,
@@ -138,7 +163,8 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     removeSelectedImage: interactionState.removeSelectedImage,
     clearSelectedImages: interactionState.clearSelectedImages,
 
-    // Cleanup
+    // Init & Cleanup
+    init,
     cleanup,
   }
 }

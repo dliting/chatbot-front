@@ -5,89 +5,226 @@
 // Import markdown styles
 @import './markdown.css';
 
-// CSS Variables
+// =============================================
+// CSS Variables — Light Theme (default)
+// =============================================
 :root {
-  // Primary colors
-  --chatbot-primary-color: #409eff;
-  --chatbot-primary-color-light: #ecf5ff;
-  --chatbot-primary-color-dark: #337ecc;
-  --chatbot-primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  // === 主色调 ===
+  --theme-primary: #409eff;
+  --theme-primary-hover: #66b1ff;
+  --theme-primary-active: #3a8ee6;
+  --theme-primary-light: #ecf5ff;
+  --theme-primary-lighter: #f5f7fa;
+  --theme-primary-dark: #337ecc;
+  --theme-primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 
-  // Status colors
-  --chatbot-success-color: #67c23a;
-  --chatbot-warning-color: #e6a23c;
-  --chatbot-danger-color: #f56c6c;
-  --chatbot-danger-color-strong: #ef4444;
-  --chatbot-info-color: #909399;
+  // === 状态色 ===
+  --color-success: #67c23a;
+  --color-success-light: #e1f3d8;
+  --color-warning: #e6a23c;
+  --color-warning-light: #fdf6ec;
+  --color-danger: #f56c6c;
+  --color-danger-light: #fef0f0;
+  --color-danger-strong: #ef4444;
+  --color-info: #909399;
+  --color-info-light: #f4f4f5;
 
-  // Light theme
-  --chatbot-bg-color: #ffffff;
-  --chatbot-text-color: #303133;
-  --chatbot-border-color: #dcdfe6;
-  --chatbot-subtext-color: #909399;
+  // === 背景色 ===
+  --bg-base: #ffffff;
+  --bg-secondary: #f5f7fa;
+  --bg-tertiary: #ebeef5;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --bg-backdrop: rgba(255, 255, 255, 0.8);
 
-  // Bubble colors - light
-  --chatbot-user-bubble-bg: #409eff;
-  --chatbot-user-bubble-text: #ffffff;
-  --chatbot-assistant-bubble-bg: #f5f7fa;
-  --chatbot-assistant-bubble-text: #303133;
+  // === 文字色 ===
+  --text-primary: #303133;
+  --text-secondary: #606266;
+  --text-tertiary: #909399;
+  --text-placeholder: #a8abb2;
+  --text-disabled: #c0c4cc;
+  --text-link: #409eff;
 
-  // Message width
-  --chatbot-message-max-width: 800px;
-  --chatbot-user-bubble-max-width: 70%;
+  // === 边框色 ===
+  --border-base: #dcdfe6;
+  --border-light: #e4e7ed;
+  --border-lighter: #ebeef5;
+  --border-dark: #d4d7de;
 
-  // Panel colors - light
-  --chatbot-panel-bg: #ffffff;
-  --chatbot-panel-border: #e4e7ed;
-  --chatbot-panel-text: #303133;
-  --chatbot-panel-subtext: #909399;
+  // === 聊天消息气泡 ===
+  --chat-user-bg: #409eff;
+  --chat-user-text: #ffffff;
+  --chat-assistant-bg: #f5f7fa;
+  --chat-assistant-text: #303133;
+  --bg-video-overlay: rgba(0, 0, 0, 0.8);
 
-  // Content background gradient - light
-  --chatbot-content-bg-1: #f0f4ff;
-  --chatbot-content-bg-2: #e8f0ff;
-  --chatbot-content-bg-3: #f5f3ff;
+  // === 内容区背景渐变 ===
+  --content-bg-1: #f0f4ff;
+  --content-bg-2: #e8f0ff;
+  --content-bg-3: #f5f3ff;
 
-  // Quick action - light
-  --chatbot-quick-action-bg: rgba(255, 255, 255, 0.7);
-  --chatbot-quick-action-border: rgba(255, 255, 255, 0.5);
+  // === 快捷操作 ===
+  --quick-action-bg: rgba(255, 255, 255, 0.7);
+  --quick-action-border: rgba(255, 255, 255, 0.5);
 
-  // Sizes
-  --chatbot-border-radius: 12px;
-  --chatbot-ball-size: 56px;
+  // === 输入区域 ===
+  --input-bg: #ffffff;
+  --input-bg-hover: #fafafa;
+  --input-border: #dcdfe6;
+  --input-border-hover: #c0c4cc;
+  --input-border-focus: #409eff;
+
+  // === 会话列表 ===
+  --topic-bg: #ffffff;
+  --topic-bg-hover: #f5f7fa;
+  --topic-bg-active: #ecf5ff;
+  --topic-border: #e4e7ed;
+
+  // === 悬浮元素 ===
+  --float-bg: #ffffff;
+  --float-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  --float-shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.15);
+
+  // === 思考过程 ===
+  --thinking-bg: #f0f9ff;
+  --thinking-border: #bae6fd;
+  --thinking-text: #0369a1;
+
+  // === 滚动条 ===
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #dcdfe6;
+  --scrollbar-thumb-hover: #c0c4cc;
+
+  // === 消息宽度 ===
+  --message-max-width: 800px;
+  --user-bubble-max-width: 70%;
+
+  // === 阴影 ===
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.15);
+
+  // === 圆角 ===
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  // === 间距 ===
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 16px;
+  --spacing-xl: 24px;
+  --spacing-2xl: 32px;
+
+  // === 过渡 ===
+  --transition-fast: 0.15s;
+  --transition-base: 0.3s;
+  --transition-slow: 0.5s;
+  --easing-base: cubic-bezier(0.4, 0, 0.2, 1);
+
+  // === 文字覆盖色 ===
+  --text-on-primary: #ffffff;
+
+  // === 操作图标 ===
+  --action-icon-color: #8c8c8c;
+  --action-hover-bg: rgba(0, 0, 0, 0.1);
+  --action-icon-hover-color: #4a4a4a;
+
+  // === 语义色深色变体 ===
+  --color-danger-dark: #f78989;
+  --color-warning-dark: #ebb563;
 }
 
-[data-theme='dark'] {
-  // Dark theme
-  --chatbot-bg-color: #1a1a1a;
-  --chatbot-text-color: #e5e5e5;
-  --chatbot-border-color: #4c4d4f;
-  --chatbot-subtext-color: #a3a3a3;
+// =============================================
+// 暗色主题
+// =============================================
+[data-theme="dark"] {
+  // 背景色系统
+  --bg-base: #1a1a1a;
+  --bg-secondary: #2c2c2c;
+  --bg-tertiary: #3a3a3a;
+  --bg-overlay: rgba(0, 0, 0, 0.7);
+  --bg-backdrop: rgba(26, 26, 26, 0.8);
 
-  // Bubble colors - dark
-  --chatbot-user-bubble-bg: #5a6fd6;
-  --chatbot-user-bubble-text: #ffffff;
-  --chatbot-assistant-bubble-bg: #2c2c2c;
-  --chatbot-assistant-bubble-text: #e5e5e5;
+  // 文字色系统
+  --text-primary: #e5e5e5;
+  --text-secondary: #a3a3a3;
+  --text-tertiary: #757575;
+  --text-placeholder: #5a5a5a;
+  --text-disabled: #4a4a4a;
 
-  // Panel colors - dark
-  --chatbot-panel-bg: #1a1a1a;
-  --chatbot-panel-border: #4c4d4f;
-  --chatbot-panel-text: #e5e5e5;
-  --chatbot-panel-subtext: #a3a3a3;
+  // 边框色系统
+  --border-base: #4c4d4f;
+  --border-light: #3a3a3a;
+  --border-lighter: #2c2c2c;
+  --border-dark: #5a5a5a;
 
-  // Content background gradient - dark
-  --chatbot-content-bg-1: #1a1a2e;
-  --chatbot-content-bg-2: #16213e;
-  --chatbot-content-bg-3: #1a1a2e;
+  // 语义色浅色变体（暗色主题下需要更深）
+  --color-success-light: rgba(103, 194, 58, 0.15);
+  --color-warning-light: rgba(230, 162, 60, 0.15);
+  --color-danger-light: rgba(245, 108, 108, 0.15);
+  --color-info-light: rgba(144, 147, 153, 0.15);
 
-  // Quick action - dark
-  --chatbot-quick-action-bg: rgba(44, 44, 44, 0.7);
-  --chatbot-quick-action-border: rgba(76, 77, 79, 0.5);
+  // 聊天消息气泡
+  --chat-user-bg: #5a6fd6;
+  --chat-assistant-bg: #2c2c2c;
+  --chat-assistant-text: #e5e5e5;
 
-  // Primary color light variant for dark theme
-  --chatbot-primary-color-light: #1a3a5c;
-  --chatbot-danger-color-dark: #c45656;
-  --chatbot-primary-gradient: linear-gradient(135deg, #5a6fd6 0%, #6a5bb5 100%);
+  // 内容区背景渐变
+  --content-bg-1: #1a1f2e;
+  --content-bg-2: #1a1e2d;
+  --content-bg-3: #1e1a2e;
+
+  // 快捷操作
+  --quick-action-bg: rgba(44, 44, 44, 0.7);
+  --quick-action-border: rgba(44, 44, 44, 0.5);
+
+  // 输入区域
+  --input-bg: #2c2c2c;
+  --input-bg-hover: #3a3a3a;
+  --input-border: #4c4d4f;
+  --input-border-hover: #5a5a5a;
+
+  // 会话列表
+  --topic-bg: #1a1a1a;
+  --topic-bg-hover: #2c2c2c;
+  --topic-bg-active: #1a3a5c;
+  --topic-border: #4c4d4f;
+
+  // 悬浮元素
+  --float-bg: #2c2c2c;
+  --float-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  --float-shadow-lg: 0 4px 20px rgba(0, 0, 0, 0.4);
+
+  // 思考过程
+  --thinking-bg: #1a3a5c;
+  --thinking-border: #2c5a8a;
+  --thinking-text: #7ab8e8;
+
+  // 滚动条
+  --scrollbar-thumb: #4c4d4f;
+  --scrollbar-thumb-hover: #5a5a5a;
+
+  // 阴影（暗色下更深）
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  // 操作图标
+  --action-icon-color: #a3a3a3;
+  --action-hover-bg: rgba(255, 255, 255, 0.1);
+  --action-icon-hover-color: #e5e5e5;
+
+  // 语义色深色变体
+  --color-danger-dark: #c45656;
+  --color-warning-dark: #d4a23c;
+
+  // 渐变覆盖
+  --theme-primary-gradient: linear-gradient(135deg, #5a6fd6 0%, #6a5bb5 100%);
 }
 
 // Reset
@@ -119,16 +256,16 @@
 }
 
 .ai-chatbot ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--scrollbar-track);
 }
 
 .ai-chatbot ::-webkit-scrollbar-thumb {
-  background: var(--chatbot-border-color);
+  background: var(--scrollbar-thumb);
   border-radius: 3px;
 }
 
 .ai-chatbot ::-webkit-scrollbar-thumb:hover {
-  background: var(--chatbot-subtext-color);
+  background: var(--scrollbar-thumb-hover);
 }
 
 // Base styles
@@ -144,5 +281,5 @@ body {
 }
 
 h1 {
-  color: var(--chatbot-text-color);
+  color: var(--text-primary);
 }

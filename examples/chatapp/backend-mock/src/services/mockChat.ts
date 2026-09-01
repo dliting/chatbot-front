@@ -26,8 +26,8 @@ function getMockResponse(input: string): string {
 3. **代码示例**：
 \`\`\`javascript
 const response = await ai.chat({
-  model: 'qwen3.5:9b',
-  messages: [{ role: 'user', content: '${input}' }]
+  model: '<your-configured-model>',
+  messages: [{ role: 'user', content: '<user-input>' }]
 });
 console.log(response);
 **功能说明**：
@@ -40,14 +40,32 @@ console.log(response);
 如有更多问题，请继续提问！`
 }
 
+export interface MockChatOptions {
+  thinking?: { enabled?: boolean }
+}
+
+function getMockThinkingContent(input: string): string {
+  return `好的，让我分析一下这个问题...\n\n用户的问题是："${input}"\n\n我需要从以下几个角度来考虑：\n1. 问题的核心需求是什么\n2. 最合适的解决方案\n3. 如何清晰地表达回答`
+}
+
 export async function* streamMockChat(
-  messages: Array<{ role: string; content: string }>
-): AsyncGenerator<{ type: string; content?: string; fullContent?: string }, void, unknown> {
+  messages: Array<{ role: string; content: string }>,
+  options?: MockChatOptions
+): AsyncGenerator<{ type: string; content?: string; fullContent?: string; reasoningContent?: string }, void, unknown> {
   const lastMessage = messages[messages.length - 1]
   const input = lastMessage?.content || ''
   const response = getMockResponse(input)
 
   yield { type: 'start', content: '' }
+
+  // Stream thinking content before main response if enabled
+  if (options?.thinking?.enabled) {
+    const thinkingText = getMockThinkingContent(input)
+    for (const char of thinkingText) {
+      await new Promise((resolve) => setTimeout(resolve, 15 + Math.random() * 20))
+      yield { type: 'reasoning', reasoningContent: char }
+    }
+  }
 
   // Stream tokens character by character
   for (const char of response) {
@@ -59,9 +77,16 @@ export async function* streamMockChat(
 }
 
 export async function mockChat(
-  messages: Array<{ role: string; content: string }>
+  messages: Array<{ role: string; content: string }>,
+  options?: MockChatOptions
 ): Promise<string> {
   const lastMessage = messages[messages.length - 1]
   const input = lastMessage?.content || ''
+
+  if (options?.thinking?.enabled) {
+    const thinkingText = getMockThinkingContent(input)
+    return thinkingText + '\n\n---\n\n' + getMockResponse(input)
+  }
+
   return getMockResponse(input)
 }

@@ -1,18 +1,37 @@
 /**
  * Unit tests for FloatingChatPanel component
  * Tests for floating mode functionality
+ * Architecture: inject-primary pattern — internal actions use inject, emits are external-only
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import FloatingChatPanel from '@/components/FloatingChatPanel.vue'
+import { chatActionsKey, topicActionsKey, uiActionsKey } from '@/symbols'
 import type { ChatbotConfig } from '@/types/config'
 import type { Message, Topic } from '@/types'
+import { createMockChatActions, createMockTopicActions, createMockUIActions } from '../utils/mockActions'
+
+const mockChatActions = createMockChatActions()
+const mockTopicActions = createMockTopicActions()
+const mockUIActions = createMockUIActions()
+
+function mountPanel(props: Record<string, unknown>) {
+  return mount(FloatingChatPanel, {
+    props,
+    global: {
+      provide: {
+        [chatActionsKey]: mockChatActions,
+        [topicActionsKey]: mockTopicActions,
+        [uiActionsKey]: mockUIActions,
+      },
+    },
+  })
+}
 
 describe('FloatingChatPanel Component', () => {
-  // Sample test data
   const mockConfig: ChatbotConfig = {
-    chatMode: 'floating',
+    mode: 'floating',
     theme: 'light',
     position: 'bottom-right',
     panelWidth: 400,
@@ -61,46 +80,43 @@ describe('FloatingChatPanel Component', () => {
     },
   ]
 
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
   describe('Props and Rendering', () => {
     it('should render with required props', () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
-      })
+        })
 
       expect(wrapper.exists()).toBe(true)
     })
 
     it('should render SuspendedBall when panel is closed', () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
-      })
+        })
 
-      // Initially panel should be closed (defaultExpanded: false)
       const suspendedBall = wrapper.findComponent({ name: 'SuspendedBall' })
       expect(suspendedBall.exists()).toBe(true)
     })
 
     it('should render DraggableWindow when panel is open', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -110,14 +126,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should render ChatContent inside DraggableWindow', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -127,15 +141,13 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should accept hideWelcome prop', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: [],
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
           hideWelcome: true,
-        },
       })
 
       await nextTick()
@@ -144,172 +156,139 @@ describe('FloatingChatPanel Component', () => {
       expect(chatContent.props('welcomeVisible')).toBe(false)
     })
 
-    it('should accept hideQuickActions prop', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+    it('should accept quickActions prop', async () => {
+      const mockActions = [{ id: '1', title: 'Test', prompt: 'Test prompt' }]
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-          hideQuickActions: true,
-        },
+          quickActions: mockActions,
       })
 
       await nextTick()
 
       const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      expect(chatContent.props('quickActionsVisible')).toBe(false)
+      expect(chatContent.props('quickActions')).toEqual(mockActions)
     })
   })
 
   describe('Panel State Management', () => {
     it('should open panel when SuspendedBall is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
-      })
+        })
 
-      // Find SuspendedBall and click it
       const suspendedBall = wrapper.find('.chatbot-ball')
       expect(suspendedBall.exists()).toBe(true)
       await suspendedBall.trigger('click')
       await nextTick()
-      await wrapper.vm.$nextTick()
 
-      // Check internal state via exposed method
       const vm = wrapper.vm as unknown as { isPanelOpen: boolean }
       expect(vm.isPanelOpen).toBe(true)
     })
 
-    it('should close panel when ChatHeader close button is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+    it('should close panel when corner close button is clicked', async () => {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      // Find ChatHeader and trigger close - need to trigger on the button inside
-      const closeBtn = wrapper.find('.chat-header__close')
+      const closeBtn = wrapper.find('.floating-chat-panel__close-btn')
       expect(closeBtn.exists()).toBe(true)
       await closeBtn.trigger('click')
       await nextTick()
 
-      // Check internal state
       const vm = wrapper.vm as unknown as { isPanelOpen: boolean }
       expect(vm.isPanelOpen).toBe(false)
     })
   })
 
-  describe('Topic List View', () => {
+  describe('Session List View', () => {
     it('should show TopicListView when topics button is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      // Initially should show ChatContent
       let chatContent = wrapper.findComponent({ name: 'ChatContent' })
       expect(chatContent.exists()).toBe(true)
 
-      // Click topics button in ChatHeader - find the topics button
       const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
       expect(topicsBtn.exists()).toBe(true)
       await topicsBtn.trigger('click')
       await nextTick()
 
-      // Now should show TopicListView
       const topicListView = wrapper.findComponent({ name: 'TopicListView' })
       expect(topicListView.exists()).toBe(true)
     })
 
     it('should switch to chat view when close button is clicked in TopicListView', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      // Go to topics view
       const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
       await topicsBtn.trigger('click')
       await nextTick()
 
-      // Verify we're in topics view
       let topicListView = wrapper.findComponent({ name: 'TopicListView' })
       expect(topicListView.exists()).toBe(true)
 
-      // Emit close event from TopicListView component
       await topicListView.vm.$emit('close')
       await nextTick()
 
-      // Should be back to chat view
       const chatContent = wrapper.findComponent({ name: 'ChatContent' })
       expect(chatContent.exists()).toBe(true)
     })
   })
 
-  describe('Theme Toggle', () => {
-    it('should toggle theme when theme toggle button is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+  describe('Theme Toggle (inject path)', () => {
+    it('should not show theme toggle button (hidden by default)', async () => {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true, theme: 'light' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      // Find the theme toggle button (it's the second button, first is topics)
-      const themeBtn = wrapper.findAll('.chat-header__btn').at(1)
-      expect(themeBtn).toBeDefined()
-      await themeBtn?.trigger('click')
-      await nextTick()
-
-      // Verify toggleTheme method was called
-      const vm = wrapper.vm as unknown as { toggleTheme: () => void }
-      // Just verify the component renders correctly
-      expect(wrapper.findComponent({ name: 'ChatHeader' }).exists()).toBe(true)
+      const chatHeader = wrapper.findComponent({ name: 'ChatHeader' })
+      expect(chatHeader.props('showThemeToggle')).toBe(false)
     })
   })
 
   describe('Window State', () => {
     it('should initialize window position on mount', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -324,8 +303,7 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should pass correct props to DraggableWindow', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: {
             ...mockConfig,
             defaultExpanded: true,
@@ -339,7 +317,6 @@ describe('FloatingChatPanel Component', () => {
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -355,14 +332,12 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Streaming State', () => {
     it('should pass isStreaming to ChatContent', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: true,
-        },
       })
 
       await nextTick()
@@ -382,14 +357,12 @@ describe('FloatingChatPanel Component', () => {
         },
       }
 
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: customConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -399,221 +372,88 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should show all required buttons in ChatHeader', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
       const chatHeader = wrapper.findComponent({ name: 'ChatHeader' })
       expect(chatHeader.props('showTopicsButton')).toBe(true)
-      expect(chatHeader.props('showThemeToggle')).toBe(true)
-      expect(chatHeader.props('showCloseButton')).toBe(true)
+      expect(chatHeader.props('showThemeToggle')).toBe(false)
+      expect(chatHeader.props('showCloseButton')).toBe(false)
     })
   })
 
-  describe('Event Emissions', () => {
-    it('should emit send-message event when ChatContent sends a message', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+  describe('Inject-primary pattern (no emit forwarding)', () => {
+    it('should NOT emit send-message — ChatContent uses chatActions.sendMessage via inject', async () => {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      await chatContent.vm.$emit('send-message', { content: 'Test message' })
-      await nextTick()
-
-      expect(wrapper.emitted('send-message')).toBeTruthy()
-      expect(wrapper.emitted('send-message')?.[0]).toEqual([{ content: 'Test message' }])
+      // ChatContent handles sending via inject, not emit
+      expect(wrapper.emitted('send-message')).toBeFalsy()
     })
 
-    it('should emit send-message with images when ChatContent sends a message with images', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+    it('should NOT emit create-topic — TopicListView uses topicActions.createNewTopic via inject', async () => {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      await chatContent.vm.$emit('send-message', { content: 'Test', images: ['img1.jpg', 'img2.jpg'] })
-      await nextTick()
-
-      expect(wrapper.emitted('send-message')).toBeTruthy()
-      expect(wrapper.emitted('send-message')?.[0]).toEqual([{ content: 'Test', images: ['img1.jpg', 'img2.jpg'] }])
+      expect(wrapper.emitted('create-topic')).toBeFalsy()
     })
 
-    it('should emit quick-action event when quick action is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+    it('should NOT emit select-topic — TopicListView uses inject for topic switching', async () => {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      await chatContent.vm.$emit('quick-action', 'What is AI?')
-      await nextTick()
-
-      expect(wrapper.emitted('quick-action')).toBeTruthy()
-      expect(wrapper.emitted('quick-action')?.[0]).toEqual(['What is AI?'])
+      expect(wrapper.emitted('select-topic')).toBeFalsy()
     })
 
-    it('should emit edit-message event when message is edited', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+    it('should NOT emit delete-topic — TopicListView uses topicActions.removeTopic via inject', async () => {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      const editedMessage = { ...mockMessages[0], content: 'Edited content' }
-      await chatContent.vm.$emit('edit', editedMessage)
-      await nextTick()
-
-      expect(wrapper.emitted('edit-message')).toBeTruthy()
-      expect(wrapper.emitted('edit-message')?.[0]).toEqual([editedMessage])
+      expect(wrapper.emitted('delete-topic')).toBeFalsy()
     })
 
-    it('should emit toggle-theme event when theme toggle button is clicked', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+    it('should switch to chat view after selecting topic (via inject)', async () => {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
-      })
-
-      await nextTick()
-
-      // Find the theme toggle button and click it
-      const themeBtn = wrapper.findAll('.chat-header__btn').at(1)
-      await themeBtn?.trigger('click')
-      await nextTick()
-
-      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
-    })
-
-    it('should emit create-topic event when creating new topic', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
-          config: { ...mockConfig, defaultExpanded: true },
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic_1',
-          isStreaming: false,
-        },
-      })
-
-      await nextTick()
-
-      // Go to topics view
-      const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
-      await topicsBtn.trigger('click')
-      await nextTick()
-
-      // Find TopicListView and emit create-topic
-      const topicListView = wrapper.findComponent({ name: 'TopicListView' })
-      await topicListView.vm.$emit('create-topic')
-      await nextTick()
-
-      expect(wrapper.emitted('create-topic')).toBeTruthy()
-    })
-
-    it('should emit select-topic event when selecting a topic', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
-          config: { ...mockConfig, defaultExpanded: true },
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic_1',
-          isStreaming: false,
-        },
-      })
-
-      await nextTick()
-
-      // Go to topics view
-      const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
-      await topicsBtn.trigger('click')
-      await nextTick()
-
-      // Find TopicListView and emit select-topic
-      const topicListView = wrapper.findComponent({ name: 'TopicListView' })
-      await topicListView.vm.$emit('select-topic', 'topic_2')
-      await nextTick()
-
-      expect(wrapper.emitted('select-topic')).toBeTruthy()
-      expect(wrapper.emitted('select-topic')?.[0]).toEqual(['topic_2'])
-    })
-
-    it('should emit delete-topic event when deleting a topic', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
-          config: { ...mockConfig, defaultExpanded: true },
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic_1',
-          isStreaming: false,
-        },
-      })
-
-      await nextTick()
-
-      // Go to topics view
-      const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
-      await topicsBtn.trigger('click')
-      await nextTick()
-
-      // Find TopicListView and emit delete-topic
-      const topicListView = wrapper.findComponent({ name: 'TopicListView' })
-      await topicListView.vm.$emit('delete-topic', 'topic_2')
-      await nextTick()
-
-      expect(wrapper.emitted('delete-topic')).toBeTruthy()
-      expect(wrapper.emitted('delete-topic')?.[0]).toEqual(['topic_2'])
-    })
-
-    it('should switch to chat view after selecting topic', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
-          config: { ...mockConfig, defaultExpanded: true },
-          messages: mockMessages,
-          topics: mockTopics,
-          currentTopicId: 'topic_1',
-          isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -627,8 +467,10 @@ describe('FloatingChatPanel Component', () => {
       let topicListView = wrapper.findComponent({ name: 'TopicListView' })
       expect(topicListView.exists()).toBe(true)
 
-      // Select a topic
-      await topicListView.vm.$emit('select-topic', 'topic_2')
+      // Simulate what happens when user clicks a topic:
+      // TopicListView calls topicActions.switchToTopic + uiActions.showChatView via inject
+      // The enhanced provide chain ensures showChatView is the panel's local one
+      wrapper.vm.showChatView()
       await nextTick()
 
       // Should be back to chat view
@@ -639,38 +481,32 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Boundary Cases', () => {
     it('should render correctly with empty messages array', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: [],
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
       const chatContent = wrapper.findComponent({ name: 'ChatContent' })
       expect(chatContent.exists()).toBe(true)
-      // welcomeVisible should be true when messages is empty
       expect(chatContent.props('welcomeVisible')).toBe(true)
     })
 
     it('should render correctly with empty topics array', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: [],
           topics: [],
           currentTopicId: '',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      // Go to topics view
       const topicsBtn = wrapper.find('.chat-header__btn:not(.chat-header__close)')
       await topicsBtn.trigger('click')
       await nextTick()
@@ -681,31 +517,26 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should use default config values when config is empty', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: {},
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      // Should render without errors
       expect(wrapper.exists()).toBe(true)
     })
 
     it('should handle dark theme correctly', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true, theme: 'dark' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -718,14 +549,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should pass position to SuspendedBall', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, position: 'top-left' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -735,14 +564,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should handle bottom-left position', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { position: 'bottom-left' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -752,14 +579,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should handle top-right position', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { position: 'top-right' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -769,37 +594,31 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should start with panel open when defaultExpanded is true', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      // Panel should be open
       const draggableWindow = wrapper.findComponent({ name: 'DraggableWindow' })
       expect(draggableWindow.exists()).toBe(true)
     })
 
     it('should start with panel closed when defaultExpanded is false', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: false },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      // Panel should be closed, SuspendedBall should be visible
       const draggableWindow = wrapper.findComponent({ name: 'DraggableWindow' })
       expect(draggableWindow.exists()).toBe(false)
 
@@ -808,14 +627,12 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should pass primaryColor to SuspendedBall', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, primaryColor: '#ff0000' },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
@@ -827,23 +644,19 @@ describe('FloatingChatPanel Component', () => {
 
   describe('Exposed Methods', () => {
     it('should expose openPanel method', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: mockConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
-      })
+        })
 
       await nextTick()
 
-      // Panel should be initially closed
       const vm = wrapper.vm as unknown as { isPanelOpen: boolean }
       expect(vm.isPanelOpen).toBe(false)
 
-      // Call openPanel
       wrapper.vm.openPanel()
       await nextTick()
 
@@ -851,47 +664,39 @@ describe('FloatingChatPanel Component', () => {
     })
 
     it('should expose closePanel method', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      // Panel should be initially open
       const vm = wrapper.vm as unknown as { isPanelOpen: boolean }
       expect(vm.isPanelOpen).toBe(true)
 
-      // Call closePanel
       wrapper.vm.closePanel()
       await nextTick()
 
       expect(vm.isPanelOpen).toBe(false)
     })
 
-    it('should expose toggleTheme method', async () => {
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+    it('should NOT expose toggleTheme — theme toggling is handled via inject', async () => {
+      const wrapper = mountPanel({
           config: { ...mockConfig, defaultExpanded: true },
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()
 
-      // Call handleToggleTheme
-      wrapper.vm.handleToggleTheme()
-      await nextTick()
-
-      expect(wrapper.emitted('toggle-theme')).toBeTruthy()
+      // toggleTheme/handleToggleTheme should not be exposed
+      expect((wrapper.vm as any).handleToggleTheme).toBeUndefined()
+      expect((wrapper.vm as any).toggleTheme).toBeUndefined()
     })
   })
 
@@ -904,14 +709,12 @@ describe('FloatingChatPanel Component', () => {
         panelHeight: 600,
       }
 
-      const wrapper = mount(FloatingChatPanel, {
-        props: {
+      const wrapper = mountPanel({
           config: customConfig,
           messages: mockMessages,
           topics: mockTopics,
           currentTopicId: 'topic_1',
           isStreaming: false,
-        },
       })
 
       await nextTick()

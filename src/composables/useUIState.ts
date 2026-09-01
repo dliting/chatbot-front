@@ -22,11 +22,10 @@ interface UseUIStateOptions {
 }
 
 export function useUIState(options: Required<UseUIStateOptions>) {
-  // System theme detection
+  let initialized = false
   let mediaQueryList: MediaQueryList | null = null
   let handleThemeChange: ((e: MediaQueryListEvent) => void) | null = null
 
-  // Get system theme
   const getSystemTheme = (): Theme => {
     if (typeof window === 'undefined' || !window.matchMedia) {
       return 'light'
@@ -34,7 +33,6 @@ export function useUIState(options: Required<UseUIStateOptions>) {
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   }
 
-  // Determine initial theme based on config
   const getInitialTheme = (): Theme => {
     if (options.initialTheme === 'system') {
       return getSystemTheme()
@@ -42,43 +40,14 @@ export function useUIState(options: Required<UseUIStateOptions>) {
     return options.initialTheme
   }
 
-  // Initialize theme change listener
-  const initThemeListener = () => {
-    if (options.initialTheme !== 'system') {
-      return
-    }
-
-    if (typeof window === 'undefined' || !window.matchMedia) {
-      return
-    }
-
-    mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)')
-    handleThemeChange = (e: MediaQueryListEvent) => {
-      const newTheme = e.matches ? 'dark' : 'light'
-      ui.theme = newTheme
-      document.documentElement.setAttribute('data-theme', newTheme)
-    }
-
-    mediaQueryList.addEventListener('change', handleThemeChange)
-  }
-
-  // Clean up theme listener
-  const cleanupThemeListener = () => {
-    if (mediaQueryList && handleThemeChange) {
-      mediaQueryList.removeEventListener('change', handleThemeChange)
-      mediaQueryList = null
-      handleThemeChange = null
-    }
-  }
-
-  // UI State
+  // UI State (safe defaults for SSR, updated on init())
   const ui = reactive<UIState>({
     isPanelOpen: options.defaultExpanded,
     panelMode: options.panelMode === 'auto' || !options.panelMode ? 'dialog' : options.panelMode,
     theme: getInitialTheme(),
     locale: options.locale,
-    screenWidth: window.innerWidth,
-    isMobile: window.innerWidth < 768,
+    screenWidth: typeof window !== 'undefined' ? window.innerWidth : 1024,
+    isMobile: typeof window !== 'undefined' ? window.innerWidth < 768 : false,
     currentView: 'chat',
   })
 
@@ -90,7 +59,9 @@ export function useUIState(options: Required<UseUIStateOptions>) {
   const setTheme = (theme: Theme) => {
     const resolvedTheme = theme === 'system' ? getSystemTheme() : theme
     ui.theme = resolvedTheme
-    document.documentElement.setAttribute('data-theme', resolvedTheme)
+    if (initialized) {
+      document.documentElement.setAttribute('data-theme', resolvedTheme)
+    }
   }
 
   const setCurrentView = (view: 'topics' | 'chat') => {
@@ -116,9 +87,44 @@ export function useUIState(options: Required<UseUIStateOptions>) {
     }
   }
 
-  // Initialize theme
-  setTheme(ui.theme)
-  initThemeListener()
+  const initThemeListener = () => {
+    if (options.initialTheme !== 'system') return
+    if (typeof window === 'undefined' || !window.matchMedia) return
+
+    mediaQueryList = window.matchMedia('(prefers-color-scheme: dark)')
+    handleThemeChange = (e: MediaQueryListEvent) => {
+      const newTheme = e.matches ? 'dark' : 'light'
+      ui.theme = newTheme
+      document.documentElement.setAttribute('data-theme', newTheme)
+    }
+    mediaQueryList.addEventListener('change', handleThemeChange)
+  }
+
+  const cleanupThemeListener = () => {
+    if (mediaQueryList && handleThemeChange) {
+      mediaQueryList.removeEventListener('change', handleThemeChange)
+      mediaQueryList = null
+      handleThemeChange = null
+    }
+  }
+
+  /** Initialize side effects (call from onMounted) */
+  const init = () => {
+    initialized = true
+    setTheme(ui.theme)
+    initThemeListener()
+    updateScreenSize()
+    window.addEventListener('resize', updateScreenSize)
+  }
+
+  /** Clean up all listeners (call from onUnmounted) */
+  const cleanup = () => {
+    cleanupThemeListener()
+    if (initialized) {
+      window.removeEventListener('resize', updateScreenSize)
+      initialized = false
+    }
+  }
 
   return {
     ui,
@@ -127,7 +133,8 @@ export function useUIState(options: Required<UseUIStateOptions>) {
     setCurrentView,
     toggleView,
     updateScreenSize,
-    cleanupThemeListener,
+    init,
+    cleanup,
   }
 }
 

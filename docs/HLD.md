@@ -100,6 +100,25 @@ AIChat
 | FloatingPanel | Floating Mode Exclusive | Floating | Floating panel component |
 | DraggableWindow | Floating Mode Exclusive | Floating | Draggable window component |
 
+### Composables
+
+| Composable | Description |
+|------------|-------------|
+| useChatView | Chat view orchestration (scroll, welcome screen, auto-scroll) |
+| useChatActions | Chat action handlers (send, stop, regenerate, edit, delete) |
+| useTopicActions | Topic action handlers (create, switch, delete, update title, clear) |
+| useResizeHandle | Resize handle logic for draggable/resizable panels and sidebars |
+| useFilePreview | File preview state and actions (open, close, navigate between files) |
+| useChatbotState | Top-level chatbot state management |
+| useStream | Stream response handling |
+| useMessagesState | Message state management |
+| useTopicsState | Topic state management |
+| useUIState | UI state management (theme, panel toggle) |
+| useInteractionState | Interaction mode state management |
+| useResponsive | Responsive breakpoint detection |
+| useStorage | Persistent storage abstraction |
+| useApiClient | Backend API client with session-to-topic mapping |
+
 ## Component Structure
 
 ### Shared Components
@@ -127,7 +146,7 @@ interface ChatAreaProps {
 - Welcome screen display
 
 **Internal Components**:
-- `ChatHeader`: Header (title, theme toggle, settings button)
+- `ChatHeader`: Header (title, settings button; theme toggle hidden by default)
 - `MessageList`: Message list (virtual scrolling)
 - `WelcomeScreen`: Welcome screen (quick action cards)
 - `InputArea`: Input area (text input, file upload, send button)
@@ -198,7 +217,7 @@ interface InputAreaProps {
 interface ChatHeaderProps {
   title?: string
   theme?: Theme
-  showThemeToggle?: boolean
+  showThemeToggle?: boolean  // Default false — hidden by default, host-controlled
   showSettings?: boolean
   showClose?: boolean
   onClose?: () => void
@@ -207,9 +226,9 @@ interface ChatHeaderProps {
 
 **Features**:
 - Display title
-- Theme toggle button
+- Theme toggle button (hidden by default; host app controls theme via config/exposed methods)
 - Settings button (opens menu)
-- Close button (sidebar/floating mode)
+- Close button (sidebar/floating mode; floating mode uses separate corner button)
 
 #### WelcomeScreen (Welcome Screen)
 
@@ -399,7 +418,7 @@ interface TabViewProps {
 ```typescript
 interface SidebarModeConfig {
   // Sidebar configuration
-  sidebarWidth?: number           // Sidebar width (380-600px)
+  sidebarWidth?: number           // Sidebar width (200-500px, default 280)
   sidebarPosition?: 'left' | 'right'  // Sidebar position
   defaultExpanded?: boolean       // Default expanded state
 
@@ -487,7 +506,7 @@ interface CompactSidebarProps {
 ```typescript
 interface CompactModeConfig {
   // Sidebar configuration
-  sidebarWidth?: number           // Sidebar width (380-600px)
+  sidebarWidth?: number           // Sidebar width (200-500px, default 280)
   sidebarPosition?: 'left' | 'right'  // Sidebar position
   defaultExpanded?: boolean       // Default expanded state
 
@@ -633,6 +652,7 @@ interface FloatingModeConfig {
 ### Design Documents
 Detailed design documents are available in the [`design/`](./design/) directory:
 
+- [Component Communication Architecture](./design/component-communication-architecture.md) — inject-primary pattern for internal actions, emit for external events
 - [Session List Enhancement Design](./design/session-list-enhancement.md)
 
 ### Feature Documents

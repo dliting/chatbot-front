@@ -19,7 +19,7 @@ npm run dev
 
 ### Real 模式（连接 Ollama）- 需要本地 LLM
 - 连接本地 Ollama 服务
-- 使用 qwen3.5:9b 模型（请参考@docs\reference\qwen3.5.md）
+- 使用 qwen3.5:9b 模型
 - 需要本地安装并运行 Ollama
 
 启动命令：
@@ -87,7 +87,33 @@ chatapp/
 
 ## 快速开始
 
-### 启动 Mock 模式（推荐用于开发测试）
+### 一键启动（推荐）
+
+项目根目录提供了脚本，可一键启动前后端服务：
+
+```bash
+# Mock 模式（不需要 LLM）
+start-chatapp.bat mock
+
+# Real 模式（需要本地 Ollama）
+start-chatapp.bat real
+```
+
+脚本会自动完成以下操作：
+1. 读取对应模式的环境配置文件（`mock.env` / `real.env`）
+2. 检查并释放占用的端口（5173-5180 及后端端口）
+3. 启动后端服务（mock 模式端口 3001，real 模式端口 3000）
+4. 生成前端 `.env` 文件，设置 `VITE_API_BASE_URL` 指向后端
+5. 启动前端开发服务器（端口 5180）
+
+```bash
+# 停止所有服务
+stop-chatapp.bat
+```
+
+### 手动启动
+
+#### Mock 模式（推荐用于开发测试）
 
 ```bash
 # 1. 启动 Mock 后端
@@ -103,7 +129,7 @@ npm run dev
 
 前端将在 http://localhost:5180 运行。
 
-### 启动 Real 模式（需要 Ollama）
+#### Real 模式（需要 Ollama）
 
 ```bash
 # 1. 启动 Ollama(如果没启动)

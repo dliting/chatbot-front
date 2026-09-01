@@ -1,34 +1,18 @@
 /**
  * Composable for topics state management
+ * Follows Single Responsibility Principle - only handles topic state logic
  */
-import { reactive } from 'vue'
+import { reactive, watch } from 'vue'
 import type { Topic } from '@/types'
+import type { StorageAdapter } from '@/utils/storage'
+import { TOPIC_DEFAULTS } from '@/constants'
+import { loadTopicsFromStorage, saveTopicsToStorage } from './useStorage'
 
-// Storage key for topics
-const TOPICS_STORAGE_KEY = 'chatbot-topics'
+// Module-level counter for unique ID generation (avoids Date.now() collisions)
+let topicIdCounter = 0
 
-// Load topics from localStorage
-function loadTopicsFromStorage(): Topic[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const stored = localStorage.getItem(TOPICS_STORAGE_KEY)
-    if (stored) {
-      return JSON.parse(stored)
-    }
-  } catch (e) {
-    // localStorage disabled, quota exceeded, or corrupted data - return empty
-  }
-  return []
-}
-
-// Save topics to localStorage
-function saveTopicsToStorage(topics: Topic[]): void {
-  if (typeof window === 'undefined') return
-  try {
-    localStorage.setItem(TOPICS_STORAGE_KEY, JSON.stringify(topics))
-  } catch (e) {
-    // localStorage disabled or quota exceeded - silently fail
-  }
+function generateTopicId(): string {
+  return `topic_${Date.now()}_${++topicIdCounter}`
 }
 
 export interface TopicsState {
@@ -36,17 +20,24 @@ export interface TopicsState {
   currentId: string
 }
 
-export function useTopicsState() {
-  // Load from localStorage or create new
-  const storedTopics = loadTopicsFromStorage()
+export interface UseTopicsStateOptions {
+  defaultTitle?: string
+  storageAdapter?: StorageAdapter
+}
+
+export function useTopicsState(options: UseTopicsStateOptions = {}) {
+  const { defaultTitle = TOPIC_DEFAULTS.TITLE, storageAdapter } = options
+
+  // Load from storage or create new
+  const storedTopics = loadTopicsFromStorage(storageAdapter)
   const initialTopicId = storedTopics.length > 0
     ? storedTopics[0].topicId
-    : `topic_${Date.now()}`
+    : generateTopicId()
 
   const topics = reactive<TopicsState>({
     list: storedTopics.length > 0 ? storedTopics : [{
       topicId: initialTopicId,
-      title: 'New Topic',
+      title: defaultTitle,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       messageCount: 0,
@@ -54,6 +45,18 @@ export function useTopicsState() {
     }],
     currentId: initialTopicId,
   })
+
+  // Save initial state to storage
+  saveTopicsToStorage(topics.list, storageAdapter)
+
+  // Auto-persist topics to storage on changes
+  watch(
+    () => topics.list,
+    (list) => {
+      saveTopicsToStorage(list, storageAdapter)
+    },
+    { deep: true }
+  )
 
   const currentTopic = (): Topic | undefined => {
     return topics.list.find(t => t.topicId === topics.currentId)
@@ -66,7 +69,7 @@ export function useTopicsState() {
       // Create new topic
       const newTopic: Topic = {
         topicId,
-        title: 'New Topic',
+        title: defaultTitle,
         createdAt: Date.now(),
         updatedAt: Date.now(),
         messageCount,
@@ -87,19 +90,14 @@ export function useTopicsState() {
 
   const switchTopic = (topicId: string) => {
     topics.currentId = topicId
-    // Move topic to top of list
-    const index = topics.list.findIndex(t => t.topicId === topicId)
-    if (index > 0) {
-      const topic = topics.list.splice(index, 1)[0]
-      topics.list.unshift(topic)
-      saveTopicsToStorage(topics.list)
-    }
+    // Only update currentId — do NOT reorder the list.
+    // Topics are sorted by updatedAt; only updateTopicAfterMessage should reorder.
   }
 
   const createTopic = (): string => {
     const newTopic: Topic = {
-      topicId: `topic_${Date.now()}`,
-      title: 'New Topic',
+      topicId: generateTopicId(),
+      title: defaultTitle,
       createdAt: Date.now(),
       updatedAt: Date.now(),
       messageCount: 0,
@@ -107,7 +105,7 @@ export function useTopicsState() {
     }
     topics.list.unshift(newTopic)
     topics.currentId = newTopic.topicId
-    saveTopicsToStorage(topics.list)
+    saveTopicsToStorage(topics.list, storageAdapter)
     return newTopic.topicId
   }
 
@@ -116,7 +114,7 @@ export function useTopicsState() {
     const index = topics.list.findIndex(t => t.topicId === topicId)
     if (index > -1) {
       topics.list.splice(index, 1)
-      saveTopicsToStorage(topics.list)
+      saveTopicsToStorage(topics.list, storageAdapter)
     }
   }
 
@@ -125,7 +123,7 @@ export function useTopicsState() {
     if (topic) {
       topic.title = title
       topic.updatedAt = Date.now()
-      saveTopicsToStorage(topics.list)
+      saveTopicsToStorage(topics.list, storageAdapter)
     }
   }
 

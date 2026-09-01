@@ -1,30 +1,32 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { AIChatbot } from 'chatbot'
+import { useSettings } from '../composables/useSettings'
 
-const router = useRouter()
+const { getApiBaseUrl, settings } = useSettings()
 
 const config = computed(() => ({
   mode: 'sidebar', // 边栏模式，内部使用单栏布局（Tab切换会话/聊天）
   panelWidth: 400,
   defaultExpanded: true,
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
+  apiBaseUrl: getApiBaseUrl(),
   streamEnabled: true,
+  streamTimeout: settings.apiTimeout,
   enableImageUpload: true,
   maxImageCount: 3,
-  enableSessionManager: true,
+  enableTopicManager: true,
+  enableThinking: settings.showThinkingToggle,
+  thinkingDefaultEnabled: settings.thinkingDefaultEnabled,
+  thinkingAutoCollapse: settings.thinkingAutoCollapse,
+  enableVoiceInput: settings.enableVoiceInput,
+  theme: settings.theme,
   labels: {
     title: '智能助手',
     placeholder: '输入消息...',
-    newChat: '新建对话',
-    history: '历史对话',
+    newChat: '新话题',
+    history: '历史话题',
   },
 }))
-
-function goHome() {
-  router.push('/')
-}
 </script>
 
 <template>
@@ -49,23 +51,24 @@ function goHome() {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   display: flex;
 }
 
 .main-content {
   flex: 1;
   padding: 40px;
-  background: #f5f7fa;
+  background: var(--bg-secondary, #f5f7fa);
+  transition: background var(--transition-base);
 }
 
 .main-content h1 {
   margin-bottom: 16px;
-  color: #303133;
+  color: var(--text-primary, #303133);
 }
 
 .main-content p {
-  color: #606266;
+  color: var(--text-secondary, #606266);
   line-height: 1.6;
 }
 
@@ -75,18 +78,19 @@ function goHome() {
   left: 16px;
   z-index: 10000;
   padding: 10px 20px;
-  background: white;
-  border: 1px solid #ddd;
+  background: var(--bg-base, white);
+  color: var(--text-primary, #303133);
+  border: 1px solid var(--border-light, #ddd);
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transition: all 0.2s;
+  box-shadow: var(--shadow-sm, 0 2px 8px rgba(0, 0, 0, 0.1));
+  transition: background var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .back-button:hover {
-  background: #f5f5f5;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background: var(--bg-secondary, #f5f5f5);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0, 0, 0, 0.15));
 }
 
 @media (max-width: 768px) {

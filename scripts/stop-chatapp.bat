@@ -12,6 +12,7 @@ rem Use PowerShell for reliable port checking and process killing
 powershell -NoProfile -Command ^
   "$ErrorActionPreference = 'SilentlyContinue'; " ^
   "$configDir = '%CONFIG_DIR%'; " ^
+  "$projectRoot = '%PROJECT_ROOT%'; " ^
   "$realPort = '3000'; " ^
   "$mockPort = '3001'; " ^
   "if (Test-Path \"$configDir\real.env\") { " ^
@@ -23,25 +24,57 @@ powershell -NoProfile -Command ^
   "  if ($portLine) { $mockPort = ($portLine.Line -split '=')[1].Trim(); } " ^
   "} " ^
   "Write-Host \"Backend ports configured: Real=$realPort, Mock=$mockPort\"; " ^
+  "$chatAppPaths = @(); " ^
+  "$chatAppPaths += [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'examples\chatapp\backend-mock')); " ^
+  "$chatAppPaths += [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'examples\chatapp\backend-real')); " ^
+  "$chatAppPaths += [System.IO.Path]::GetFullPath((Join-Path $projectRoot 'examples\chatapp\frontend')); " ^
   "$killed = 0; " ^
   "$backendPorts = @($realPort, $mockPort) | Select-Object -Unique; " ^
   "$frontendPorts = 5173..5185; " ^
   "$allPorts = $backendPorts + $frontendPorts; " ^
   "$pidsToKill = @(); " ^
   "foreach ($port in $allPorts) { " ^
-  "  $conn = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue; " ^
-  "  if ($conn) { " ^
-  "    $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue; " ^
-  "    if ($proc) { " ^
-  "      $portType = if ($backendPorts -contains $port) { 'backend' } else { 'frontend' }; " ^
-  "      Write-Host \"Stopping $portType on port $port (PID: $($conn.OwningProcess), Process: $($proc.ProcessName))\"; " ^
-  "      $pidsToKill += $conn.OwningProcess; " ^
-  "      $killed = 1; " ^
+  "  $conns = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue; " ^
+  "  if ($conns) { " ^
+  "    foreach ($conn in $conns) { " ^
+  "      $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue; " ^
+  "      if ($proc) { " ^
+  "        $isChatApp = $false; " ^
+  "        $procPath = [System.IO.Path]::GetFullPath($proc.Path); " ^
+  "        foreach ($chatAppPath in $chatAppPaths) { " ^
+  "          if ($procPath.StartsWith($chatAppPath, 'OrdinalIgnoreCase')) { " ^
+  "            $isChatApp = $true; " ^
+  "            break; " ^
+  "          } " ^
+  "        } " ^
+  "        if (-not $isChatApp -and $procPath -match 'node\.exe$') { " ^
+  "          try { " ^
+  "            $parentProc = Get-Process -Id $proc.ParentProcessId -ErrorAction SilentlyContinue; " ^
+  "            if ($parentProc -and ($parentProc.ProcessName -eq 'cmd' -or $parentProc.ProcessName -eq 'npm')) { " ^
+  "              $parentCmd = if ($parentProc.CommandLine) { $parentProc.CommandLine } else { '' }; " ^
+  "              if ($parentCmd -match 'examples[\\\\/]chatapp') { " ^
+  "                $isChatApp = $true; " ^
+  "              } " ^
+  "            } " ^
+  "          } catch { } " ^
+  "        } " ^
+  "        if ($isChatApp) { " ^
+  "          $portType = if ($backendPorts -contains $port) { 'backend' } else { 'frontend' }; " ^
+  "          Write-Host \"Stopping $portType on port $port (PID: $($conn.OwningProcess), Process: $($proc.ProcessName))\"; " ^
+  "          $pidsToKill += $conn.OwningProcess; " ^
+  "          $killed = 1; " ^
+  "        } else { " ^
+  "          Write-Host \"Skipping non-ChatApp process on port $port ($($proc.ProcessName) PID: $($conn.OwningProcess))\"; " ^
+  "        } " ^
+  "      } " ^
   "    } " ^
   "  } " ^
   "} " ^
   "if ($pidsToKill.Count -gt 0) { " ^
-  "  Stop-Process -Id $pidsToKill -Force -ErrorAction SilentlyContinue; " ^
+  "  $pidsToKill = $pidsToKill | Select-Object -Unique; " ^
+  "  foreach ($pid in $pidsToKill) { " ^
+  "    Stop-Process -Id $pid -Force -ErrorAction SilentlyContinue; " ^
+  "  } " ^
   "  Start-Sleep -Milliseconds 500; " ^
   "} " ^
   "Write-Host ''; " ^

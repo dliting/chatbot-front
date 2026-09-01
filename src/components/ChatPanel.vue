@@ -31,7 +31,7 @@
               <button
                 v-if="showThemeToggle"
                 class="chatbot-panel__action-btn"
-                :title="theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'"
+                :title="theme === 'light' ? (labels?.switchToDarkMode || 'Switch to dark mode') : (labels?.switchToLightMode || 'Switch to light mode')"
                 @click="$emit('toggle-theme')"
               >
                 <svg v-if="theme === 'light'" viewBox="0 0 24 24" fill="currentColor">
@@ -46,7 +46,7 @@
             <!-- Close button -->
             <button
               class="chatbot-panel__action-btn chatbot-panel__close-btn"
-              title="Close"
+              :title="labels?.close || 'Close'"
               @click="handleClose"
             >
               <svg viewBox="0 0 24 24" fill="currentColor">
@@ -65,7 +65,7 @@
     <div
       v-else-if="isOpen"
       ref="panelRef"
-      :class="classes"
+      :class="[classes, { 'chatbot-panel--resizing': isSidebarMode && sidebarResize.isResizing.value }]"
       :style="panelStyle"
       @touchstart="handleTouchStart"
       @touchend="handleTouchEnd"
@@ -82,7 +82,7 @@
             <button
               v-if="showThemeToggle"
               class="chatbot-panel__action-btn"
-              :title="theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'"
+              :title="theme === 'light' ? (labels?.switchToDarkMode || 'Switch to dark mode') : (labels?.switchToLightMode || 'Switch to light mode')"
               @click="$emit('toggle-theme')"
             >
               <svg v-if="theme === 'light'" viewBox="0 0 24 24" fill="currentColor">
@@ -97,7 +97,7 @@
           <!-- Close button -->
           <button
             class="chatbot-panel__action-btn chatbot-panel__close-btn"
-            title="Close"
+            :title="labels?.close || 'Close'"
             @click="handleClose"
           >
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -106,6 +106,21 @@
           </button>
         </div>
       </div>
+
+      <!-- Sidebar resize handle -->
+      <div
+        v-if="isSidebarMode"
+        class="chatbot-panel__resize-handle"
+        role="separator"
+        tabindex="0"
+        aria-label="Resize panel"
+        :class="[
+          `chatbot-panel__resize-handle--${sidebarDirection.value}`,
+          { 'chatbot-panel__resize-handle--active': sidebarResize.isResizing.value }
+        ]"
+        @mousedown="sidebarResize.startResize"
+        @dblclick="sidebarResize.resetWidth"
+      />
 
       <!-- Body -->
       <div class="chatbot-panel__body">
@@ -119,6 +134,8 @@
 import { computed, ref, onMounted } from 'vue'
 import DraggableWindow from './DraggableWindow.vue'
 import type { PanelMode, Position, Theme } from '@/types'
+import type { ChatbotLabels } from '@/types/config'
+import { useResizeHandle } from '@/composables/useResizeHandle'
 
 // Swipe gesture configuration
 const SWIPE_THRESHOLD = 100 // pixels
@@ -141,6 +158,7 @@ interface Props {
   maxWidth?: number
   maxHeight?: number
   rememberPosition?: boolean
+  labels?: ChatbotLabels
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -149,7 +167,7 @@ const props = withDefaults(defineProps<Props>(), {
   title: 'AI Assistant',
   width: 400,
   height: 600,
-  showThemeToggle: true,
+  showThemeToggle: false,
   showHeader: true,
   draggable: true,
   resizable: true,
@@ -169,6 +187,17 @@ const emit = defineEmits<Emits>()
 
 // Refs
 const panelRef = ref<HTMLElement>()
+
+// Sidebar mode resize handle
+const isSidebarMode = computed(() => props.mode === 'sidebar')
+const sidebarDirection = computed(() => props.position?.includes('left') ? 'right' : 'left')
+const sidebarResize = useResizeHandle({
+  initialWidth: props.width,
+  minWidth: props.minWidth,
+  maxWidth: props.maxWidth || 600,
+  storageKey: 'chatbot-sidebar-panel-width',
+  direction: sidebarDirection.value,
+})
 
 // Touch gesture state
 const touchStartX = ref(0)
@@ -207,7 +236,7 @@ const panelStyle = computed(() => {
   const baseStyle: Record<string, string> = {}
 
   if (props.mode === 'sidebar') {
-    baseStyle.width = `${props.width}px`
+    baseStyle.width = `${sidebarResize.width.value}px`
   } else if (props.mode === 'fullscreen') {
     baseStyle.width = '100%'
     baseStyle.height = '100%'
@@ -282,8 +311,8 @@ onMounted(() => {
 <style scoped lang="scss">
 .chatbot-panel {
   position: fixed;
-  background-color: var(--chatbot-bg-color, #ffffff);
-  border-radius: var(--chatbot-border-radius, 12px);
+  background-color: var(--bg-base, #ffffff);
+  border-radius: var(--radius-lg, 12px);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   display: flex;
   flex-direction: column;
@@ -307,13 +336,13 @@ onMounted(() => {
     &.chatbot-panel--top-left,
     &.chatbot-panel--bottom-left {
       left: 0;
-      border-radius: 0 var(--chatbot-border-radius, 12px) var(--chatbot-border-radius, 12px) 0;
+      border-radius: 0 var(--radius-lg, 12px) var(--radius-lg, 12px) 0;
     }
 
     &.chatbot-panel--top-right,
     &.chatbot-panel--bottom-right {
       right: 0;
-      border-radius: var(--chatbot-border-radius, 12px) 0 0 var(--chatbot-border-radius, 12px);
+      border-radius: var(--radius-lg, 12px) 0 0 var(--radius-lg, 12px);
     }
   }
 
@@ -346,22 +375,22 @@ onMounted(() => {
   &--floating {
     max-height: none;
     resize: none; // We use custom resize handles
-    border-radius: var(--chatbot-border-radius, 12px) !important;
+    border-radius: var(--radius-lg, 12px) !important;
   }
 
   // Theme
   &--light {
-    --chatbot-panel-bg: #ffffff;
-    --chatbot-panel-border: #e4e7ed;
-    --chatbot-panel-text: #303133;
-    --chatbot-panel-subtext: #909399;
+    --bg-base: #ffffff;
+    --topic-border: #e4e7ed;
+    --text-primary: #303133;
+    --text-tertiary: #909399;
   }
 
   &--dark {
-    --chatbot-panel-bg: #1a1a1a;
-    --chatbot-panel-border: #4c4d4f;
-    --chatbot-panel-text: #e5e5e5;
-    --chatbot-panel-subtext: #a3a3a3;
+    --bg-base: #1a1a1a;
+    --topic-border: #4c4d4f;
+    --text-primary: #e5e5e5;
+    --text-tertiary: #a3a3a3;
   }
 
   &__header {
@@ -369,12 +398,12 @@ onMounted(() => {
     align-items: center;
     justify-content: space-between;
     padding: 16px;
-    border-bottom: 1px solid var(--chatbot-panel-border);
-    background-color: var(--chatbot-panel-bg);
+    border-bottom: 1px solid var(--topic-border);
+    background-color: var(--bg-base);
     flex-shrink: 0;
     width: 100%;
     box-sizing: border-box;
-    border-radius: var(--chatbot-border-radius, 12px) var(--chatbot-border-radius, 12px) 0 0;
+    border-radius: var(--radius-lg, 12px) var(--radius-lg, 12px) 0 0;
 
     &--draggable {
       cursor: move;
@@ -384,7 +413,7 @@ onMounted(() => {
   &__title {
     font-size: 18px;
     font-weight: 600;
-    color: var(--chatbot-panel-text);
+    color: var(--text-primary);
     pointer-events: none; // Prevent text selection during drag
   }
 
@@ -404,13 +433,13 @@ onMounted(() => {
     background: transparent;
     border-radius: 6px;
     cursor: pointer;
-    color: var(--chatbot-panel-subtext);
+    color: var(--text-tertiary);
     transition: background-color 0.2s, color 0.2s;
     flex-shrink: 0;
 
     &:hover {
-      background-color: var(--chatbot-panel-border);
-      color: var(--chatbot-panel-text);
+      background-color: var(--topic-border);
+      color: var(--text-primary);
     }
 
     svg {
@@ -421,9 +450,42 @@ onMounted(() => {
 
   &__close-btn {
     &:hover {
-      background-color: var(--chatbot-danger-color, #f56c6c);
+      background-color: var(--color-danger, #f56c6c);
       color: #fff;
     }
+  }
+
+  &__resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    cursor: col-resize;
+    background: transparent;
+    z-index: 1;
+    transition: background 0.2s;
+
+    &:hover {
+      background: var(--theme-primary, #409eff);
+    }
+
+    &--active {
+      background: var(--theme-primary, #409eff);
+    }
+
+    // Right-positioned sidebar: handle on left edge
+    &--left {
+      left: 0;
+    }
+
+    // Left-positioned sidebar: handle on right edge
+    &--right {
+      right: 0;
+    }
+  }
+
+  &--resizing {
+    user-select: none;
   }
 
   &__body {
@@ -434,7 +496,7 @@ onMounted(() => {
     min-height: 0;
     width: 100%;
     box-sizing: border-box;
-    border-radius: 0 0 var(--chatbot-border-radius, 12px) var(--chatbot-border-radius, 12px);
+    border-radius: 0 0 var(--radius-lg, 12px) var(--radius-lg, 12px);
   }
 }
 

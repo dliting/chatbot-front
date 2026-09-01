@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
+import { useSettings } from '../composables/useSettings'
 
 const router = useRouter()
+const { settings } = useSettings()
 
 // 导航到指定模式的演示页面
 function goToDemo(mode: 'extended' | 'sidebar' | 'floating') {
   router.push(`/${mode}`)
+}
+
+function goToSettings() {
+  router.push('/settings')
 }
 </script>
 
@@ -14,9 +20,20 @@ function goToDemo(mode: 'extended' | 'sidebar' | 'floating') {
     <div class="container">
       <!-- Header -->
       <div class="header">
+        <button class="settings-btn" title="设置" @click="goToSettings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+        </button>
         <h1>AI Chatbot</h1>
         <p class="tagline">Vue 3 + TypeScript 通用聊天组件</p>
-        <span class="version">v1.0.0</span>
+        <div class="header-badges">
+          <span class="version">v1.0.0</span>
+          <span class="mode-badge" :class="settings.backendMode">
+            {{ settings.backendMode === 'mock' ? 'Mock 模式' : 'Real 模式' }}
+          </span>
+        </div>
       </div>
 
       <!-- Mode Cards -->
@@ -157,6 +174,7 @@ html, body, #app {
 }
 
 .header {
+  position: relative;
   text-align: center;
   margin-bottom: 48px;
   animation: fadeInDown 0.8s ease;
@@ -177,13 +195,67 @@ html, body, #app {
 
 .header .version {
   display: inline-block;
-  margin-top: 16px;
   padding: 6px 16px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 20px;
   font-size: 14px;
   color: white;
   backdrop-filter: blur(10px);
+}
+
+.header-badges {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.settings-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+  backdrop-filter: blur(10px);
+  padding: 0;
+}
+
+.settings-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.settings-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mode-badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+}
+
+.mode-badge.mock {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.mode-badge.real {
+  background: rgba(255, 200, 50, 0.3);
+  color: #fff8e1;
 }
 
 .mode-section {
@@ -205,10 +277,10 @@ html, body, #app {
 }
 
 .mode-card {
-  background: white;
+  background: var(--bg-base, white);
   border-radius: 20px;
   padding: 32px 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg, 0 10px 40px rgba(0, 0, 0, 0.1));
   transition: all 0.3s ease;
   cursor: pointer;
   animation: fadeInUp 0.8s ease backwards;
@@ -238,7 +310,7 @@ html, body, #app {
 
 .mode-card:hover {
   transform: translateY(-8px);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-xl, 0 20px 60px rgba(0, 0, 0, 0.15));
 }
 
 .mode-icon {
@@ -261,27 +333,27 @@ html, body, #app {
 .mode-card h2 {
   font-size: 20px;
   margin-bottom: 8px;
-  color: #333;
+  color: var(--text-primary, #333);
 }
 
 .mode-card .subtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary, #666);
   margin-bottom: 16px;
 }
 
 .mode-card .description {
   font-size: 13px;
-  color: #888;
+  color: var(--text-tertiary, #888);
   line-height: 1.6;
 }
 
 .section {
-  background: white;
+  background: var(--bg-base, white);
   border-radius: 20px;
   padding: 32px;
   margin-bottom: 24px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-lg, 0 10px 40px rgba(0, 0, 0, 0.1));
   animation: fadeInUp 0.8s ease backwards;
   animation-delay: 0.4s;
 }
@@ -289,29 +361,29 @@ html, body, #app {
 .section h2 {
   font-size: 24px;
   margin-bottom: 16px;
-  color: #333;
+  color: var(--text-primary, #333);
 }
 
 .section h3 {
   font-size: 18px;
   margin: 24px 0 12px;
-  color: #409eff;
+  color: var(--theme-primary, #409eff);
 }
 
 .section p {
   font-size: 15px;
-  color: #666;
+  color: var(--text-secondary, #666);
   line-height: 1.8;
   margin-bottom: 12px;
 }
 
 .section code {
-  background: #f5f7fa;
+  background: var(--bg-secondary, #f5f7fa);
   padding: 2px 8px;
   border-radius: 4px;
   font-family: 'Monaco', 'Menlo', monospace;
   font-size: 13px;
-  color: #e6a23c;
+  color: var(--color-warning, #e6a23c);
 }
 
 .section pre {
@@ -337,7 +409,7 @@ html, body, #app {
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: #f5f7fa;
+  background: var(--bg-secondary, #f5f7fa);
   border-radius: 8px;
 }
 
@@ -354,7 +426,7 @@ html, body, #app {
 
 .feature-item span {
   font-size: 14px;
-  color: #666;
+  color: var(--text-secondary, #666);
 }
 
 footer {

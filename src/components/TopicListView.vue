@@ -1,9 +1,9 @@
 <template>
   <div :class="containerClasses">
     <!-- Header with close button -->
-    <header v-if="showCloseButton" class="chatbot-topics__header topic-list-view__header">
-      <h1 class="chatbot-topics__header-title topic-list-view__title">{{ config.labels?.topics || '话题列表' }}</h1>
-      <button class="chatbot-topics__header-close topic-list-view__close" :aria-label="cancelLabel" @click="$emit('close')">
+    <header v-if="showCloseButton" class="topic-list-view__header">
+      <h1 class="topic-list-view__header-title topic-list-view__title">{{ config.labels?.historyTooltip || config.labels?.history || 'History' }}</h1>
+      <button class="topic-list-view__header-close topic-list-view__close" :aria-label="labels.cancelLabel" @click="$emit('close')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
@@ -13,28 +13,28 @@
     <!-- Search bar -->
     <TopicSearch
       v-model="searchQuery"
-      :placeholder="searchPlaceholder"
-      class="chatbot-topics__search"
+      :placeholder="labels.searchPlaceholder"
+      class="topic-list-view__search"
     />
 
     <!-- Batch operation bar (shown when items are selected) -->
     <Transition name="batch-bar">
-      <div v-if="selectedTopicIds.length > 0" class="chatbot-topics__batch-bar">
-        <span class="chatbot-topics__batch-count">
+      <div v-if="selectedTopicIds.length > 0" class="topic-list-view__batch-bar">
+        <span class="topic-list-view__batch-count">
           {{ selectedCountText }}
         </span>
-        <div class="chatbot-topics__batch-actions">
+        <div class="topic-list-view__batch-actions">
           <button
-            class="chatbot-topics__batch-btn chatbot-topics__batch-btn--cancel"
+            class="topic-list-view__batch-btn topic-list-view__batch-btn--cancel"
             @click="clearSelection"
           >
-            {{ cancelLabel }}
+            {{ labels.cancelLabel }}
           </button>
           <button
-            class="chatbot-topics__batch-btn chatbot-topics__batch-btn--delete"
+            class="topic-list-view__batch-btn topic-list-view__batch-btn--delete"
             @click="handleBatchDelete"
           >
-            {{ deleteSelectedLabel }}
+            {{ labels.deleteSelectedLabel }}
           </button>
         </div>
       </div>
@@ -43,35 +43,35 @@
     <!-- New topic button -->
     <button
       v-if="!isBatchMode"
-      class="chatbot-topics__new-btn topic-list-view__new-btn"
-      @click="$emit('create-topic')"
+      class="topic-list-view__new-btn"
+      @click="handleCreateTopic"
     >
       <svg viewBox="0 0 24 24" fill="currentColor">
         <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
       </svg>
-      <span>{{ newTopicLabel }}</span>
+      <span>{{ labels.newTopicLabel }}</span>
     </button>
 
     <!-- Batch mode toggle -->
     <button
       v-else
-      class="chatbot-topics__batch-toggle"
+      class="topic-list-view__batch-toggle"
       @click="toggleBatchMode"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M9 11l3 3L22 4" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
-      <span>{{ doneLabel }}</span>
+      <span>{{ labels.doneLabel }}</span>
     </button>
 
     <!-- Topics list -->
-    <div class="chatbot-topics__list topic-list-view__list">
+    <div class="topic-list-view__list">
       <TopicActionMenu
         v-for="topic in filteredTopics"
         :key="topic.topicId"
-        :edit-label="editLabel"
-        :delete-label="deleteLabel"
+        :edit-label="labels.editLabel"
+        :delete-label="labels.deleteLabel"
         @edit="startEditTitle(topic)"
         @delete="handleDelete(topic.topicId)"
       >
@@ -82,7 +82,7 @@
           <!-- Checkbox for batch mode -->
           <div
             v-if="isBatchMode"
-            class="chatbot-topics__checkbox"
+            class="topic-list-view__checkbox"
             @click.stop="toggleSelection(topic.topicId)"
           >
             <svg
@@ -97,30 +97,30 @@
           </div>
 
           <!-- Topic icon (shown when not in batch mode) -->
-          <div v-else class="chatbot-topics__item-icon">
+          <div v-else class="topic-list-view__item-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
           </div>
 
-          <div class="chatbot-topics__item-content" @dblclick.stop="startEditTitle(topic)">
+          <div class="topic-list-view__item-content" @dblclick.stop="startEditTitle(topic)">
             <!-- Editing mode -->
             <input
               v-if="editingTopicId === topic.topicId"
               ref="editInputRef"
               v-model="editingTitle"
-              class="chatbot-topics__item-title-input"
+              class="topic-list-view__item-title-input"
               @blur="saveTitle(topic.topicId)"
               @keyup.enter="saveTitle(topic.topicId)"
               @keyup.escape="cancelEdit"
               @click.stop
             />
             <!-- Display mode with highlight -->
-            <div v-else class="chatbot-topics__item-title">
+            <div v-else class="topic-list-view__item-title">
               <!-- eslint-disable-next-line vue/no-v-html -- Sanitized input for text highlighting -->
-              <span v-html="highlightText(topic.title || '未命名话题', searchQuery)" />
+              <span v-html="highlightText(topic.title || unnamedTopicText, searchQuery)" />
             </div>
-            <div class="chatbot-topics__item-meta">
+            <div class="topic-list-view__item-meta">
               {{ formatTopicMeta(topic) }}
             </div>
           </div>
@@ -128,7 +128,7 @@
           <!-- Unread badge -->
           <span
             v-if="topic.unreadCount > 0"
-            class="chatbot-topics__item-badge"
+            class="topic-list-view__item-badge"
           >
             {{ topic.unreadCount > 99 ? '99+' : topic.unreadCount }}
           </span>
@@ -136,9 +136,9 @@
           <!-- Delete button (only in non-batch mode) -->
           <button
             v-if="!isBatchMode"
-            class="chatbot-topics__item-delete topic-list-view__item-delete"
-            :title="deleteLabel"
-            :aria-label="deleteLabel"
+            class="topic-list-view__item-delete"
+            :title="labels.deleteLabel"
+            :aria-label="labels.deleteLabel"
             @click.stop="handleDelete(topic.topicId)"
           >
             <svg viewBox="0 0 24 24" fill="currentColor">
@@ -149,11 +149,11 @@
       </TopicActionMenu>
 
       <!-- Empty state -->
-      <div v-if="filteredTopics.length === 0" class="chatbot-topics__empty topic-list-view__empty">
+      <div v-if="filteredTopics.length === 0" class="topic-list-view__empty">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <p>{{ searchQuery ? noResultsLabel : noTopicsLabel }}</p>
+        <p>{{ searchQuery ? labels.noResultsLabel : labels.noTopicsLabel }}</p>
         <p v-if="!searchQuery">{{ noTopicsHint }}</p>
       </div>
     </div>
@@ -172,9 +172,9 @@
     <!-- Batch mode button (shown when not in batch mode) -->
     <button
       v-if="!isBatchMode && topics.length > 0"
-      class="chatbot-topics__batch-mode-btn"
-      :title="batchModeLabel"
-      :aria-label="batchModeLabel"
+      class="topic-list-view__batch-mode-btn"
+      :title="labels.batchModeLabel"
+      :aria-label="labels.batchModeLabel"
       @click="toggleBatchMode"
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -188,9 +188,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, nextTick, inject } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import type { Topic } from '@/types'
+import { topicActionsKey, uiActionsKey } from '@/symbols'
 import { formatTime, escapeHTML } from '@/utils/helpers'
 import TopicSearch from './TopicSearch.vue'
 import TopicActionMenu from './TopicActionMenu.vue'
@@ -226,42 +227,67 @@ const props = withDefaults(defineProps<Props>(), {
   isEmbedded: false,
   layout: 'dual',
   enableClose: false,
-  newTopicLabel: '新话题',
-  searchPlaceholder: '搜索话题...',
-  editLabel: '重命名',
-  deleteLabel: '删除',
-  cancelLabel: '取消',
-  doneLabel: '完成',
-  batchModeLabel: '批量选择',
-  deleteSelectedLabel: '删除选中',
-  noResultsLabel: '未找到匹配的话题',
-  noTopicsLabel: '暂无历史话题',
-  noTopicsHint: '点击上方按钮开始新话题',
-  deleteConfirmTitle: '删除话题?',
-  deleteConfirmMessage: '确定要删除此话题吗?',
-  batchDeleteConfirmTitle: '删除话题?',
-  batchDeleteConfirmMessage: '确定要删除选中的话题吗?',
-  selectedCountFormat: '已选择 {count} 个',
 })
 
+// Resolve labels: explicit prop > config.labels > English fallback
+const labels = computed(() => {
+  const cfg = props.config?.labels
+  return {
+    newTopicLabel: props.newTopicLabel || cfg?.newTopic || 'New Topic',
+    searchPlaceholder: props.searchPlaceholder || cfg?.searchTopics || 'Search topics...',
+    editLabel: props.editLabel || cfg?.rename || 'Rename',
+    deleteLabel: props.deleteLabel || cfg?.delete || 'Delete',
+    cancelLabel: props.cancelLabel || cfg?.cancel || 'Cancel',
+    doneLabel: props.doneLabel || cfg?.done || 'Done',
+    batchModeLabel: props.batchModeLabel || cfg?.batchSelect || 'Batch Select',
+    deleteSelectedLabel: props.deleteSelectedLabel || cfg?.deleteSelected || 'Delete Selected',
+    noResultsLabel: props.noResultsLabel || cfg?.noResults || 'No matching topics found',
+    noTopicsLabel: props.noTopicsLabel || cfg?.noTopics || 'No topics yet',
+    noTopicsHint: props.noTopicsHint || cfg?.noTopicsHint || 'Click the button above to start a new topic',
+    deleteConfirmTitle: props.deleteConfirmTitle || cfg?.deleteTopicConfirmTitle || 'Delete Topic?',
+    deleteConfirmMessage: props.deleteConfirmMessage || cfg?.deleteTopicConfirmMessage || 'Are you sure you want to delete this topic?',
+    batchDeleteConfirmTitle: props.batchDeleteConfirmTitle || cfg?.deleteTopicConfirmTitle || 'Delete Topic?',
+    batchDeleteConfirmMessage: props.batchDeleteConfirmMessage || cfg?.batchDeleteTopicConfirmMessage || 'Are you sure you want to delete the selected topics?',
+    selectedCountFormat: props.selectedCountFormat || cfg?.selectedCountFormat || '{count} selected',
+  }
+})
+
+/**
+ * Emits - reserved for external-facing events only
+ * Internal actions (create/switch/delete/rename) are handled via inject (topicActionsKey)
+ * View navigation is handled via inject (uiActionsKey)
+ */
 interface Emits {
+  /** Emitted when close button is clicked (external UI event, not a data action) */
   (e: 'close'): void
-  (e: 'create-topic'): void
-  (e: 'select-topic', topicId: string): void
-  (e: 'delete-topic', topicId: string): void
-  (e: 'delete-topics', topicIds: string[]): void
-  (e: 'update-topic-title', topicId: string, title: string): void
 }
 
-const emit = defineEmits<Emits>()
+defineEmits<Emits>()
 
-// Container classes for backward compatibility
+// Inject action handlers from AIChatbot
+// - topicActions: data operations (create/switch/delete/rename)
+// - uiActions: UI operations (showChatView/showTopicsView for view navigation)
+const topicActions = inject(topicActionsKey)
+const uiActions = inject(uiActionsKey)
+
+/**
+ * Action handlers using inject-primary pattern:
+ * - Inject handles the actual operation (data mutation, view navigation)
+ * - Emit is reserved for external consumers only (e.g., close event)
+ * This eliminates the dual-path problem where inject and emit could get out of sync.
+ */
+
+// Create topic - uses inject for data operation
+const handleCreateTopic = () => {
+  if (topicActions) { topicActions.createNewTopic() }
+  // No emit: action handled by inject, external consumers listen to AIChatbot's topic:created event
+}
+
+// Container classes
 const containerClasses = computed(() => [
   'topic-list-view',
-  'chatbot-topics',
   {
     'topic-list-view--embedded': props.isEmbedded,
-    'chatbot-topics--embedded': props.isEmbedded,
   },
 ])
 
@@ -282,12 +308,12 @@ const pendingDeleteIds = ref<string[]>([])
 const deleteDialog = computed(() => {
   const isBatch = pendingDeleteIds.value.length > 1
   return {
-    title: isBatch ? props.batchDeleteConfirmTitle : props.deleteConfirmTitle,
+    title: isBatch ? labels.value.batchDeleteConfirmTitle : labels.value.deleteConfirmTitle,
     message: isBatch
-      ? `${props.batchDeleteConfirmMessage} (${pendingDeleteIds.value.length})`
-      : props.deleteConfirmMessage,
-    confirmText: props.deleteLabel,
-    cancelText: props.cancelLabel,
+      ? `${labels.value.batchDeleteConfirmMessage} (${pendingDeleteIds.value.length})`
+      : labels.value.deleteConfirmMessage,
+    confirmText: labels.value.deleteLabel,
+    cancelText: labels.value.cancelLabel,
   }
 })
 
@@ -303,14 +329,14 @@ const filteredTopics = computed(() => {
   }
   const query = searchQuery.value.toLowerCase()
   return props.topics.filter(topic =>
-    (topic.title || '未命名话题').toLowerCase().includes(query)
+    (topic.title || props.config?.labels?.unnamedTopic || 'Unnamed Topic').toLowerCase().includes(query)
   )
 })
 
 // Selected count text
 const selectedCountText = computed(() => {
   const count = selectedTopicIds.value.length
-  return props.selectedCountFormat.replace('{count}', String(count))
+  return labels.value.selectedCountFormat.replace('{count}', String(count))
 })
 
 // Toggle batch mode
@@ -336,12 +362,13 @@ const toggleSelection = (topicId: string) => {
   }
 }
 
-// Handle topic click
+// Handle topic click — inject-primary: both data switch and view navigation via inject
 const handleTopicClick = (topicId: string) => {
   if (isBatchMode.value) {
     toggleSelection(topicId)
   } else {
-    emit('select-topic', topicId)
+    if (topicActions) { topicActions.switchToTopic(topicId) }
+    if (uiActions) { uiActions.showChatView() }
   }
 }
 
@@ -362,9 +389,9 @@ const handleBatchDelete = () => {
 // Confirm delete
 const confirmDelete = () => {
   if (pendingDeleteIds.value.length === 1) {
-    emit('delete-topic', pendingDeleteIds.value[0])
+    if (topicActions) { topicActions.removeTopic(pendingDeleteIds.value[0]) }
   } else {
-    emit('delete-topics', pendingDeleteIds.value)
+    if (topicActions) { topicActions.removeTopics(pendingDeleteIds.value) }
   }
   clearSelection()
   isBatchMode.value = false
@@ -404,7 +431,7 @@ const saveTitle = (topicId: string) => {
   const trimmedTitle = editingTitle.value.trim()
   const originalTopic = props.topics.find(t => t.topicId === topicId)
   if (trimmedTitle && originalTopic && trimmedTitle !== (originalTopic.title || '')) {
-    emit('update-topic-title', topicId, trimmedTitle)
+    if (topicActions) { topicActions.renameTopic(topicId, trimmedTitle) }
   }
   cancelEdit()
 }
@@ -417,36 +444,35 @@ const cancelEdit = () => {
 
 // Topic classes
 const topicClasses = (topic: Topic) => [
-  'chatbot-topics__item',
   'topic-list-view__item',
   {
-    'chatbot-topics__item--active': topic.topicId === props.currentTopicId,
-    'chatbot-topics__item--selected': selectedTopicIds.value.includes(topic.topicId),
     'topic-list-view__item--active': topic.topicId === props.currentTopicId,
+    'topic-list-view__item--selected': selectedTopicIds.value.includes(topic.topicId),
   },
 ]
 
 // Format topic metadata
+const unnamedTopicText = computed(() => props.config?.labels?.unnamedTopic || 'Unnamed Topic')
+
 const formatTopicMeta = (topic: Topic): string => {
   const timeStr = formatTime(topic.updatedAt)
-  const countStr = topic.messageCount === 1 ? '1 条消息' : `${topic.messageCount} 条消息`
+  const fmt = props.config?.labels?.messageCountFormat || '{count} messages'
+  const countStr = topic.messageCount === 1 ? fmt.replace('{count}', '1') : fmt.replace('{count}', String(topic.messageCount))
   return `${timeStr} • ${countStr}`
 }
 </script>
 
 <style scoped lang="scss">
-// Backward compatibility - merge both class styles
-.topic-list-view,
-.chatbot-topics {
+.topic-list-view {
   display: flex;
   flex-direction: column;
   height: 100%;
-  background-color: var(--chatbot-panel-bg, #ffffff);
-  color: var(--chatbot-text-color, #303133);
+  background-color: var(--bg-base, #ffffff);
+  color: var(--text-primary, #303133);
 
   &--embedded {
     height: auto;
-    border-right: 1px solid var(--chatbot-panel-border, #e4e7ed);
+    border-right: 1px solid var(--topic-border, #e4e7ed);
   }
 
   &__header {
@@ -454,7 +480,7 @@ const formatTopicMeta = (topic: Topic): string => {
     align-items: center;
     justify-content: space-between;
     padding: 16px;
-    border-bottom: 1px solid var(--chatbot-border-color, #e4e7ed);
+    border-bottom: 1px solid var(--border-light, #e4e7ed);
     flex-shrink: 0;
   }
 
@@ -462,7 +488,7 @@ const formatTopicMeta = (topic: Topic): string => {
     font-size: 18px;
     font-weight: 600;
     margin: 0;
-    color: var(--chatbot-text-color, #303133);
+    color: var(--text-primary, #303133);
   }
 
   &__header-close {
@@ -475,12 +501,12 @@ const formatTopicMeta = (topic: Topic): string => {
     background: transparent;
     border-radius: 6px;
     cursor: pointer;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     transition: all 0.2s;
 
     &:hover {
-      background: var(--chatbot-border-color, #e4e7ed);
-      color: var(--chatbot-text-color, #303133);
+      background: var(--border-light, #e4e7ed);
+      color: var(--text-primary, #303133);
     }
 
     svg {
@@ -499,15 +525,15 @@ const formatTopicMeta = (topic: Topic): string => {
     align-items: center;
     justify-content: space-between;
     padding: 12px 16px;
-    background: var(--chatbot-primary-color-light, #ecf5ff);
-    border-bottom: 1px solid var(--chatbot-primary-color, #409eff);
+    background: var(--theme-primary-light, #ecf5ff);
+    border-bottom: 1px solid var(--theme-primary, #409eff);
     flex-shrink: 0;
   }
 
   &__batch-count {
     font-size: 14px;
     font-weight: 500;
-    color: var(--chatbot-primary-color, #409eff);
+    color: var(--theme-primary, #409eff);
   }
 
   &__batch-actions {
@@ -525,21 +551,21 @@ const formatTopicMeta = (topic: Topic): string => {
     transition: all 0.2s;
 
     &--cancel {
-      background: var(--chatbot-bg-color, #ffffff);
-      color: var(--chatbot-text-color, #303133);
-      border: 1px solid var(--chatbot-border-color, #dcdfe6);
+      background: var(--bg-base, #ffffff);
+      color: var(--text-primary, #303133);
+      border: 1px solid var(--border-light, #dcdfe6);
 
       &:hover {
-        background: var(--chatbot-border-color, #e4e7ed);
+        background: var(--border-light, #e4e7ed);
       }
     }
 
     &--delete {
-      background: var(--chatbot-danger-color, #f56c6c);
-      color: white;
+      background: var(--color-danger, #f56c6c);
+      color: var(--text-on-primary, #fff);
 
       &:hover {
-        background: var(--chatbot-danger-color-dark, #f78989);
+        background: var(--color-danger-dark, #f78989);
       }
     }
   }
@@ -555,8 +581,8 @@ const formatTopicMeta = (topic: Topic): string => {
     margin: 0 16px;
     border: none;
     border-radius: 12px;
-    background: var(--chatbot-primary-gradient);
-    color: white;
+    background: var(--theme-primary-gradient);
+    color: var(--text-on-primary, #fff);
     font-size: 15px;
     font-weight: 500;
     cursor: pointer;
@@ -579,12 +605,12 @@ const formatTopicMeta = (topic: Topic): string => {
   }
 
   &__batch-toggle {
-    background: var(--chatbot-bg-color, #ffffff);
-    color: var(--chatbot-text-color, #303133);
-    border: 1px solid var(--chatbot-border-color, #dcdfe6);
+    background: var(--bg-base, #ffffff);
+    color: var(--text-primary, #303133);
+    border: 1px solid var(--border-light, #dcdfe6);
 
     &:hover {
-      background: var(--chatbot-border-color, #e4e7ed);
+      background: var(--border-light, #e4e7ed);
       transform: none;
       box-shadow: none;
     }
@@ -601,8 +627,8 @@ const formatTopicMeta = (topic: Topic): string => {
     height: 40px;
     border: none;
     border-radius: 50%;
-    background: var(--chatbot-primary-color, #409eff);
-    color: white;
+    background: var(--theme-primary, #409eff);
+    color: var(--text-on-primary, #fff);
     cursor: pointer;
     box-shadow: 0 2px 8px rgba(64, 158, 255, 0.4);
     transition: all 0.2s;
@@ -633,7 +659,7 @@ const formatTopicMeta = (topic: Topic): string => {
     }
 
     &::-webkit-scrollbar-thumb {
-      background: var(--chatbot-border-color, #e4e7ed);
+      background: var(--border-light, #e4e7ed);
       border-radius: 2px;
     }
   }
@@ -650,9 +676,8 @@ const formatTopicMeta = (topic: Topic): string => {
     position: relative;
 
     &:hover {
-      background: var(--chatbot-primary-color-light, #ecf5ff);
+      background: var(--theme-primary-light, #ecf5ff);
 
-      .chatbot-topics__item-delete,
       .topic-list-view__item-delete {
         opacity: 1;
       }
@@ -660,20 +685,19 @@ const formatTopicMeta = (topic: Topic): string => {
 
     &:focus {
       outline: none;
-      background: var(--chatbot-primary-color-light, #ecf5ff);
+      background: var(--theme-primary-light, #ecf5ff);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--chatbot-primary-color, #409eff);
+      outline: 2px solid var(--theme-primary, #409eff);
       outline-offset: 2px;
     }
 
     &--active {
-      background: var(--chatbot-primary-color-light, #ecf5ff);
+      background: var(--theme-primary-light, #ecf5ff);
 
-      .chatbot-topics__item-title,
       .topic-list-view__item-title {
-        color: var(--chatbot-primary-color, #409eff);
+        color: var(--theme-primary, #409eff);
         font-weight: 500;
       }
 
@@ -684,13 +708,13 @@ const formatTopicMeta = (topic: Topic): string => {
         top: 0;
         bottom: 0;
         width: 3px;
-        background-color: var(--chatbot-primary-color, #409eff);
+        background-color: var(--theme-primary, #409eff);
         border-radius: 12px 0 0 12px;
       }
     }
 
     &--selected {
-      background: var(--chatbot-primary-color-light, #ecf5ff);
+      background: var(--theme-primary-light, #ecf5ff);
     }
   }
 
@@ -701,8 +725,8 @@ const formatTopicMeta = (topic: Topic): string => {
     width: 40px;
     height: 40px;
     border-radius: 10px;
-    background: var(--chatbot-primary-color-light, #ecf5ff);
-    color: var(--chatbot-primary-color, #409eff);
+    background: var(--theme-primary-light, #ecf5ff);
+    color: var(--theme-primary, #409eff);
     flex-shrink: 0;
 
     svg {
@@ -717,7 +741,7 @@ const formatTopicMeta = (topic: Topic): string => {
     justify-content: center;
     width: 20px;
     height: 20px;
-    border: 2px solid var(--chatbot-border-color, #dcdfe6);
+    border: 2px solid var(--border-light, #dcdfe6);
     border-radius: 4px;
     flex-shrink: 0;
     transition: all 0.2s;
@@ -725,25 +749,24 @@ const formatTopicMeta = (topic: Topic): string => {
 
     &:focus {
       outline: none;
-      border-color: var(--chatbot-primary-color, #409eff);
+      border-color: var(--theme-primary, #409eff);
       box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.3);
     }
 
     &:focus-visible {
-      outline: 2px solid var(--chatbot-primary-color, #409eff);
+      outline: 2px solid var(--theme-primary, #409eff);
       outline-offset: 2px;
     }
 
     svg {
       width: 14px;
       height: 14px;
-      color: var(--chatbot-primary-color, #409eff);
+      color: var(--theme-primary, #409eff);
     }
 
-    .chatbot-topics__item--selected &,
     .topic-list-view__item--selected & {
-      border-color: var(--chatbot-primary-color, #409eff);
-      background: var(--chatbot-primary-color, #409eff);
+      border-color: var(--theme-primary, #409eff);
+      background: var(--theme-primary, #409eff);
     }
   }
 
@@ -754,15 +777,15 @@ const formatTopicMeta = (topic: Topic): string => {
 
   &__item-title {
     font-size: 14px;
-    color: var(--chatbot-text-color, #303133);
+    color: var(--text-primary, #303133);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     cursor: text;
 
     :deep(mark) {
-      background: var(--chatbot-warning-color-light, #fdf6ec);
-      color: var(--chatbot-warning-color, #e6a23c);
+      background: var(--color-warning-light, #fdf6ec);
+      color: var(--color-warning, #e6a23c);
       padding: 0 2px;
       border-radius: 2px;
     }
@@ -773,10 +796,10 @@ const formatTopicMeta = (topic: Topic): string => {
     padding: 4px 8px;
     font-size: 14px;
     font-weight: 500;
-    border: 1px solid var(--chatbot-primary-color, #409eff);
+    border: 1px solid var(--theme-primary, #409eff);
     border-radius: 4px;
-    background-color: var(--chatbot-bg-color, #ffffff);
-    color: var(--chatbot-text-color, #303133);
+    background-color: var(--bg-base, #ffffff);
+    color: var(--text-primary, #303133);
     outline: none;
 
     &:focus {
@@ -786,7 +809,7 @@ const formatTopicMeta = (topic: Topic): string => {
 
   &__item-meta {
     font-size: 12px;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     margin-top: 2px;
   }
 
@@ -800,7 +823,7 @@ const formatTopicMeta = (topic: Topic): string => {
     background: transparent;
     border-radius: 6px;
     cursor: pointer;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     opacity: 0;
     transition: all 0.2s;
     flex-shrink: 0;
@@ -811,8 +834,8 @@ const formatTopicMeta = (topic: Topic): string => {
     }
 
     &:hover {
-      background: var(--chatbot-danger-color, #f56c6c);
-      color: white;
+      background: var(--color-danger, #f56c6c);
+      color: var(--text-on-primary, #fff);
     }
   }
 
@@ -825,8 +848,8 @@ const formatTopicMeta = (topic: Topic): string => {
     padding: 0 5px;
     font-size: 11px;
     font-weight: 600;
-    color: #fff;
-    background-color: var(--chatbot-danger-color, #f56c6c);
+    color: var(--text-on-primary, #fff);
+    background-color: var(--color-danger, #f56c6c);
     border-radius: 9px;
     flex-shrink: 0;
   }
@@ -838,7 +861,7 @@ const formatTopicMeta = (topic: Topic): string => {
     justify-content: center;
     padding: 48px 20px;
     text-align: center;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
 
     svg {
       width: 64px;

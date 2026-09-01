@@ -95,13 +95,13 @@ defineExpose({
     display: flex;
     align-items: center;
     position: relative;
-    background: var(--chatbot-input-bg, #f5f7fa);
-    border: 1px solid var(--chatbot-input-border, #dcdfe6);
+    background: var(--input-bg, #f5f7fa);
+    border: 1px solid var(--input-border, #dcdfe6);
     border-radius: 8px;
     transition: all 0.2s;
 
     &:focus-within {
-      border-color: var(--chatbot-primary-color, #409eff);
+      border-color: var(--theme-primary, #409eff);
       box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.1);
     }
   }
@@ -111,7 +111,7 @@ defineExpose({
     left: 12px;
     width: 16px;
     height: 16px;
-    color: var(--chatbot-subtext-color, #909399);
+    color: var(--text-tertiary, #909399);
     pointer-events: none;
   }
 
@@ -121,11 +121,11 @@ defineExpose({
     border: none;
     background: transparent;
     font-size: 14px;
-    color: var(--chatbot-text-color, #303133);
+    color: var(--text-primary, #303133);
     outline: none;
 
     &::placeholder {
-      color: var(--chatbot-placeholder-color, #a8abb2);
+      color: var(--text-placeholder, #a8abb2);
     }
   }
 
@@ -138,10 +138,10 @@ defineExpose({
     width: 20px;
     height: 20px;
     border: none;
-    background: var(--chatbot-subtext-color, #909399);
+    background: var(--text-tertiary, #909399);
     border-radius: 50%;
     cursor: pointer;
-    color: white;
+    color: var(--text-on-primary, #fff);
     opacity: 0.8;
     transition: all 0.2s;
 

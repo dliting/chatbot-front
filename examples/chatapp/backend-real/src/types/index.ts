@@ -11,7 +11,11 @@ export interface Message {
   sessionId: string
   role: 'user' | 'assistant'
   content: string
+  thinkingContent?: string
+  thinkingTime?: number
   images?: string[]
+  videos?: string[]
+  audios?: string[]
   timestamp: number
 }
 
@@ -29,8 +33,9 @@ export interface ApiResponse<T = unknown> {
 }
 
 export interface ChatMessage {
-  type: 'start' | 'token' | 'end'
+  type: 'start' | 'token' | 'reasoning' | 'end'
   messageId?: string
   content?: string
   fullContent?: string
+  reasoningContent?: string
 }

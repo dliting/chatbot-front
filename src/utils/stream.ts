@@ -224,10 +224,15 @@ export function parseSSELine(line: string): StreamEvent | null {
  */
 export function createMockStream(
   content: string,
-  delay = 50
+  delay = 50,
+  thinkingContent?: string
 ): AsyncGenerator<StreamEvent, void, unknown> {
   return (async function* () {
     yield { type: 'start', messageId: `msg_${Date.now()}` }
+
+    if (thinkingContent) {
+      yield { type: 'reasoning', reasoningContent: thinkingContent }
+    }
 
     for (const char of content) {
       await new Promise(resolve => setTimeout(resolve, delay))
@@ -244,12 +249,19 @@ export function createMockStream(
 export class StreamAccumulator {
   private content = ''
   private messageId: string | null = null
+  private thinkingContent = ''
 
   add(event: StreamEvent): void {
     switch (event.type) {
       case 'start':
         this.content = ''
+        this.thinkingContent = ''
         this.messageId = event.messageId ?? null
+        break
+      case 'reasoning':
+        if (event.reasoningContent) {
+          this.thinkingContent += event.reasoningContent
+        }
         break
       case 'token':
         if (event.content) {
@@ -268,12 +280,17 @@ export class StreamAccumulator {
     return this.content
   }
 
+  getThinkingContent(): string {
+    return this.thinkingContent
+  }
+
   getMessageId(): string | null {
     return this.messageId
   }
 
   reset(): void {
     this.content = ''
+    this.thinkingContent = ''
     this.messageId = null
   }
 

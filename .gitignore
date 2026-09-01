@@ -1,8 +1,9 @@
 # Dependencies
 node_modules/
-package-lock.json
 yarn.lock
 pnpm-lock.yaml
+# examples are standalone demo apps; only the root lockfile is tracked
+examples/**/package-lock.json
 
 # Build outputs
 dist/
@@ -31,8 +32,17 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Environment
+.env
 .env.local
 .env.*.local
+examples/chatapp/backend-real/.env
+examples/chatapp/real.env
+
+# local-only: assistant working files (never commit)
+CLAUDE.md
+examples/chatapp/CLAUDE.md
+.claude/
+docs/superpowers/
 
 # Testing
 coverage/
@@ -51,10 +61,19 @@ docs/plans/
 
 # ChatApp frontend
 examples/chatapp/frontend/.env
-examples/chatapp/backend-real/
 
 # Mock database
 examples/chatapp/backend-mock/data/*.db
 
-# Test screenshots
-tests/screenshots/*.png
+# Real database
+examples/chatapp/backend-real/data/*.db
+
+# Test screenshots and artifacts
+tests/screenshots/
+tests/e2e/results/
+
+# Runtime temp files
+scripts/chatapp.pid
+
+# playwright-mcp tests
+.playwright-mcp/

@@ -67,7 +67,7 @@ watch(() => props.visible, (val) => {
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
   }
-})
+}, { immediate: true })
 </script>
 
 <style scoped lang="scss">
@@ -86,7 +86,7 @@ watch(() => props.visible, (val) => {
     max-width: 900px;
     height: 90vh;
     max-height: 800px;
-    background: white;
+    background: var(--bg-base, #ffffff);
     border-radius: 12px;
     display: flex;
     flex-direction: column;
@@ -99,14 +99,14 @@ watch(() => props.visible, (val) => {
     align-items: center;
     justify-content: space-between;
     padding: 16px 20px;
-    border-bottom: 1px solid #ebeef5;
+    border-bottom: 1px solid var(--border-light, #ebeef5);
     flex-shrink: 0;
   }
 
   &__title {
     font-size: 16px;
     font-weight: 500;
-    color: #303133;
+    color: var(--text-primary, #303133);
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -123,19 +123,16 @@ watch(() => props.visible, (val) => {
     align-items: center;
     justify-content: center;
     transition: background 0.2s;
+    color: var(--text-tertiary, #606266);
 
     svg {
       width: 20px;
       height: 20px;
-      stroke: #606266;
     }
 
     &:hover {
-      background: #f5f7fa;
-
-      svg {
-        stroke: #303133;
-      }
+      background: var(--chat-assistant-bg, #f5f7fa);
+      color: var(--text-primary, #303133);
     }
   }
 
@@ -150,7 +147,7 @@ watch(() => props.visible, (val) => {
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: #909399;
+    color: var(--text-tertiary, #909399);
     font-size: 14px;
   }
 }

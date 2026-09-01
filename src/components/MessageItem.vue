@@ -21,31 +21,42 @@
 
       <!-- Bubble -->
       <div :class="bubbleClasses" @dblclick="handleDoubleClick">
+        <!-- Thinking block -->
+        <ThinkingBlock
+          v-if="message.thinkingContent"
+          :content="message.thinkingContent"
+          :thinking-time="message.thinkingTime"
+          :is-thinking="isStreaming && isThinkingActive"
+          :auto-collapse="true"
+          :labels="labels"
+          @toggle="thinkingCollapsed = !thinkingCollapsed"
+        />
+
         <!-- Text content -->
-        <!-- eslint-disable-next-line vue/no-v-html -- Content is sanitized via DOMPurify in formatMessageContent -->
-        <div v-if="hasText" class="chatbot-message__text" v-html="formattedContent"/>
+        <!-- eslint-disable-next-line vue/no-v-html -- Content is sanitized via DOMPurify in formatMarkdownContent -->
+        <div v-if="hasText" class="chatbot-message__text" @click="handleTextClick" v-html="formattedContent"/>
 
         <!-- Image content -->
         <div v-if="hasImages" class="chatbot-message__images">
           <img
-            v-for="(image, index) in message.images"
+            v-for="(image, index) in imageAttachments"
             :key="index"
-            :src="image"
+            :src="image.url"
             :alt="`Image ${index + 1}`"
             class="chatbot-message__image"
-            @click="$emit('file-click', { type: 'image', url: image })"
+            @click="$emit('file-click', { type: 'image', url: image.url })"
           />
         </div>
 
         <!-- Video content -->
         <div v-if="hasVideos" class="chatbot-message__videos">
           <div
-            v-for="(video, index) in message.videos"
+            v-for="(video, index) in videoAttachments"
             :key="`video-${index}`"
             class="chatbot-message__video"
-            @click="$emit('file-click', { type: 'video', url: `data:video/mp4;base64,${video}` })"
+            @click="$emit('file-click', { type: 'video', url: video.url })"
           >
-            <video :src="`data:video/mp4;base64,${video}`" class="chatbot-message__video-player" preload="metadata" />
+            <video :src="video.url" class="chatbot-message__video-player" preload="metadata" />
             <div class="chatbot-message__video-overlay">
               <svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M8 5v14l11-7z"/>
@@ -57,19 +68,19 @@
         <!-- Audio content -->
         <div v-if="hasAudios" class="chatbot-message__audios">
           <div
-            v-for="(audio, index) in message.audios"
+            v-for="(audio, index) in audioAttachments"
             :key="`audio-${index}`"
             class="chatbot-message__audio"
-            @click="$emit('file-click', { type: 'audio', url: `data:audio/mp3;base64,${audio}` })"
+            @click="$emit('file-click', { type: 'audio', url: audio.url })"
           >
-            <audio :src="`data:audio/mp3;base64,${audio}`" controls class="chatbot-message__audio-player" />
+            <audio :src="audio.url" controls class="chatbot-message__audio-player" />
           </div>
         </div>
 
         <!-- Document content -->
         <div v-if="hasDocuments" class="chatbot-message__documents">
           <div
-            v-for="(doc, index) in message.documents"
+            v-for="(doc, index) in documentAttachments"
             :key="`doc-${index}`"
             class="chatbot-message__document"
             @click="$emit('file-click', { type: doc.type, url: doc.url, name: doc.name })"
@@ -92,7 +103,12 @@
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
           </svg>
-          <span>Failed to send</span>
+          <span>{{ message.errorMessage || (isUser ? (labels?.sendFailed || 'Send failed') : (labels?.responseFailed || 'Response failed')) }}</span>
+        </div>
+
+        <!-- Stopped indicator -->
+        <div v-if="isStopped" class="chatbot-message__stopped">
+          <span>{{ message.errorMessage || (labels?.generationStopped || 'Generation stopped') }}</span>
         </div>
       </div>
 
@@ -107,7 +123,7 @@
         <button
           v-if="enableCopy && canCopy"
           :class="['chatbot-message__action-btn', { 'chatbot-message__action-btn--copied': isCopied }]"
-          title="复制"
+          :title="labels?.copy || 'Copy'"
           @click="handleCopy"
         >
           <Check v-if="isCopied" :size="14" />
@@ -118,8 +134,8 @@
         <button
           v-if="isError && enableResend"
           class="chatbot-message__action-btn chatbot-message__action-btn--danger"
-          title="重新发送"
-          @click="$emit('resend')"
+          :title="labels?.resend || 'Resend'"
+          @click="handleResend"
         >
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
@@ -130,7 +146,7 @@
         <button
           v-if="enableDelete"
           class="chatbot-message__action-btn chatbot-message__action-btn--danger"
-          title="删除"
+          :title="labels?.delete || 'Delete'"
           @click="handleDelete"
         >
           <Trash2 :size="14" />
@@ -141,12 +157,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onUnmounted } from 'vue'
+import { computed, ref, onUnmounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Copy, Check, Trash2 } from 'lucide-vue-next'
 import type { Message } from '@/types'
+import type { ChatbotLabels } from '@/types/config'
+import { chatActionsKey } from '@/symbols'
 import { formatTime, copyToClipboard } from '@/utils/helpers'
-import { formatMessageContent } from '@/utils/message'
+import { formatMarkdownContent } from '@/utils/markdown'
+import { getAttachmentsByType } from '@/utils/message'
+import ThinkingBlock from './ThinkingBlock.vue'
 
 interface Props {
   message: Message
@@ -160,7 +180,8 @@ interface Props {
   enableResend?: boolean
   isStreaming?: boolean
   copyTimeout?: number
-  isLastMessage?: boolean  // AI 最后一条消息时，默认显示操作按钮
+  isLastMessage?: boolean
+  labels?: ChatbotLabels
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -178,28 +199,36 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 interface Emits {
-  (e: 'copy'): void
-  (e: 'delete'): void
-  (e: 'resend'): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
-  (e: 'edit', message: Message): void
 }
 
-const emit = defineEmits<Emits>()
+defineEmits<Emits>()
+
+// Inject chat actions
+const chatActions = inject(chatActionsKey, null)
+
+// Thinking state
+const thinkingCollapsed = ref(true)
 
 // Computed
 const isUser = computed(() => props.message.role === 'user')
 const isError = computed(() => props.message.status === 'error')
+const isStopped = computed(() => props.message.status === 'stopped')
 const hasText = computed(() => Boolean(props.message.content))
-const hasImages = computed(() => Boolean(props.message.images?.length))
-const hasVideos = computed(() => Boolean(props.message.videos?.length))
-const hasAudios = computed(() => Boolean(props.message.audios?.length))
-const hasDocuments = computed(() => Boolean(props.message.documents?.length))
+const imageAttachments = computed(() => getAttachmentsByType(props.message, 'image'))
+const videoAttachments = computed(() => getAttachmentsByType(props.message, 'video'))
+const audioAttachments = computed(() => getAttachmentsByType(props.message, 'audio'))
+const documentAttachments = computed(() => getAttachmentsByType(props.message, 'document'))
+const hasImages = computed(() => imageAttachments.value.length > 0)
+const hasVideos = computed(() => videoAttachments.value.length > 0)
+const hasAudios = computed(() => audioAttachments.value.length > 0)
+const hasDocuments = computed(() => documentAttachments.value.length > 0)
 const canCopy = computed(() => hasText.value && !props.isStreaming)
+const isThinkingActive = computed(() => chatActions?.isThinkingActive?.value ?? false)
 
-const label = computed(() => isUser.value ? 'You' : 'AI Assistant')
+const label = computed(() => isUser.value ? (props.labels?.userLabel || 'You') : (props.labels?.assistantLabel || 'AI Assistant'))
 const formattedTime = computed(() => formatTime(props.message.timestamp))
-const formattedContent = computed(() => formatMessageContent(props.message.content))
+const formattedContent = computed(() => formatMarkdownContent(props.message.content))
 
 // Classes
 const classes = computed(() => [
@@ -213,7 +242,6 @@ const classes = computed(() => [
   },
 ])
 
-// Actions visibility: AI last message shows by default, others require hover
 const actionsClasses = computed(() => [
   'chatbot-message__actions',
   {
@@ -233,11 +261,10 @@ const bubbleClasses = computed(() => [
   },
 ])
 
-// Copy state - icon switching
+// Copy state
 const isCopied = ref(false)
 let copyTimer: ReturnType<typeof setTimeout> | null = null
 
-// Cleanup timer on component unmount
 onUnmounted(() => {
   if (copyTimer) {
     clearTimeout(copyTimer)
@@ -247,47 +274,68 @@ onUnmounted(() => {
 
 const handleCopy = async () => {
   if (!props.message.content || props.isStreaming) {
-    ElMessage({ message: '无内容可复制', type: 'error', duration: 3000 })
+    ElMessage({ message: props.labels?.noContentToCopy || 'No content to copy', type: 'error', duration: 3000 })
     return
   }
 
   try {
     await copyToClipboard(props.message.content)
-    ElMessage({ message: '已复制到剪贴板', type: 'success', duration: 3000 })
+    ElMessage({ message: props.labels?.copiedToClipboard || 'Copied to clipboard', type: 'success', duration: 3000 })
     isCopied.value = true
 
-    // Reset icon after timeout
-    if (copyTimer) {
-      clearTimeout(copyTimer)
-    }
+    if (copyTimer) clearTimeout(copyTimer)
     copyTimer = setTimeout(() => {
       isCopied.value = false
       copyTimer = null
     }, props.copyTimeout)
-
-    emit('copy')
   } catch {
-    ElMessage({ message: '复制失败', type: 'error', duration: 3000 })
+    ElMessage({ message: props.labels?.copyFailed || 'Copy failed', type: 'error', duration: 3000 })
   }
 }
 
 const handleDelete = () => {
-  ElMessageBox.confirm('确定要删除这条消息吗？', '删除消息', {
-    confirmButtonText: '删除',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    emit('delete')
-    ElMessage({ message: '消息已删除', type: 'success', duration: 3000 })
+  ElMessageBox.confirm(
+    props.labels?.deleteConfirm || 'Are you sure you want to delete this message?',
+    props.labels?.deleteMessageTitle || 'Delete Message',
+    {
+      confirmButtonText: props.labels?.delete || 'Delete',
+      cancelButtonText: props.labels?.cancel || 'Cancel',
+      type: 'warning'
+    }
+  ).then(() => {
+    chatActions?.deleteMessage(props.message)
+    ElMessage({ message: props.labels?.messageDeleted || 'Message deleted', type: 'success', duration: 3000 })
   }).catch(() => {
-    // User cancelled, do nothing
+    // User cancelled
   })
 }
 
+const handleResend = () => {
+  if (isUser.value) {
+    chatActions?.sendMessage({ content: props.message.content, attachments: props.message.attachments })
+  } else {
+    chatActions?.refreshMessage(props.message)
+  }
+}
+
 const handleDoubleClick = () => {
-  // Only emit edit for user messages that are not streaming
   if (props.message.role === 'user' && !props.isStreaming) {
-    emit('edit', props.message)
+    chatActions?.editMessage(props.message)
+  }
+}
+
+/** Handle clicks on code blocks within rendered markdown */
+const handleTextClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement
+  const codeBlock = target.closest('pre')
+  if (!codeBlock) return
+
+  const codeEl = codeBlock.querySelector('code')
+  const text = codeEl?.textContent ?? codeBlock.textContent
+  if (text) {
+    copyToClipboard(text).then(() => {
+      ElMessage({ message: props.labels?.copiedToClipboard || 'Copied to clipboard', type: 'success', duration: 3000 })
+    })
   }
 }
 </script>
@@ -316,7 +364,7 @@ const handleDoubleClick = () => {
 
   &--error {
     .chatbot-message__bubble {
-      border: 1px solid var(--chatbot-danger-color, #f56c6c);
+      border: 1px solid var(--color-danger, #f56c6c);
     }
   }
 
@@ -341,13 +389,13 @@ const handleDoubleClick = () => {
     }
 
     .chatbot-message--user & {
-      background-color: var(--chatbot-user-bubble-bg, #409eff);
-      color: var(--chatbot-user-bubble-text, #ffffff);
+      background-color: var(--chat-user-bg, #409eff);
+      color: var(--chat-user-text, #ffffff);
     }
 
     .chatbot-message--assistant & {
-      background-color: var(--chatbot-assistant-bubble-bg, #f5f7fa);
-      color: var(--chatbot-assistant-bubble-text, #303133);
+      background-color: var(--chat-assistant-bg, #f5f7fa);
+      color: var(--chat-assistant-text, #303133);
     }
   }
 
@@ -359,7 +407,7 @@ const handleDoubleClick = () => {
 
   &__label {
     font-size: 12px;
-    color: var(--chatbot-panel-subtext, #909399);
+    color: var(--text-tertiary, #909399);
     margin-bottom: 4px;
     padding: 0 4px;
   }
@@ -372,14 +420,14 @@ const handleDoubleClick = () => {
     overflow-wrap: break-word;
 
     &--user {
-      background-color: var(--chatbot-user-bubble-bg, #409eff);
-      color: var(--chatbot-user-bubble-text, #ffffff);
+      background-color: var(--chat-user-bg, #409eff);
+      color: var(--chat-user-text, #ffffff);
       border-bottom-right-radius: 4px;
     }
 
     &--assistant {
-      background-color: var(--chatbot-assistant-bubble-bg, #f5f7fa);
-      color: var(--chatbot-assistant-bubble-text, #303133);
+      background-color: var(--chat-assistant-bg, #f5f7fa);
+      color: var(--chat-assistant-text, #303133);
       border-bottom-left-radius: 4px;
     }
 
@@ -394,7 +442,7 @@ const handleDoubleClick = () => {
     white-space: pre-wrap;
 
     :deep(code) {
-      background-color: rgba(0, 0, 0, 0.1);
+      background-color: var(--bg-tertiary, rgba(0, 0, 0, 0.1));
       padding: 2px 4px;
       border-radius: 4px;
       font-family: monospace;
@@ -407,6 +455,22 @@ const handleDoubleClick = () => {
 
     :deep(br) {
       line-height: 1.8;
+    }
+
+    :deep(pre) {
+      background-color: var(--bg-code-block, #1e1e1e);
+      color: var(--text-code-block, #d4d4d4);
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 8px 0;
+      cursor: pointer;
+
+      code {
+        background: none;
+        padding: 0;
+        font-size: 0.85em;
+      }
     }
   }
 
@@ -448,7 +512,7 @@ const handleDoubleClick = () => {
     border-radius: 8px;
     overflow: hidden;
     cursor: pointer;
-    background: #000;
+    background: var(--bg-video-overlay, #000);
 
     &-player {
       width: 100%;
@@ -465,12 +529,12 @@ const handleDoubleClick = () => {
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.3);
+      background: var(--bg-overlay, rgba(0, 0, 0, 0.3));
 
       svg {
         width: 48px;
         height: 48px;
-        fill: white;
+        fill: var(--text-on-primary, #fff);
       }
     }
   }
@@ -500,7 +564,7 @@ const handleDoubleClick = () => {
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.05);
+    background: var(--bg-secondary, rgba(0, 0, 0, 0.05));
     border-radius: 8px;
     cursor: pointer;
     transition: background 0.2s;
@@ -509,7 +573,7 @@ const handleDoubleClick = () => {
       width: 20px;
       height: 20px;
       flex-shrink: 0;
-      stroke: #606266;
+      stroke: var(--text-primary, #606266);
     }
 
     &:hover {
@@ -518,7 +582,7 @@ const handleDoubleClick = () => {
 
     &-name {
       font-size: 13px;
-      color: #303133;
+      color: var(--text-primary, #303133);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -538,7 +602,7 @@ const handleDoubleClick = () => {
     display: flex;
     align-items: center;
     gap: 4px;
-    color: var(--chatbot-danger-color, #f56c6c);
+    color: var(--color-danger, #f56c6c);
     font-size: 12px;
     margin-top: 4px;
 
@@ -548,9 +612,16 @@ const handleDoubleClick = () => {
     }
   }
 
+  &__stopped {
+    font-size: 12px;
+    color: var(--text-tertiary, #909399);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
   &__timestamp {
     font-size: 11px;
-    color: var(--chatbot-panel-subtext, #909399);
+    color: var(--text-tertiary, #909399);
     margin-top: 4px;
     padding: 0 4px;
   }
@@ -581,7 +652,7 @@ const handleDoubleClick = () => {
     background: transparent;
     border-radius: 4px;
     cursor: pointer;
-    color: var(--chatbot-action-icon-color, #8c8c8c);
+    color: var(--action-icon-color, #8c8c8c);
     transition: all 0.2s;
 
     svg, :deep(svg) {
@@ -590,17 +661,17 @@ const handleDoubleClick = () => {
     }
 
     &:hover {
-      background-color: var(--chatbot-action-hover-bg, rgba(0, 0, 0, 0.1));
-      color: var(--chatbot-action-icon-hover-color, #4a4a4a);
+      background-color: var(--action-hover-bg, rgba(0, 0, 0, 0.1));
+      color: var(--action-icon-hover-color, #4a4a4a);
     }
 
     &--copied {
-      color: var(--chatbot-color-success, #67c23a);
+      color: var(--color-success, #67c23a);
     }
 
     &--danger:hover {
-      background-color: var(--chatbot-danger-color, #f56c6c);
-      color: #fff;
+      background-color: var(--color-danger, #f56c6c);
+      color: var(--text-on-primary, #fff);
     }
   }
 }

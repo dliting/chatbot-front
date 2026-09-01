@@ -38,6 +38,8 @@ export async function initDatabase(): Promise<void> {
       sessionId TEXT NOT NULL,
       role TEXT NOT NULL,
       content TEXT NOT NULL,
+      thinkingContent TEXT,
+      thinkingTime INTEGER,
       images TEXT,
       videos TEXT,
       audios TEXT,
@@ -45,6 +47,22 @@ export async function initDatabase(): Promise<void> {
       FOREIGN KEY (sessionId) REFERENCES sessions(sessionId) ON DELETE CASCADE
     )
   `)
+
+  // Migration: add thinkingContent and thinkingTime columns to existing databases
+  try {
+    const columns = db.exec("PRAGMA table_info(messages)")
+    if (columns.length > 0) {
+      const columnNames = columns[0].values.map((row: any[]) => row[1] as string)
+      if (!columnNames.includes('thinkingContent')) {
+        db.run('ALTER TABLE messages ADD COLUMN thinkingContent TEXT')
+      }
+      if (!columnNames.includes('thinkingTime')) {
+        db.run('ALTER TABLE messages ADD COLUMN thinkingTime INTEGER')
+      }
+    }
+  } catch {
+    // Migration failures on fresh databases are harmless
+  }
 
   // Save to disk
   saveDatabase()
@@ -90,7 +108,7 @@ export function createSession(title: string = '新对话'): Session {
 export function getSessions(): Session[] {
   if (!db) throw new Error('Database not initialized')
 
-  const results = db.exec('SELECT * FROM sessions ORDER BY updatedAt DESC')
+  const results = db.exec('SELECT sessionId, title, createdAt, updatedAt, messageCount FROM sessions ORDER BY updatedAt DESC')
   if (results.length === 0) return []
 
   return results[0].values.map((row: any[]) => ({
@@ -105,7 +123,7 @@ export function getSessions(): Session[] {
 export function getSession(sessionId: string): Session | null {
   if (!db) throw new Error('Database not initialized')
 
-  const results = db.exec('SELECT * FROM sessions WHERE sessionId = ?', [sessionId])
+  const results = db.exec('SELECT sessionId, title, createdAt, updatedAt, messageCount FROM sessions WHERE sessionId = ?', [sessionId])
   if (results.length === 0 || results[0].values.length === 0) return null
 
   const row = results[0].values[0]
@@ -135,7 +153,9 @@ export function addMessage(
   content: string,
   images?: string[],
   videos?: string[],
-  audios?: string[]
+  audios?: string[],
+  thinkingContent?: string,
+  thinkingTime?: number
 ): Message {
   if (!db) throw new Error('Database not initialized')
 
@@ -143,12 +163,11 @@ export function addMessage(
   const timestamp = Date.now()
 
   db.run(
-    'INSERT INTO messages (messageId, sessionId, role, content, images, videos, audios, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO messages (messageId, sessionId, role, content, thinkingContent, thinkingTime, images, videos, audios, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
-      messageId,
-      sessionId,
-      role,
-      content,
+      messageId, sessionId, role, content,
+      thinkingContent || null,
+      thinkingTime ?? null,
       images ? JSON.stringify(images) : null,
       videos ? JSON.stringify(videos) : null,
       audios ? JSON.stringify(audios) : null,
@@ -176,6 +195,8 @@ export function addMessage(
     sessionId,
     role,
     content,
+    thinkingContent: thinkingContent || undefined,
+    thinkingTime: thinkingTime ?? undefined,
     images,
     videos,
     audios,
@@ -186,7 +207,7 @@ export function addMessage(
 export function getMessages(sessionId: string): Message[] {
   if (!db) throw new Error('Database not initialized')
 
-  const results = db.exec('SELECT * FROM messages WHERE sessionId = ? ORDER BY timestamp ASC', [
+  const results = db.exec('SELECT messageId, sessionId, role, content, thinkingContent, thinkingTime, images, videos, audios, timestamp FROM messages WHERE sessionId = ? ORDER BY timestamp ASC', [
     sessionId
   ])
   if (results.length === 0) return []
@@ -196,21 +217,46 @@ export function getMessages(sessionId: string): Message[] {
     sessionId: row[1] as string,
     role: row[2] as 'user' | 'assistant',
     content: row[3] as string,
-    images: row[4] ? JSON.parse(row[4] as string) : undefined,
-    videos: row[5] ? JSON.parse(row[5] as string) : undefined,
-    audios: row[6] ? JSON.parse(row[6] as string) : undefined,
-    timestamp: row[7] as number
+    thinkingContent: (row[4] as string) || undefined,
+    thinkingTime: (row[5] as number) ?? undefined,
+    images: row[6] ? JSON.parse(row[6] as string) : undefined,
+    videos: row[7] ? JSON.parse(row[7] as string) : undefined,
+    audios: row[8] ? JSON.parse(row[8] as string) : undefined,
+    timestamp: row[9] as number
   }))
+}
+
+export function deleteMessage(messageId: string): boolean {
+  if (!db) throw new Error('Database not initialized')
+
+  // Get sessionId before deleting
+  const results = db.exec('SELECT sessionId FROM messages WHERE messageId = ?', [messageId])
+  if (results.length === 0 || results[0].values.length === 0) return false
+  const sessionId = results[0].values[0][0] as string
+
+  db.run('DELETE FROM messages WHERE messageId = ?', [messageId])
+  // Decrement messageCount
+  db.run('UPDATE sessions SET messageCount = MAX(messageCount - 1, 0) WHERE sessionId = ?', [sessionId])
+  saveDatabase()
+  return true
 }
 
 export function updateSessionTitle(sessionId: string, title: string): void {
   if (!db) throw new Error('Database not initialized')
 
-  db.run('UPDATE sessions SET title = ?, updatedAt = ? WHERE sessionId = ?', [
-    title,
-    Date.now(),
-    sessionId
-  ])
+  const now = Date.now()
+  const existing = getSession(sessionId)
+  if (existing) {
+    db.run('UPDATE sessions SET title = ?, updatedAt = ? WHERE sessionId = ?', [
+      title, now, sessionId
+    ])
+  } else {
+    // Create session row if it doesn't exist
+    db.run(
+      'INSERT INTO sessions (sessionId, title, createdAt, updatedAt, messageCount) VALUES (?, ?, ?, ?, ?)',
+      [sessionId, title, now, now, 0]
+    )
+  }
 
   saveDatabase()
 }

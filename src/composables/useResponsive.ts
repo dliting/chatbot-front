@@ -2,6 +2,7 @@
  * Composable for responsive behavior
  */
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { BREAKPOINTS } from '@/constants'
 
 export type Breakpoint = 'mobile' | 'tablet' | 'desktop'
 
@@ -12,9 +13,9 @@ export interface ResponsiveOptions {
 }
 
 const defaultBreakpoints: ResponsiveOptions = {
-  mobile: 768,
-  tablet: 1024,
-  desktop: 1440,
+  mobile: BREAKPOINTS.MOBILE,
+  tablet: BREAKPOINTS.TABLET,
+  desktop: BREAKPOINTS.DESKTOP,
 }
 
 export function useResponsive(options: ResponsiveOptions = {}) {
@@ -25,10 +26,8 @@ export function useResponsive(options: ResponsiveOptions = {}) {
 
   // Computed breakpoint
   const breakpoint = computed<Breakpoint>(() => {
-    const mobile = breakpoints.mobile ?? 768
-    const tablet = breakpoints.tablet ?? 1024
-    if (screenWidth.value < mobile) return 'mobile'
-    if (screenWidth.value < tablet) return 'tablet'
+    if (screenWidth.value < breakpoints.mobile!) return 'mobile'
+    if (screenWidth.value < breakpoints.tablet!) return 'tablet'
     return 'desktop'
   })
 

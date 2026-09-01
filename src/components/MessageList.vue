@@ -18,9 +18,7 @@
           :enable-resend="enableResend"
           :is-streaming="isStreaming && message.messageId === streamingMessageId"
           :is-last-message="index === messages.length - 1"
-          @copy="$emit('copy', message)"
-          @delete="$emit('delete', message)"
-          @resend="$emit('resend', message)"
+          :labels="labels"
           @file-click="$emit('file-click', $event)"
         />
       </div>
@@ -32,7 +30,7 @@
             <svg viewBox="0 0 24 24" fill="currentColor">
               <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
             </svg>
-            <p>{{ emptyMessage }}</p>
+            <p>{{ labels?.emptyMessage || 'Start a conversation...' }}</p>
           </div>
         </slot>
       </div>
@@ -56,6 +54,7 @@
 <script setup lang="ts">
 import { ref, watch, nextTick, onMounted } from 'vue'
 import type { Message } from '@/types'
+import type { ChatbotLabels } from '@/types/config'
 import MessageItem from './MessageItem.vue'
 
 interface Props {
@@ -71,6 +70,7 @@ interface Props {
   streamingMessageId?: string | null
   autoScroll?: boolean
   emptyMessage?: string
+  labels?: ChatbotLabels
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -84,13 +84,10 @@ const props = withDefaults(defineProps<Props>(), {
   isStreaming: false,
   streamingMessageId: null,
   autoScroll: true,
-  emptyMessage: 'Start a conversation...',
+  emptyMessage: '',
 })
 
 interface Emits {
-  (e: 'copy', message: Message): void
-  (e: 'delete', message: Message): void
-  (e: 'resend', message: Message): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
   (e: 'scroll-to-top'): void
   (e: 'scroll-to-bottom'): void
@@ -181,7 +178,7 @@ defineExpose({
 
   &__empty-content {
     text-align: center;
-    color: var(--chatbot-panel-subtext, #909399);
+    color: var(--text-tertiary, #909399);
 
     svg {
       width: 48px;
@@ -203,14 +200,14 @@ defineExpose({
     width: 36px;
     height: 36px;
     border: none;
-    background-color: var(--chatbot-bg-color, #ffffff);
+    background-color: var(--bg-base, #ffffff);
     border-radius: 50%;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--chatbot-panel-subtext, #909399);
+    color: var(--text-tertiary, #909399);
     transition: all 0.2s;
 
     svg {
@@ -219,7 +216,7 @@ defineExpose({
     }
 
     &:hover {
-      background-color: var(--chatbot-primary-color, #409eff);
+      background-color: var(--theme-primary, #409eff);
       color: #fff;
       transform: scale(1.1);
     }

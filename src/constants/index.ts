@@ -1,135 +1,14 @@
 /**
- * Default configuration constants for the ChatBot component
+ * Constants for the ChatBot component
  */
 
 /**
- * Default chatbot configuration values
+ * Message roles (aligned with MessageRole type)
  */
-export const DEFAULT_CONFIG = {
-  // API Configuration
-  apiUrl: '',
-  apiToken: '',
-  streamEnabled: true,
-
-  // UI Configuration
-  title: 'AI Assistant',
-  placeholder: 'Type your message...',
-  welcomeMessage: 'Hello! How can I help you today?',
-
-  // Display Configuration
-  showSuspendedBall: true,
-  position: 'right' as const,
-  width: 380,
-  height: 600,
-  maxWidth: '100vw',
-  maxHeight: '100vh',
-
-  // Theme Configuration
-  theme: 'light' as const,
-  primaryColor: '#667eea',
-
-  // Feature Configuration
-  enableFileUpload: true,
-  enableVoiceInput: false,
-  enableHistory: true,
-  maxHistoryLength: 50,
-
-  // Message Configuration
-  maxMessageLength: 5000,
-  typingIndicatorDelay: 300,
-  streamingDelay: 50,
-
-  // Topic Configuration
-  topicStorageEnabled: true,
-  topicId: '',
-  autoSaveTopic: true,
-
-  // Animation Configuration
-  animationEnabled: true,
-  animationDuration: 300,
-
-  // Accessibility
-  ariaLabels: {
-    chatButton: 'Open chat',
-    closeButton: 'Close chat',
-    sendButton: 'Send message',
-    inputField: 'Type your message',
-  },
-} as const
-
-/**
- * Message types enumeration
- */
-export const MESSAGE_TYPES = {
+export const MESSAGE_ROLES = {
   USER: 'user',
   ASSISTANT: 'assistant',
   SYSTEM: 'system',
-  ERROR: 'error',
-} as const
-
-/**
- * Message status enumeration
- */
-export const MESSAGE_STATUS = {
-  SENDING: 'sending',
-  SENT: 'sent',
-  FAILED: 'failed',
-  STREAMING: 'streaming',
-} as const
-
-/**
- * Chat panel states
- */
-export const CHAT_STATE = {
-  CLOSED: 'closed',
-  OPEN: 'open',
-  MINIMIZED: 'minimized',
-  FULLSCREEN: 'fullscreen',
-} as const
-
-/**
- * Event names
- */
-export const EVENT_NAMES = {
-  // Chat events
-  OPEN: 'chat:open',
-  CLOSE: 'chat:close',
-  MESSAGE_SEND: 'message:send',
-  MESSAGE_RECEIVED: 'message:received',
-  MESSAGE_ERROR: 'message:error',
-
-  // Topic events
-  TOPIC_START: 'topic:start',
-  TOPIC_END: 'topic:end',
-  TOPIC_SAVE: 'topic:save',
-
-  // Lifecycle events
-  MOUNT: 'chat:mount',
-  UNMOUNT: 'chat:unmount',
-  READY: 'chatbot:ready',
-
-  // Error events
-  ERROR: 'chat:error',
-  API_ERROR: 'api:error',
-  NETWORK_ERROR: 'network:error',
-} as const
-
-/**
- * File upload configuration
- */
-export const FILE_UPLOAD_CONFIG = {
-  maxFileSize: 10 * 1024 * 1024, // 10MB
-  allowedTypes: [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'application/pdf',
-    'text/plain',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  ],
-  maxFiles: 5,
 } as const
 
 /**
@@ -147,47 +26,15 @@ export const ANIMATION_DURATION = {
  * Breakpoint values for responsive design
  */
 export const BREAKPOINTS = {
-  XS: 320,
-  SM: 480,
-  MD: 768,
-  LG: 1024,
-  XL: 1280,
-  XXL: 1536,
+  MOBILE: 768,
+  TABLET: 1024,
+  DESKTOP: 1440,
 } as const
 
 /**
- * Storage keys
+ * Topic defaults
  */
-export const STORAGE_KEYS = {
-  TOPIC: 'chatbot_topic',
-  HISTORY: 'chatbot_history',
-  SETTINGS: 'chatbot_settings',
-  THEME: 'chatbot_theme',
-} as const
-
-/**
- * HTTP status codes
- */
-export const HTTP_STATUS = {
-  OK: 200,
-  CREATED: 201,
-  BAD_REQUEST: 400,
-  UNAUTHORIZED: 401,
-  FORBIDDEN: 403,
-  NOT_FOUND: 404,
-  SERVER_ERROR: 500,
-  SERVICE_UNAVAILABLE: 503,
-} as const
-
-/**
- * Error messages
- */
-export const ERROR_MESSAGES = {
-  NETWORK_ERROR: 'Network error. Please check your connection.',
-  API_ERROR: 'API error. Please try again later.',
-  INVALID_RESPONSE: 'Invalid response from server.',
-  FILE_TOO_LARGE: 'File size exceeds maximum allowed size.',
-  INVALID_FILE_TYPE: 'Invalid file type.',
-  MESSAGE_TOO_LONG: 'Message exceeds maximum length.',
-  TOPIC_EXPIRED: 'Topic expired. Please refresh.',
+export const TOPIC_DEFAULTS = {
+  TITLE: 'New Topic',
+  STORAGE_KEY: 'chatbot-topic-list',
 } as const

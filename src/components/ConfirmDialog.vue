@@ -117,7 +117,7 @@ watch(() => props.show, (show) => {
 }
 
 .confirm-dialog {
-  background: var(--chatbot-bg-color, #ffffff);
+  background: var(--bg-base, #ffffff);
   border-radius: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
   max-width: 400px;
@@ -146,25 +146,25 @@ watch(() => props.show, (show) => {
     }
 
     .confirm-dialog--danger & {
-      background: var(--chatbot-danger-color-light, #fef0f0);
-      color: var(--chatbot-danger-color, #f56c6c);
+      background: var(--color-danger-light, #fef0f0);
+      color: var(--color-danger, #f56c6c);
     }
 
     .confirm-dialog--warning & {
-      background: var(--chatbot-warning-color-light, #fdf6ec);
-      color: var(--chatbot-warning-color, #e6a23c);
+      background: var(--color-warning-light, #fdf6ec);
+      color: var(--color-warning, #e6a23c);
     }
 
     .confirm-dialog--info & {
-      background: var(--chatbot-info-color-light, #f4f4f5);
-      color: var(--chatbot-info-color, #909399);
+      background: var(--color-info-light, #f4f4f5);
+      color: var(--color-info, #909399);
     }
   }
 
   &__title {
     font-size: 18px;
     font-weight: 600;
-    color: var(--chatbot-text-color, #303133);
+    color: var(--text-primary, #303133);
     margin: 0;
     text-align: center;
   }
@@ -175,7 +175,7 @@ watch(() => props.show, (show) => {
 
     p {
       font-size: 14px;
-      color: var(--chatbot-subtext-color, #606266);
+      color: var(--text-tertiary, #606266);
       margin: 0;
       line-height: 1.6;
     }
@@ -198,35 +198,35 @@ watch(() => props.show, (show) => {
     transition: all 0.2s;
 
     &--cancel {
-      background: var(--chatbot-border-color, #e4e7ed);
-      color: var(--chatbot-text-color, #303133);
+      background: var(--border-light, #e4e7ed);
+      color: var(--text-primary, #303133);
 
       &:hover {
-        background: var(--chatbot-border-color-dark, #dcdfe6);
+        background: var(--border-base, #dcdfe6);
       }
     }
 
     &--confirm {
-      background: var(--chatbot-primary-color, #409eff);
+      background: var(--theme-primary, #409eff);
       color: white;
 
       &:hover {
-        background: var(--chatbot-primary-color-dark, #66b1ff);
+        background: var(--theme-primary-dark, #66b1ff);
       }
 
       .confirm-dialog--danger & {
-        background: var(--chatbot-danger-color, #f56c6c);
+        background: var(--color-danger, #f56c6c);
 
         &:hover {
-          background: var(--chatbot-danger-color-dark, #f78989);
+          background: var(--color-danger-dark, #f78989);
         }
       }
 
       .confirm-dialog--warning & {
-        background: var(--chatbot-warning-color, #e6a23c);
+        background: var(--color-warning, #e6a23c);
 
         &:hover {
-          background: var(--chatbot-warning-color-dark, #ebb563);
+          background: var(--color-warning-dark, #ebb563);
         }
       }
     }

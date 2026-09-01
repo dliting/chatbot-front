@@ -16,8 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import VueOfficeExcel from '@vue-office/excel'
+import { ref, computed, onMounted, defineAsyncComponent } from 'vue'
+const VueOfficeExcel = defineAsyncComponent(() => import('@vue-office/excel'))
 
 interface Props {
   file?: File | { name: string; url: string; data?: string }
@@ -62,7 +62,7 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   overflow: auto;
-  background: #f5f7fa;
+  background: var(--chat-assistant-bg, #f5f7fa);
   border-radius: 8px;
 
   &__loading,
@@ -71,12 +71,12 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     height: 100%;
-    color: #909399;
+    color: var(--text-tertiary, #909399);
     font-size: 14px;
   }
 
   &__error {
-    color: #f56c6c;
+    color: var(--color-danger, #f56c6c);
   }
 
   :deep(.vue-office-excel) {
@@ -84,7 +84,7 @@ onMounted(() => {
     height: 100%;
 
     .excel-wrapper {
-      background: white;
+      background: var(--bg-base, #ffffff);
       padding: 20px;
     }
   }

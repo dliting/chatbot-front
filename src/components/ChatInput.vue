@@ -85,20 +85,29 @@
         </svg>
       </button>
 
+      <ThinkingToggle
+        v-if="enableThinking"
+        :enabled="thinkingEnabled"
+        :disabled="disabled"
+        @update:enabled="(val) => emit('update:thinkingEnabled', val)"
+      />
+
       <textarea
         ref="inputRef"
         v-model="inputText"
         class="chat-input__field"
-        placeholder="输入消息..."
+        :placeholder="placeholder || 'Type your message...'"
         rows="1"
         :disabled="disabled"
         @input="autoResize"
         @keydown="handleKeydown"
       />
 
+      <!-- Send / Stop button -->
       <button
+        v-if="!disabled"
         class="chat-input__send-btn"
-        :disabled="disabled || !canSend"
+        :disabled="!canSend"
         @click="handleSend"
       >
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -106,8 +115,18 @@
           <polygon points="22 2 15 22 11 13 2 9 22 2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+      <button
+        v-else
+        class="chat-input__stop-btn"
+        @click="emit('stop')"
+      >
+        <svg viewBox="0 0 24 24" fill="currentColor">
+          <rect x="6" y="6" width="12" height="12" rx="2"/>
+        </svg>
+      </button>
 
       <button
+        v-if="enableVoiceInput"
         class="chat-input__voice-btn"
         @click="$emit('toggle-voice')"
       >
@@ -135,14 +154,21 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { validateFileSize, formatFileSize, getMediaType as utilsGetMediaType, type MediaType } from '@/utils/fileValidation'
+import type { Attachment } from '@/types'
+import ThinkingToggle from './ThinkingToggle.vue'
 import { getPreviewType } from '@/utils/fileType'
 
 interface Props {
   disabled?: boolean
+  enableThinking?: boolean
+  thinkingEnabled?: boolean
+  enableVoiceInput?: boolean
+  placeholder?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
+  enableVoiceInput: true,
 })
 
 type FileType = MediaType | 'document'
@@ -157,9 +183,11 @@ interface MediaFile {
 }
 
 interface Emits {
-  (e: 'send', data: { content: string; images?: string[]; videos?: string[]; audios?: string[]; documents?: Array<{ name: string; url: string; type: string }> }): void
+  (e: 'send', data: { content: string; attachments?: Attachment[] }): void
+  (e: 'stop'): void
   (e: 'toggle-voice'): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
+  (e: 'update:thinkingEnabled', value: boolean): void
 }
 
 const emit = defineEmits<Emits>()
@@ -221,23 +249,20 @@ const handleSend = () => {
 
   const content = inputText.value.trim()
   const validFiles = selectedFiles.value.filter(f => !f.error)
-  // Use preview URL (with data URL prefix) for proper image display
-  const images = validFiles
-    .filter(f => f.type === 'image')
-    .map(f => f.preview || `data:image/png;base64,${f.data}`)
-  const videos = validFiles
-    .filter(f => f.type === 'video')
-    .map(f => f.data)
-  const audios = validFiles
-    .filter(f => f.type === 'audio')
-    .map(f => f.data)
-  const documents = validFiles
-    .filter(f => f.type === 'document')
-    .map(f => ({
-      name: f.name,
-      url: f.preview || `data:application/octet-stream;base64,${f.data}`,
-      type: f.name.split('.').pop() || 'unknown'
-    }))
+
+  // Build unified attachments array from valid files
+  const attachments: Attachment[] = validFiles.map(f => ({
+    name: f.name,
+    url: f.preview || (f.type === 'image'
+      ? `data:image/png;base64,${f.data}`
+      : f.type === 'video'
+        ? `data:video/mp4;base64,${f.data}`
+        : f.type === 'audio'
+          ? `data:audio/mp3;base64,${f.data}`
+          : `data:application/octet-stream;base64,${f.data}`),
+    type: f.type === 'document' ? 'document' : f.type,
+    size: f.size,
+  }))
 
   // Clear input
   inputText.value = ''
@@ -248,10 +273,7 @@ const handleSend = () => {
 
   emit('send', {
     content,
-    images: images.length > 0 ? images : undefined,
-    videos: videos.length > 0 ? videos : undefined,
-    audios: audios.length > 0 ? audios : undefined,
-    documents: documents.length > 0 ? documents : undefined
+    attachments: attachments.length > 0 ? attachments : undefined,
   })
 }
 
@@ -346,10 +368,10 @@ const handleFileSelect = async (e: Event) => {
 
 <style scoped lang="scss">
 .chat-input {
-  background: var(--chatbot-panel-bg, rgba(255, 255, 255, 0.95));
+  background: var(--bg-base, rgba(255, 255, 255, 0.95));
   backdrop-filter: blur(20px);
   padding: 12px 16px;
-  border-top: 1px solid var(--chatbot-border-color, rgba(102, 126, 234, 0.1));
+  border-top: 1px solid var(--border-light, rgba(102, 126, 234, 0.1));
 
   &__previews {
     display: flex;
@@ -364,7 +386,7 @@ const handleFileSelect = async (e: Event) => {
     height: 60px;
 
     &--error {
-      border-color: var(--chatbot-danger-color-strong);
+      border-color: var(--color-danger-strong);
       background: rgba(239, 68, 68, 0.1);
     }
   }
@@ -374,7 +396,7 @@ const handleFileSelect = async (e: Event) => {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    color: var(--chatbot-danger-color-strong);
+    color: var(--color-danger-strong);
 
     svg {
       width: 24px;
@@ -388,7 +410,7 @@ const handleFileSelect = async (e: Event) => {
     right: -2px;
     font-size: 10px;
     background: rgba(0, 0, 0, 0.7);
-    color: white;
+    color: var(--text-on-primary, #fff);
     padding: 2px 4px;
     border-radius: 4px;
   }
@@ -403,7 +425,7 @@ const handleFileSelect = async (e: Event) => {
   &__preview-media {
     width: 100%;
     height: 100%;
-    background: var(--chatbot-primary-gradient);
+    background: var(--theme-primary-gradient);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -412,14 +434,14 @@ const handleFileSelect = async (e: Event) => {
     svg {
       width: 28px;
       height: 28px;
-      stroke: white;
+      stroke: var(--text-on-primary, #fff);
     }
   }
 
   &__preview-document {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, var(--chatbot-assistant-bubble-bg, #f5f7fa) 0%, var(--chatbot-border-color, #e8e8ec) 100%);
+    background: linear-gradient(135deg, var(--chat-assistant-bg, #f5f7fa) 0%, var(--border-light, #e8e8ec) 100%);
     border-radius: 8px;
     display: flex;
     flex-direction: column;
@@ -430,13 +452,13 @@ const handleFileSelect = async (e: Event) => {
     svg {
       width: 24px;
       height: 24px;
-      stroke: var(--chatbot-subtext-color, #606266);
+      stroke: var(--text-tertiary, #606266);
     }
   }
 
   &__preview-docname {
     font-size: 8px;
-    color: var(--chatbot-subtext-color, #606266);
+    color: var(--text-tertiary, #606266);
     text-align: center;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -451,7 +473,7 @@ const handleFileSelect = async (e: Event) => {
     width: 20px;
     height: 20px;
     border: none;
-    background: rgba(0, 0, 0, 0.6);
+    background: var(--bg-overlay, rgba(0, 0, 0, 0.6));
     border-radius: 50%;
     cursor: pointer;
     display: flex;
@@ -461,7 +483,7 @@ const handleFileSelect = async (e: Event) => {
     svg {
       width: 12px;
       height: 12px;
-      stroke: white;
+      stroke: var(--text-on-primary, #fff);
     }
   }
 
@@ -489,12 +511,12 @@ const handleFileSelect = async (e: Event) => {
   }
 
   &__upload-btn {
-    background: linear-gradient(135deg, var(--chatbot-assistant-bubble-bg, #f0f0f3) 0%, var(--chatbot-border-color, #e8e8ec) 100%);
+    background: linear-gradient(135deg, var(--chat-assistant-bg, #f0f0f3) 0%, var(--border-light, #e8e8ec) 100%);
 
     svg {
       width: 20px;
       height: 20px;
-      stroke: var(--chatbot-text-color, #1a1a2e);
+      stroke: var(--text-primary, #1a1a2e);
     }
 
     &:hover {
@@ -503,13 +525,13 @@ const handleFileSelect = async (e: Event) => {
   }
 
   &__send-btn {
-    background: var(--chatbot-primary-gradient);
+    background: var(--theme-primary-gradient);
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 
     svg {
       width: 20px;
       height: 20px;
-      stroke: white;
+      stroke: var(--text-on-primary, #fff);
     }
 
     &:hover:not(:disabled) {
@@ -522,13 +544,38 @@ const handleFileSelect = async (e: Event) => {
     }
   }
 
+  &__stop-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    background: var(--color-danger, #f56c6c);
+
+    svg {
+      width: 16px;
+      height: 16px;
+      fill: var(--text-on-primary, #fff);
+    }
+
+    &:hover {
+      transform: scale(1.05);
+      opacity: 0.85;
+    }
+  }
+
   &__voice-btn {
-    background: linear-gradient(135deg, var(--chatbot-assistant-bubble-bg, #f0f0f3) 0%, var(--chatbot-border-color, #e8e8ec) 100%);
+    background: linear-gradient(135deg, var(--chat-assistant-bg, #f0f0f3) 0%, var(--border-light, #e8e8ec) 100%);
 
     svg {
       width: 22px;
       height: 22px;
-      stroke: var(--chatbot-text-color, #1a1a2e);
+      stroke: var(--text-primary, #1a1a2e);
     }
 
     &:hover {
@@ -538,7 +585,7 @@ const handleFileSelect = async (e: Event) => {
 
   &__field {
     flex: 1;
-    background: var(--chatbot-assistant-bubble-bg, rgba(240, 242, 248, 0.8));
+    background: var(--chat-assistant-bg, rgba(240, 242, 248, 0.8));
     border: none;
     border-radius: 24px;
     padding: 12px 18px;
@@ -549,15 +596,15 @@ const handleFileSelect = async (e: Event) => {
     outline: none;
     transition: all 0.3s ease;
     line-height: 1.5;
-    color: var(--chatbot-text-color, #1a1a2e);
+    color: var(--text-primary, #1a1a2e);
 
     &:focus {
-      background: var(--chatbot-assistant-bubble-bg, rgba(235, 238, 250, 1));
+      background: var(--chat-assistant-bg, rgba(235, 238, 250, 1));
       box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
     }
 
     &::placeholder {
-      color: var(--chatbot-subtext-color, #9ca3af);
+      color: var(--text-tertiary, #9ca3af);
     }
   }
 }

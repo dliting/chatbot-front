@@ -1,24 +1,32 @@
 /**
  * Message utility functions
  */
-import type { Message, MessageType, MessageRole } from '@/types'
+import type { Message, MessageType, MessageRole, Attachment, AttachmentType } from '@/types'
 import { generateId } from './helpers'
-import DOMPurify from 'dompurify'
+import { TOPIC_DEFAULTS } from '@/constants'
 
 /**
- * Get message type based on content and attachments
+ * Derive message type from content and attachments.
+ * Returns the single attachment type if all attachments share the same type,
+ * 'mixed' if there are multiple types, or 'text' if there are no attachments.
  */
-function getMessageType(
-  content: string,
-  images?: string[],
-  videos?: string[],
-  audios?: string[]
+export function deriveMessageType(
+  data: { content: string; attachments?: Attachment[] }
 ): MessageType {
-  if (videos?.length) return 'video'
-  if (audios?.length) return 'audio'
-  if (images?.length && content) return 'mixed'
-  if (images?.length) return 'image'
-  return 'text'
+  if (!data.attachments?.length) return 'text'
+  const types = new Set(data.attachments.map(a => a.type))
+  if (types.size === 1) return types.values().next().value as MessageType
+  return 'mixed'
+}
+
+/**
+ * Get attachments from a message filtered by type.
+ */
+export function getAttachmentsByType(
+  message: Message,
+  type: AttachmentType
+): Attachment[] {
+  return message.attachments?.filter(a => a.type === type) ?? []
 }
 
 /**
@@ -30,16 +38,14 @@ export function createMessage(
   topicId: string,
   options: {
     type?: MessageType
-    images?: string[]
-    videos?: string[]
-    audios?: string[]
+    attachments?: Attachment[]
     metadata?: Record<string, unknown>
   } = {}
 ): Message {
-  const { type, images, videos, audios, metadata } = options
+  const { type, attachments, metadata } = options
 
   // Determine message type based on content and attachments
-  const messageType = type || getMessageType(content, images, videos, audios)
+  const messageType = type || deriveMessageType({ content, attachments })
 
   return {
     messageId: generateId('msg'),
@@ -47,9 +53,7 @@ export function createMessage(
     role,
     type: messageType,
     content,
-    images,
-    videos,
-    audios,
+    attachments,
     timestamp: Date.now(),
     status: role === 'user' ? 'sending' : 'loading',
     metadata,
@@ -99,9 +103,8 @@ export function hasImages(message: Message): boolean {
  */
 export function getMessageText(message: Message): string {
   if (message.type === 'image') {
-    return message.images?.length === 1
-      ? 'Sent an image'
-      : `Sent ${message.images?.length || 0} images`
+    const imageCount = getAttachmentsByType(message, 'image').length
+    return imageCount === 1 ? 'Sent an image' : `Sent ${imageCount} images`
   }
   return message.content
 }
@@ -147,7 +150,7 @@ export function extractTopicTitle(messages: Message[]): string {
   const firstAIMessage = messages.find(m => m.role === 'assistant')
 
   if (!firstAIMessage || !firstAIMessage.content) {
-    return 'New Topic'
+    return TOPIC_DEFAULTS.TITLE
   }
 
   // Get first line or up to 30 characters
@@ -196,50 +199,12 @@ export function getMessageStats(messages: Message[]): MessageStats {
       if (message.role === 'assistant') stats.assistant++
       if (hasImages(message)) {
         stats.withImages++
-        stats.totalImages += message.images?.length || 0
+        stats.totalImages += getAttachmentsByType(message, 'image').length
       }
       return stats
     },
     { total: 0, user: 0, assistant: 0, withImages: 0, totalImages: 0 }
   )
-}
-
-/**
- * Sanitize message content to prevent XSS
- */
-export function sanitizeMessageContent(content: string): string {
-  // DOMPurify requires browser environment
-  if (typeof window === 'undefined') {
-    return content
-  }
-
-  if (!content) {
-    return ''
-  }
-
-  return DOMPurify.sanitize(content, {
-    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'code', 'pre'],
-    ALLOWED_ATTR: []
-  })
-}
-
-/**
- * Format message content with markdown
- */
-export function formatMessageContent(content: string, options: { sanitize?: boolean } = {}): string {
-  let formatted = content
-
-  if (options.sanitize !== false) {
-    formatted = sanitizeMessageContent(formatted)
-  }
-
-  // Basic markdown formatting
-  // For production, consider using a proper markdown library like marked
-  return formatted
-    .replace(/\n/g, '<br>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
 }
 
 /**

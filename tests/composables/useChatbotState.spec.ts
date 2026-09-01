@@ -10,7 +10,7 @@ describe('useChatbotState', () => {
   let mockConfig: Required<ChatbotConfig>
 
   beforeEach(() => {
-    // Clear localStorage to avoid topic leakage between tests
+    // Clear localStorage to avoid session leakage between tests
     localStorage.clear()
 
     // Mock window.innerWidth
@@ -86,7 +86,6 @@ describe('useChatbotState', () => {
     it('should initialize interaction state', () => {
       const { state } = useChatbotState(mockConfig)
 
-      expect(state.interaction.isSending).toBe(false)
       expect(state.interaction.selectedImages).toEqual([])
     })
   })
@@ -157,14 +156,17 @@ describe('useChatbotState', () => {
       expect(state.ui.isPanelOpen).toBe(true)
     })
 
-    it('should set theme and apply to document', () => {
-      const { setTheme } = useChatbotState(mockConfig)
+    it('should set theme and apply to document after init', () => {
+      const { setTheme, init, cleanup } = useChatbotState(mockConfig)
 
+      init()
       setTheme('dark')
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark')
 
       setTheme('light')
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
+
+      cleanup()
     })
 
     it('should detect system theme when config theme is system', () => {
@@ -178,9 +180,10 @@ describe('useChatbotState', () => {
       })))
 
       mockConfig.theme = 'system'
-      const { state, cleanup } = useChatbotState(mockConfig)
+      const { state, init, cleanup } = useChatbotState(mockConfig)
 
       expect(state.ui.theme).toBe('dark')
+      init()
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'dark')
 
       cleanup()
@@ -197,9 +200,10 @@ describe('useChatbotState', () => {
       })))
 
       mockConfig.theme = 'system'
-      const { state, cleanup } = useChatbotState(mockConfig)
+      const { state, init, cleanup } = useChatbotState(mockConfig)
 
       expect(state.ui.theme).toBe('light')
+      init()
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
 
       cleanup()
@@ -216,8 +220,9 @@ describe('useChatbotState', () => {
       })))
 
       mockConfig.theme = 'light'
-      const { setTheme, cleanup } = useChatbotState(mockConfig)
+      const { setTheme, init, cleanup } = useChatbotState(mockConfig)
 
+      init()
       // When setTheme is called with 'system', it should resolve to current system theme
       setTheme('system')
       expect(document.documentElement.setAttribute).toHaveBeenCalledWith('data-theme', 'light')
@@ -341,7 +346,7 @@ describe('useChatbotState', () => {
   })
 
   describe('Topic Actions', () => {
-    it('should switch to existing topic', () => {
+    it('should switch to existing topic', async () => {
       const { state, addMessage, switchTopic, currentTopic } = useChatbotState(mockConfig)
 
       const originalTopicId = state.messages.currentTopicId
@@ -368,13 +373,14 @@ describe('useChatbotState', () => {
       })
 
       switchTopic(newTopicId)
+      await nextTick()
 
       expect(state.messages.currentTopicId).toBe(newTopicId)
       expect(state.topics.currentId).toBe(newTopicId)
       expect(currentTopic.value?.topicId).toBe(newTopicId)
     })
 
-    it('should create new topic', () => {
+    it('should create new topic', async () => {
       const { state, createTopic } = useChatbotState(mockConfig)
 
       const originalTopicId = state.messages.currentTopicId
@@ -382,6 +388,7 @@ describe('useChatbotState', () => {
       // createTopic creates a new topic with a different timestamp
       // The IDs might be the same if called at the same time, but the state is updated
       const newTopicId = createTopic()
+      await nextTick()
 
       // Verify that the topic IDs are updated (even if timestamps might be the same)
       expect(state.messages.currentTopicId).toBe(newTopicId)
@@ -604,22 +611,164 @@ describe('useChatbotState', () => {
     it('should remove event listener on cleanup', () => {
       const removeSpy = vi.spyOn(window, 'removeEventListener')
 
-      const { cleanup } = useChatbotState(mockConfig)
+      const { init, cleanup } = useChatbotState(mockConfig)
 
+      init()
       cleanup()
 
       expect(removeSpy).toHaveBeenCalledWith('resize', expect.any(Function))
     })
   })
 
+  describe('Message Mutation Methods', () => {
+    it('should remove a message from a topic by ID', () => {
+      const { state, addMessage, removeMessage } = useChatbotState(mockConfig)
+      const topicId = state.messages.currentTopicId
+
+      addMessage({ messageId: 'msg-1', topicId, role: 'user', content: 'Hello', timestamp: Date.now(), status: 'sent' })
+      addMessage({ messageId: 'msg-2', topicId, role: 'user', content: 'World', timestamp: Date.now(), status: 'sent' })
+
+      expect(state.messages.byTopic[topicId].length).toBe(2)
+
+      removeMessage(topicId, 'msg-1')
+      expect(state.messages.byTopic[topicId].length).toBe(1)
+      expect(state.messages.byTopic[topicId][0].messageId).toBe('msg-2')
+    })
+
+    it('should do nothing when removing a message from a non-existent topic', () => {
+      const { removeMessage } = useChatbotState(mockConfig)
+      expect(() => removeMessage('non-existent-topic', 'msg-1')).not.toThrow()
+    })
+
+    it('should do nothing when removing a non-existent message from a topic', () => {
+      const { state, addMessage, removeMessage } = useChatbotState(mockConfig)
+      const topicId = state.messages.currentTopicId
+
+      addMessage({ messageId: 'msg-1', topicId, role: 'user', content: 'Hello', timestamp: Date.now(), status: 'sent' })
+
+      removeMessage(topicId, 'non-existent-msg')
+      expect(state.messages.byTopic[topicId].length).toBe(1)
+    })
+
+    it('should insert a message at a specific index in a topic', () => {
+      const { state, addMessage, insertMessage } = useChatbotState(mockConfig)
+      const topicId = state.messages.currentTopicId
+
+      addMessage({ messageId: 'msg-1', topicId, role: 'user', content: 'Hello', timestamp: Date.now(), status: 'sent' })
+      addMessage({ messageId: 'msg-2', topicId, role: 'user', content: 'World', timestamp: Date.now(), status: 'sent' })
+
+      insertMessage(topicId, 1, { messageId: 'msg-insert', topicId, role: 'user', content: 'Inserted', timestamp: Date.now(), status: 'sent' })
+
+      expect(state.messages.byTopic[topicId].length).toBe(3)
+      expect(state.messages.byTopic[topicId][1].messageId).toBe('msg-insert')
+    })
+
+    it('should do nothing when inserting into a non-existent topic', () => {
+      const { insertMessage } = useChatbotState(mockConfig)
+      expect(() => insertMessage('non-existent-topic', 0, { messageId: 'msg-x', topicId: 'non-existent-topic', role: 'user', content: 'Test', timestamp: Date.now(), status: 'sent' })).not.toThrow()
+    })
+
+    it('should replace all messages for a topic via setMessages', () => {
+      const { state, addMessage, setMessages } = useChatbotState(mockConfig)
+      const topicId = state.messages.currentTopicId
+
+      addMessage({ messageId: 'msg-1', topicId, role: 'user', content: 'Hello', timestamp: Date.now(), status: 'sent' })
+      expect(state.messages.byTopic[topicId].length).toBe(1)
+
+      const newMessages = [
+        { messageId: 'msg-a', topicId, role: 'user', content: 'A', timestamp: Date.now(), status: 'sent' as const },
+        { messageId: 'msg-b', topicId, role: 'assistant', content: 'B', timestamp: Date.now(), status: 'sent' as const },
+      ]
+      setMessages(topicId, newMessages)
+
+      expect(state.messages.byTopic[topicId].length).toBe(2)
+      expect(state.messages.byTopic[topicId][0].messageId).toBe('msg-a')
+    })
+
+    it('should set messages for a topic that had no messages before', () => {
+      const { state, setMessages } = useChatbotState(mockConfig)
+      const topicId = 'brand-new-topic'
+
+      expect(state.messages.byTopic[topicId]).toBeUndefined()
+
+      setMessages(topicId, [{ messageId: 'msg-x', topicId, role: 'user', content: 'New', timestamp: Date.now(), status: 'sent' as const }])
+
+      expect(state.messages.byTopic[topicId].length).toBe(1)
+    })
+
+    it('should ensure messages array exists for a topic and return it', () => {
+      const { state, ensureMessages } = useChatbotState(mockConfig)
+      const topicId = 'topic-ensure'
+
+      expect(state.messages.byTopic[topicId]).toBeUndefined()
+
+      const msgs = ensureMessages(topicId)
+      expect(Array.isArray(msgs)).toBe(true)
+      expect(msgs.length).toBe(0)
+      expect(state.messages.byTopic[topicId]).toBe(msgs)
+    })
+
+    it('should return existing messages array from ensureMessages if topic already has messages', () => {
+      const { state, addMessage, ensureMessages } = useChatbotState(mockConfig)
+      const topicId = state.messages.currentTopicId
+
+      addMessage({ messageId: 'msg-1', topicId, role: 'user', content: 'Hello', timestamp: Date.now(), status: 'sent' })
+
+      const msgs = ensureMessages(topicId)
+      expect(msgs.length).toBe(1)
+    })
+  })
+
+  describe('Topic List Management', () => {
+    it('should replace entire topic list via setTopicList', () => {
+      const { state, setTopicList } = useChatbotState(mockConfig)
+
+      expect(state.topics.list.length).toBe(1)
+
+      const newTopics = [
+        { topicId: 't-1', title: 'Topic 1', createdAt: Date.now(), updatedAt: Date.now(), messageCount: 5, unreadCount: 0 },
+        { topicId: 't-2', title: 'Topic 2', createdAt: Date.now(), updatedAt: Date.now(), messageCount: 3, unreadCount: 1 },
+      ]
+      setTopicList(newTopics)
+
+      expect(state.topics.list.length).toBe(2)
+      expect(state.topics.list[0].topicId).toBe('t-1')
+      expect(state.topics.list[1].topicId).toBe('t-2')
+    })
+
+    it('should set current topic ID and sync messages state via setCurrentTopicId', async () => {
+      const { state, setCurrentTopicId } = useChatbotState(mockConfig)
+      const newTopicId = 'synced-topic-id'
+
+      setCurrentTopicId(newTopicId)
+      await nextTick()
+
+      expect(state.topics.currentId).toBe(newTopicId)
+      expect(state.messages.currentTopicId).toBe(newTopicId)
+    })
+
+    it('should add a topic to the front of the list via addTopicToFront', () => {
+      const { state, addTopicToFront } = useChatbotState(mockConfig)
+
+      const originalFirstTopicId = state.topics.list[0].topicId
+
+      const newTopic = { topicId: 'front-topic', title: 'Front Topic', createdAt: Date.now(), updatedAt: Date.now(), messageCount: 0, unreadCount: 0 }
+      addTopicToFront(newTopic)
+
+      expect(state.topics.list[0].topicId).toBe('front-topic')
+      expect(state.topics.list[1].topicId).toBe(originalFirstTopicId)
+    })
+  })
+
   describe('Edge Cases', () => {
-    it('should handle switching to non-existent topic', () => {
+    it('should handle switching to non-existent topic', async () => {
       const { state, switchTopic } = useChatbotState(mockConfig)
 
       const originalTopicId = state.messages.currentTopicId
 
       // switchTopic allows switching to any topic ID without validation
       switchTopic('non-existent-topic')
+      await nextTick()
 
       // The implementation doesn't validate - it just switches
       expect(state.messages.currentTopicId).toBe('non-existent-topic')

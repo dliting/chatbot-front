@@ -7,7 +7,7 @@ import 'element-plus/dist/index.css'
 import AIChatbot from './components/AIChatbot.vue'
 import { IframeMessenger } from './utils/postMessage'
 import type { ChatbotConfig } from './types/config'
-import type { PanelToggleData, SendMessageData, MessageSuccessData } from './types'
+import type { Message, PanelToggleData } from './types'
 import './styles/chatbot.scss'
 
 // Get config from URL params or use defaults
@@ -38,7 +38,6 @@ const app = createApp({
       panelWidth: 400,
       theme: 'light',
       enableImageUpload: true,
-      enableTopicManager: true,
       iframeMode: true,
       ...chatbotConfig,
     }))
@@ -54,20 +53,20 @@ const app = createApp({
     })
 
     // Handle events from chatbot
-    const handleToggle = (data: PanelToggleData) => {
+    const handleToggle = (data: { isOpen: boolean; mode: string }) => {
       messenger.send('chatbot:toggle', data)
     }
 
-    const handleSendMessage = (data: SendMessageData) => {
+    const handleSendMessage = (data: { message: Message }) => {
       messenger.send('chatbot:sendMessage', data)
     }
 
-    const handleMessageSuccess = (data: MessageSuccessData) => {
-      messenger.send('chatbot:messageReceived', data)
+    const handleMessageError = (data: { message: Message; error: Error }) => {
+      messenger.send('chatbot:messageError', data)
     }
 
-    const handleTopicChange = (topicId: string) => {
-      messenger.send('chatbot:topicChange', { topicId })
+    const handleTopicSwitched = (data: { topicId: string }) => {
+      messenger.send('chatbot:topicChange', data)
     }
 
     // Listen for messages from parent
@@ -86,18 +85,18 @@ const app = createApp({
       mergedConfig,
       handleToggle,
       handleSendMessage,
-      handleMessageSuccess,
-      handleTopicChange,
+      handleMessageError,
+      handleTopicSwitched,
     }
   },
   template: `
     <AIChatbot
       ref="chatbotRef"
       :config="mergedConfig"
-      @panel-toggle="handleToggle"
-      @send-message="handleSendMessage"
-      @message-success="handleMessageSuccess"
-      @topic-change="handleTopicChange"
+      @ui:panel-toggle="handleToggle"
+      @message:sent="handleSendMessage"
+      @message:error="handleMessageError"
+      @topic:switched="handleTopicSwitched"
     />
   `,
 })

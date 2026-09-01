@@ -149,4 +149,21 @@ describe('ConfirmDialog', () => {
       expect(wrapper?.emitted('update:show')).toBeFalsy()
     })
   })
+
+  describe('Keyboard handling', () => {
+    it('should close on ESC key press when dialog is shown', async () => {
+      wrapper = mountDialog({ show: true })
+      await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+
+      expect(wrapper?.emitted('cancel')).toBeTruthy()
+      expect(wrapper?.emitted('update:show')?.[0]).toEqual([false])
+    })
+
+    it('should not close on ESC key press when dialog is hidden', async () => {
+      wrapper = mountDialog({ show: false })
+      await document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))
+
+      expect(wrapper?.emitted('cancel')).toBeFalsy()
+    })
+  })
 })

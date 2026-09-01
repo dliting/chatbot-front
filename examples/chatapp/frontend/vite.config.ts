@@ -44,6 +44,29 @@ function suppressHmrReconnectionErrors() {
   };
 }
 
+function createProxyErrorHandler(label: string) {
+  return (proxy, _options) => {
+    proxy.on('proxyReq', (proxyReq, _req, res) => {
+      proxyReq.setTimeout(5000, () => {
+        if (res && !res.headersSent) {
+          res.writeHead(503, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ code: 503, message: `${label} backend unavailable` }))
+        }
+      })
+    })
+    proxy.on('error', (err, _req, res) => {
+      if (err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET') {
+        if (res && !res.headersSent) {
+          res.writeHead(503, { 'Content-Type': 'application/json' })
+          res.end(JSON.stringify({ code: 503, message: `${label} backend service unavailable` }))
+        }
+      } else {
+        console.error(`[Proxy Error - ${label}]:`, err.message)
+      }
+    })
+  }
+}
+
 export default defineConfig({
   plugins: [
     vue(),
@@ -71,32 +94,20 @@ export default defineConfig({
       ignored: ['**/node_modules/**', '**/.git/**']
     },
     proxy: {
-      '/api': {
-        target: process.env.VITE_API_BASE_URL || 'http://localhost:3001',
+      '/api/mock': {
+        target: `http://localhost:${process.env.MOCK_PORT || '3001'}`,
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        rewrite: (path) => path.replace(/^\/api\/mock/, ''),
         selfResponding: false,
-        configure: (proxy, _options) => {
-          proxy.on('proxyReq', (proxyReq, req, res) => {
-            proxyReq.setTimeout(5000, () => {
-              if (res && !res.headersSent) {
-                res.writeHead(503, { 'Content-Type': 'application/json' })
-                res.end(JSON.stringify({ code: 503, message: 'Backend unavailable' }))
-              }
-            })
-          })
-          proxy.on('error', (err, req, res) => {
-            if (err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET') {
-              if (res && !res.headersSent) {
-                res.writeHead(503, { 'Content-Type': 'application/json' })
-                res.end(JSON.stringify({ code: 503, message: 'Backend service unavailable' }))
-              }
-            } else {
-              console.error('[Proxy Error]:', err.message)
-            }
-          })
-        }
-      }
+        configure: createProxyErrorHandler('Mock'),
+      },
+      '/api/real': {
+        target: `http://localhost:${process.env.REAL_PORT || '3000'}`,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/real/, ''),
+        selfResponding: false,
+        configure: createProxyErrorHandler('Real'),
+      },
     }
   }
 })

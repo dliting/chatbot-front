@@ -27,7 +27,7 @@ function highlightCodeBlocks(html: string): string {
 
     const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
     const highlighted = hljs.highlight(decodedCode.trim(), { language }).value
-    return `<div class="code-block-wrapper"><pre><code class="hljs language-${language}">${highlighted}</code></pre><button class="code-copy-btn" type="button">复制</button></div>`
+    return `<div class="code-block-wrapper"><pre><code class="hljs language-${language}">${highlighted}</code></pre><button class="code-copy-btn" type="button" data-i18n="copy">Copy</button></div>`
   })
 }
 
@@ -50,17 +50,4 @@ export function formatMarkdownContent(content: string): string {
   // Future extension: renderMermaid(html)
 
   return html
-}
-
-/**
- * Convert markdown to simple HTML (basic implementation)
- * For production, consider using a proper markdown library
- */
-export function markdownToHTML(markdown: string): string {
-  return markdown
-    .replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-    .replace(/`([^`]+)`/g, '<code>$1</code>')
-    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(/\n/g, '<br>')
 }
