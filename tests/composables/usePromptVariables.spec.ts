@@ -7,7 +7,8 @@ describe('usePromptVariables', () => {
 
     it('should resolve {{date}} to current date', async () => {
       const result = await resolve('Today is {{date}}')
-      expect(result).toMatch(/Today is \d{4}/)
+      // Locale-agnostic: any locale's date string contains the 4-digit year
+      expect(result).toMatch(/Today is .*\d{4}/)
     })
 
     it('should resolve {{time}} to current time', async () => {
@@ -17,7 +18,8 @@ describe('usePromptVariables', () => {
 
     it('should resolve {{datetime}} to current datetime', async () => {
       const result = await resolve('Now: {{datetime}}')
-      expect(result).toMatch(/Now: \d{4}/)
+      // Locale-agnostic: en-US renders "9/1/2026, 1:52 PM", zh-CN "2026/9/1 13:52"
+      expect(result).toMatch(/Now: .*\d{4}/)
     })
 
     it('should resolve {{weekday}} to day of week', async () => {
