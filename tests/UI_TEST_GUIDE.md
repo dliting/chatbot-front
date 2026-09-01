@@ -1327,6 +1327,26 @@ test('TC-EXTENDED-008: Topic自动持久化', async ({ page }) => {
 | 3 | 检查性能 | 性能稳定 |
 | 4 | 检查内存 | 内存使用合理 |
 
+### 7.3 字体子集测试
+
+项目内置的 Noto Sans SC 为本地 woff2 子集（离线部署，不走 CDN）。字符覆盖范围：
+源码静态文本 + **GB2312 一级汉字（3755 常用字）** + ASCII 可打印字符 + 常用中文标点 + 全角形式，
+共约 4000 字符；子集外字符（生僻字）通过 font-family 栈回退到系统字体渲染，不会出现空白。
+
+**测试用例 TC-PERF-005: 字体子集加载与渲染**
+
+| 步骤 | 操作 | 预期结果 |
+|------|------|----------|
+| 1 | 启动 dev server 后运行 `node tests/verify-fonts.cjs` | 输出 PASS，退出码 0 |
+| 2 | 检查字体响应 | `noto-sans-sc.css` + 4 个 woff2 均 HTTP 200 |
+| 3 | 检查字体解码 | Light/Regular/Medium/Bold 直连 FontFace 均 loaded |
+| 4 | 检查子集渲染 | 样例中文文本 `document.fonts.check` 为 true，probe 宽度 > 50 |
+| 5 | 检查截图 | `tests/e2e/results/screenshots/font-subset-verify.png` 两行文本清晰、无缺字方框 |
+
+**说明**：
+- UI 文案变更或字体升级后需重新生成子集：`python scripts/fonts/subset-fonts.py`（同时写入根 `public/` 与 `examples/chatapp/frontend/public/`，保持两侧一致；用法见 `scripts/fonts/README.md`）。
+- 本机已安装 Noto Sans SC 时，`@font-face` 的 `local()` 源会命中系统字体，脚本中的直连 woff2 加载可绕过该干扰，验证的即客户端实际下载的子集文件。
+
 ---
 
 ## 八、可访问性测试
