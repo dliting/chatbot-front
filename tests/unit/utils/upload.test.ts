@@ -170,14 +170,27 @@ describe('utils/upload', () => {
     })
 
     it('should delay response based on parameter', async () => {
-      const start = Date.now()
-      const endpoint = createMockUploadEndpoint(100)
-      const files = [new File([''], 'test.jpg', { type: 'image/jpeg' })]
+      // Fake timers: wall-clock measurement of setTimeout is flaky at exact
+      // boundaries on loaded CI runners (a 100ms timer can measure 99ms).
+      vi.useFakeTimers()
+      try {
+        const endpoint = createMockUploadEndpoint(100)
+        const files = [new File([''], 'test.jpg', { type: 'image/jpeg' })]
 
-      await endpoint.upload(files)
+        let settled = false
+        const upload = endpoint.upload(files).then(() => {
+          settled = true
+        })
 
-      const duration = Date.now() - start
-      expect(duration).toBeGreaterThanOrEqual(100)
+        await vi.advanceTimersByTimeAsync(99)
+        expect(settled).toBe(false)
+
+        await vi.advanceTimersByTimeAsync(1)
+        await upload
+        expect(settled).toBe(true)
+      } finally {
+        vi.useRealTimers()
+      }
     })
   })
 
