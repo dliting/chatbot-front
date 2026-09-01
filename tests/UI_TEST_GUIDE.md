@@ -810,12 +810,16 @@ await expect(page.locator('h1')).toContainText('AI Chatbot')
 
 **测试用例 TC-COMMON-022: 快捷操作**
 
+> 点击卡片会**直接发送**解析后的 prompt（不填充输入框）。prompt 中的 `{{variable}}` 在发送前解析：内置变量 `date` / `time` / `datetime` / `weekday` 跟随浏览器 locale，自定义变量经 `config.promptVariableResolvers` 注入。自动化覆盖见 `tests/e2e/chatapp/chat-interaction.spec.ts`（TC-COMMON-022）与 `tests/components/WelcomeScreen.spec.ts`。
+
 | 步骤 | 操作 | 预期结果 |
 |------|------|----------|
-| 1 | 点击 "写邮件" 卡片 | 输入框填充 "帮我写一封邮件" |
-| 2 | 点击 "总结文章" 卡片 | 输入框填充 "帮我总结这篇文章" |
-| 3 | 点击 "翻译" 卡片 | 输入框填充 "帮我翻译这段文字" |
-| 4 | 点击 "数据分析" 卡片 | 输入框填充 "帮我分析数据" |
+| 1 | 点击 "写邮件" 卡片 | 以用户消息发出 "帮我写一封邮件"，AI 开始流式回复 |
+| 2 | 点击 "总结文章" 卡片 | 以用户消息发出 "帮我总结这篇文章" |
+| 3 | 点击 "翻译" 卡片 | 以用户消息发出 "帮我翻译这段文字" |
+| 4 | 点击 "数据分析" 卡片 | 以用户消息发出 "帮我分析数据" |
+| 5 | 配置含 `{{date}}`/`{{weekday}}` 的自定义 quickActions 后点击卡片 | 发出的消息中变量已替换为当前日期/星期（跟随浏览器 locale），无 `{{...}}` 残留 |
+| 6 | 快捷操作的 `extraInfo` 字段 | 随消息一并传递给后端 `sendMessage` |
 
 ### 2.11 思考过程（Chain-of-Thought）测试 (F-500)
 
