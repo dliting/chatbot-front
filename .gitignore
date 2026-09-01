@@ -75,5 +75,10 @@ tests/e2e/results/
 # Runtime temp files
 scripts/chatapp.pid
 
+# Font subset maintenance: source TTFs and intermediate charsets
+# (regenerate via scripts/fonts/subset-fonts.py — see its README)
+scripts/fonts/src/
+scripts/fonts/*.txt
+
 # playwright-mcp tests
 .playwright-mcp/
