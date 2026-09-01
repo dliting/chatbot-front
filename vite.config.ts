@@ -18,14 +18,10 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      // Multi-entry for development/examples
+      // Single dev/E2E entry; the library build uses vite.config.lib.ts,
+      // the full-stack example lives in examples/chatapp with its own tooling
       input: {
         main: resolve(__dirname, 'index.html'),
-        extended: resolve(__dirname, 'examples/extended.html'),
-        compact: resolve(__dirname, 'examples/compact.html'),
-        fullscreen: resolve(__dirname, 'examples/fullscreen.html'),
-        floating: resolve(__dirname, 'examples/floating.html'),
-        sidebar: resolve(__dirname, 'examples/sidebar.html'),
       },
     },
     cssCodeSplit: false,
