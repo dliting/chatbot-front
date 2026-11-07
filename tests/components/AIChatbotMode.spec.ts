@@ -188,3 +188,41 @@ describe('AIChatbot upload-limit raw passthrough (default fallbacks intact)', ()
     expect(input.props('maxImageCount')).toBe(2)
   })
 })
+
+describe('AIChatbot clear-all callback error handling', () => {
+  it('surfaces onClearMessages rejection as chatbot:error', async () => {
+    const onClearMessages = vi.fn().mockRejectedValue(new Error('backend down'))
+    const wrapper = mount(AIChatbot, {
+      props: {
+        config: {
+          mode: 'extended',
+          apiBaseUrl: '/api',
+          enableClearAll: true,
+          callbacks: { onClearMessages },
+        },
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+          SuspendedBall: true,
+          ChatContent: true,
+          TopicListView: true,
+          TopicSearch: true,
+          TopicActionMenu: true,
+          FilePreviewModal: true,
+        },
+      },
+    })
+    await nextTick()
+
+    await wrapper.find('.chat-header__clear').trigger('click')
+    await wrapper.find('.confirm-dialog__btn--confirm').trigger('click')
+    await new Promise((r) => setTimeout(r, 0))
+    await nextTick()
+
+    const errors = (wrapper.emitted('chatbot:error') ?? []).map(
+      (e) => (e[0] as { error: { userMessage: string } }).error.userMessage
+    )
+    expect(errors).toContain('Failed to clear messages')
+  })
+})

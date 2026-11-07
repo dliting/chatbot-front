@@ -376,9 +376,17 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', stopResize)
 })
 
-/** Whether a stored position exists and would be restored (rememberPosition enabled + storage hit) */
+/** Whether a stored position exists and would be restored (rememberPosition enabled + parseable storage hit) */
 const hasStoredPosition = (): boolean => {
-  return props.rememberPosition && !!localStorage.getItem(props.storageKey)
+  if (!props.rememberPosition) return false
+  try {
+    const stored = localStorage.getItem(props.storageKey)
+    if (!stored) return false
+    const parsed = JSON.parse(stored)
+    return typeof parsed?.x === 'number' && typeof parsed?.y === 'number'
+  } catch {
+    return false
+  }
 }
 
 // Expose methods

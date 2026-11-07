@@ -103,8 +103,11 @@ describe('ChatbotConfig Type', () => {
 describe('ChatbotLabels package-root export', () => {
   it('is re-exported by the package root and types barrel', () => {
     const read = (rel: string) => fs.readFileSync(path.resolve(__dirname, rel), 'utf8')
-    expect(read('../../src/index.ts')).toMatch(/ChatbotLabels/)
-    expect(read('../../src/types/index.ts')).toMatch(/ChatbotLabels/)
+    // Assert the export STATEMENT itself, not just any mention of the name
+    expect(read('../../src/index.ts')).toMatch(/export type \{[\s\S]*?\bChatbotLabels\b/)
+    expect(read('../../src/types/index.ts')).toMatch(
+      /export type \{[\s\S]*?\bChatbotLabels\b[\s\S]*?\} from '\.\/config'/
+    )
   })
 
   it('getDefaultLabels output satisfies required ChatbotLabels fields', () => {

@@ -359,3 +359,36 @@ describe('FloatingChatPanel position restore (real DraggableWindow)', () => {
     expect(win.attributes('style')).toContain('left: 604px')
   })
 })
+
+describe('FloatingChatPanel corrupt stored position', () => {
+  it('falls back to default placement when stored position is corrupt JSON', async () => {
+    localStorage.setItem('draggable-window-position', '{broken json')
+    const wrapper = mount(FloatingChatPanel, {
+      props: {
+        config: { mode: 'floating', theme: 'light', position: 'bottom-right', panelWidth: 400, panelHeight: 500, defaultExpanded: true },
+        messages: [],
+        topics: [],
+        currentTopicId: 'topic_1',
+      },
+      global: {
+        provide: {
+          [chatActionsKey as symbol]: mockChatActions,
+          [topicActionsKey as symbol]: mockTopicActions,
+          [uiActionsKey as symbol]: mockUIActions,
+        },
+        stubs: {
+          SuspendedBall: { name: 'SuspendedBall', props: ['position', 'size', 'backgroundColor', 'badge'], template: '<div />' },
+          FilePreviewModal: { name: 'FilePreviewModal', props: ['visible', 'file'], template: '<div />' },
+          ChatContent: { name: 'ChatContent', template: '<div />' },
+        },
+      },
+    })
+    await nextTick()
+
+    const win = wrapper.find('.draggable-window')
+    expect(win.exists()).toBe(true)
+    // default right-aligned placement (1024 - 400 - 20), NOT the 0,0 fallback
+    expect(win.attributes('style')).toContain('left: 604px')
+    localStorage.removeItem('draggable-window-position')
+  })
+})
