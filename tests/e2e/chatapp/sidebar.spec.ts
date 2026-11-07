@@ -61,10 +61,10 @@ test.describe('Sidebar Mode - ChatApp', () => {
     await expect(sendBtn).toBeEnabled()
     await sendBtn.click()
 
-    const userMessage = page.locator('.chat-content__message.user .chat-content__text').last()
+    const userMessage = page.locator('.chatbot-message__bubble--user .chatbot-message__text').last()
     await expect(userMessage).toContainText('Hi', { timeout: 10000 })
 
-    const assistantMessage = page.locator('.chat-content__message.assistant .chat-content__text').last()
+    const assistantMessage = page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
     await expect(assistantMessage).toBeVisible({ timeout: 30000 })
   })
 

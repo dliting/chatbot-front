@@ -176,6 +176,17 @@ test('示例：悬浮球可见且可点击', async ({ page }) => {
 
 ---
 
+## Real 后端套件（本地 Ollama，E2E_REAL=1）
+
+| 项 | 说明 |
+|----|------|
+| 运行 | `E2E_REAL=1 npx playwright test --project=chatapp real-backend --workers=1`（前置：Ollama 运行中，backend-real 已启动） |
+| 跳过条件 | 未设置 E2E_REAL 时自动跳过（CI 无 Ollama） |
+| 失败判定 | 响应超时即判失败（回复等待上限 60s） |
+| 覆盖链路 | 发送→真实流式回复；头部清空（确认流）；新建话题隔离 |
+
+---
+
 ## 一、Landing页面测试
 
 > 测试入口: http://localhost:5180/
