@@ -17,6 +17,8 @@ declare global {
     AIChatbot?: {
       toggle: (open?: boolean) => void
       setTheme: (theme: 'light' | 'dark' | 'system') => void
+      sendMessage: (data: { content: string; attachments?: import("./types").Attachment[]; extraInfo?: string }) => Promise<void>
+      getState: () => import('./types/events').IframeStateSnapshot
     }
     Vue?: {
       use: (plugin: unknown) => void

@@ -5,12 +5,12 @@
  * - forwardEvent maps AIChatbot component events to chatbot:* postMessage types
  * - handleHostMessage maps host:* commands to AIChatbot expose calls
  */
-import type { IframeStateSnapshot, PostMessageType } from '@/types'
+import type { Attachment, IframeStateSnapshot, PostMessageType } from '@/types'
 
 /** Minimal shape of the AIChatbot expose surface the bridge needs */
 export interface BridgeChatbotExpose {
   togglePanel: (open?: boolean) => void
-  sendMessage: (data: { content: string; attachments?: unknown[]; extraInfo?: string }) => Promise<void>
+  sendMessage: (data: { content: string; attachments?: Attachment[]; extraInfo?: string }) => Promise<void>
   getState: () => IframeStateSnapshot
 }
 
