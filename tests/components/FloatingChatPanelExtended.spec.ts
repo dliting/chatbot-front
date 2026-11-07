@@ -291,3 +291,71 @@ describe('FloatingChatPanel Extended Tests', () => {
     })
   })
 })
+
+describe('FloatingChatPanel position restore (real DraggableWindow)', () => {
+  const STORAGE_KEY = 'draggable-window-position'
+  const localConfig: ChatbotConfig = { mode: 'floating', theme: 'light', position: 'bottom-right', panelWidth: 400, panelHeight: 500 }
+  const mockConfig: ChatbotConfig = { mode: 'floating', theme: 'light', position: 'bottom-right', panelWidth: 400, panelHeight: 500 }
+
+  const mountWithRealWindow = () => {
+    return mount(FloatingChatPanel, {
+      props: {
+        config: { ...mockConfig, defaultExpanded: true },
+        messages: [],
+        topics: [],
+        currentTopicId: 'topic_1',
+      },
+      global: {
+        provide: {
+          [chatActionsKey as symbol]: mockChatActions,
+          [topicActionsKey as symbol]: mockTopicActions,
+          [uiActionsKey as symbol]: mockUIActions,
+        },
+        stubs: {
+          SuspendedBall: {
+            name: 'SuspendedBall',
+            props: ['position', 'size', 'backgroundColor', 'badge'],
+            template: '<div class="suspended-ball-stub" />',
+          },
+          FilePreviewModal: {
+            name: 'FilePreviewModal',
+            props: ['visible', 'file'],
+            template: '<div class="file-preview-modal-stub" />',
+          },
+          ChatContent: {
+            name: 'ChatContent',
+            template: '<div class="chat-content-stub" />',
+          },
+        },
+      },
+    })
+  }
+
+  afterEach(() => {
+    localStorage.removeItem(STORAGE_KEY)
+  })
+
+  it('restores stored position instead of default placement', async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ x: 111, y: 222, width: 400, height: 500 })
+    )
+    const wrapper = mountWithRealWindow()
+    await nextTick()
+
+    const win = wrapper.find('.draggable-window')
+    expect(win.exists()).toBe(true)
+    expect(win.attributes('style')).toContain('left: 111px')
+    expect(win.attributes('style')).toContain('top: 222px')
+  })
+
+  it('uses default placement when nothing is stored', async () => {
+    const wrapper = mountWithRealWindow()
+    await nextTick()
+
+    const win = wrapper.find('.draggable-window')
+    expect(win.exists()).toBe(true)
+    // Default: right-aligned with 20px margin (1024 - 400 - 20 = 604)
+    expect(win.attributes('style')).toContain('left: 604px')
+  })
+})
