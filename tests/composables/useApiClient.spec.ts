@@ -302,21 +302,6 @@ describe('useApiClient', () => {
     })
   })
 
-  describe('uploadImages', () => {
-    it('should upload images successfully', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ code: 0, data: { urls: ['http://uploaded.jpg'] } }),
-      })
-
-      const client = useApiClient(defaultOptions)
-      const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' })
-      const urls = await client.uploadImages([file])
-
-      expect(urls).toEqual(['http://uploaded.jpg'])
-    })
-  })
-
   describe('streamChat', () => {
     it('should create a stream generator with topicId mapped to sessionId in request', async () => {
       const encoder = new TextEncoder()

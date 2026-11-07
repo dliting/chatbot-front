@@ -27,7 +27,6 @@ describe('useApiClient (unit)', () => {
     expect(typeof client.createTopic).toBe('function')
     expect(typeof client.deleteTopic).toBe('function')
     expect(typeof client.updateTopicTitle).toBe('function')
-    expect(typeof client.uploadImages).toBe('function')
     expect(typeof client.deleteMessage).toBe('function')
   })
 
@@ -155,21 +154,6 @@ describe('useApiClient (unit)', () => {
       expect(result.messageId).toBe('m1')
       expect(result.type).toBe('text')
       expect(result.status).toBe('sent')
-    })
-  })
-
-  describe('uploadImages', () => {
-    it('should upload files and return URLs', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ code: 0, data: { urls: ['http://img.jpg'] } }),
-      })
-
-      const client = useApiClient(defaultOptions)
-      const file = new File(['data'], 'test.jpg', { type: 'image/jpeg' })
-      const urls = await client.uploadImages([file])
-
-      expect(urls).toEqual(['http://img.jpg'])
     })
   })
 

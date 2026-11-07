@@ -14,28 +14,17 @@ describe('ChatbotConfig Type', () => {
       expect(config.mode).toBe('extended')
     })
 
-    it('should accept layout field with Layout values', () => {
-      const config: ChatbotConfig = {
-        layout: 'dual'
-      }
-      expect(config.layout).toBe('dual')
-    })
-
-    it('should accept layout field with single value', () => {
-      const config: ChatbotConfig = {
-        layout: 'single'
-      }
-      expect(config.layout).toBe('single')
+    it('derives layout purely from mode (layout is not configurable)', () => {
+      // layout was removed from ChatbotConfig: modeToLayoutMap is the single source
+      expect(modeToLayoutMap.extended).toBe('dual')
+      expect(modeToLayoutMap.sidebar).toBe('single')
+      expect(modeToLayoutMap.floating).toBe('single')
     })
   })
 
   describe('Default Configuration', () => {
     it('should have floating mode as default mode', () => {
       expect(defaultChatbotConfig.mode).toBe('floating')
-    })
-
-    it('should have single layout as default layout', () => {
-      expect(defaultChatbotConfig.layout).toBe('single')
     })
 
     it('should have reasonable default panel dimensions', () => {
@@ -61,14 +50,6 @@ describe('ChatbotConfig Type', () => {
       expect(derivedLayout).toBe('dual')
     })
 
-    it('should use explicit layout when provided', () => {
-      const config: ChatbotConfig = {
-        mode: 'floating',
-        layout: 'dual' // Explicit override
-      }
-      expect(config.layout).toBe('dual')
-    })
-
     it('should map floating mode to single layout by default', () => {
       const layout = modeToLayoutMap['floating']
       expect(layout).toBe('single')
@@ -82,19 +63,6 @@ describe('ChatbotConfig Type', () => {
     it('should map sidebar mode to single layout by default', () => {
       const layout = modeToLayoutMap['sidebar']
       expect(layout).toBe('single')
-    })
-  })
-
-  describe('Layout Field Constraints', () => {
-    it('should only accept dual or single as valid layout values', () => {
-      const validLayouts: ('dual' | 'single')[] = ['dual', 'single']
-      expect(validLayouts).toHaveLength(2)
-    })
-
-    it('should reject invalid layout values at compile time', () => {
-      // @ts-expect-error - Testing type safety for invalid layout value
-      const invalidConfig: ChatbotConfig = { layout: 'invalid' }
-      expect(true).toBe(true) // Placeholder for type check
     })
   })
 
@@ -114,15 +82,15 @@ describe('ChatbotConfig Type', () => {
   describe('Required Fields', () => {
     it('should have all required fields in default config', () => {
       const requiredFields = [
-        'mode', 'layout', 'position', 'panelWidth', 'panelHeight',
-        'panelMinWidth', 'panelMaxWidth', 'defaultExpanded', 'panelMode',
+        'mode', 'position', 'panelWidth', 'panelHeight',
+        'defaultExpanded', 'panelMode',
         'draggable', 'resizable', 'minWidth', 'minHeight', 'rememberPosition',
         'enableImageUpload', 'enableVoiceInput',
         'enableCopyMessage', 'enableDeleteMessage', 'enableResend', 'enableClearAll',
         'maxImageCount', 'maxImageSize', 'theme', 'primaryColor',
         'apiBaseUrl', 'streamEnabled', 'streamTimeout',
-        'iframeMode', 'allowedOrigins', 'locale',
-        'maxMessagesInMemory', 'autoScroll', 'labels'
+        'allowedOrigins', 'locale',
+        'autoScroll', 'labels'
       ]
 
       requiredFields.forEach(field => {

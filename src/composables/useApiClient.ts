@@ -226,28 +226,6 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
-   * Upload images
-   */
-  async function uploadImages(files: File[]): Promise<string[]> {
-    const formData = new FormData()
-    files.forEach((file) => {
-      formData.append('files', file)
-    })
-
-    const response = await fetch(`${baseUrl}/upload/images`, {
-      method: 'POST',
-      body: formData,
-    })
-
-    if (!response.ok) throw new Error(`API error: ${response.status}`)
-
-    const result = await response.json()
-    if (result.code !== 0) throw new Error(result.message || 'API error')
-
-    return result.data.urls
-  }
-
-  /**
    * Delete message
    */
   async function deleteMessage(messageId: string): Promise<void> {
@@ -267,7 +245,6 @@ export function useApiClient(options: ApiClientOptions) {
     createTopic,
     deleteTopic,
     updateTopicTitle,
-    uploadImages,
     deleteMessage,
   }
 }
