@@ -8,7 +8,7 @@ const router = useRouter()
 const { getApiBaseUrl, settings } = useSettings()
 
 const config = computed(() => ({
-  mode: 'extended', // 使用新的交互模式参数  // 明确指定双栏布局
+  mode: 'extended',
   defaultExpanded: true, // 默认展开聊天面板
   apiBaseUrl: getApiBaseUrl(),
   streamEnabled: true,

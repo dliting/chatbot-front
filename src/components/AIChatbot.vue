@@ -287,7 +287,9 @@ provide(chatActionsKey, {
     const topicId = state.topics.currentId
     clearCurrentMessages()
     emit('messages:cleared', { topicId })
-    void config.value.callbacks?.onClearMessages?.(topicId)
+    config.value.callbacks?.onClearMessages?.(topicId).catch((error) => {
+      handleError(error, 'message', 'Failed to clear messages')
+    })
   },
 } satisfies ChatActionHandlers)
 

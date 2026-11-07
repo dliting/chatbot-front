@@ -115,7 +115,7 @@ interface Props {
   labels?: Partial<ChatbotLabels>
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   title: 'AI Assistant',
   theme: 'light',
   showBackButton: false,
@@ -124,9 +124,6 @@ const props = withDefaults(defineProps<Props>(), {
   showCloseButton: false,
   unreadCount: 0,
 })
-
-// props is only used through the template bindings of withDefaults
-void props
 
 interface Emits {
   (e: 'back'): void
@@ -157,7 +154,6 @@ const handleClearConfirm = () => {
   showClearDialog.value = false
   chatActions?.clearMessages?.()
 }
-void props
 </script>
 
 <style scoped lang="scss">
