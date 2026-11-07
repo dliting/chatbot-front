@@ -111,6 +111,8 @@ export interface ChatActionHandlers {
   stopGenerating: () => void
   isGenerating: { value: boolean }
   isThinkingActive: { value: boolean }
+  /** Clear all messages of the current topic (behind enableClearAll) */
+  clearMessages?: () => void
 }
 
 export interface TopicActionHandlers {
@@ -158,6 +160,8 @@ export interface ChatState {
   maxImageSize?: number
   allowedImageTypes?: string[]
   maxImageCount?: number
+  /** Show the clear-conversation header action */
+  enableClearAll?: boolean
 }
 
 // Upload result

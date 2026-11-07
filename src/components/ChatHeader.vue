@@ -51,6 +51,22 @@
         </svg>
       </button>
 
+      <!-- Clear conversation (enableClearAll) -->
+      <button
+        v-if="clearVisible"
+        class="chat-header__btn chat-header__clear"
+        :title="labels?.clearAll || 'Clear All'"
+        @click="showClearDialog = true"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path
+            d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </button>
+
       <!-- Close button -->
       <button
         v-if="showCloseButton"
@@ -65,14 +81,28 @@
         </svg>
       </button>
     </div>
+
+    <!-- Clear confirmation -->
+    <ConfirmDialog
+      :show="showClearDialog"
+      :title="labels?.clearAll || 'Clear All'"
+      :message="labels?.clearConfirm || 'Are you sure you want to clear all messages in this topic?'"
+      :confirm-text="labels?.confirm || 'Confirm'"
+      :cancel-text="labels?.cancel || 'Cancel'"
+      type="danger"
+      @confirm="handleClearConfirm"
+      @cancel="showClearDialog = false"
+      @update:show="showClearDialog = $event"
+    />
   </header>
 </template>
 
 <script setup lang="ts">
-import { inject } from 'vue'
+import { inject, ref, computed } from 'vue'
 import type { Theme } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
-import { uiActionsKey } from '@/symbols'
+import { uiActionsKey, chatStateKey, chatActionsKey } from '@/symbols'
+import ConfirmDialog from './ConfirmDialog.vue'
 
 interface Props {
   title?: string
@@ -85,7 +115,7 @@ interface Props {
   labels?: Partial<ChatbotLabels>
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   title: 'AI Assistant',
   theme: 'light',
   showBackButton: false,
@@ -94,6 +124,9 @@ withDefaults(defineProps<Props>(), {
   showCloseButton: false,
   unreadCount: 0,
 })
+
+// props is only used through the template bindings of withDefaults
+void props
 
 interface Emits {
   (e: 'back'): void
@@ -104,6 +137,8 @@ defineEmits<Emits>()
 
 // Inject UI action handlers — inject-primary: no emit fallback for data operations
 const uiActions = inject(uiActionsKey)
+const chatState = inject(chatStateKey, null)
+const chatActions = inject(chatActionsKey)
 
 // Inject-primary: theme toggle via inject, no emit
 const handleToggleTheme = () => {
@@ -114,6 +149,15 @@ const handleToggleTheme = () => {
 const handleTopicsClick = () => {
   uiActions?.showTopicsView?.()
 }
+
+// Clear conversation action (behind enableClearAll, confirmed via dialog)
+const showClearDialog = ref(false)
+const clearVisible = computed(() => chatState?.enableClearAll ?? false)
+const handleClearConfirm = () => {
+  showClearDialog.value = false
+  chatActions?.clearMessages?.()
+}
+void props
 </script>
 
 <style scoped lang="scss">

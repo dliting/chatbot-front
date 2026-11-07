@@ -11,6 +11,7 @@ export function createMockChatActions(overrides?: Partial<ChatActionHandlers>): 
     stopGenerating: vi.fn(),
     isGenerating: ref(false),
     isThinkingActive: ref(false),
+    clearMessages: vi.fn(),
     ...overrides,
   }
 }

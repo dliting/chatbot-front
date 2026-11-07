@@ -113,3 +113,43 @@ describe('AIChatbot Mode Rendering', () => {
     })
   })
 })
+
+describe('AIChatbot clear-all integration', () => {
+  it('clears messages, emits messages:cleared and calls onClearMessages after confirmation', async () => {
+    const onClearMessages = vi.fn().mockResolvedValue(undefined)
+    const wrapper = mount(AIChatbot, {
+      props: {
+        config: {
+          mode: 'extended',
+          apiBaseUrl: '/api',
+          enableClearAll: true,
+          callbacks: { onClearMessages },
+        },
+      },
+      global: {
+        stubs: {
+          Teleport: true,
+          SuspendedBall: true,
+          ChatContent: true,
+          TopicListView: true,
+          TopicSearch: true,
+          TopicActionMenu: true,
+          FilePreviewModal: true,
+        },
+      },
+    })
+    await nextTick()
+
+    const clearBtn = wrapper.find('.chat-header__clear')
+    expect(clearBtn.exists()).toBe(true)
+    await clearBtn.trigger('click')
+
+    const confirmBtn = wrapper.find('.confirm-dialog__btn--confirm')
+    expect(confirmBtn.exists()).toBe(true)
+    await confirmBtn.trigger('click')
+    await nextTick()
+
+    expect(wrapper.emitted('messages:cleared')).toHaveLength(1)
+    expect(onClearMessages).toHaveBeenCalledTimes(1)
+  })
+})

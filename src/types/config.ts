@@ -205,6 +205,7 @@ export interface ChatbotLabels {
   newTopic: string
   history: string
   clearAll: string
+  clearConfirm?: string
   delete: string
   copy: string
   refresh: string
