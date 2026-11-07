@@ -420,3 +420,73 @@ describe('MessageList scroll handling', () => {
     expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth', top: 1000 }))
   })
 })
+
+describe('streaming token-growth auto-follow (B-6)', () => {
+  function mountStreaming() {
+    const messages: Message[] = [
+      { messageId: 'u1', topicId: 't1', role: 'user', type: 'text', content: 'q', timestamp: Date.now(), status: 'sent' },
+      { messageId: 'a1', topicId: 't1', role: 'assistant', type: 'text', content: '', timestamp: Date.now(), status: 'loading' },
+    ]
+    const wrapper = mount(MessageList, {
+      props: { messages, autoScroll: true, isStreaming: true, streamingMessageId: 'a1' },
+    })
+    const el = wrapper.find('.chatbot-messages').element as HTMLElement
+    Object.defineProperty(el, 'scrollTop', { value: 0, configurable: true })
+    Object.defineProperty(el, 'scrollHeight', { value: 1000, configurable: true })
+    Object.defineProperty(el, 'clientHeight', { value: 400, configurable: true })
+    const scrollTo = vi.fn()
+    ;(el as unknown as { scrollTo: unknown }).scrollTo = scrollTo
+    return { wrapper, messages, scrollTo, el }
+  }
+
+  it('follows token growth while near the bottom', async () => {
+    const { wrapper, messages, scrollTo } = mountStreaming()
+    // near the bottom: scrollTop leaves < 100px to scrollHeight-clientHeight
+    Object.defineProperty(wrapper.find('.chatbot-messages').element, 'scrollTop', { value: 600, configurable: true })
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+    const callsBefore = scrollTo.mock.calls.length
+
+    // streaming token arrives → assistant content grows in place
+    messages[1] = { ...messages[1], content: 'partial reply' }
+    await wrapper.setProps({ messages: [...messages] })
+    await nextTick()
+
+    expect(scrollTo.mock.calls.length).toBeGreaterThan(callsBefore)
+  })
+
+  it('does not follow when the user scrolled away', async () => {
+    const { wrapper, messages, scrollTo } = mountStreaming()
+    // scrolled far up → not near bottom
+    Object.defineProperty(wrapper.find('.chatbot-messages').element, 'scrollTop', { value: 0, configurable: true })
+    Object.defineProperty(wrapper.find('.chatbot-messages').element, 'scrollHeight', { value: 5000, configurable: true })
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+    const callsBefore = scrollTo.mock.calls.length
+
+    messages[1] = { ...messages[1], content: 'more tokens' }
+    await wrapper.setProps({ messages: [...messages] })
+    await nextTick()
+
+    expect(scrollTo.mock.calls.length).toBe(callsBefore)
+  })
+
+  it('does not follow when autoScroll is false', async () => {
+    const messages: Message[] = [
+      { messageId: 'a1', topicId: 't1', role: 'assistant', type: 'text', content: '', timestamp: Date.now(), status: 'loading' },
+    ]
+    const wrapper = mount(MessageList, {
+      props: { messages, autoScroll: false, isStreaming: true, streamingMessageId: 'a1' },
+    })
+    const el = wrapper.find('.chatbot-messages').element as HTMLElement
+    Object.defineProperty(el, 'scrollHeight', { value: 1000, configurable: true })
+    Object.defineProperty(el, 'clientHeight', { value: 400, configurable: true })
+    const scrollTo = vi.fn()
+    ;(el as unknown as { scrollTo: unknown }).scrollTo = scrollTo
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+
+    messages[0] = { ...messages[0], content: 'tokens' }
+    await wrapper.setProps({ messages: [...messages] })
+    await nextTick()
+
+    expect(scrollTo.mock.calls.length).toBe(0)
+  })
+})

@@ -55,7 +55,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted } from 'vue'
 import type { Message } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
 import MessageItem from './MessageItem.vue'
@@ -146,6 +146,20 @@ watch(
     }
   }
 )
+
+// Watch streaming content growth (token increments) so the view
+// keeps following the reply while the user stays near the bottom
+const streamingContentLength = computed(() => {
+  return (
+    props.messages.find((m) => m.messageId === props.streamingMessageId)?.content.length ?? -1
+  )
+})
+watch(streamingContentLength, (len, oldLen) => {
+  if (len < 0 || oldLen < 0) return
+  if (props.autoScroll && props.isStreaming && isNearBottom.value) {
+    nextTick(() => scrollToBottom())
+  }
+})
 
 // Initial scroll
 onMounted(() => {
