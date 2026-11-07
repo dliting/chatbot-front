@@ -700,3 +700,61 @@ describe('composables/useTopicActions', () => {
     })
   })
 })
+
+describe('AbortSignal handling (topic switch race)', () => {
+  it('passes signal to onLoadMessages and aborts in-flight load on rapid switch', async () => {
+    const signals: AbortSignal[] = []
+    const { deps, errors } = createMockDeps({
+      callbacks: {
+        onLoadMessages: (topicId: string, signal?: AbortSignal) => {
+          signals.push(signal as AbortSignal)
+          return new Promise<Message[]>((resolve, reject) => {
+            const timer = setTimeout(() => resolve([]), 20)
+            signal?.addEventListener('abort', () => {
+              clearTimeout(timer)
+              reject(new DOMException('Aborted', 'AbortError'))
+            })
+          })
+        },
+      },
+    })
+    const actions = useTopicActions(deps)
+
+    const p1 = actions.switchToTopic('topic_a')
+    await Promise.resolve()
+    const p2 = actions.switchToTopic('topic_b')
+    await Promise.allSettled([p1, p2])
+
+    expect(signals.length).toBe(2)
+    expect(signals[0].aborted).toBe(true)
+    expect(signals[1].aborted).toBe(false)
+    expect(errors).toHaveLength(0)
+  })
+
+  it('loadTopicMessages swallows AbortError without handleError', async () => {
+    const abortErr = new DOMException('Aborted', 'AbortError')
+    const { deps, errors } = createMockDeps()
+    deps.apiClient.value = {
+      getTopicMessages: vi.fn().mockRejectedValue(abortErr),
+      getTopics: vi.fn().mockResolvedValue([]),
+    } as never
+    const actions = useTopicActions(deps)
+
+    const messages = await actions.loadTopicMessages('topic_1')
+    expect(messages).toEqual([])
+    expect(errors).toHaveLength(0)
+  })
+
+  it('reloadTopics swallows AbortError without handleError', async () => {
+    const abortErr = new DOMException('Aborted', 'AbortError')
+    const { deps, errors } = createMockDeps()
+    deps.apiClient.value = {
+      getTopics: vi.fn().mockRejectedValue(abortErr),
+      getTopicMessages: vi.fn().mockResolvedValue([]),
+    } as never
+    const actions = useTopicActions(deps)
+
+    await actions.reloadTopics()
+    expect(errors).toHaveLength(0)
+  })
+})

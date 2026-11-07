@@ -706,3 +706,19 @@ describe('useApiClient', () => {
     })
   })
 })
+
+describe('AbortSignal passthrough', () => {
+  it('getTopics forwards signal to fetch', async () => {
+    const controller = new AbortController()
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ code: 0, data: { sessions: [] } }) })
+    await useApiClient({ baseUrl: 'http://localhost:3000' }).getTopics(controller.signal)
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/sessions', { signal: controller.signal })
+  })
+
+  it('getTopicMessages forwards signal to fetch', async () => {
+    const controller = new AbortController()
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ code: 0, data: { messages: [] } }) })
+    await useApiClient({ baseUrl: 'http://localhost:3000' }).getTopicMessages('t1', controller.signal)
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/sessions/t1/messages', { signal: controller.signal })
+  })
+})

@@ -157,8 +157,10 @@ export function useApiClient(options: ApiClientOptions) {
   /**
    * Get topics
    */
-  async function getTopics(): Promise<Topic[]> {
-    const response = await fetch(`${baseUrl}/sessions`)
+  async function getTopics(signal?: AbortSignal): Promise<Topic[]> {
+    const response = signal
+      ? await fetch(`${baseUrl}/sessions`, { signal })
+      : await fetch(`${baseUrl}/sessions`)
     if (!response.ok) throw new Error(`API error: ${response.status}`)
 
     const result = await response.json()
@@ -170,8 +172,9 @@ export function useApiClient(options: ApiClientOptions) {
   /**
    * Get topic messages
    */
-  async function getTopicMessages(topicId: string): Promise<Message[]> {
-    const response = await fetch(`${baseUrl}/sessions/${topicId}/messages`)
+  async function getTopicMessages(topicId: string, signal?: AbortSignal): Promise<Message[]> {
+    const url = `${baseUrl}/sessions/${topicId}/messages`
+    const response = signal ? await fetch(url, { signal }) : await fetch(url)
     if (!response.ok) throw new Error(`API error: ${response.status}`)
 
     const result = await response.json()
