@@ -375,6 +375,24 @@ const handleDoubleClick = () => {
 /** Handle clicks on code blocks within rendered markdown */
 const handleTextClick = (e: MouseEvent) => {
   const target = e.target as HTMLElement
+
+  // Copy button inside a code block wrapper: copy the wrapped pre's code
+  const copyBtnHit = target.closest('.markdown-copy-btn') as HTMLElement | null
+  if (copyBtnHit) {
+    const codeEl = copyBtnHit.closest('.code-block-wrapper')?.querySelector('pre code')
+    const text = codeEl?.textContent
+    if (text) {
+      copyToClipboard(text).then(() => {
+        ElMessage({
+          message: props.labels?.copiedToClipboard || 'Copied to clipboard',
+          type: 'success',
+          duration: 3000,
+        })
+      })
+    }
+    return
+  }
+
   const codeBlock = target.closest('pre')
   if (!codeBlock) return
 

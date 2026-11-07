@@ -57,6 +57,29 @@ describe('formatMarkdownContent', () => {
   it('should handle code block wrapper', () => {
     const result = formatMarkdownContent('```js\nconst x = 1\n```')
     expect(result).toContain('code-block-wrapper')
-    expect(result).toContain('code-copy-btn')
+    expect(result).toContain('markdown-copy-btn')
+  })
+
+  it('should place copy button inside wrapper and outside pre', () => {
+    const result = formatMarkdownContent('```js\nconsole.log(1)\n```')
+    const div = document.createElement('div')
+    div.innerHTML = result
+
+    const wrapper = div.querySelector('.code-block-wrapper')
+    expect(wrapper).toBeTruthy()
+
+    const btn = wrapper?.querySelector('button.markdown-copy-btn')
+    expect(btn).toBeTruthy()
+
+    const pre = wrapper?.querySelector('pre')
+    expect(pre).toBeTruthy()
+
+    // Button is a sibling of pre inside the wrapper, never nested inside pre
+    expect(btn?.closest('pre')).toBeNull()
+  })
+
+  it('should keep highlight.js output intact', () => {
+    const result = formatMarkdownContent('```js\nconsole.log(1)\n```')
+    expect(result).toContain('hljs language-js')
   })
 })
