@@ -187,3 +187,6 @@ export type {
   ChatbotConfig,
   ChatbotLabels,
 } from './config'
+
+// Iframe postMessage protocol types
+export type { PostMessageData, PostMessageType, IframeStateSnapshot } from './events'
