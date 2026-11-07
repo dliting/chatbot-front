@@ -6,8 +6,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ChatHeader from '@/components/ChatHeader.vue'
-import { uiActionsKey } from '@/symbols'
-import { createMockUIActions } from '../utils/mockActions'
+import { uiActionsKey, chatStateKey, chatActionsKey } from '@/symbols'
+import { createMockUIActions, createMockChatActions } from '../utils/mockActions'
 
 const mockUIActions = createMockUIActions()
 
@@ -318,5 +318,72 @@ describe('ChatHeader Component', () => {
         expect(buttons.length).toBe(2)
       })
     })
+  })
+})
+
+describe('ChatHeader clear-all action (inject-primary)', () => {
+  const mockChatActions = createMockChatActions()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+  const chatState = {
+    messages: { value: [] },
+    topics: { value: [] },
+    currentTopicId: { value: 'topic_1' },
+    isStreaming: { value: false },
+    streamingMessageId: { value: null },
+    enableThinking: false,
+    thinkingEnabled: { value: false },
+    isThinking: { value: false },
+    enableVoiceInput: false,
+  }
+
+  function mountWithClear(options: { enableClearAll?: boolean } = {}) {
+    return mount(ChatHeader, {
+      props: { labels: { clearAll: 'Clear All', clearConfirm: 'Clear all messages?' } },
+      global: {
+        stubs: { Teleport: true },
+        provide: {
+          [uiActionsKey]: mockUIActions,
+          [chatStateKey]: { ...chatState, enableClearAll: options.enableClearAll },
+          [chatActionsKey]: mockChatActions,
+        },
+      },
+    })
+  }
+
+  it('hides the clear button by default (no enableClearAll)', () => {
+    const wrapper = mountWithClear()
+    expect(wrapper.find('.chat-header__clear').exists()).toBe(false)
+  })
+
+  it('shows the clear button when enableClearAll is provided', () => {
+    const wrapper = mountWithClear({ enableClearAll: true })
+    expect(wrapper.find('.chat-header__clear').exists()).toBe(true)
+  })
+
+  it('clears messages only after confirmation', async () => {
+    const wrapper = mountWithClear({ enableClearAll: true })
+    await wrapper.find('.chat-header__clear').trigger('click')
+
+    // dialog shown, action not yet fired
+    expect(mockChatActions.clearMessages).not.toHaveBeenCalled()
+
+    await wrapper.find('.chat-header').trigger('keydown.escape') // no-op; use dialog confirm
+    const confirmBtn = wrapper.find('.confirm-dialog__btn--confirm')
+    expect(confirmBtn.exists()).toBe(true)
+    await confirmBtn.trigger('click')
+
+    expect(mockChatActions.clearMessages).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not clear when the confirmation is cancelled', async () => {
+    const wrapper = mountWithClear({ enableClearAll: true })
+    await wrapper.find('.chat-header__clear').trigger('click')
+    const cancelBtn = wrapper.find('.confirm-dialog__btn--cancel')
+    await cancelBtn.trigger('click')
+
+    expect(mockChatActions.clearMessages).not.toHaveBeenCalled()
   })
 })

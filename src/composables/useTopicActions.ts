@@ -37,21 +37,31 @@ interface TopicActionsDeps {
 export function useTopicActions(deps: TopicActionsDeps) {
   const { config, state, apiClient, emit } = deps
 
+  // Cancels the previous topic-data load whenever a newer one starts
+  let loadController: AbortController | null = null
+
+  const isAbortError = (error: unknown): boolean =>
+    error instanceof Error && error.name === 'AbortError'
+
   /**
    * Reload topics list from callback or apiClient
    */
   async function reloadTopics() {
+    loadController?.abort()
+    loadController = new AbortController()
+    const { signal } = loadController
     try {
       let topics: import('@/types').Topic[] = []
       if (config.value.callbacks?.onLoadTopics) {
-        topics = await config.value.callbacks.onLoadTopics()
+        topics = await config.value.callbacks.onLoadTopics(signal)
       } else if (apiClient.value) {
-        topics = await apiClient.value.getTopics()
+        topics = await apiClient.value.getTopics(signal)
       }
       if (topics.length > 0) {
         deps.setTopicList(topics)
       }
     } catch (error) {
+      if (isAbortError(error)) return
       deps.handleError(error, 'topic', 'Failed to reload topics')
     }
   }
@@ -59,14 +69,15 @@ export function useTopicActions(deps: TopicActionsDeps) {
   /**
    * Load messages for a specific topic from backend
    */
-  async function loadTopicMessages(topicId: string): Promise<Message[]> {
+  async function loadTopicMessages(topicId: string, signal?: AbortSignal): Promise<Message[]> {
     try {
       if (config.value.callbacks?.onLoadMessages) {
-        return await config.value.callbacks.onLoadMessages(topicId)
+        return await config.value.callbacks.onLoadMessages(topicId, signal)
       } else if (apiClient.value) {
-        return await apiClient.value.getTopicMessages(topicId)
+        return await apiClient.value.getTopicMessages(topicId, signal)
       }
     } catch (error: unknown) {
+      if (isAbortError(error)) return []
       const errorMessage = error instanceof Error ? error.message : String(error)
       if (errorMessage.includes('404')) return []
       deps.handleError(error, 'topic', 'Failed to load topic messages')
@@ -126,7 +137,9 @@ export function useTopicActions(deps: TopicActionsDeps) {
 
     // Load messages if not already loaded
     if (!state.messages.byTopic[topicId]?.length) {
-      const messages = await loadTopicMessages(topicId)
+      loadController?.abort()
+      loadController = new AbortController()
+      const messages = await loadTopicMessages(topicId, loadController.signal)
       if (messages.length > 0) {
         deps.setMessages(topicId, messages)
       }

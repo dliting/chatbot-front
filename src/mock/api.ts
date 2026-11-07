@@ -88,22 +88,6 @@ export const mockAPI = {
   },
 
   /**
-   * Upload images (mock)
-   */
-  async uploadImages(files: File[]): Promise<ApiResponse<{ urls: string[] }>> {
-    await sleep(1000)
-
-    // Create blob URLs for preview
-    const urls = files.map((file) => URL.createObjectURL(file))
-
-    return {
-      code: 0,
-      message: 'success',
-      data: { urls },
-    }
-  },
-
-  /**
    * Get topic list (mock)
    */
   async getTopics(): Promise<ApiResponse<Topic[]>> {

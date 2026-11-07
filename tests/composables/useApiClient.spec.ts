@@ -284,7 +284,7 @@ describe('useApiClient', () => {
         { name: '', url: 'http://img.jpg', type: 'image' },
       ])
 
-      const body = JSON.parse((mockFetch.mock.calls[0][1] as RequestInit).body as string)
+      const body = JSON.parse((mockFetch.mock.calls.at(-1)![1] as RequestInit).body as string)
       expect(body.images).toEqual(['http://img.jpg'])
     })
   })
@@ -299,21 +299,6 @@ describe('useApiClient', () => {
       expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/messages/msg-1', {
         method: 'DELETE',
       })
-    })
-  })
-
-  describe('uploadImages', () => {
-    it('should upload images successfully', async () => {
-      mockFetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ code: 0, data: { urls: ['http://uploaded.jpg'] } }),
-      })
-
-      const client = useApiClient(defaultOptions)
-      const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' })
-      const urls = await client.uploadImages([file])
-
-      expect(urls).toEqual(['http://uploaded.jpg'])
     })
   })
 
@@ -344,7 +329,7 @@ describe('useApiClient', () => {
       }
 
       // Verify sessionId in request body
-      const body = JSON.parse((mockFetch.mock.calls[0][1] as RequestInit).body as string)
+      const body = JSON.parse((mockFetch.mock.calls.at(-1)![1] as RequestInit).body as string)
       expect(body.sessionId).toBe('topic-1')
       expect(chunks).toEqual(['Hi'])
     })
@@ -368,7 +353,7 @@ describe('useApiClient', () => {
 
       for await (const _ of generator) { /* consume */ }
 
-      const body = JSON.parse((mockFetch.mock.calls[0][1] as RequestInit).body as string)
+      const body = JSON.parse((mockFetch.mock.calls.at(-1)![1] as RequestInit).body as string)
       expect(body.options).toEqual({ thinking: { enabled: true } })
     })
 
@@ -391,7 +376,7 @@ describe('useApiClient', () => {
 
       for await (const _ of generator) { /* consume */ }
 
-      const body = JSON.parse((mockFetch.mock.calls[0][1] as RequestInit).body as string)
+      const body = JSON.parse((mockFetch.mock.calls.at(-1)![1] as RequestInit).body as string)
       expect(body.options).toBeUndefined()
     })
 
@@ -419,7 +404,7 @@ describe('useApiClient', () => {
 
       for await (const _ of generator) { /* consume */ }
 
-      const body = JSON.parse((mockFetch.mock.calls[0][1] as RequestInit).body as string)
+      const body = JSON.parse((mockFetch.mock.calls.at(-1)![1] as RequestInit).body as string)
       expect(body.images).toEqual(['http://img.jpg'])
       expect(body.videos).toEqual(['http://vid.mp4'])
       expect(body.audios).toEqual(['http://aud.mp3'])
@@ -704,5 +689,104 @@ describe('useApiClient', () => {
         for await (const _ of generator) { /* consume */ }
       }).rejects.toThrow('Request timeout')
     })
+  })
+})
+
+describe('AbortSignal passthrough', () => {
+  it('getTopics forwards signal to fetch', async () => {
+    const controller = new AbortController()
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ code: 0, data: { sessions: [] } }) })
+    await useApiClient({ baseUrl: 'http://localhost:3000' }).getTopics(controller.signal)
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/sessions', { signal: controller.signal })
+  })
+
+  it('getTopicMessages forwards signal to fetch', async () => {
+    const controller = new AbortController()
+    mockFetch.mockResolvedValueOnce({ ok: true, json: () => Promise.resolve({ code: 0, data: { messages: [] } }) })
+    await useApiClient({ baseUrl: 'http://localhost:3000' }).getTopicMessages('t1', controller.signal)
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/sessions/t1/messages', { signal: controller.signal })
+  })
+})
+
+describe('REST error branches', () => {
+  const makeErr = (status: number) => ({ ok: false, status, json: async () => ({}) })
+
+  it('createTopic throws on !ok and on code!==0', async () => {
+    const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+    mockFetch.mockResolvedValueOnce(makeErr(500))
+    await expect(client.createTopic()).rejects.toThrow('API error: 500')
+
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ code: 1, message: 'nope' }) })
+    await expect(client.createTopic()).rejects.toThrow('nope')
+  })
+
+  it('deleteTopic throws on !ok', async () => {
+    const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+    mockFetch.mockResolvedValueOnce(makeErr(404))
+    await expect(client.deleteTopic('t1')).rejects.toThrow('API error: 404')
+  })
+
+  it('updateTopicTitle throws on !ok', async () => {
+    const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+    mockFetch.mockResolvedValueOnce(makeErr(403))
+    await expect(client.updateTopicTitle('t1', 'x')).rejects.toThrow('API error: 403')
+  })
+
+  it('getTopics/getTopicMessages throw on code!==0', async () => {
+    const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ code: 1, message: 'boom1' }) })
+    await expect(client.getTopics()).rejects.toThrow('boom1')
+
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ code: 1, message: 'boom2' }) })
+    await expect(client.getTopicMessages('t1')).rejects.toThrow('boom2')
+  })
+
+  it('deleteMessage throws on !ok', async () => {
+    const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+    mockFetch.mockResolvedValueOnce(makeErr(400))
+    await expect(client.deleteMessage('m1')).rejects.toThrow('API error: 400')
+  })
+})
+
+describe('streamChat request body coverage', () => {
+  const makeStream = (chunks: string[]) => {
+    const encoder = new TextEncoder()
+    return new ReadableStream({
+      start(controller) {
+        for (const c of chunks) controller.enqueue(encoder.encode(c))
+        controller.close()
+      },
+    })
+  }
+
+  it('passes all media attachment arrays and thinking option in the body', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, body: makeStream(['data: {"type":"done"}\n\n']) })
+
+    const client = useApiClient(defaultOptions)
+    const attachments = [
+      { type: 'image', url: 'data:image/png;base64,x', name: 'a.png' },
+      { type: 'video', url: 'data:video/mp4;base64,y', name: 'b.mp4' },
+      { type: 'audio', url: 'data:audio/mp3;base64,z', name: 'c.mp3' },
+    ] as never[]
+    const gen = client.streamChat('t1', 'Hello', attachments, { thinking: { enabled: true } })
+    for await (const _ of gen) { void _ }
+
+    const body = JSON.parse((mockFetch.mock.calls.at(-1)![1] as RequestInit).body as string)
+    expect(body.images).toHaveLength(1)
+    expect(body.videos).toHaveLength(1)
+    expect(body.audios).toHaveLength(1)
+    expect(body.options).toEqual({ thinking: { enabled: true } })
+  })
+
+  it('omits options key when no options provided', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, body: makeStream(['data: {"type":"done"}\n\n']) })
+
+    const client = useApiClient(defaultOptions)
+    const gen = client.streamChat('t1', 'Hello')
+    for await (const _ of gen) { void _ }
+
+    const body = JSON.parse((mockFetch.mock.calls.at(-1)![1] as RequestInit).body as string)
+    expect(body.options).toBeUndefined()
+    expect(body.stream).toBe(true)
   })
 })

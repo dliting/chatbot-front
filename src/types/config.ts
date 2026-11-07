@@ -6,13 +6,11 @@ import type {
   Theme,
   Locale,
   InteractionMode,
-  Layout,
   PanelMode,
   Topic,
   Attachment,
   StreamEvent,
   Message,
-  UploadResult,
 } from './index'
 
 /**
@@ -109,22 +107,16 @@ export interface ChatbotCallbacks {
 
   /** Clear all messages in a topic. */
   onClearMessages?: (topicId: string) => Promise<void>
-
-  /** Upload image files. Returns URLs of uploaded files. */
-  onUploadImages?: (files: File[]) => Promise<UploadResult>
 }
 
 export interface ChatbotConfig {
   // Interaction mode
   mode?: InteractionMode
-  layout?: Layout
 
   // Layout configuration
   position?: Position
   panelWidth?: number
   panelHeight?: number
-  panelMinWidth?: number
-  panelMaxWidth?: number
   defaultExpanded?: boolean
   panelMode?: PanelMode
 
@@ -161,7 +153,6 @@ export interface ChatbotConfig {
   // Style configuration
   theme?: Theme
   primaryColor?: string
-  customStyles?: Record<string, string>
 
   // API configuration
   apiBaseUrl?: string
@@ -172,14 +163,12 @@ export interface ChatbotConfig {
   callbacks?: ChatbotCallbacks
 
   // Iframe mode
-  iframeMode?: boolean
   allowedOrigins?: string[]
 
   // Internationalization
   locale?: Locale
 
   // Messages configuration
-  maxMessagesInMemory?: number
   autoScroll?: boolean
 
   // UI Labels (can be customized)
@@ -205,6 +194,7 @@ export interface ChatbotLabels {
   newTopic: string
   history: string
   clearAll: string
+  clearConfirm?: string
   delete: string
   copy: string
   refresh: string
@@ -232,6 +222,10 @@ export interface ChatbotLabels {
   noContentToCopy?: string
   copiedToClipboard?: string
   copyFailed?: string
+  /** Upload rejection toasts (prefixed with file name by the input) */
+  uploadSizeExceeded?: string
+  uploadTypeNotAllowed?: string
+  uploadCountExceeded?: string
   historyTooltip?: string
   switchToDarkMode?: string
   switchToLightMode?: string

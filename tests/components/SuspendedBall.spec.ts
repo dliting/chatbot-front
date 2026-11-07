@@ -408,3 +408,54 @@ describe('SuspendedBall Component', () => {
     })
   })
 })
+
+describe('SuspendedBall position memory', () => {
+  const STORAGE_KEY = 'suspended-ball-position'
+
+  afterEach(() => {
+    localStorage.removeItem(STORAGE_KEY)
+  })
+
+  it('restores stored position on mount', async () => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ x: 55, y: 66 }))
+    const wrapper = mount(SuspendedBall)
+    await nextTick()
+
+    const ball = wrapper.find('.chatbot-ball')
+    expect(ball.attributes('style')).toContain('left: 55px')
+    expect(ball.attributes('style')).toContain('top: 66px')
+  })
+
+  it('uses default corner position when nothing stored', async () => {
+    const wrapper = mount(SuspendedBall)
+    await nextTick()
+
+    const ball = wrapper.find('.chatbot-ball')
+    // bottom-right default: 1024 - 56(size) - 16(margin) = 952
+    expect(ball.attributes('style')).toContain('left: 952px')
+  })
+
+  it('saves position after drag end', async () => {
+    const wrapper = mount(SuspendedBall, { props: { draggable: true }, attachTo: document.body })
+    await nextTick()
+
+    const ball = wrapper.find('.chatbot-ball')
+    await ball.trigger('mousedown', { button: 0, clientX: 100, clientY: 100 })
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 150, clientY: 140 }))
+    document.dispatchEvent(new MouseEvent('mouseup', { clientX: 150, clientY: 140 }))
+    await nextTick()
+
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+    expect(stored).toEqual({ x: 50, y: 40 })
+    wrapper.unmount()
+  })
+
+  it('ignores corrupted stored value and falls back to default', async () => {
+    localStorage.setItem(STORAGE_KEY, '{broken json')
+    const wrapper = mount(SuspendedBall)
+    await nextTick()
+
+    const ball = wrapper.find('.chatbot-ball')
+    expect(ball.attributes('style')).toContain('left: 952px')
+  })
+})

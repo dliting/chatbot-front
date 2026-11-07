@@ -209,6 +209,14 @@ export function useChatActions(deps: ChatActionsDeps) {
           signal: controller.signal,
           extraInfo: data.extraInfo,
         })
+      } else if (apiClient.value && !config.value.streamEnabled) {
+        // Non-streaming request path (streamEnabled=false): one POST, full reply
+        emit('message:stream-start', { messageId: assistantMessageId })
+        const reply = await apiClient.value.sendMessage(topicId, data.content, data.attachments)
+        deps.updateMessage(assistantMessageId, { content: reply.content, status: 'sent' })
+        finalizeStreamStatus(assistantMessageId, controller, userMessageId)
+        emit('message:stream-end', { messageId: assistantMessageId, fullContent: reply.content })
+        return
       } else if (apiClient.value) {
         stream = apiClient.value.streamChat(topicId, data.content, data.attachments, {
           thinking: { enabled: thinkingRequested },
@@ -369,10 +377,66 @@ export function useChatActions(deps: ChatActionsDeps) {
   }
 
   /**
-   * Edit a message (emit event for host to handle)
+   * Edit a message: emit event for host, and when the host provides
+   * onEditMessage, run the edit-resend flow (streaming replacement reply).
    */
-  function editMessage(message: Message) {
+  async function editMessage(message: Message) {
     emit('message:edited', { messageId: message.messageId, topicId: message.topicId })
+
+    const editCallback = config.value.callbacks?.onEditMessage
+    if (!editCallback || isGenerating.value) return
+
+    const topicId = message.topicId || state.topics.currentId
+    const msgs = state.messages.byTopic[topicId]
+    if (!msgs) return
+
+    const index = msgs.findIndex((m) => m.messageId === message.messageId)
+    if (index === -1) return
+
+    // Remove the assistant reply that follows the edited user message
+    const replyIndex = msgs.findIndex(
+      (m, i) => i > index && m.role === 'assistant'
+    )
+    if (replyIndex !== -1) {
+      deps.removeMessage(topicId, msgs[replyIndex].messageId)
+    }
+
+    isGenerating.value = true
+    const controller = new AbortController()
+    abortController.value = controller
+    const assistantMessageId = generateId('msg')
+
+    try {
+      deps.insertMessage(topicId, index + 1, {
+        messageId: assistantMessageId,
+        topicId,
+        role: 'assistant',
+        type: 'text',
+        content: '',
+        timestamp: Date.now(),
+        status: 'loading',
+      })
+
+      const thinkingRequested = config.value.thinkingDefaultEnabled
+      const stream = editCallback({
+        topicId,
+        content: message.content,
+        attachments: message.attachments,
+        thinking: { enabled: thinkingRequested },
+        signal: controller.signal,
+        messageId: message.messageId,
+      })
+
+      await processStream(stream, controller, assistantMessageId, thinkingRequested)
+      finalizeStreamStatus(assistantMessageId, controller)
+    } catch (error) {
+      if (!(error instanceof Error && error.name === 'AbortError')) {
+        deps.handleError(error, 'message', 'Failed to edit message')
+      }
+    } finally {
+      isGenerating.value = false
+      abortController.value = null
+    }
   }
 
   /**

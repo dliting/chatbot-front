@@ -90,15 +90,14 @@ npm run build:iframe   # outputs to dist-iframe/
 <iframe src="/dist-iframe/index.html" style="border:0"></iframe>
 ```
 
-Configure `iframeMode: true` and `allowedOrigins` in the chat config for postMessage-based communication with the host page.
+The iframe build communicates with the host page via a `postMessage` bridge — pass `allowedOrigins` in the `?config=` URL parameter (see the [iframe protocol in API.md](docs/API.md)).
 
 ## Configuration
 
 ```typescript
 interface ChatbotConfig {
   // Interaction mode
-  mode?: 'floating' | 'extended' | 'sidebar'   // default 'floating'
-  layout?: 'dual' | 'single'                    // auto-derived from mode
+  mode?: 'floating' | 'extended' | 'sidebar'   // default 'floating' (layout auto-derived from mode)
 
   // Panel / floating window
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'

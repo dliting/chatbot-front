@@ -103,13 +103,6 @@ describe('ChatbotCallbacks', () => {
     }
     expect(callbacks.onClearMessages).toBeDefined()
   })
-
-  it('should accept onUploadImages callback', () => {
-    const callbacks: ChatbotCallbacks = {
-      onUploadImages: async (files: File[]) => ({ urls: ['http://example.com/img.jpg'] }),
-    }
-    expect(callbacks.onUploadImages).toBeDefined()
-  })
 })
 
 describe('SendMessageParams', () => {

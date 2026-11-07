@@ -146,6 +146,20 @@ describe('MessageItem Copy and Delete', () => {
       // After copy, button should have copied class
       expect(wrapper.find('.chatbot-message__action-btn--copied').exists()).toBe(true)
     })
+
+    it('should copy code text when markdown copy button is clicked', async () => {
+      const message = createMessage({ content: '```js\nconsole.log(1)\n```' })
+      const wrapper = createWrapper(message, { enableCopy: true })
+      await nextTick()
+
+      const mdCopyBtn = wrapper.find('.markdown-copy-btn')
+      expect(mdCopyBtn.exists()).toBe(true)
+
+      await mdCopyBtn.trigger('click')
+      await flushPromises()
+
+      expect(copyToClipboard).toHaveBeenCalledWith('console.log(1)')
+    })
   })
 
   describe('Delete Functionality', () => {

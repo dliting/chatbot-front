@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import MessageList from '@/components/MessageList.vue'
+import MessageItem from '@/components/MessageItem.vue'
 import type { Message } from '@/types'
 import { chatActionsKey } from '@/symbols'
 
@@ -9,7 +10,7 @@ import { chatActionsKey } from '@/symbols'
 vi.mock('@/components/MessageItem.vue', () => ({
   default: {
     name: 'MessageItem',
-    props: ['message', 'theme', 'isStreaming'],
+    props: ['message', 'theme', 'isStreaming', 'autoCollapse', 'enableCopy', 'enableDelete', 'enableResend', 'labels'],
     emits: ['file-click'],
     template: `
       <div class="chatbot-messages__item" :class="'chatbot-messages__item--' + message.role" data-testid="message-item">
@@ -342,5 +343,80 @@ describe('MessageList.vue', () => {
         expect(vm.showLoading(messages[0])).toBe(true)
       }
     })
+  })
+})
+
+describe('thinkingAutoCollapse passthrough to MessageItem', () => {
+  it('passes thinkingAutoCollapse=false as autoCollapse=false on MessageItem', () => {
+    const wrapper = mount(MessageList, {
+      props: {
+        messages: [{
+          messageId: 'm1', topicId: 't1', role: 'assistant', type: 'text',
+          content: 'answer', thinkingContent: 'thinking...', timestamp: Date.now(), status: 'sent',
+        } as Message],
+        thinkingAutoCollapse: false,
+      },
+    })
+    expect(wrapper.findComponent(MessageItem).props('autoCollapse')).toBe(false)
+  })
+
+  it('defaults to autoCollapse=true on MessageItem', () => {
+    const wrapper = mount(MessageList, {
+      props: {
+        messages: [{
+          messageId: 'm1', topicId: 't1', role: 'assistant', type: 'text',
+          content: 'answer', timestamp: Date.now(), status: 'sent',
+        } as Message],
+      },
+    })
+    expect(wrapper.findComponent(MessageItem).props('autoCollapse')).toBe(true)
+  })
+})
+
+describe('MessageList scroll handling', () => {
+  const scrollMessages: Message[] = Array.from({ length: 5 }, (_, i) => ({
+    messageId: `m${i}`, topicId: 't1', role: 'assistant' as const, type: 'text' as const,
+    content: `msg ${i}`, timestamp: Date.now(), status: 'sent' as const,
+  }))
+
+  function mountScroller() {
+    return mount(MessageList, { props: { messages: scrollMessages } })
+  }
+
+  function mockScrollMetrics(el: Element, metrics: { scrollTop: number; scrollHeight: number; clientHeight: number }) {
+    Object.defineProperty(el, 'scrollTop', { value: metrics.scrollTop, configurable: true })
+    Object.defineProperty(el, 'scrollHeight', { value: metrics.scrollHeight, configurable: true })
+    Object.defineProperty(el, 'clientHeight', { value: metrics.clientHeight, configurable: true })
+  }
+
+  it('shows the scroll-to-bottom button when scrolled away from bottom', async () => {
+    const wrapper = mountScroller()
+    const el = wrapper.find('.chatbot-messages').element
+    mockScrollMetrics(el, { scrollTop: 0, scrollHeight: 1000, clientHeight: 400 })
+
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+    expect(wrapper.find('.chatbot-messages__scroll-btn').exists()).toBe(true)
+  })
+
+  it('hides the button near the bottom', async () => {
+    const wrapper = mountScroller()
+    const el = wrapper.find('.chatbot-messages').element
+    mockScrollMetrics(el, { scrollTop: 550, scrollHeight: 1000, clientHeight: 400 })
+
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+    expect(wrapper.find('.chatbot-messages__scroll-btn').exists()).toBe(false)
+  })
+
+  it('scrolls to bottom when the button is clicked', async () => {
+    const wrapper = mountScroller()
+    const el = wrapper.find('.chatbot-messages').element as HTMLElement
+    mockScrollMetrics(el, { scrollTop: 0, scrollHeight: 1000, clientHeight: 400 })
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+
+    const scrollTo = vi.fn()
+    ;(el as unknown as { scrollTo: unknown }).scrollTo = scrollTo
+
+    await wrapper.find('.chatbot-messages__scroll-btn').trigger('click')
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth', top: 1000 }))
   })
 })

@@ -17,6 +17,11 @@
         :is-streaming="effectiveIsStreaming"
         :streaming-message-id="effectiveStreamingMessageId"
         :labels="mergedLabels"
+        :enable-copy="chatState?.enableCopyMessage ?? true"
+        :enable-delete="chatState?.enableDeleteMessage ?? true"
+        :enable-resend="chatState?.enableResend ?? true"
+        :auto-scroll="chatState?.autoScroll ?? true"
+        :thinking-auto-collapse="chatState?.thinkingAutoCollapse ?? true"
         @file-click="$emit('file-click', $event)"
       />
     </div>
@@ -29,6 +34,11 @@
         :thinking-enabled="effectiveThinkingEnabled"
         :enable-voice-input="effectiveEnableVoiceInput"
         :placeholder="mergedLabels.placeholder"
+        :labels="mergedLabels"
+        :enable-upload="chatState?.enableImageUpload ?? true"
+        :max-image-size="chatState?.maxImageSize"
+        :allowed-image-types="chatState?.allowedImageTypes"
+        :max-image-count="chatState?.maxImageCount"
         @send="handleSend"
         @stop="chatActions?.stopGenerating()"
         @file-click="$emit('file-click', $event)"

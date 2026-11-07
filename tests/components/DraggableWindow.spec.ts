@@ -541,3 +541,82 @@ describe('DraggableWindow Component', () => {
     })
   })
 })
+
+describe('DraggableWindow resize interactions', () => {
+  let localStorageMock: { getItem: (k: string) => string | null; setItem: (k: string, v: string) => void; removeItem: (k: string) => void; clear: () => void }
+
+  const createWrapper = (props = {}) => {
+    return mount(DraggableWindow, {
+      props: { x: 100, y: 100, width: 400, height: 500, modelValue: true, ...props },
+      slots: {
+        header: '<div class="test-header">Window Header</div>',
+        default: '<div class="test-content">Window Content</div>',
+      },
+      attachTo: document.body,
+    })
+  }
+
+  beforeEach(() => {
+    const store: Record<string, string> = {}
+    localStorageMock = {
+      getItem: (key) => store[key] ?? null,
+      setItem: (key, value) => { store[key] = String(value) },
+      removeItem: (key) => { delete store[key] },
+      clear: () => { for (const k of Object.keys(store)) delete store[k] },
+    }
+    global.localStorage = localStorageMock as Storage
+  })
+
+  it('renders overlay and 8 resize handles when open and resizable', () => {
+    const wrapper = createWrapper({ resizable: true })
+    const overlays = document.body.querySelectorAll('.draggable-window__resize-overlay')
+    const own = overlays[overlays.length - 1]
+    expect(own).toBeTruthy()
+    expect(own.querySelectorAll('.draggable-window__resize-handle').length).toBe(8)
+    wrapper.unmount()
+  })
+
+  it('does not render handles when closed', () => {
+    const before = document.body.querySelectorAll('.draggable-window__resize-overlay').length
+    const wrapper = createWrapper({ resizable: true, modelValue: false })
+    expect(document.body.querySelectorAll('.draggable-window__resize-overlay').length).toBe(before)
+    wrapper.unmount()
+  })
+
+  it('grows width when dragging the east handle', async () => {
+    const wrapper = createWrapper({ resizable: true, width: 400, maxWidth: 800 })
+    const overlays = document.body.querySelectorAll('.draggable-window__resize-overlay')
+    const handle = (overlays[overlays.length - 1] as HTMLElement).querySelector('.draggable-window__resize-handle--e') as HTMLElement
+    handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 500 }))
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 700 }))
+    document.dispatchEvent(new MouseEvent('mouseup', { clientX: 700 }))
+    await nextTick()
+    expect(wrapper.find('.draggable-window').attributes('style')).toContain('width: 600px')
+    wrapper.unmount()
+  })
+
+  it('clamps width to maxWidth when dragging far beyond', async () => {
+    const wrapper = createWrapper({ resizable: true, width: 400, maxWidth: 500 })
+    const overlays = document.body.querySelectorAll('.draggable-window__resize-overlay')
+    const handle = (overlays[overlays.length - 1] as HTMLElement).querySelector('.draggable-window__resize-handle--e') as HTMLElement
+    handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 500 }))
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 1200 }))
+    document.dispatchEvent(new MouseEvent('mouseup', { clientX: 1200 }))
+    await nextTick()
+    expect(wrapper.find('.draggable-window').attributes('style')).toContain('width: 500px')
+    wrapper.unmount()
+  })
+
+  it('moves window when dragging the header', async () => {
+    const wrapper = createWrapper({ x: 100, y: 100, draggable: true })
+    const header = wrapper.find('.draggable-window__header')
+    await header.trigger('mousedown', { clientX: 120, clientY: 120 })
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX: 220, clientY: 180 }))
+    document.dispatchEvent(new MouseEvent('mouseup', { clientX: 220, clientY: 180 }))
+    await nextTick()
+    const style = wrapper.find('.draggable-window').attributes('style')
+    expect(style).toContain('left: 200px')
+    expect(style).toContain('top: 160px')
+    wrapper.unmount()
+  })
+})

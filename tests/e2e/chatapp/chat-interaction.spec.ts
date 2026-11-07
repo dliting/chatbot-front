@@ -50,10 +50,10 @@ test.describe('Chat Interaction - Extended Mode', () => {
     await sendBtn.click()
 
     // .last() is safe: beforeEach ensures clean state with at most one user/assistant message pair
-    const userMessage = page.locator('.chat-content__message.user .chat-content__text').last()
+    const userMessage = page.locator('.chatbot-message__bubble--user .chatbot-message__text').last()
     await expect(userMessage).toContainText('Hi', { timeout: 10000 })
 
-    const assistantMessage = page.locator('.chat-content__message.assistant .chat-content__text').last()
+    const assistantMessage = page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
     await expect(assistantMessage).toBeVisible({ timeout: 30000 })
 
     const responseText = await assistantMessage.textContent()
@@ -66,7 +66,7 @@ test.describe('Chat Interaction - Extended Mode', () => {
     await textarea.type('使用Enter键发送')
     await textarea.press('Enter')
 
-    const userMessage = page.locator('.chat-content__message.user .chat-content__text').last()
+    const userMessage = page.locator('.chatbot-message__bubble--user .chatbot-message__text').last()
     await expect(userMessage).toContainText('使用Enter键发送', { timeout: 10000 })
   })
 
@@ -79,14 +79,14 @@ test.describe('Chat Interaction - Extended Mode', () => {
     await page.keyboard.type('第二行')
     await sendBtn.click()
 
-    const userMessage = page.locator('.chat-content__message.user .chat-content__text').last()
+    const userMessage = page.locator('.chatbot-message__bubble--user .chatbot-message__text').last()
     await expect(userMessage).toContainText('第一行', { timeout: 10000 })
     await expect(userMessage).toContainText('第二行')
   })
 
   test('should send message when quick action is clicked (TC-COMMON-022)', async ({ page }) => {
     // Quick actions are visible on the welcome screen (beforeEach ensures clean state)
-    const quickActions = page.locator('.chat-content__quick-action')
+    const quickActions = page.locator('.welcome-screen__quick-action')
     await expect(quickActions.first()).toBeVisible({ timeout: 10000 })
 
     await expect(quickActions).toHaveCount(4)
@@ -95,7 +95,7 @@ test.describe('Chat Interaction - Extended Mode', () => {
     await expect(firstAction).toContainText('写邮件')
     await firstAction.click()
 
-    const userMessage = page.locator('.chat-content__message.user .chat-content__text').last()
+    const userMessage = page.locator('.chatbot-message__bubble--user .chatbot-message__text').last()
     await expect(userMessage).toContainText('帮我写一封邮件', { timeout: 10000 })
 
     const welcome = page.locator('.chat-content__welcome')
@@ -137,10 +137,10 @@ test.describe('Chat Interaction - Floating Mode', () => {
     await expect(sendBtn).toBeEnabled()
     await sendBtn.click()
 
-    const userMessage = window.locator('.chat-content__message.user .chat-content__text').last()
+    const userMessage = window.locator('.chatbot-message__bubble--user .chatbot-message__text').last()
     await expect(userMessage).toContainText('Hi', { timeout: 10000 })
 
-    const assistantMessage = window.locator('.chat-content__message.assistant .chat-content__text').last()
+    const assistantMessage = window.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
     await expect(assistantMessage).toBeVisible({ timeout: 30000 })
   })
 
@@ -152,7 +152,7 @@ test.describe('Chat Interaction - Floating Mode', () => {
     const window = page.locator('.draggable-window')
     await expect(window).toBeVisible({ timeout: 5000 })
 
-    const quickActions = window.locator('.chat-content__quick-action')
+    const quickActions = window.locator('.welcome-screen__quick-action')
     await expect(quickActions.first()).toBeVisible({ timeout: 10000 })
     await expect(quickActions).toHaveCount(4)
   })

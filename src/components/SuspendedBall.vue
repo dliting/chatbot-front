@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import type { Position } from '@/types'
+import type { Position, Point } from '@/types'
 import { makeDraggable, getInitialPosition } from '@/utils/drag'
 
 interface Props {
@@ -114,13 +114,36 @@ const ballStyle = computed(() => ({
   top: `${currentPosition.value.y}px`,
 }))
 
+// Storage key for the ball's own position memory (PRD F-007-04)
+const BALL_POSITION_KEY = 'suspended-ball-position'
+
 // Initialize position
 const initPosition = () => {
   if (!ballRef.value) return
 
   const size = { width: props.size, height: props.size }
-  const pos = getInitialPosition(props.position, size)
-  currentPosition.value = pos
+  try {
+    const stored = localStorage.getItem(BALL_POSITION_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      if (typeof parsed?.x === 'number' && typeof parsed?.y === 'number') {
+        currentPosition.value = { x: parsed.x, y: parsed.y }
+        return
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to load ball position:', e)
+  }
+  currentPosition.value = getInitialPosition(props.position, size)
+}
+
+/** Persist ball position after a drag ends */
+const saveBallPosition = (pos: Point) => {
+  try {
+    localStorage.setItem(BALL_POSITION_KEY, JSON.stringify({ x: pos.x, y: pos.y }))
+  } catch (e) {
+    console.warn('Failed to save ball position:', e)
+  }
 }
 
 // Handle mouse down (start drag)
@@ -169,6 +192,7 @@ const setupDrag = () => {
     onDragEnd: (pos) => {
       isDragging.value = false
       currentPosition.value = pos
+      saveBallPosition(pos)
       emit('dragEnd', pos)
     },
   })

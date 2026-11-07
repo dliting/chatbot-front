@@ -376,10 +376,16 @@ onUnmounted(() => {
   document.removeEventListener('mouseup', stopResize)
 })
 
+/** Whether a stored position exists and would be restored (rememberPosition enabled + storage hit) */
+const hasStoredPosition = (): boolean => {
+  return props.rememberPosition && !!localStorage.getItem(props.storageKey)
+}
+
 // Expose methods
 defineExpose({
   savePosition,
   loadPosition,
+  hasStoredPosition,
 })
 </script>
 

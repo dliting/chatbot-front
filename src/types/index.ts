@@ -111,6 +111,8 @@ export interface ChatActionHandlers {
   stopGenerating: () => void
   isGenerating: { value: boolean }
   isThinkingActive: { value: boolean }
+  /** Clear all messages of the current topic (behind enableClearAll) */
+  clearMessages?: () => void
 }
 
 export interface TopicActionHandlers {
@@ -148,6 +150,20 @@ export interface ChatState {
   thinkingEnabled: { value: boolean }
   isThinking: { value: boolean }
   enableVoiceInput: boolean
+  /** Config-driven message operation switches (optional: standalone usage defaults to true) */
+  enableCopyMessage?: boolean
+  enableDeleteMessage?: boolean
+  enableResend?: boolean
+  autoScroll?: boolean
+  /** Config-driven upload settings */
+  enableImageUpload?: boolean
+  maxImageSize?: number
+  allowedImageTypes?: string[]
+  maxImageCount?: number
+  /** Show the clear-conversation header action */
+  enableClearAll?: boolean
+  /** Auto-collapse thinking block after completion (default true) */
+  thinkingAutoCollapse?: boolean
 }
 
 // Upload result
@@ -170,4 +186,5 @@ export type {
   PromptVariableResolver,
   PromptVariableConfig,
   ChatbotConfig,
+  ChatbotLabels,
 } from './config'

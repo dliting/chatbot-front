@@ -29,7 +29,7 @@ function highlightCodeBlocks(html: string): string {
 
       const language = lang && hljs.getLanguage(lang) ? lang : 'plaintext'
       const highlighted = hljs.highlight(decodedCode.trim(), { language }).value
-      return `<div class="code-block-wrapper"><pre><code class="hljs language-${language}">${highlighted}</code></pre><button class="code-copy-btn" type="button" data-i18n="copy">Copy</button></div>`
+      return `<div class="code-block-wrapper"><pre><code class="hljs language-${language}">${highlighted}</code></pre><button class="markdown-copy-btn" type="button" aria-label="copy">Copy</button></div>`
     }
   )
 }

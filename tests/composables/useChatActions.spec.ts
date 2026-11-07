@@ -1129,3 +1129,121 @@ describe('composables/useChatActions', () => {
     })
   })
 })
+
+describe('editMessage with onEditMessage callback', () => {
+  it('invokes onEditMessage and streams a replacement assistant reply', async () => {
+    const userMsg: Message = {
+      messageId: 'm1', topicId: 'topic_1', role: 'user', type: 'text',
+      content: 'edited text', timestamp: Date.now(), status: 'sent',
+    }
+    const assistantMsg: Message = {
+      messageId: 'm2', topicId: 'topic_1', role: 'assistant', type: 'text',
+      content: 'old reply', timestamp: Date.now(), status: 'sent',
+    }
+    const onEditMessage = vi.fn(() =>
+      createMockStream([
+        { type: 'token', content: 'new ' },
+        { type: 'token', content: 'reply' },
+        { type: 'end' },
+      ])
+    )
+    const { deps, state, emitted } = createMockDeps({
+      callbacks: { onEditMessage },
+    })
+    state.messages.byTopic['topic_1'] = [userMsg, assistantMsg]
+    const actions = useChatActions(deps)
+
+    await actions.editMessage(userMsg)
+
+    expect(onEditMessage).toHaveBeenCalledTimes(1)
+    expect(onEditMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ topicId: 'topic_1', content: 'edited text', messageId: 'm1' })
+    )
+    const msgs = state.messages.byTopic['topic_1']
+    expect(msgs.some((m) => m.messageId === 'm2')).toBe(false)
+    expect(msgs.some((m) => m.role === 'assistant' && m.content === 'new reply')).toBe(true)
+    expect(emitted.filter((e) => e.event === 'message:edited')).toHaveLength(1)
+  })
+
+  it('keeps emit-only behavior without onEditMessage callback', async () => {
+    const userMsg: Message = {
+      messageId: 'm1', topicId: 'topic_1', role: 'user', type: 'text',
+      content: 'hello', timestamp: Date.now(), status: 'sent',
+    }
+    const { deps, state, emitted } = createMockDeps()
+    state.messages.byTopic['topic_1'] = [userMsg]
+    const actions = useChatActions(deps)
+
+    await actions.editMessage(userMsg)
+
+    expect(emitted.filter((e) => e.event === 'message:edited')).toHaveLength(1)
+    expect(state.messages.byTopic['topic_1']).toHaveLength(1)
+  })
+})
+
+describe('streamEnabled=false non-streaming path', () => {
+  const backendReply: Message = {
+    messageId: 'srv-1', topicId: 'topic_1', role: 'assistant', type: 'text',
+    content: 'server reply', timestamp: Date.now(), status: 'sent',
+  }
+
+  function setupNonStream(overrides: Record<string, unknown> = {}) {
+    const { deps, state, emitted, errors } = createMockDeps({
+      streamEnabled: false,
+      ...overrides,
+    })
+    deps.apiClient.value = {
+      sendMessage: vi.fn().mockResolvedValue(backendReply),
+      streamChat: vi.fn(),
+      getTopics: vi.fn().mockResolvedValue([]),
+      getTopicMessages: vi.fn().mockResolvedValue([]),
+    } as never
+    state.messages.byTopic['topic_1'] = []
+    return { deps, state, emitted, errors }
+  }
+
+  it('posts once via sendMessage and fills the assistant message', async () => {
+    const { deps, state, emitted } = setupNonStream()
+    const actions = useChatActions(deps)
+
+    await actions.sendMessage({ content: 'hi' })
+
+    const api = deps.apiClient.value as { sendMessage: ReturnType<typeof vi.fn>; streamChat: ReturnType<typeof vi.fn> }
+    expect(api.sendMessage).toHaveBeenCalledTimes(1)
+    expect(api.sendMessage).toHaveBeenCalledWith('topic_1', 'hi', undefined)
+    expect(api.streamChat).not.toHaveBeenCalled()
+
+    const msgs = state.messages.byTopic['topic_1']
+    const assistant = msgs.find((m) => m.role === 'assistant')
+    expect(assistant?.content).toBe('server reply')
+    expect(assistant?.status).toBe('sent')
+
+    const ends = emitted.filter((e) => e.event === 'message:stream-end')
+    expect(ends).toHaveLength(1)
+    expect(ends[0].args[0]).toEqual(expect.objectContaining({ fullContent: 'server reply' }))
+  })
+
+  it('surfaces network failure as message:error without hanging', async () => {
+    const { deps, emitted, errors } = setupNonStream()
+    ;(deps.apiClient.value as { sendMessage: ReturnType<typeof vi.fn> }).sendMessage
+      .mockRejectedValue(new Error('network down'))
+    const actions = useChatActions(deps)
+
+    await actions.sendMessage({ content: 'hi' })
+
+    expect(emitted.filter((e) => e.event === 'message:error')).toHaveLength(1)
+    expect(errors.length).toBeGreaterThanOrEqual(1)
+    expect(actions.isGenerating.value).toBe(false)
+  })
+
+  it('keeps SSE path when streamEnabled=true', async () => {
+    const { deps } = setupNonStream({ streamEnabled: true })
+    const actions = useChatActions(deps)
+
+    await actions.sendMessage({ content: 'hi' })
+
+    const api = deps.apiClient.value as { streamChat: ReturnType<typeof vi.fn>; sendMessage: ReturnType<typeof vi.fn> }
+    expect(api.streamChat).toHaveBeenCalled()
+    expect(api.sendMessage).not.toHaveBeenCalled()
+  })
+})

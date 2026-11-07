@@ -8,15 +8,13 @@ const router = useRouter()
 const { getApiBaseUrl, settings } = useSettings()
 
 const config = computed(() => ({
-  mode: 'extended', // 使用新的交互模式参数
-  layout: 'dual',  // 明确指定双栏布局
+  mode: 'extended', // 使用新的交互模式参数  // 明确指定双栏布局
   defaultExpanded: true, // 默认展开聊天面板
   apiBaseUrl: getApiBaseUrl(),
   streamEnabled: true,
   streamTimeout: settings.apiTimeout,
   enableImageUpload: true,
   maxImageCount: 3,
-  enableTopicManager: true,
   enableThinking: settings.showThinkingToggle,
   thinkingDefaultEnabled: settings.thinkingDefaultEnabled,
   thinkingAutoCollapse: settings.thinkingAutoCollapse,
@@ -25,7 +23,6 @@ const config = computed(() => ({
   labels: {
     title: '智能助手',
     placeholder: '输入消息...',
-    newChat: '新话题',
     history: '历史话题',
   },
 }))

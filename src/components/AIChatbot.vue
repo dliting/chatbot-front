@@ -93,6 +93,7 @@ interface Emits {
   (e: 'message:deleted', data: { messageId: string; topicId: string }): void
   (e: 'message:edited', data: { messageId: string; topicId: string }): void
   (e: 'message:regenerated', data: { messageId: string; topicId: string }): void
+  (e: 'messages:cleared', data: { topicId: string }): void
   (e: 'message:stream-start', data: { messageId: string }): void
   (e: 'message:stream-end', data: { messageId: string; fullContent: string }): void
   (e: 'topic:created', data: { topic: import('@/types').Topic }): void
@@ -167,6 +168,7 @@ const {
   setCurrentTopicId,
   addTopicToFront,
   setMessages,
+  clearCurrentMessages,
   init: stateInit,
   cleanup,
 } = useChatbotState(config.value)
@@ -259,6 +261,18 @@ provide(chatStateKey, {
   thinkingEnabled,
   isThinking: chatActions.isThinkingActive,
   enableVoiceInput: config.value.enableVoiceInput,
+  enableCopyMessage: config.value.enableCopyMessage,
+  enableDeleteMessage: config.value.enableDeleteMessage,
+  enableResend: config.value.enableResend,
+  autoScroll: config.value.autoScroll,
+  enableImageUpload: config.value.enableImageUpload,
+  // Raw user values (not merged defaults): undefined must reach ChatInput so its
+  // per-type size limits and full default accept list stay effective
+  maxImageSize: props.config?.maxImageSize,
+  allowedImageTypes: props.config?.allowedImageTypes,
+  maxImageCount: props.config?.maxImageCount,
+  enableClearAll: config.value.enableClearAll,
+  thinkingAutoCollapse: config.value.thinkingAutoCollapse,
 } satisfies ChatState)
 
 provide(chatActionsKey, {
@@ -269,6 +283,12 @@ provide(chatActionsKey, {
   stopGenerating: chatActions.stopGenerating,
   isGenerating: chatActions.isGenerating,
   isThinkingActive: chatActions.isThinkingActive,
+  clearMessages: () => {
+    const topicId = state.topics.currentId
+    clearCurrentMessages()
+    emit('messages:cleared', { topicId })
+    void config.value.callbacks?.onClearMessages?.(topicId)
+  },
 } satisfies ChatActionHandlers)
 
 provide(topicActionsKey, {

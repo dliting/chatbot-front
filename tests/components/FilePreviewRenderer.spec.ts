@@ -75,3 +75,20 @@ describe('FilePreviewRenderer', () => {
     expect(wrapper.vm.fileType).toBe('unknown')
   })
 })
+
+describe('FilePreviewRenderer full type matrix', () => {
+  it.each([
+    ['doc.pdf', 'pdf', '.pdf-preview-mock'],
+    ['report.docx', 'word', '.word-preview-mock'],
+    ['sheet.xlsx', 'excel', '.excel-preview-mock'],
+    ['clip.mp4', 'video', '.media-preview-mock'],
+    ['song.mp3', 'audio', '.media-preview-mock'],
+    ['notes.txt', 'text', '.text-preview-mock'],
+    ['pic.png', 'image', '.image-preview-mock'],
+  ])('routes %s to %s preview', async (filename, expectedType, mockClass) => {
+    const wrapper = mountRenderer(filename as string)
+    expect(wrapper.vm.fileType).toBe(expectedType)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.find(mockClass as string).exists()).toBe(true)
+  })
+})

@@ -21,7 +21,6 @@ const config = computed(() => ({
   draggable: true,
   resizable: true,
   rememberPosition: true,
-  enableTopicManager: true,
   enableThinking: settings.showThinkingToggle,
   thinkingDefaultEnabled: settings.thinkingDefaultEnabled,
   thinkingAutoCollapse: settings.thinkingAutoCollapse,
@@ -30,7 +29,6 @@ const config = computed(() => ({
   labels: {
     title: '智能助手',
     placeholder: '输入消息...',
-    newChat: '新话题',
     history: '历史话题',
   },
 }))

@@ -168,11 +168,22 @@ test('示例：悬浮球可见且可点击', async ({ page }) => {
 
 | 旧术语 | 新术语 | 旧英文值 | 新英文值 |
 |--------|--------|-----------|-----------|
-| 平铺形式 / 平铺布局 | 双栏布局 | `layout: 'split'` | `layout: 'dual'` |
-| 紧凑形式 / 紧凑布局 | 单栏布局 | `layout: 'compact'` | `layout: 'single'` |
+| 平铺形式 / 平铺布局 | 双栏布局 | `layout: 'split'` | `mode: 'extended'`（布局由 mode 推导） |
+| 紧凑形式 / 紧凑布局 | 单栏布局 | `layout: 'compact'` | `mode: 'sidebar'`（布局由 mode 推导） |
 | 扩展模式 | 扩展模式 (不变) | `mode: 'extended'` | `mode: 'extended'` |
 | 边栏模式 | 边栏模式 (不变) | `mode: 'sidebar'` | `mode: 'sidebar'` |
 | 悬浮模式 | 悬浮模式 (不变) | `mode: 'floating'` | `mode: 'floating'` |
+
+---
+
+## Real 后端套件（本地 Ollama，E2E_REAL=1）
+
+| 项 | 说明 |
+|----|------|
+| 运行 | `E2E_REAL=1 npx playwright test --project=chatapp real-backend --workers=1`（前置：Ollama 运行中，backend-real 已启动） |
+| 跳过条件 | 未设置 E2E_REAL 时自动跳过（CI 无 Ollama） |
+| 失败判定 | 响应超时即判失败（回复等待上限 60s） |
+| 覆盖链路 | 发送→真实流式回复；头部清空（确认流）；新建话题隔离 |
 
 ---
 
@@ -361,6 +372,33 @@ await expect(page.locator('h1')).toContainText('AI Chatbot')
 | 2 | 找到清空选项 | 显示清空全部选项 |
 | 3 | 点击清空 | 弹出二次确认对话框 |
 | 4 | 点击确认 | 所有消息清空，会话保留 |
+
+### 2.2a 清空会话测试 (F-304, enableClearAll)
+
+| 用例 | 操作 | 预期 |
+|------|------|------|
+| 默认显示 | extended 模式默认配置（enableClearAll 默认 true） | 头部出现清空按钮（垃圾桶图标） |
+| 配置隐藏 | enableClearAll: false | 头部无清空按钮 |
+| 确认清空 | 点击清空按钮 → 确认对话框 → 点确认 | 当前话题消息全部清空，话题保留 |
+| 取消保留 | 点击清空按钮 → 点取消 | 消息不变 |
+| 回调触发 | 配置 callbacks.onClearMessages | 确认后回调收到 topicId，宿主收到 messages:cleared 事件 |
+
+### 2.2b 代码块复制按钮测试
+
+| 用例 | 操作 | 预期 |
+|------|------|------|
+| 按钮可见 | 发送含 ``` 代码块的消息，悬停代码块 | 右上角出现 Copy 按钮 |
+| 点击复制 | 点击 Copy 按钮 | 剪贴板内容为代码文本，toast 提示已复制 |
+| 点击代码区 | 直接点击代码文本 | 同样触发复制 |
+
+### 2.2c 上传限制测试 (config 驱动)
+
+| 用例 | 操作 | 预期 |
+|------|------|------|
+| 隐藏上传 | enableImageUpload: false | 输入区无上传按钮 |
+| 数量限制 | maxImageCount: 2，选择 3 个文件 | toast 提示数量超限，仅 2 个进入预览 |
+| 类型限制 | allowedImageTypes: [image/png]，选择 gif | toast 提示类型不支持，不入预览 |
+| 大小限制 | maxImageSize 小于所选文件 | toast 提示超限，不入预览 |
 
 ### 2.3 图片功能测试 (F-101 ~ F-104)
 

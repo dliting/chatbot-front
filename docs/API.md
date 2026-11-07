@@ -56,15 +56,13 @@ const chatConfig: ChatbotConfig = {
 ```typescript
 interface ChatbotConfig {
   // === Interaction Mode (dual-dimension architecture) ===
+  // Layout is auto-derived from mode via modeToLayoutMap (not configurable)
   mode?: 'floating' | 'extended' | 'sidebar'  // Interaction mode (default: 'floating')
-  layout?: 'dual' | 'single'                   // Layout (auto-derived from mode)
 
   // === Layout ===
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'
   panelWidth?: number              // Default 400
   panelHeight?: number             // Default 600
-  panelMinWidth?: number           // Default 320
-  panelMaxWidth?: number           // Default 600
   sidebarWidth?: number            // Initial sidebar width in px (default 280)
   sidebarMinWidth?: number         // Minimum sidebar width in px (default 200)
   sidebarMaxWidth?: number         // Maximum sidebar width in px (default 500)
@@ -99,7 +97,6 @@ interface ChatbotConfig {
   // === Style ===
   theme?: 'light' | 'dark' | 'system'  // Default 'light'. Note: the theme toggle button in the header is hidden by default; host apps should control theme programmatically via config or the exposed setTheme method.
   primaryColor?: string            // Default '#409eff'
-  customStyles?: Record<string, string>
 
   // === API ===
   apiBaseUrl?: string              // Default '/api'
@@ -110,18 +107,16 @@ interface ChatbotConfig {
   callbacks?: ChatbotCallbacks
 
   // === Iframe ===
-  iframeMode?: boolean
-  allowedOrigins?: string[]
+  allowedOrigins?: string[]        // Origins allowed to talk to the iframe entry (postMessage whitelist)
 
   // === Internationalization ===
-  locale?: 'zh-CN' | 'en-US'      // Default 'en-US'
+  locale?: 'zh-CN' | 'en-US'      // Default 'zh-CN'
   labels?: Partial<ChatbotLabels>
   quickActions?: QuickAction[]           // Quick action list (default: locale-aware defaults)
   quickActionIconBase?: string           // Base path for resolving custom icon paths
   promptVariables?: PromptVariableConfig // Prompt variable substitution configuration
 
   // === Messages ===
-  maxMessagesInMemory?: number     // Default 1000
   autoScroll?: boolean             // Default true
 }
 ```
@@ -176,8 +171,6 @@ interface ChatbotCallbacks {
 
   // ===== File Operations =====
 
-  /** Upload image files. Returns URLs of uploaded files. */
-  onUploadImages?: (files: File[]) => Promise<UploadResult>
 }
 ```
 
@@ -282,6 +275,7 @@ Events use a colon-separated naming convention (`domain:action`) and carry objec
 | `message:regenerated` | `{ messageId: string, topicId: string }` | AI response regenerated |
 | `message:stream-start` | `{ messageId: string }` | Streaming response started |
 | `message:stream-end` | `{ messageId: string, fullContent: string }` | Streaming response completed |
+| `messages:cleared` | `{ topicId: string }` | All messages of the current topic cleared (enableClearAll, confirmed via dialog) |
 
 ### Topic Events
 
@@ -477,6 +471,7 @@ interface ChatbotLabels {
   newTopic: string
   history: string
   clearAll: string
+  clearConfirm?: string
   delete: string
   copy: string
   refresh: string
@@ -488,12 +483,50 @@ interface ChatbotLabels {
   networkError: string
   serverError: string
   generationStopped: string
+  sendFailed: string
+  responseFailed: string
+  userLabel: string
+  assistantLabel: string
   close: string
   expand: string
   collapse: string
+  cancel?: string
+  confirm?: string
+  deleteConfirmTitle?: string
+  deleteConfirm?: string
+  deleteMessageTitle?: string
+  messageDeleted?: string
+  noContentToCopy?: string
+  copiedToClipboard?: string
+  copyFailed?: string
+  /** Upload rejection toasts (prefixed with file name by the input) */
+  uploadSizeExceeded?: string
+  uploadTypeNotAllowed?: string
+  uploadCountExceeded?: string
+  historyTooltip?: string
+  switchToDarkMode?: string
+  switchToLightMode?: string
+  recording?: string
+  topicsTab?: string
+  chatTab?: string
+  unnamedTopic?: string
+  searchTopics?: string
+  rename?: string
+  done?: string
+  batchSelect?: string
+  deleteSelected?: string
+  noResults?: string
+  noTopics?: string
+  noTopicsHint?: string
+  deleteTopicConfirmTitle?: string
+  deleteTopicConfirmMessage?: string
+  batchDeleteTopicConfirmMessage?: string
+  selectedCountFormat?: string
+  messageCountFormat?: string
   welcomeTitle?: string
   welcomeSubtitle?: string
   copied?: string
+  emptyMessage?: string
   thinking?: {
     toggle?: string
     thinking?: string
@@ -501,7 +534,6 @@ interface ChatbotLabels {
     showThinking?: string
     hideThinking?: string
   }
-}
 ```
 
 ### Utility Types
@@ -745,7 +777,13 @@ Used internally by `useChatbotState`. Not exported; direct usage requires import
 Standalone utility for consuming `AsyncGenerator<StreamEvent>` streams. Not used internally by the chat flow (which uses `useChatActions.processStream`); provided for consumers building custom streaming UIs.
 
 ```typescript
-const { isStreaming, streamedContent, streamFromGenerator, cancel, reset } = useStream({
+const {
+  isStreaming, streamedContent,
+  streamedThinkingContent, isThinking,          // thinking-channel state
+  streamFromGenerator, streamFromSSE, streamFromFetch,
+  cancel, reset,
+} = useStream({
+  enabled?: boolean,                             // gate streaming (default true)
   onChunk: (content) => { /* receive chunk */ },
   onComplete: (fullContent) => { /* completed */ },
   onError: (error) => { /* error */ },
@@ -839,7 +877,6 @@ When using `apiBaseUrl` (without callbacks), the component expects the following
 |--------|----------|-------------|
 | `POST` | `/chat/stream` | Stream chat (SSE) |
 | `POST` | `/chat/message` | Non-streaming chat |
-| `POST` | `/upload/images` | Upload images |
 | `GET` | `/sessions` | List sessions/topics |
 | `POST` | `/sessions` | Create session/topic |
 | `GET` | `/sessions/:id/messages` | Get session messages |
@@ -992,7 +1029,6 @@ const config: ChatbotConfig = {
     onDeleteTopic: async (topicId) => await db.deleteTopic(topicId),
     onUpdateTopicTitle: async (topicId, title) => await db.updateTitle(topicId, title),
     onClearMessages: async (topicId) => await db.clearMessages(topicId),
-    onUploadImages: async (files) => await uploadService.upload(files),
   }
 }" />
 ```
@@ -1023,6 +1059,56 @@ const config: ChatbotConfig = {
   },
 }" />
 ```
+
+---
+
+## 15a. Component Slots
+
+| Component | Slot | Purpose |
+|-----------|------|---------|
+| AIChatbot (ChatPanel) | `title` | Replace header title area |
+| AIChatbot (ChatPanel) | `theme-toggle` | Custom theme toggle in header |
+| ChatPanel | `default` | Panel body content |
+| SuspendedBall | `icon` | Replace the default floating-ball icon (SVG/any node) |
+| MessageItem | `avatar` | Custom avatar rendering |
+| MessageItem | `label` | Custom sender label |
+| MessageList | `empty` | Custom empty-state content |
+| DraggableWindow | `header` | Custom window header (drag area) |
+| DraggableWindow | `default` | Window body |
+| TopicActionMenu | `default` | Custom action menu items |
+
+## 15b. Exposed Methods (defineExpose)
+
+| Component | Methods | Notes |
+|-----------|---------|-------|
+| AIChatbot | `togglePanel(open?: boolean)`, `setTheme(theme)` | Also bridged on the iframe entry as `window.AIChatbot` |
+| FloatingChatPanel | `openPanel()`, `closePanel()`, `showChatView()`, `showTopicsView()` | |
+| MessageList | `scrollToBottom()` | Programmatic scroll |
+| DraggableWindow | `savePosition()`, `loadPosition()`, `hasStoredPosition()` | Position persistence control |
+| TopicSearch | `focus()` | Focus the search input |
+
+## 15c. Iframe postMessage Protocol
+
+The iframe entry (`iframe-entry.ts`, built via `build:iframe`) communicates with its host page through `postMessage` with an origin whitelist (`allowedOrigins`).
+
+**Child → Host**
+
+| Message | Payload | Fired when |
+|---------|---------|-----------|
+| `chatbot:ready` | `{ config }` | Iframe chatbot mounted |
+| `chatbot:toggle` | `{ isOpen, mode }` | Panel opened/closed |
+| `chatbot:sendMessage` | `{ message: Message }` | User message sent |
+| `chatbot:messageError` | `{ message, error }` | Message failed |
+| `chatbot:topicChange` | `{ topicId }` | Topic switched |
+
+**Host → Child**
+
+| Message | Payload | Effect |
+|---------|---------|--------|
+| `host:toggle` | `{ isOpen? }` | Toggle panel |
+| `host:setConfig` | `Partial<ChatbotConfig>` | Reactive config patch (unknown keys ignored) |
+
+Configuration can also be passed at load time via `?config=<base64 JSON>` URL parameter. After mount, the host page can call `window.AIChatbot.toggle(open?)` / `window.AIChatbot.setTheme(theme)`; both throw if the iframe chatbot is not ready yet.
 
 ---
 
@@ -1067,6 +1153,9 @@ export type { ResolvedIcon, BuiltinIconName } from './utils/icons'
 
 // Constants
 export { getDefaultQuickActions, defaultQuickActions } from './constants/quickActions'
+
+// Built-in icon components (usable for quick actions and custom UIs)
+export { builtinIconComponents } from './utils/builtinIcons'
 
 // Vue Plugin
 export const ChatbotPlugin = { install: (app, options?) => app.component('AIChatbot', AIChatbot) }

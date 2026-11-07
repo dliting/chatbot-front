@@ -8,14 +8,11 @@ import { defaultQuickActions } from '@/constants/quickActions'
 export const defaultChatbotConfig: Required<ChatbotConfig> = {
   // Interaction mode
   mode: 'floating',
-  layout: 'single',
 
   // Layout
   position: 'bottom-right',
   panelWidth: 400,
   panelHeight: 600,
-  panelMinWidth: 320,
-  panelMaxWidth: 600,
   defaultExpanded: false,
   panelMode: 'auto',
 
@@ -52,7 +49,6 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   // Style
   theme: 'light',
   primaryColor: '#409eff',
-  customStyles: {},
 
   // API
   apiBaseUrl: '/api',
@@ -63,14 +59,12 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   callbacks: {} as ChatbotCallbacks,
 
   // Iframe
-  iframeMode: false,
   allowedOrigins: [],
 
   // i18n
   locale: 'zh-CN',
 
   // Messages
-  maxMessagesInMemory: 1000,
   autoScroll: true,
 
   // Labels

@@ -16,6 +16,7 @@ export { default as MessageItem } from './components/MessageItem.vue'
 // Export types
 export type * from './types'
 export type { ChatbotConfig, ChatbotCallbacks, SendMessageParams } from './types/config'
+export type { ChatbotLabels } from './types/config'
 export type { QuickAction, PromptVariableResolver, PromptVariableConfig } from './types/config'
 
 // Export injection keys (for advanced usage with provide/inject)

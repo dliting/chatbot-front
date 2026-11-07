@@ -2,6 +2,7 @@
   <!-- Floating Mode with DraggableWindow (when open) -->
   <DraggableWindow
     v-if="isPanelOpen"
+    ref="draggableWindowRef"
     v-model="isPanelOpen"
     v-model:x="windowState.x"
     v-model:y="windowState.y"
@@ -181,6 +182,9 @@ provide(uiActionsKey, {
 // Panel state
 const isPanelOpen = ref(configRef.value.defaultExpanded)
 
+// DraggableWindow instance (for stored-position coordination)
+const draggableWindowRef = ref<InstanceType<typeof DraggableWindow> | null>(null)
+
 // Window state
 const windowState = ref({
   x: 0,
@@ -204,6 +208,9 @@ const closePanel = () => {
 
 // Initialize floating window position on mount
 onMounted(() => {
+  // Respect a stored position: DraggableWindow already restored it on its own mount
+  if (draggableWindowRef.value?.hasStoredPosition?.()) return
+
   const windowWidth = window.innerWidth
   const windowHeight = window.innerHeight
   windowState.value = {

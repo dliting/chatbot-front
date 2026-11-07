@@ -10,6 +10,7 @@ import ChatInput from '@/components/ChatInput.vue'
 
 // Mock fileValidation utils
 vi.mock('@/utils/fileValidation', () => ({
+  validateFiles: vi.fn((files: File[]) => ({ accepted: files, rejected: [] })),
   validateFileSize: vi.fn().mockReturnValue({ valid: true, maxSize: '10MB' }),
   formatFileSize: vi.fn((size: number) => {
     if (size < 1024) return `${size}B`
@@ -1058,28 +1059,25 @@ describe('ChatInput', () => {
       expect(vm.selectedFiles[0].preview).toBeUndefined()
     })
 
-    it('should add file with error when media file exceeds size limit', async () => {
-      const { getPreviewType } = await import('@/utils/fileType')
-      vi.mocked(getPreviewType).mockReturnValue('image')
-
-      const { getMediaType, validateFileSize } = await import('@/utils/fileValidation')
-      vi.mocked(getMediaType).mockReturnValue('image')
-      vi.mocked(validateFileSize).mockReturnValue({ valid: false, maxSize: '10MB' })
+    it('rejects oversize media file with toast and without adding a preview', async () => {
+      const { validateFiles } = await import('@/utils/fileValidation')
+      const file = new File(['largeimg'], 'large.png', { type: 'image/png' })
+      Object.defineProperty(file, 'size', { value: 20 * 1024 * 1024 })
 
       const alertMock = vi.fn()
       vi.stubGlobal('alert', alertMock)
 
-      const wrapper = createWrapper()
-      const file = new File(['largeimg'], 'large.png', { type: 'image/png' })
-      Object.defineProperty(file, 'size', { value: 20 * 1024 * 1024 })
+      vi.mocked(validateFiles).mockReturnValueOnce({
+        accepted: [],
+        rejected: [{ file, reason: 'size' }],
+      })
 
+      const wrapper = createWrapper()
       await callHandleFileSelect(wrapper, [file])
 
       const vm = wrapper.vm as any
-      expect(vm.selectedFiles.length).toBe(1)
-      expect(vm.selectedFiles[0].error).toContain('exceeds')
-      expect(vm.selectedFiles[0].type).toBe('image')
-      expect(alertMock).toHaveBeenCalled()
+      expect(vm.selectedFiles.length).toBe(0)
+      expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('large.png'))
 
       vi.unstubAllGlobals()
     })
@@ -1183,27 +1181,28 @@ describe('ChatInput', () => {
       expect(vm.selectedFiles[0].type).toBe('document')
     })
 
-    it('should add document with error when file exceeds size limit', async () => {
+    it('rejects oversize document with toast and without adding a preview', async () => {
       const { getPreviewType } = await import('@/utils/fileType')
       vi.mocked(getPreviewType).mockReturnValue('pdf')
 
-      const { validateFileSize } = await import('@/utils/fileValidation')
-      vi.mocked(validateFileSize).mockReturnValue({ valid: false, maxSize: '10MB' })
+      const { validateFiles } = await import('@/utils/fileValidation')
+      const file = new File(['largepdf'], 'large.pdf', { type: 'application/pdf' })
+      Object.defineProperty(file, 'size', { value: 50 * 1024 * 1024 })
 
       const alertMock = vi.fn()
       vi.stubGlobal('alert', alertMock)
 
-      const wrapper = createWrapper()
-      const file = new File(['largepdf'], 'large.pdf', { type: 'application/pdf' })
-      Object.defineProperty(file, 'size', { value: 50 * 1024 * 1024 })
+      vi.mocked(validateFiles).mockReturnValueOnce({
+        accepted: [],
+        rejected: [{ file, reason: 'size' }],
+      })
 
+      const wrapper = createWrapper()
       await callHandleFileSelect(wrapper, [file])
 
       const vm = wrapper.vm as any
-      expect(vm.selectedFiles.length).toBe(1)
-      expect(vm.selectedFiles[0].error).toContain('exceeds')
-      expect(vm.selectedFiles[0].type).toBe('document')
-      expect(alertMock).toHaveBeenCalled()
+      expect(vm.selectedFiles.length).toBe(0)
+      expect(alertMock).toHaveBeenCalledWith(expect.stringContaining('large.pdf'))
 
       vi.unstubAllGlobals()
     })
@@ -1324,5 +1323,74 @@ describe('ChatInput', () => {
       expect(vm.selectedFiles[0].type).toBe('image')
       expect(vm.selectedFiles[1].type).toBe('document')
     })
+  })
+})
+
+describe('config-driven upload settings', () => {
+  it('hides upload button when enableUpload is false', () => {
+    const wrapper = mount(ChatInput, { props: { enableUpload: false } })
+    expect(wrapper.find('.chat-input__upload-btn').exists()).toBe(false)
+  })
+
+  it('shows upload button by default', () => {
+    const wrapper = mount(ChatInput)
+    expect(wrapper.find('.chat-input__upload-btn').exists()).toBe(true)
+  })
+
+  it('reflects allowedImageTypes in the file input accept attribute', async () => {
+    const wrapper = mount(ChatInput, { props: { allowedImageTypes: ['image/png', 'image/jpeg'] } })
+    await wrapper.find('.chat-input__upload-btn').trigger('click')
+    const input = wrapper.find('input[type="file"]')
+    expect(input.attributes('accept')).toBe('image/png,image/jpeg')
+  })
+
+  it('rejects files via validateFiles with a toast and no preview added', async () => {
+    const alertMock = vi.fn()
+    vi.stubGlobal('alert', alertMock)
+    const { validateFiles } = await import('@/utils/fileValidation')
+    ;(validateFiles as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+      accepted: [],
+      rejected: [{ file: { name: 'big.png' }, reason: 'size' }],
+    })
+
+    const wrapper = mount(ChatInput)
+    await wrapper.find('.chat-input__upload-btn').trigger('click')
+    const input = wrapper.find('input[type="file"]')
+
+    const dt = { files: [{ name: 'big.png', size: 99, type: 'image/png' }] } as unknown as FileList
+    Object.defineProperty(input.element, 'files', { value: dt.files })
+    await input.trigger('change')
+    await flushPromises()
+
+    expect(alertMock).toHaveBeenCalled()
+    expect(wrapper.find('.chat-input__previews').exists()).toBe(false)
+    vi.unstubAllGlobals()
+    ;(validateFiles as ReturnType<typeof vi.fn>).mockReset()
+  })
+})
+
+describe('default upload acceptance matrix (real validateFiles)', () => {
+  it('accepts pdf/video/audio when host provides no upload limits', async () => {
+    const { validateFiles } = await import('@/utils/fileValidation')
+    const real = await vi.importActual<typeof import('@/utils/fileValidation')>('@/utils/fileValidation')
+    vi.mocked(validateFiles).mockImplementationOnce(real.validateFiles)
+
+    const alertMock = vi.fn()
+    vi.stubGlobal('alert', alertMock)
+
+    const wrapper = mount(ChatInput, { props: {} })
+    const pdf = new File(['pdfdata'], 'doc.pdf', { type: 'application/pdf' })
+    Object.defineProperty(pdf, 'size', { value: 1024 })
+    const mp4 = new File(['viddata'], 'clip.mp4', { type: 'video/mp4' })
+    Object.defineProperty(mp4, 'size', { value: 1024 })
+
+    const mockEvent = { target: { files: [pdf, mp4], value: 'dummy' } }
+    await (wrapper.vm as any).handleFileSelect(mockEvent)
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    expect(vm.selectedFiles.map((f: { name: string }) => f.name)).toEqual(['doc.pdf', 'clip.mp4'])
+    expect(alertMock).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
   })
 })
