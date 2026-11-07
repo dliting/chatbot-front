@@ -266,9 +266,11 @@ provide(chatStateKey, {
   enableResend: config.value.enableResend,
   autoScroll: config.value.autoScroll,
   enableImageUpload: config.value.enableImageUpload,
-  maxImageSize: config.value.maxImageSize,
-  allowedImageTypes: config.value.allowedImageTypes,
-  maxImageCount: config.value.maxImageCount,
+  // Raw user values (not merged defaults): undefined must reach ChatInput so its
+  // per-type size limits and full default accept list stay effective
+  maxImageSize: props.config?.maxImageSize,
+  allowedImageTypes: props.config?.allowedImageTypes,
+  maxImageCount: props.config?.maxImageCount,
   enableClearAll: config.value.enableClearAll,
   thinkingAutoCollapse: config.value.thinkingAutoCollapse,
 } satisfies ChatState)

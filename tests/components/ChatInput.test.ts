@@ -1368,3 +1368,29 @@ describe('config-driven upload settings', () => {
     ;(validateFiles as ReturnType<typeof vi.fn>).mockReset()
   })
 })
+
+describe('default upload acceptance matrix (real validateFiles)', () => {
+  it('accepts pdf/video/audio when host provides no upload limits', async () => {
+    const { validateFiles } = await import('@/utils/fileValidation')
+    const real = await vi.importActual<typeof import('@/utils/fileValidation')>('@/utils/fileValidation')
+    vi.mocked(validateFiles).mockImplementationOnce(real.validateFiles)
+
+    const alertMock = vi.fn()
+    vi.stubGlobal('alert', alertMock)
+
+    const wrapper = mount(ChatInput, { props: {} })
+    const pdf = new File(['pdfdata'], 'doc.pdf', { type: 'application/pdf' })
+    Object.defineProperty(pdf, 'size', { value: 1024 })
+    const mp4 = new File(['viddata'], 'clip.mp4', { type: 'video/mp4' })
+    Object.defineProperty(mp4, 'size', { value: 1024 })
+
+    const mockEvent = { target: { files: [pdf, mp4], value: 'dummy' } }
+    await (wrapper.vm as any).handleFileSelect(mockEvent)
+    await flushPromises()
+
+    const vm = wrapper.vm as any
+    expect(vm.selectedFiles.map((f: { name: string }) => f.name)).toEqual(['doc.pdf', 'clip.mp4'])
+    expect(alertMock).not.toHaveBeenCalled()
+    vi.unstubAllGlobals()
+  })
+})

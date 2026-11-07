@@ -97,8 +97,7 @@ The iframe build communicates with the host page via a `postMessage` bridge — 
 ```typescript
 interface ChatbotConfig {
   // Interaction mode
-  mode?: 'floating' | 'extended' | 'sidebar'   // default 'floating'
-  layout?: 'dual' | 'single'                    // auto-derived from mode
+  mode?: 'floating' | 'extended' | 'sidebar'   // default 'floating' (layout auto-derived from mode)
 
   // Panel / floating window
   position?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'

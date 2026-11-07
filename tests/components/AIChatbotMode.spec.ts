@@ -153,3 +153,38 @@ describe('AIChatbot clear-all integration', () => {
     expect(onClearMessages).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('AIChatbot upload-limit raw passthrough (default fallbacks intact)', () => {
+  it('leaves upload-limit fields undefined so ChatInput defaults apply', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api' } },
+      global: { stubs: { SuspendedBall: true, ChatHeader: true, TopicListView: true, FilePreviewModal: true } },
+    })
+    await nextTick()
+    const input = wrapper.findComponent({ name: 'ChatInput' })
+    expect(input.props('allowedImageTypes')).toBeUndefined()
+    expect(input.props('maxImageSize')).toBeUndefined()
+    expect(input.props('maxImageCount')).toBeUndefined()
+    expect(input.props('enableUpload')).toBe(true)
+  })
+
+  it('still forwards host-provided upload limits', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: {
+        config: {
+          mode: 'extended',
+          apiBaseUrl: '/api',
+          allowedImageTypes: ['image/png'],
+          maxImageSize: 2048,
+          maxImageCount: 2,
+        },
+      },
+      global: { stubs: { SuspendedBall: true, ChatHeader: true, TopicListView: true, FilePreviewModal: true } },
+    })
+    await nextTick()
+    const input = wrapper.findComponent({ name: 'ChatInput' })
+    expect(input.props('allowedImageTypes')).toEqual(['image/png'])
+    expect(input.props('maxImageSize')).toBe(2048)
+    expect(input.props('maxImageCount')).toBe(2)
+  })
+})
