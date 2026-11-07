@@ -153,7 +153,8 @@ const clearVisible = computed(() => chatState?.enableClearAll ?? false)
 const handleClearConfirm = () => {
   showClearDialog.value = false
   chatActions?.clearMessages?.()
-}</script>
+}
+</script>
 
 <style scoped lang="scss">
 .chat-header {
