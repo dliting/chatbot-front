@@ -4,9 +4,8 @@
  */
 import { ref, computed } from 'vue'
 import type { Ref, ComputedRef } from 'vue'
-import type { Attachment } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
-import { validateFiles } from '@/utils/fileValidation'
+import { validateFiles, getMediaType } from '@/utils/fileValidation'
 import { getPreviewType } from '@/utils/fileType'
 
 export type FileType = 'image' | 'video' | 'audio' | 'document'
@@ -46,13 +45,6 @@ function convertFileToBase64(file: File): Promise<string> {
     reader.onerror = () => reject(new Error('Failed to read file'))
     reader.readAsDataURL(file)
   })
-}
-
-function getMediaType(file: File): 'image' | 'video' | 'audio' {
-  if (file.type.startsWith('image/')) return 'image'
-  if (file.type.startsWith('video/')) return 'video'
-  if (file.type.startsWith('audio/')) return 'audio'
-  return 'image' // default fallback (matches fileValidation.getMediaType)
 }
 
 export function useFileSelection(options: UseFileSelectionOptions = {}): UseFileSelectionReturn {
@@ -132,6 +124,3 @@ export function useFileSelection(options: UseFileSelectionOptions = {}): UseFile
 
   return { selectedFiles, hasValidFiles, handleFileSelect, removeFile, clearFiles }
 }
-
-/** Expose Attachment so consumers (ChatInput.handleSend) can build payloads */
-export type { Attachment }
