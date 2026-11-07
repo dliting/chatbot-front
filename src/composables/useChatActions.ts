@@ -209,6 +209,14 @@ export function useChatActions(deps: ChatActionsDeps) {
           signal: controller.signal,
           extraInfo: data.extraInfo,
         })
+      } else if (apiClient.value && !config.value.streamEnabled) {
+        // Non-streaming request path (streamEnabled=false): one POST, full reply
+        emit('message:stream-start', { messageId: assistantMessageId })
+        const reply = await apiClient.value.sendMessage(topicId, data.content, data.attachments)
+        deps.updateMessage(assistantMessageId, { content: reply.content, status: 'sent' })
+        finalizeStreamStatus(assistantMessageId, controller, userMessageId)
+        emit('message:stream-end', { messageId: assistantMessageId, fullContent: reply.content })
+        return
       } else if (apiClient.value) {
         stream = apiClient.value.streamChat(topicId, data.content, data.attachments, {
           thinking: { enabled: thinkingRequested },
