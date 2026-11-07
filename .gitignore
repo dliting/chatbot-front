@@ -39,6 +39,7 @@ examples/chatapp/backend-real/.env
 examples/chatapp/real.env
 
 # local-only: assistant working files (never commit)
+AGENTS.md
 CLAUDE.md
 examples/chatapp/CLAUDE.md
 .claude/
