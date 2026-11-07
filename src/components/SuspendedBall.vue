@@ -25,9 +25,8 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import type { Position } from '@/types'
+import type { Position, Point } from '@/types'
 import { makeDraggable, getInitialPosition } from '@/utils/drag'
-import type { Point } from '@/utils/drag'
 
 interface Props {
   position?: Position

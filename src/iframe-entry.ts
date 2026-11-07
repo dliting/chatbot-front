@@ -1,11 +1,12 @@
 /**
  * Iframe entry point
  */
-import { createApp, ref, computed, onMounted } from 'vue'
+import { createApp, ref, onMounted } from 'vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
 import AIChatbot from './components/AIChatbot.vue'
 import { IframeMessenger } from './utils/postMessage'
+import { createIframeConfigStore } from './utils/iframeConfigStore'
 import type { ChatbotConfig } from './types/config'
 import type { Message, PanelToggleData } from './types'
 import './styles/chatbot.scss'
@@ -14,15 +15,21 @@ import './styles/chatbot.scss'
 const urlParams = new URLSearchParams(window.location.search)
 const configFromUrl = urlParams.get('config')
 
-let chatbotConfig: ChatbotConfig = {}
+let initialConfig: ChatbotConfig = {}
 
 try {
   if (configFromUrl) {
-    chatbotConfig = JSON.parse(atob(configFromUrl))
+    initialConfig = JSON.parse(atob(configFromUrl))
   }
 } catch (error) {
   console.warn('Failed to parse config from URL:', error)
 }
+
+// Reactive config store: host:setConfig patches reach the component instantly
+const configStore = createIframeConfigStore(initialConfig)
+
+// Captured once the mounted AIChatbot instance is available
+let chatbotInstance: InstanceType<typeof AIChatbot> | null = null
 
 // Create app
 const app = createApp({
@@ -32,24 +39,15 @@ const app = createApp({
   setup() {
     const chatbotRef = ref<InstanceType<typeof AIChatbot>>()
 
-    // Merge default config with URL config
-    const mergedConfig = computed(() => ({
-      position: 'bottom-right',
-      panelWidth: 400,
-      theme: 'light',
-      enableImageUpload: true,
-      iframeMode: true,
-      ...chatbotConfig,
-    }))
-
     // Setup postMessage messenger
     const messenger = new IframeMessenger({
-      allowedOrigins: chatbotConfig.allowedOrigins || [],
+      allowedOrigins: initialConfig.allowedOrigins || [],
     })
 
     // Notify parent that chatbot is ready
     onMounted(() => {
-      messenger.send('chatbot:ready', { config: mergedConfig.value })
+      chatbotInstance = chatbotRef.value ?? null
+      messenger.send('chatbot:ready', { config: configStore.mergedConfig.value })
     })
 
     // Handle events from chatbot
@@ -78,13 +76,13 @@ const app = createApp({
     messenger.on('host:setConfig', (raw: unknown) => {
       const data = raw as ChatbotConfig | undefined
       if (data) {
-        Object.assign(chatbotConfig, data)
+        configStore.patch(data)
       }
     })
 
     return {
       chatbotRef,
-      mergedConfig,
+      mergedConfig: configStore.mergedConfig,
       handleToggle,
       handleSendMessage,
       handleMessageError,
@@ -106,12 +104,21 @@ const app = createApp({
 app.use(ElementPlus)
 app.mount('#app')
 
-// Make chatbot methods available globally for parent page
+// Make chatbot methods available globally for parent page.
+// Methods delegate to the mounted instance and throw when it is not ready —
+// a silent no-op here hides real integration errors from the host page.
+const getChatbot = (): InstanceType<typeof AIChatbot> => {
+  if (!chatbotInstance) {
+    throw new Error('AIChatbot instance not ready')
+  }
+  return chatbotInstance
+}
+
 window.AIChatbot = {
-  toggle: (_open?: boolean) => {
-    // This will be called by parent page
+  toggle: (open?: boolean) => {
+    getChatbot().togglePanel(open)
   },
-  setTheme: (_theme: 'light' | 'dark' | 'system') => {
-    // This will be called by parent page
+  setTheme: (theme: 'light' | 'dark' | 'system') => {
+    getChatbot().setTheme(theme)
   },
 }
