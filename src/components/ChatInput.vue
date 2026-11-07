@@ -59,18 +59,6 @@
         </svg>
       </button>
 
-      <button v-if="enableVoiceInput" class="chat-input__voice-btn" @click="$emit('toggle-voice')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path
-            d="M12 1a3 3 0 013 3v8a3 3 0 01-6 0V4a3 3 0 013-3z"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path d="M19 10v2a7 7 0 01-14 0v-2" stroke-linecap="round" stroke-linejoin="round" />
-          <line x1="12" y1="19" x2="12" y2="23" stroke-linecap="round" stroke-linejoin="round" />
-          <line x1="8" y1="23" x2="16" y2="23" stroke-linecap="round" stroke-linejoin="round" />
-        </svg>
-      </button>
     </div>
 
     <!-- Hidden File Input -->
@@ -99,7 +87,6 @@ interface Props {
   disabled?: boolean
   enableThinking?: boolean
   thinkingEnabled?: boolean
-  enableVoiceInput?: boolean
   placeholder?: string
   labels?: Partial<ChatbotLabels>
   /** Config-driven upload settings */
@@ -111,7 +98,6 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
-  enableVoiceInput: true,
   enableUpload: true,
 })
 
@@ -125,7 +111,6 @@ const acceptAttr = computed(() =>
 interface Emits {
   (e: 'send', data: { content: string; attachments?: Attachment[] }): void
   (e: 'stop'): void
-  (e: 'toggle-voice'): void
   (e: 'file-click', file: { type: string; url: string; name?: string }): void
   (e: 'update:thinkingEnabled', value: boolean): void
 }
@@ -220,18 +205,6 @@ const handleUploadClick = () => {
 
   &__upload-btn,
   &__send-btn,
-  &__voice-btn {
-    width: 40px;
-    height: 40px;
-    border: none;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-  }
 
   &__upload-btn {
     background: linear-gradient(
@@ -296,23 +269,6 @@ const handleUploadClick = () => {
     }
   }
 
-  &__voice-btn {
-    background: linear-gradient(
-      135deg,
-      var(--chat-assistant-bg, #f0f0f3) 0%,
-      var(--border-light, #e8e8ec) 100%
-    );
-
-    svg {
-      width: 22px;
-      height: 22px;
-      stroke: var(--text-primary, #1a1a2e);
-    }
-
-    &:hover {
-      transform: scale(1.05);
-    }
-  }
 
   &__field {
     flex: 1;

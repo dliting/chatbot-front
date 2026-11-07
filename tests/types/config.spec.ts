@@ -85,7 +85,7 @@ describe('ChatbotConfig Type', () => {
         'mode', 'position', 'panelWidth', 'panelHeight',
         'defaultExpanded', 'panelMode',
         'draggable', 'resizable', 'minWidth', 'minHeight', 'rememberPosition',
-        'enableImageUpload', 'enableVoiceInput',
+        'enableImageUpload',
         'enableCopyMessage', 'enableDeleteMessage', 'enableResend', 'enableClearAll',
         'maxImageCount', 'maxImageSize', 'theme', 'primaryColor',
         'apiBaseUrl', 'streamEnabled', 'streamTimeout',

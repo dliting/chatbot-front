@@ -10,7 +10,6 @@ export interface ChatAppSettings {
   showThinkingToggle: boolean
   thinkingDefaultEnabled: boolean
   thinkingAutoCollapse: boolean
-  enableVoiceInput: boolean
 }
 
 const STORAGE_KEY = 'chatapp-settings'
@@ -22,7 +21,6 @@ const DEFAULTS: ChatAppSettings = {
   showThinkingToggle: true,
   thinkingDefaultEnabled: true,
   thinkingAutoCollapse: true,
-  enableVoiceInput: true,
 }
 
 function loadSettings(): ChatAppSettings {

@@ -260,7 +260,6 @@ provide(chatStateKey, {
   enableThinking: config.value.enableThinking,
   thinkingEnabled,
   isThinking: chatActions.isThinkingActive,
-  enableVoiceInput: config.value.enableVoiceInput,
   enableCopyMessage: config.value.enableCopyMessage,
   enableDeleteMessage: config.value.enableDeleteMessage,
   enableResend: config.value.enableResend,

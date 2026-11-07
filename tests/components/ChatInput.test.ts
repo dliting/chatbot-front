@@ -86,25 +86,6 @@ describe('ChatInput', () => {
     })
   })
 
-  describe('Voice Input Toggle', () => {
-    it('should show voice button by default (enableVoiceInput true)', () => {
-      const wrapper = createWrapper()
-      expect(wrapper.find('.chat-input__voice-btn').exists()).toBe(true)
-    })
-
-    it('should hide voice button when enableVoiceInput is false', () => {
-      const wrapper = createWrapper({ enableVoiceInput: false })
-      expect(wrapper.find('.chat-input__voice-btn').exists()).toBe(false)
-    })
-
-    it('should emit toggle-voice on voice button click', async () => {
-      const wrapper = createWrapper()
-      const voiceBtn = wrapper.find('.chat-input__voice-btn')
-      await voiceBtn.trigger('click')
-      expect(wrapper.emitted('toggle-voice')).toBeTruthy()
-    })
-  })
-
   describe('ThinkingToggle', () => {
     it('should show ThinkingToggle when enableThinking is true', () => {
       const wrapper = createWrapper({ enableThinking: true })

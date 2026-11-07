@@ -49,7 +49,6 @@ vi.mock('@/components/ChatContent.vue', () => ({
       enableThinking: Boolean,
       thinkingEnabled: Boolean,
       isThinking: Boolean,
-      enableVoiceInput: Boolean,
     },
   },
 }))
@@ -179,13 +178,6 @@ describe('EmbeddedChatPanel Extended Tests', () => {
 
       const chatContent = wrapper.findComponent(ChatContent)
       expect(chatContent.props('isThinking')).toBe(true)
-    })
-
-    it('should pass enableVoiceInput to ChatContent', async () => {
-      const wrapper = createDualWrapper({ enableVoiceInput: true })
-
-      const chatContent = wrapper.findComponent(ChatContent)
-      expect(chatContent.props('enableVoiceInput')).toBe(true)
     })
   })
 

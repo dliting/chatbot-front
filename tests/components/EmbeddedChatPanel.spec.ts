@@ -48,7 +48,6 @@ vi.mock('@/components/ChatContent.vue', () => ({
       enableThinking: Boolean,
       thinkingEnabled: Boolean,
       isThinking: Boolean,
-      enableVoiceInput: Boolean,
     },
   },
 }))

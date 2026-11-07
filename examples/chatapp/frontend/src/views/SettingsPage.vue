@@ -14,7 +14,6 @@ const form = ref({
   showThinkingToggle: settings.showThinkingToggle,
   thinkingDefaultEnabled: settings.thinkingDefaultEnabled,
   thinkingAutoCollapse: settings.thinkingAutoCollapse,
-  enableVoiceInput: settings.enableVoiceInput,
 })
 
 const saved = ref(false)
@@ -32,7 +31,6 @@ function handleSave() {
   settings.showThinkingToggle = form.value.showThinkingToggle
   settings.thinkingDefaultEnabled = form.value.thinkingDefaultEnabled
   settings.thinkingAutoCollapse = form.value.thinkingAutoCollapse
-  settings.enableVoiceInput = form.value.enableVoiceInput
   saveSettings()
   saved.value = true
   setTimeout(() => { saved.value = false }, 2000)
@@ -146,10 +144,6 @@ function goHome() {
         <div class="setting-section">
           <h2>语音输入</h2>
           <div class="toggle-group">
-            <label class="toggle-option">
-              <span>允许语音输入</span>
-              <input v-model="form.enableVoiceInput" type="checkbox" />
-            </label>
           </div>
         </div>
 
