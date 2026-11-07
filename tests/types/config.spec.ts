@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { defaultChatbotConfig } from '@/types/config'
-import type { ChatbotConfig } from '@/types/config'
+import fs from 'node:fs'
+import path from 'node:path'
+import { defaultChatbotConfig, getDefaultLabels } from '@/types/config'
+import type { ChatbotConfig, ChatbotLabels } from '@/types/config'
 import { modeToLayoutMap } from '@/types'
 
 describe('ChatbotConfig Type', () => {
@@ -127,5 +129,27 @@ describe('ChatbotConfig Type', () => {
         expect(defaultChatbotConfig).toHaveProperty(field)
       })
     })
+  })
+})
+
+describe('ChatbotLabels package-root export', () => {
+  it('is re-exported by the package root and types barrel', () => {
+    const read = (rel: string) => fs.readFileSync(path.resolve(__dirname, rel), 'utf8')
+    expect(read('../../src/index.ts')).toMatch(/ChatbotLabels/)
+    expect(read('../../src/types/index.ts')).toMatch(/ChatbotLabels/)
+  })
+
+  it('getDefaultLabels output satisfies required ChatbotLabels fields', () => {
+    const labels = getDefaultLabels()
+    const required: Array<keyof ChatbotLabels> = [
+      'clearAll',
+      'sendFailed',
+      'responseFailed',
+      'userLabel',
+      'assistantLabel',
+    ]
+    for (const key of required) {
+      expect(labels[key], String(key)).toBeTruthy()
+    }
   })
 })

@@ -170,4 +170,5 @@ export type {
   PromptVariableResolver,
   PromptVariableConfig,
   ChatbotConfig,
+  ChatbotLabels,
 } from './config'
