@@ -120,3 +120,31 @@ describe('TOPICS_SCHEMA_VERSION', () => {
     expect(TOPICS_SCHEMA_VERSION).toBe(1)
   })
 })
+
+describe('LocalStorageAdapter thrown-error branches', () => {
+  it('returns null when localStorage.getItem itself throws', () => {
+    const original = Storage.prototype.getItem
+    Storage.prototype.getItem = () => {
+      throw new Error('boom')
+    }
+    try {
+      const adapter = new LocalStorageAdapter()
+      expect(adapter.get('k')).toBeNull()
+    } finally {
+      Storage.prototype.getItem = original
+    }
+  })
+
+  it('set swallows setItem errors (quota etc.)', () => {
+    const original = Storage.prototype.setItem
+    Storage.prototype.setItem = () => {
+      throw new Error('quota')
+    }
+    try {
+      const adapter = new LocalStorageAdapter()
+      expect(() => adapter.set('k', { a: 1 })).not.toThrow()
+    } finally {
+      Storage.prototype.setItem = original
+    }
+  })
+})

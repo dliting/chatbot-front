@@ -372,3 +372,51 @@ describe('thinkingAutoCollapse passthrough to MessageItem', () => {
     expect(wrapper.findComponent(MessageItem).props('autoCollapse')).toBe(true)
   })
 })
+
+describe('MessageList scroll handling', () => {
+  const scrollMessages: Message[] = Array.from({ length: 5 }, (_, i) => ({
+    messageId: `m${i}`, topicId: 't1', role: 'assistant' as const, type: 'text' as const,
+    content: `msg ${i}`, timestamp: Date.now(), status: 'sent' as const,
+  }))
+
+  function mountScroller() {
+    return mount(MessageList, { props: { messages: scrollMessages } })
+  }
+
+  function mockScrollMetrics(el: Element, metrics: { scrollTop: number; scrollHeight: number; clientHeight: number }) {
+    Object.defineProperty(el, 'scrollTop', { value: metrics.scrollTop, configurable: true })
+    Object.defineProperty(el, 'scrollHeight', { value: metrics.scrollHeight, configurable: true })
+    Object.defineProperty(el, 'clientHeight', { value: metrics.clientHeight, configurable: true })
+  }
+
+  it('shows the scroll-to-bottom button when scrolled away from bottom', async () => {
+    const wrapper = mountScroller()
+    const el = wrapper.find('.chatbot-messages').element
+    mockScrollMetrics(el, { scrollTop: 0, scrollHeight: 1000, clientHeight: 400 })
+
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+    expect(wrapper.find('.chatbot-messages__scroll-btn').exists()).toBe(true)
+  })
+
+  it('hides the button near the bottom', async () => {
+    const wrapper = mountScroller()
+    const el = wrapper.find('.chatbot-messages').element
+    mockScrollMetrics(el, { scrollTop: 550, scrollHeight: 1000, clientHeight: 400 })
+
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+    expect(wrapper.find('.chatbot-messages__scroll-btn').exists()).toBe(false)
+  })
+
+  it('scrolls to bottom when the button is clicked', async () => {
+    const wrapper = mountScroller()
+    const el = wrapper.find('.chatbot-messages').element as HTMLElement
+    mockScrollMetrics(el, { scrollTop: 0, scrollHeight: 1000, clientHeight: 400 })
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+
+    const scrollTo = vi.fn()
+    ;(el as unknown as { scrollTo: unknown }).scrollTo = scrollTo
+
+    await wrapper.find('.chatbot-messages__scroll-btn').trigger('click')
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'smooth', top: 1000 }))
+  })
+})
