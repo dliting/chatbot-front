@@ -119,7 +119,7 @@
 
     <!-- Input Row -->
     <div class="chat-input__row">
-      <button class="chat-input__upload-btn" @click="handleUploadClick">
+      <button v-if="enableUpload" class="chat-input__upload-btn" @click="handleUploadClick">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path
             d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"
@@ -187,7 +187,7 @@
     <input
       ref="fileInputRef"
       type="file"
-      accept="image/*,video/mp4,video/webm,audio/mp3,audio/wav,audio/ogg,.pdf,.doc,.docx,.xls,.xlsx,.txt,.md"
+      :accept="acceptAttr"
       multiple
       style="display: none"
       @change="handleFileSelect"
@@ -198,12 +198,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import {
-  validateFileSize,
   formatFileSize,
   getMediaType as utilsGetMediaType,
   type MediaType,
 } from '@/utils/fileValidation'
 import type { Attachment } from '@/types'
+import type { ChatbotLabels } from '@/types/config'
+import { validateFiles } from '@/utils/fileValidation'
 import ThinkingToggle from './ThinkingToggle.vue'
 import { getPreviewType } from '@/utils/fileType'
 
@@ -213,12 +214,26 @@ interface Props {
   thinkingEnabled?: boolean
   enableVoiceInput?: boolean
   placeholder?: string
+  labels?: Partial<ChatbotLabels>
+  /** Config-driven upload settings */
+  enableUpload?: boolean
+  maxImageSize?: number
+  allowedImageTypes?: string[]
+  maxImageCount?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   enableVoiceInput: true,
+  enableUpload: true,
 })
+
+const DEFAULT_ACCEPT =
+  'image/*,video/mp4,video/webm,audio/mp3,audio/wav,audio/ogg,.pdf,.doc,.docx,.xls,.xlsx,.txt,.md'
+
+const acceptAttr = computed(() =>
+  props.allowedImageTypes?.length ? props.allowedImageTypes.join(',') : DEFAULT_ACCEPT
+)
 
 type FileType = MediaType | 'document'
 
@@ -342,27 +357,29 @@ const handleFileSelect = async (e: Event) => {
   if (!files || files.length === 0) return
 
   try {
-    for (const file of Array.from(files)) {
+    // Config-driven batch validation (size / type / count)
+    const { accepted, rejected } = validateFiles(Array.from(files), {
+      maxImageSize: props.maxImageSize,
+      allowedImageTypes: props.allowedImageTypes,
+      maxCount: props.maxImageCount,
+    })
+
+    for (const { file, reason } of rejected) {
+      const message =
+        reason === 'size'
+          ? props.labels?.uploadSizeExceeded || 'File exceeds size limit'
+          : reason === 'type'
+            ? props.labels?.uploadTypeNotAllowed || 'Unsupported file type'
+            : props.labels?.uploadCountExceeded || 'Too many files'
+      showToast(`${file.name}: ${message}`)
+    }
+
+    for (const file of accepted) {
       // Check if it's a document type (PDF, Word, Excel, Text)
       const previewType = getPreviewType(file.name)
       const isDocument = ['pdf', 'word', 'excel', 'text'].includes(previewType)
 
       if (isDocument) {
-        // Handle document files
-        const validation = validateFileSize(file, 'image') // Use image limit for documents
-        if (!validation.valid) {
-          const error = `${file.name} exceeds ${validation.maxSize} limit`
-          selectedFiles.value.push({
-            type: 'document',
-            data: '',
-            name: file.name,
-            size: file.size,
-            error,
-          })
-          showToast(`File too large: ${error}`)
-          continue
-        }
-
         const base64 = await convertFileToBase64(file)
         selectedFiles.value.push({
           type: 'document',
@@ -372,27 +389,7 @@ const handleFileSelect = async (e: Event) => {
           preview: `data:${file.type};base64,${base64}`,
         })
       } else {
-        // Handle media files
         const mediaType = utilsGetMediaType(file)
-
-        // Validate file size
-        const validation = validateFileSize(file, mediaType)
-        if (!validation.valid) {
-          const error = `${file.name} exceeds ${validation.maxSize} limit`
-
-          // Add file with error state
-          selectedFiles.value.push({
-            type: mediaType,
-            data: '',
-            name: file.name,
-            size: file.size,
-            error,
-          })
-
-          // Show toast notification
-          showToast(`File too large: ${error}`)
-          continue
-        }
 
         // Convert to base64
         const base64 = await convertFileToBase64(file)

@@ -2,7 +2,7 @@
  * Unit tests for file validation utilities
  */
 import { describe, it, expect } from 'vitest'
-import { validateFileSize, getMediaType, FILE_SIZE_LIMITS } from '@/utils/fileValidation'
+import { validateFileSize, validateFiles, getMediaType, FILE_SIZE_LIMITS } from '@/utils/fileValidation'
 
 describe('fileValidation', () => {
   describe('validateFileSize', () => {
@@ -87,5 +87,48 @@ describe('fileValidation', () => {
       expect(FILE_SIZE_LIMITS.video).toBe(100 * 1024 * 1024)
       expect(FILE_SIZE_LIMITS.audio).toBe(20 * 1024 * 1024)
     })
+  })
+})
+
+describe('validateFiles', () => {
+  const mk = (name: string, size: number, type: string): File =>
+    ({ name, size, type } as unknown as File)
+
+  it('accepts files within default limits', () => {
+    const { accepted, rejected } = validateFiles([mk('a.png', 1024, 'image/png')])
+    expect(accepted).toHaveLength(1)
+    expect(rejected).toHaveLength(0)
+  })
+
+  it('rejects oversize files with reason size when custom maxImageSize set', () => {
+    const file = mk('big.png', 20 * 1024 * 1024, 'image/png')
+    const { accepted, rejected } = validateFiles([file], { maxImageSize: 1024 })
+    expect(accepted).toHaveLength(0)
+    expect(rejected).toEqual([{ file, reason: 'size' }])
+  })
+
+  it('applies default per-type limits when no override given', () => {
+    const { rejected } = validateFiles([mk('big.png', 11 * 1024 * 1024, 'image/png')])
+    expect(rejected[0]?.reason).toBe('size')
+  })
+
+  it('rejects disallowed types with reason type', () => {
+    const file = mk('x.gif', 10, 'image/gif')
+    const { accepted, rejected } = validateFiles([file], { allowedImageTypes: ['image/png'] })
+    expect(accepted).toHaveLength(0)
+    expect(rejected).toEqual([{ file, reason: 'type' }])
+  })
+
+  it('rejects files beyond maxCount with reason count, keeping first N', () => {
+    const files = [mk('a.png', 1, 'image/png'), mk('b.png', 1, 'image/png'), mk('c.png', 1, 'image/png')]
+    const { accepted, rejected } = validateFiles(files, { maxCount: 2 })
+    expect(accepted).toEqual([files[0], files[1]])
+    expect(rejected).toEqual([{ file: files[2], reason: 'count' }])
+  })
+
+  it('keeps accepted order matching input order', () => {
+    const files = [mk('b.png', 1, 'image/png'), mk('a.png', 1, 'image/png')]
+    const { accepted } = validateFiles(files)
+    expect(accepted.map((f) => f.name)).toEqual(['b.png', 'a.png'])
   })
 })

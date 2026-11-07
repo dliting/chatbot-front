@@ -232,6 +232,10 @@ export interface ChatbotLabels {
   noContentToCopy?: string
   copiedToClipboard?: string
   copyFailed?: string
+  /** Upload rejection toasts (prefixed with file name by the input) */
+  uploadSizeExceeded?: string
+  uploadTypeNotAllowed?: string
+  uploadCountExceeded?: string
   historyTooltip?: string
   switchToDarkMode?: string
   switchToLightMode?: string

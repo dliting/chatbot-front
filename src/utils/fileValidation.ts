@@ -49,3 +49,57 @@ export function getMediaType(file: File): MediaType {
   if (file.type.startsWith('audio/')) return 'audio'
   return 'image' // default fallback
 }
+
+/**
+ * Config-driven batch validation options
+ */
+export interface FileValidationOptions {
+  /** Max size in bytes; omit to use per-type FILE_SIZE_LIMITS defaults */
+  maxImageSize?: number
+  /** Allowed MIME types; omit to allow anything the file input accepts */
+  allowedImageTypes?: string[]
+  /** Max number of files accepted per message */
+  maxCount?: number
+}
+
+export type FileRejectReason = 'size' | 'type' | 'count'
+
+export interface FileValidationOutcome {
+  accepted: File[]
+  rejected: { file: File; reason: FileRejectReason }[]
+}
+
+/**
+ * Batch-validate files against size/type/count constraints.
+ * Order of `accepted` matches input order; the first `maxCount` files win.
+ */
+export function validateFiles(
+  files: File[],
+  options: FileValidationOptions = {}
+): FileValidationOutcome {
+  const accepted: File[] = []
+  const rejected: { file: File; reason: FileRejectReason }[] = []
+
+  for (const file of files) {
+    if (options.maxCount !== undefined && accepted.length >= options.maxCount) {
+      rejected.push({ file, reason: 'count' })
+      continue
+    }
+
+    if (options.allowedImageTypes && !options.allowedImageTypes.includes(file.type)) {
+      rejected.push({ file, reason: 'type' })
+      continue
+    }
+
+    const limit =
+      options.maxImageSize ?? FILE_SIZE_LIMITS[getMediaType(file)]
+    if (file.size > limit) {
+      rejected.push({ file, reason: 'size' })
+      continue
+    }
+
+    accepted.push(file)
+  }
+
+  return { accepted, rejected }
+}

@@ -153,6 +153,11 @@ export interface ChatState {
   enableDeleteMessage?: boolean
   enableResend?: boolean
   autoScroll?: boolean
+  /** Config-driven upload settings */
+  enableImageUpload?: boolean
+  maxImageSize?: number
+  allowedImageTypes?: string[]
+  maxImageCount?: number
 }
 
 // Upload result

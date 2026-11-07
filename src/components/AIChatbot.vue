@@ -263,6 +263,10 @@ provide(chatStateKey, {
   enableDeleteMessage: config.value.enableDeleteMessage,
   enableResend: config.value.enableResend,
   autoScroll: config.value.autoScroll,
+  enableImageUpload: config.value.enableImageUpload,
+  maxImageSize: config.value.maxImageSize,
+  allowedImageTypes: config.value.allowedImageTypes,
+  maxImageCount: config.value.maxImageCount,
 } satisfies ChatState)
 
 provide(chatActionsKey, {

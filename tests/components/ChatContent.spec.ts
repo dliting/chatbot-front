@@ -8,6 +8,7 @@ import ChatContent from '@/components/ChatContent.vue'
 import { computed } from 'vue'
 import { chatActionsKey, chatStateKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
 import MessageList from '@/components/MessageList.vue'
+import ChatInput from '@/components/ChatInput.vue'
 import { createMockChatActions, createMockUIActions } from '../utils/mockActions'
 
 // Mock ChatInput to avoid complex dependencies
@@ -15,7 +16,7 @@ vi.mock('@/components/ChatInput.vue', () => ({
   default: {
     name: 'ChatInput',
     template: '<div class="chat-input-mock"><slot /></div>',
-    props: ['disabled'],
+    props: ['disabled', 'enableThinking', 'thinkingEnabled', 'enableVoiceInput', 'placeholder', 'labels', 'enableUpload', 'maxImageSize', 'allowedImageTypes', 'maxImageCount'],
     emits: ['send', 'file-click'],
   },
 }))
@@ -274,5 +275,41 @@ describe('config-driven message switches', () => {
     expect(list.props('enableDelete')).toBe(true)
     expect(list.props('enableResend')).toBe(true)
     expect(list.props('autoScroll')).toBe(true)
+  })
+})
+
+describe('config-driven upload settings', () => {
+  const chatStateWithUpload = {
+    messages: computed(() => mockMessages),
+    topics: computed(() => []),
+    currentTopicId: computed(() => 'session-1'),
+    isStreaming: computed(() => false),
+    streamingMessageId: computed(() => null),
+    enableThinking: false,
+    thinkingEnabled: { value: false },
+    isThinking: { value: false },
+    enableVoiceInput: false,
+  }
+
+  it('passes enableImageUpload=false down to ChatInput', () => {
+    const wrapper = createWrapper({}, {
+      [chatStateKey]: { ...chatStateWithUpload, enableImageUpload: false },
+    })
+    expect(wrapper.findComponent(ChatInput).props('enableUpload')).toBe(false)
+  })
+
+  it('passes upload limits down to ChatInput', () => {
+    const wrapper = createWrapper({}, {
+      [chatStateKey]: {
+        ...chatStateWithUpload,
+        maxImageSize: 1024,
+        allowedImageTypes: ['image/png'],
+        maxImageCount: 3,
+      },
+    })
+    const input = wrapper.findComponent(ChatInput)
+    expect(input.props('maxImageSize')).toBe(1024)
+    expect(input.props('allowedImageTypes')).toEqual(['image/png'])
+    expect(input.props('maxImageCount')).toBe(3)
   })
 })
