@@ -259,6 +259,10 @@ provide(chatStateKey, {
   thinkingEnabled,
   isThinking: chatActions.isThinkingActive,
   enableVoiceInput: config.value.enableVoiceInput,
+  enableCopyMessage: config.value.enableCopyMessage,
+  enableDeleteMessage: config.value.enableDeleteMessage,
+  enableResend: config.value.enableResend,
+  autoScroll: config.value.autoScroll,
 } satisfies ChatState)
 
 provide(chatActionsKey, {

@@ -1129,3 +1129,54 @@ describe('composables/useChatActions', () => {
     })
   })
 })
+
+describe('editMessage with onEditMessage callback', () => {
+  it('invokes onEditMessage and streams a replacement assistant reply', async () => {
+    const userMsg: Message = {
+      messageId: 'm1', topicId: 'topic_1', role: 'user', type: 'text',
+      content: 'edited text', timestamp: Date.now(), status: 'sent',
+    }
+    const assistantMsg: Message = {
+      messageId: 'm2', topicId: 'topic_1', role: 'assistant', type: 'text',
+      content: 'old reply', timestamp: Date.now(), status: 'sent',
+    }
+    const onEditMessage = vi.fn(() =>
+      createMockStream([
+        { type: 'token', content: 'new ' },
+        { type: 'token', content: 'reply' },
+        { type: 'end' },
+      ])
+    )
+    const { deps, state, emitted } = createMockDeps({
+      callbacks: { onEditMessage },
+    })
+    state.messages.byTopic['topic_1'] = [userMsg, assistantMsg]
+    const actions = useChatActions(deps)
+
+    await actions.editMessage(userMsg)
+
+    expect(onEditMessage).toHaveBeenCalledTimes(1)
+    expect(onEditMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ topicId: 'topic_1', content: 'edited text', messageId: 'm1' })
+    )
+    const msgs = state.messages.byTopic['topic_1']
+    expect(msgs.some((m) => m.messageId === 'm2')).toBe(false)
+    expect(msgs.some((m) => m.role === 'assistant' && m.content === 'new reply')).toBe(true)
+    expect(emitted.filter((e) => e.event === 'message:edited')).toHaveLength(1)
+  })
+
+  it('keeps emit-only behavior without onEditMessage callback', async () => {
+    const userMsg: Message = {
+      messageId: 'm1', topicId: 'topic_1', role: 'user', type: 'text',
+      content: 'hello', timestamp: Date.now(), status: 'sent',
+    }
+    const { deps, state, emitted } = createMockDeps()
+    state.messages.byTopic['topic_1'] = [userMsg]
+    const actions = useChatActions(deps)
+
+    await actions.editMessage(userMsg)
+
+    expect(emitted.filter((e) => e.event === 'message:edited')).toHaveLength(1)
+    expect(state.messages.byTopic['topic_1']).toHaveLength(1)
+  })
+})

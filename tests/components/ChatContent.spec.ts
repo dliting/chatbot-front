@@ -5,7 +5,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ChatContent from '@/components/ChatContent.vue'
-import { chatActionsKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
+import { computed } from 'vue'
+import { chatActionsKey, chatStateKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
+import MessageList from '@/components/MessageList.vue'
 import { createMockChatActions, createMockUIActions } from '../utils/mockActions'
 
 // Mock ChatInput to avoid complex dependencies
@@ -242,5 +244,35 @@ describe('ChatContent', () => {
       const wrapper = createWrapper()
       expect(wrapper.find('.chat-content__input-area').exists()).toBe(true)
     })
+  })
+})
+
+describe('config-driven message switches', () => {
+  const baseChatState = {
+    messages: computed(() => mockMessages),
+    topics: computed(() => []),
+    currentTopicId: computed(() => 'session-1'),
+    isStreaming: computed(() => false),
+    streamingMessageId: computed(() => null),
+    enableThinking: false,
+    thinkingEnabled: { value: false },
+    isThinking: { value: false },
+    enableVoiceInput: false,
+  }
+
+  it('passes enableCopyMessage=false down to MessageList', () => {
+    const wrapper = createWrapper({}, {
+      [chatStateKey]: { ...baseChatState, enableCopyMessage: false },
+    })
+    expect(wrapper.findComponent(MessageList).props('enableCopy')).toBe(false)
+  })
+
+  it('defaults message switches to true without provider', () => {
+    const wrapper = createWrapper()
+    const list = wrapper.findComponent(MessageList)
+    expect(list.props('enableCopy')).toBe(true)
+    expect(list.props('enableDelete')).toBe(true)
+    expect(list.props('enableResend')).toBe(true)
+    expect(list.props('autoScroll')).toBe(true)
   })
 })

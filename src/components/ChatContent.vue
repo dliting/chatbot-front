@@ -17,6 +17,10 @@
         :is-streaming="effectiveIsStreaming"
         :streaming-message-id="effectiveStreamingMessageId"
         :labels="mergedLabels"
+        :enable-copy="chatState?.enableCopyMessage ?? true"
+        :enable-delete="chatState?.enableDeleteMessage ?? true"
+        :enable-resend="chatState?.enableResend ?? true"
+        :auto-scroll="chatState?.autoScroll ?? true"
         @file-click="$emit('file-click', $event)"
       />
     </div>

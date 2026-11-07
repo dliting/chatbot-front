@@ -148,6 +148,11 @@ export interface ChatState {
   thinkingEnabled: { value: boolean }
   isThinking: { value: boolean }
   enableVoiceInput: boolean
+  /** Config-driven message operation switches (optional: standalone usage defaults to true) */
+  enableCopyMessage?: boolean
+  enableDeleteMessage?: boolean
+  enableResend?: boolean
+  autoScroll?: boolean
 }
 
 // Upload result
