@@ -162,6 +162,8 @@ export interface ChatState {
   maxImageCount?: number
   /** Show the clear-conversation header action */
   enableClearAll?: boolean
+  /** Auto-collapse thinking block after completion (default true) */
+  thinkingAutoCollapse?: boolean
 }
 
 // Upload result

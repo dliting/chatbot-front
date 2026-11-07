@@ -21,6 +21,7 @@
         :enable-delete="chatState?.enableDeleteMessage ?? true"
         :enable-resend="chatState?.enableResend ?? true"
         :auto-scroll="chatState?.autoScroll ?? true"
+        :thinking-auto-collapse="chatState?.thinkingAutoCollapse ?? true"
         @file-click="$emit('file-click', $event)"
       />
     </div>

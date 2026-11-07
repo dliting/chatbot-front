@@ -270,6 +270,7 @@ provide(chatStateKey, {
   allowedImageTypes: config.value.allowedImageTypes,
   maxImageCount: config.value.maxImageCount,
   enableClearAll: config.value.enableClearAll,
+  thinkingAutoCollapse: config.value.thinkingAutoCollapse,
 } satisfies ChatState)
 
 provide(chatActionsKey, {

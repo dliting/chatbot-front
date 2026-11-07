@@ -31,7 +31,7 @@
           :content="message.thinkingContent"
           :thinking-time="message.thinkingTime"
           :is-thinking="isStreaming && isThinkingActive"
-          :auto-collapse="true"
+          :auto-collapse="autoCollapse"
           :labels="labels?.thinking"
           @toggle="thinkingCollapsed = !thinkingCollapsed"
         />
@@ -208,6 +208,7 @@ interface Props {
   enableDelete?: boolean
   enableResend?: boolean
   isStreaming?: boolean
+  autoCollapse?: boolean
   copyTimeout?: number
   isLastMessage?: boolean
   labels?: ChatbotLabels
@@ -223,6 +224,7 @@ const props = withDefaults(defineProps<Props>(), {
   enableDelete: true,
   enableResend: true,
   isStreaming: false,
+  autoCollapse: true,
   copyTimeout: 2000,
   isLastMessage: false,
 })

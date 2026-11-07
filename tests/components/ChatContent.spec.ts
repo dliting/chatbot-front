@@ -313,3 +313,29 @@ describe('config-driven upload settings', () => {
     expect(input.props('maxImageCount')).toBe(3)
   })
 })
+
+describe('thinkingAutoCollapse chain', () => {
+  const chatStateBase = {
+    messages: computed(() => mockMessages),
+    topics: computed(() => []),
+    currentTopicId: computed(() => 'session-1'),
+    isStreaming: computed(() => false),
+    streamingMessageId: computed(() => null),
+    enableThinking: false,
+    thinkingEnabled: { value: false },
+    isThinking: { value: false },
+    enableVoiceInput: false,
+  }
+
+  it('passes thinkingAutoCollapse=false down to MessageList', () => {
+    const wrapper = createWrapper({}, {
+      [chatStateKey]: { ...chatStateBase, thinkingAutoCollapse: false },
+    })
+    expect(wrapper.findComponent(MessageList).props('thinkingAutoCollapse')).toBe(false)
+  })
+
+  it('defaults thinkingAutoCollapse to true', () => {
+    const wrapper = createWrapper()
+    expect(wrapper.findComponent(MessageList).props('thinkingAutoCollapse')).toBe(true)
+  })
+})

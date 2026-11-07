@@ -16,6 +16,7 @@
           :enable-copy="enableCopy"
           :enable-delete="enableDelete"
           :enable-resend="enableResend"
+          :auto-collapse="thinkingAutoCollapse"
           :is-streaming="isStreaming && message.messageId === streamingMessageId"
           :is-last-message="index === messages.length - 1"
           :labels="labels"
@@ -71,6 +72,7 @@ interface Props {
   isStreaming?: boolean
   streamingMessageId?: string | null
   autoScroll?: boolean
+  thinkingAutoCollapse?: boolean
   emptyMessage?: string
   labels?: ChatbotLabels
 }
@@ -86,6 +88,7 @@ const props = withDefaults(defineProps<Props>(), {
   isStreaming: false,
   streamingMessageId: null,
   autoScroll: true,
+  thinkingAutoCollapse: true,
   emptyMessage: '',
 })
 

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount, VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 import MessageList from '@/components/MessageList.vue'
+import MessageItem from '@/components/MessageItem.vue'
 import type { Message } from '@/types'
 import { chatActionsKey } from '@/symbols'
 
@@ -9,7 +10,7 @@ import { chatActionsKey } from '@/symbols'
 vi.mock('@/components/MessageItem.vue', () => ({
   default: {
     name: 'MessageItem',
-    props: ['message', 'theme', 'isStreaming'],
+    props: ['message', 'theme', 'isStreaming', 'autoCollapse', 'enableCopy', 'enableDelete', 'enableResend', 'labels'],
     emits: ['file-click'],
     template: `
       <div class="chatbot-messages__item" :class="'chatbot-messages__item--' + message.role" data-testid="message-item">
@@ -342,5 +343,32 @@ describe('MessageList.vue', () => {
         expect(vm.showLoading(messages[0])).toBe(true)
       }
     })
+  })
+})
+
+describe('thinkingAutoCollapse passthrough to MessageItem', () => {
+  it('passes thinkingAutoCollapse=false as autoCollapse=false on MessageItem', () => {
+    const wrapper = mount(MessageList, {
+      props: {
+        messages: [{
+          messageId: 'm1', topicId: 't1', role: 'assistant', type: 'text',
+          content: 'answer', thinkingContent: 'thinking...', timestamp: Date.now(), status: 'sent',
+        } as Message],
+        thinkingAutoCollapse: false,
+      },
+    })
+    expect(wrapper.findComponent(MessageItem).props('autoCollapse')).toBe(false)
+  })
+
+  it('defaults to autoCollapse=true on MessageItem', () => {
+    const wrapper = mount(MessageList, {
+      props: {
+        messages: [{
+          messageId: 'm1', topicId: 't1', role: 'assistant', type: 'text',
+          content: 'answer', timestamp: Date.now(), status: 'sent',
+        } as Message],
+      },
+    })
+    expect(wrapper.findComponent(MessageItem).props('autoCollapse')).toBe(true)
   })
 })
