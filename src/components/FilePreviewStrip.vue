@@ -136,6 +136,7 @@ defineEmits<Emits>()
 </script>
 
 <style scoped lang="scss">
+.chat-input {
   &__previews {
     display: flex;
     flex-wrap: wrap;
@@ -254,4 +255,5 @@ defineEmits<Emits>()
     }
   }
 
+}
 </style>
