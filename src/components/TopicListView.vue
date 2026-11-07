@@ -198,7 +198,9 @@ import { ref, computed, nextTick, inject } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import type { Topic } from '@/types'
 import { topicActionsKey, uiActionsKey } from '@/symbols'
-import { formatTime, escapeHTML } from '@/utils/helpers'
+import { formatTime } from '@/utils/helpers'
+import { highlightText } from '@/utils/highlight'
+import { formatTemplate } from '@/utils/format'
 import TopicSearch from './TopicSearch.vue'
 import TopicActionMenu from './TopicActionMenu.vue'
 import ConfirmDialog from './ConfirmDialog.vue'
@@ -357,7 +359,7 @@ const filteredTopics = computed(() => {
 // Selected count text
 const selectedCountText = computed(() => {
   const count = selectedTopicIds.value.length
-  return labels.value.selectedCountFormat.replace('{count}', String(count))
+  return formatTemplate(labels.value.selectedCountFormat, { count })
 })
 
 // Toggle batch mode
@@ -424,19 +426,6 @@ const confirmDelete = () => {
   isBatchMode.value = false
 }
 
-// Highlight text (with XSS protection)
-const highlightText = (text: string, query: string): string => {
-  if (!query.trim()) {
-    return escapeHTML(text)
-  }
-  // First escape HTML to prevent XSS
-  const escapedText = escapeHTML(text)
-  // Then escape special regex characters in the query
-  const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const regex = new RegExp(`(${escapedQuery})`, 'gi')
-  return escapedText.replace(regex, '<mark>$1</mark>')
-}
-
 // Start editing title
 const startEditTitle = async (topic: Topic) => {
   if (isBatchMode.value) return
@@ -486,10 +475,7 @@ const unnamedTopicText = computed(() => props.config?.labels?.unnamedTopic || 'U
 const formatTopicMeta = (topic: Topic): string => {
   const timeStr = formatTime(topic.updatedAt)
   const fmt = props.config?.labels?.messageCountFormat || '{count} messages'
-  const countStr =
-    topic.messageCount === 1
-      ? fmt.replace('{count}', '1')
-      : fmt.replace('{count}', String(topic.messageCount))
+  const countStr = formatTemplate(fmt, { count: topic.messageCount })
   return `${timeStr} • ${countStr}`
 }
 </script>

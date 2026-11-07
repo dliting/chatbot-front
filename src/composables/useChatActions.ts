@@ -1,11 +1,12 @@
 /**
  * Chat actions composable - handles message send/stream/delete/edit logic
  */
-import { ref, type Ref, type ComputedRef } from 'vue'
+import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import type { Message, Attachment, StreamEvent } from '@/types'
 import type { ChatbotError, ErrorCategory } from '@/utils/errors'
 import { generateId } from '@/utils/helpers'
+import { useStreamProcessor } from './useStreamProcessor'
 
 interface ChatActionsDeps {
   config: ComputedRef<Required<ChatbotConfig>>
@@ -35,89 +36,26 @@ export function useChatActions(deps: ChatActionsDeps) {
   const { config, state, apiClient, emit } = deps
 
   const isGenerating = ref(false)
-  const isThinkingActive = ref(false)
   const abortController = ref<AbortController | null>(null)
 
-  /**
-   * Process a stream, updating the assistant message in place.
-   * Shared between send and regenerate flows.
-   */
-  async function processStream(
-    stream: AsyncGenerator<StreamEvent>,
-    controller: AbortController,
-    assistantMessageId: string,
-    thinkingRequested: boolean
-  ): Promise<{ fullContent: string; fullThinkingContent: string }> {
-    let fullContent = ''
-    let fullThinkingContent = ''
-    let thinkingStartTime = 0
+  // Stream-processing state machine (shared by send / regenerate / edit)
+  const streamProcessor = useStreamProcessor({
+    updateMessage: deps.updateMessage,
+    labels: computed(() => config.value.labels),
+    getMessages: () => state.messages.byTopic[state.topics.currentId],
+  })
+  const { processStream, finalizeStreamStatus, isThinkingActive } = streamProcessor
 
-    for await (const chunk of stream) {
-      if (chunk.type === 'reasoning' && chunk.reasoningContent) {
-        if (!thinkingRequested) continue
-        if (!thinkingStartTime) thinkingStartTime = Date.now()
-        isThinkingActive.value = true
-        fullThinkingContent += chunk.reasoningContent
-        deps.updateMessage(assistantMessageId, {
-          thinkingContent: fullThinkingContent,
-          thinkingTime: Date.now() - thinkingStartTime,
-        })
-      } else if (chunk.type === 'token' && chunk.content) {
-        isThinkingActive.value = false
-        fullContent += chunk.content
-        const updates: Partial<Message> = { content: fullContent }
-        if (thinkingStartTime) {
-          updates.thinkingTime = Date.now() - thinkingStartTime
-        }
-        deps.updateMessage(assistantMessageId, updates)
-      } else if (chunk.type === 'end') {
-        if (controller.signal.aborted) break
-        isThinkingActive.value = false
-        deps.updateMessage(assistantMessageId, { status: 'sent' })
-      }
-    }
-
-    return { fullContent, fullThinkingContent }
-  }
-
-  /**
-   * Finalize assistant message status after stream ends
-   */
-  function finalizeStreamStatus(
-    assistantMessageId: string,
-    controller: AbortController,
-    userMessageId?: string
-  ) {
-    isThinkingActive.value = false
-
-    const msgs = state.messages.byTopic[state.topics.currentId]
-    if (!msgs) return
-
-    // Finalize user message
-    if (userMessageId) {
-      const userMsg = msgs.find((m) => m.messageId === userMessageId)
-      if (userMsg?.status === 'sending') {
-        deps.updateMessage(userMessageId, { status: 'sent' })
-      }
-    }
-
-    // Finalize assistant message
-    const assistantMsg = msgs.find((m) => m.messageId === assistantMessageId)
-    if (!assistantMsg) return
-
-    if (controller.signal.aborted) {
-      deps.updateMessage(assistantMessageId, {
-        status: assistantMsg.content ? 'stopped' : 'error',
-        errorMessage: config.value.labels?.generationStopped || 'Generation stopped',
-      })
-    } else if (assistantMsg.status === 'loading') {
-      const hasContent = !!(assistantMsg.content || assistantMsg.thinkingContent)
-      deps.updateMessage(assistantMessageId, {
-        status: hasContent ? 'sent' : 'error',
-        ...(hasContent
-          ? {}
-          : { errorMessage: config.value.labels?.serverError || 'Stream ended unexpectedly' }),
-      })
+  /** Assistant loading placeholder — identical shape at all three insertion sites */
+  function createAssistantPlaceholder(topicId: string, messageId: string): Message {
+    return {
+      messageId,
+      topicId,
+      role: 'assistant',
+      type: 'text',
+      content: '',
+      timestamp: Date.now(),
+      status: 'loading',
     }
   }
 
@@ -186,15 +124,7 @@ export function useChatActions(deps: ChatActionsDeps) {
 
       // Add assistant placeholder
       assistantMessageId = generateId('msg')
-      deps.insertMessage(topicId, state.messages.byTopic[topicId].length, {
-        messageId: assistantMessageId,
-        topicId,
-        role: 'assistant',
-        type: 'text',
-        content: '',
-        timestamp: Date.now(),
-        status: 'loading',
-      })
+      deps.insertMessage(topicId, state.messages.byTopic[topicId].length, createAssistantPlaceholder(topicId, assistantMessageId))
 
       const thinkingRequested = config.value.thinkingDefaultEnabled
 
@@ -282,15 +212,7 @@ export function useChatActions(deps: ChatActionsDeps) {
 
       try {
         // Add placeholder for new AI response
-        deps.insertMessage(topicId, index, {
-          messageId: assistantMessageId,
-          topicId,
-          role: 'assistant',
-          type: 'text',
-          content: '',
-          timestamp: Date.now(),
-          status: 'loading',
-        })
+        deps.insertMessage(topicId, index, createAssistantPlaceholder(topicId, assistantMessageId))
 
         const thinkingRequested = config.value.thinkingDefaultEnabled
         const stream = config.value.callbacks.onRegenerateMessage({
@@ -407,15 +329,7 @@ export function useChatActions(deps: ChatActionsDeps) {
     const assistantMessageId = generateId('msg')
 
     try {
-      deps.insertMessage(topicId, index + 1, {
-        messageId: assistantMessageId,
-        topicId,
-        role: 'assistant',
-        type: 'text',
-        content: '',
-        timestamp: Date.now(),
-        status: 'loading',
-      })
+      deps.insertMessage(topicId, index + 1, createAssistantPlaceholder(topicId, assistantMessageId))
 
       const thinkingRequested = config.value.thinkingDefaultEnabled
       const stream = editCallback({

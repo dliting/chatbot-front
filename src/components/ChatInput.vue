@@ -1,121 +1,11 @@
 <template>
   <div class="chat-input">
     <!-- File Previews -->
-    <div v-if="selectedFiles.length > 0" class="chat-input__previews">
-      <div
-        v-for="(file, idx) in selectedFiles"
-        :key="idx"
-        :class="['chat-input__preview', { 'chat-input__preview--error': file.error }]"
-      >
-        <!-- Error state -->
-        <div v-if="file.error" class="chat-input__preview-error">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round" />
-            <line x1="12" y1="8" x2="12" y2="12" stroke-linecap="round" stroke-linejoin="round" />
-            <line
-              x1="12"
-              y1="16"
-              x2="12.01"
-              y2="16"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </div>
-
-        <!-- Image preview -->
-        <img
-          v-else-if="file.type === 'image'"
-          :src="file.preview ?? file.data"
-          class="chat-input__preview-img"
-          @click="
-            $emit('file-click', { type: 'image', url: file.preview ?? file.data, name: file.name })
-          "
-        />
-
-        <!-- Video icon -->
-        <div
-          v-else-if="file.type === 'video'"
-          class="chat-input__preview-media"
-          @click="
-            $emit('file-click', { type: 'video', url: file.preview ?? file.data, name: file.name })
-          "
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon
-              points="23 7 16 12 23 17 23 7"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <rect
-              x="1"
-              y="5"
-              width="15"
-              height="14"
-              rx="2"
-              ry="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-          <span v-if="file.size" class="chat-input__preview-size">
-            {{ formatFileSize(file.size) }}
-          </span>
-        </div>
-
-        <!-- Audio icon -->
-        <div
-          v-else-if="file.type === 'audio'"
-          class="chat-input__preview-media"
-          @click="
-            $emit('file-click', { type: 'audio', url: file.preview ?? file.data, name: file.name })
-          "
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 18V5l12-2v13" stroke-linecap="round" stroke-linejoin="round" />
-            <circle cx="6" cy="18" r="3" stroke-linecap="round" stroke-linejoin="round" />
-            <circle cx="18" cy="16" r="3" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <span v-if="file.size" class="chat-input__preview-size">
-            {{ formatFileSize(file.size) }}
-          </span>
-        </div>
-
-        <!-- Document icon -->
-        <div
-          v-else-if="file.type === 'document'"
-          class="chat-input__preview-document"
-          :title="file.name"
-          @click="
-            $emit('file-click', {
-              type: file.name.split('.').pop() || 'unknown',
-              url: file.preview ?? file.data,
-              name: file.name,
-            })
-          "
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path
-              d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <polyline points="14 2 14 8 20 8" stroke-linecap="round" stroke-linejoin="round" />
-            <line x1="16" y1="13" x2="8" y2="13" stroke-linecap="round" stroke-linejoin="round" />
-            <line x1="16" y1="17" x2="8" y2="17" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <span class="chat-input__preview-docname">{{ file.name }}</span>
-        </div>
-
-        <!-- Remove button (even for errors) -->
-        <button class="chat-input__preview-remove" @click="removeFile(idx)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="18" y1="6" x2="6" y2="18" stroke-linecap="round" stroke-linejoin="round" />
-            <line x1="6" y1="6" x2="18" y2="18" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-        </button>
-      </div>
-    </div>
+    <FilePreviewStrip
+      :files="selectedFiles"
+      @remove="removeFile"
+      @file-click="$emit('file-click', $event)"
+    />
 
     <!-- Input Row -->
     <div class="chat-input__row">
@@ -197,16 +87,13 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import {
-  formatFileSize,
-  getMediaType as utilsGetMediaType,
-  type MediaType,
-} from '@/utils/fileValidation'
+
 import type { Attachment } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
-import { validateFiles } from '@/utils/fileValidation'
 import ThinkingToggle from './ThinkingToggle.vue'
-import { getPreviewType } from '@/utils/fileType'
+import { buildAttachmentUrl } from '@/utils/attachments'
+import { useFileSelection } from '@/composables/useFileSelection'
+import FilePreviewStrip from './FilePreviewStrip.vue'
 
 interface Props {
   disabled?: boolean
@@ -235,17 +122,6 @@ const acceptAttr = computed(() =>
   props.allowedImageTypes?.length ? props.allowedImageTypes.join(',') : DEFAULT_ACCEPT
 )
 
-type FileType = MediaType | 'document'
-
-interface MediaFile {
-  type: FileType
-  data: string // base64
-  name: string
-  preview?: string // 预览URL
-  size?: number // 文件大小
-  error?: string // 错误信息
-}
-
 interface Emits {
   (e: 'send', data: { content: string; attachments?: Attachment[] }): void
   (e: 'stop'): void
@@ -262,33 +138,19 @@ const fileInputRef = ref<HTMLInputElement>()
 
 // State
 const inputText = ref('')
-const selectedFiles = ref<MediaFile[]>([])
 
-// Simple toast notification
-const showToast = (message: string) => {
-  // Simple alert for now - can be enhanced later
-  alert(message)
-}
-
-// Convert file to base64 for direct sending to backend
-const convertFileToBase64 = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const result = reader.result as string
-      // Remove data URL prefix (e.g., "data:image/png;base64,")
-      resolve(result.split(',')[1])
-    }
-    reader.onerror = () => reject(new Error('Failed to read file'))
-    reader.readAsDataURL(file)
-  })
-}
+// File selection (validation, base64 conversion, selection state)
+const { selectedFiles, hasValidFiles, handleFileSelect, removeFile, clearFiles } = useFileSelection({
+  maxImageSize: props.maxImageSize,
+  allowedImageTypes: props.allowedImageTypes,
+  maxCount: props.maxImageCount,
+  labels: props.labels,
+})
 
 // Computed
 const canSend = computed(() => {
   const hasText = inputText.value.trim().length > 0
-  const hasValidFiles = selectedFiles.value.some((f) => !f.error)
-  return hasText || hasValidFiles
+  return hasText || hasValidFiles.value
 })
 
 // Methods
@@ -317,22 +179,14 @@ const handleSend = () => {
   // Build unified attachments array from valid files
   const attachments: Attachment[] = validFiles.map((f) => ({
     name: f.name,
-    url:
-      f.preview ||
-      (f.type === 'image'
-        ? `data:image/png;base64,${f.data}`
-        : f.type === 'video'
-          ? `data:video/mp4;base64,${f.data}`
-          : f.type === 'audio'
-            ? `data:audio/mp3;base64,${f.data}`
-            : `data:application/octet-stream;base64,${f.data}`),
-    type: f.type === 'document' ? 'document' : f.type,
+    url: buildAttachmentUrl(f),
+    type: f.type,
     size: f.size,
   }))
 
   // Clear input
   inputText.value = ''
-  selectedFiles.value = []
+  clearFiles()
   if (inputRef.value) {
     inputRef.value.style.height = 'auto'
   }
@@ -343,75 +197,10 @@ const handleSend = () => {
   })
 }
 
-const removeFile = (index: number) => {
-  selectedFiles.value.splice(index, 1)
-}
-
 const handleUploadClick = () => {
   fileInputRef.value?.click()
 }
 
-const handleFileSelect = async (e: Event) => {
-  const target = e.target as HTMLInputElement
-  const files = target.files
-  if (!files || files.length === 0) return
-
-  try {
-    // Config-driven batch validation (size / type / count)
-    const { accepted, rejected } = validateFiles(Array.from(files), {
-      maxImageSize: props.maxImageSize,
-      allowedImageTypes: props.allowedImageTypes,
-      maxCount: props.maxImageCount,
-    })
-
-    for (const { file, reason } of rejected) {
-      const message =
-        reason === 'size'
-          ? props.labels?.uploadSizeExceeded || 'File exceeds size limit'
-          : reason === 'type'
-            ? props.labels?.uploadTypeNotAllowed || 'Unsupported file type'
-            : props.labels?.uploadCountExceeded || 'Too many files'
-      showToast(`${file.name}: ${message}`)
-    }
-
-    for (const file of accepted) {
-      // Check if it's a document type (PDF, Word, Excel, Text)
-      const previewType = getPreviewType(file.name)
-      const isDocument = ['pdf', 'word', 'excel', 'text'].includes(previewType)
-
-      if (isDocument) {
-        const base64 = await convertFileToBase64(file)
-        selectedFiles.value.push({
-          type: 'document',
-          data: base64,
-          name: file.name,
-          size: file.size,
-          preview: `data:${file.type};base64,${base64}`,
-        })
-      } else {
-        const mediaType = utilsGetMediaType(file)
-
-        // Convert to base64
-        const base64 = await convertFileToBase64(file)
-
-        selectedFiles.value.push({
-          type: mediaType,
-          data: base64,
-          name: file.name,
-          size: file.size,
-          preview: file.type.startsWith('image/')
-            ? `data:${file.type};base64,${base64}`
-            : undefined,
-        })
-      }
-    }
-  } catch (error) {
-    console.error('File processing failed:', error)
-    showToast('Failed to process files. Please try again.')
-  }
-
-  target.value = ''
-}
 </script>
 
 <style scoped lang="scss">
@@ -420,124 +209,6 @@ const handleFileSelect = async (e: Event) => {
   backdrop-filter: blur(20px);
   padding: 12px 16px;
   border-top: 1px solid var(--border-light, rgba(102, 126, 234, 0.1));
-
-  &__previews {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 8px;
-  }
-
-  &__preview {
-    position: relative;
-    width: 60px;
-    height: 60px;
-
-    &--error {
-      border-color: var(--color-danger-strong);
-      background: rgba(239, 68, 68, 0.1);
-    }
-  }
-
-  &__preview-error {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--color-danger-strong);
-
-    svg {
-      width: 24px;
-      height: 24px;
-    }
-  }
-
-  &__preview-size {
-    position: absolute;
-    bottom: -2px;
-    right: -2px;
-    font-size: 10px;
-    background: rgba(0, 0, 0, 0.7);
-    color: var(--text-on-primary, #fff);
-    padding: 2px 4px;
-    border-radius: 4px;
-  }
-
-  &__preview-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 8px;
-  }
-
-  &__preview-media {
-    width: 100%;
-    height: 100%;
-    background: var(--theme-primary-gradient);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    svg {
-      width: 28px;
-      height: 28px;
-      stroke: var(--text-on-primary, #fff);
-    }
-  }
-
-  &__preview-document {
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      135deg,
-      var(--chat-assistant-bg, #f5f7fa) 0%,
-      var(--border-light, #e8e8ec) 100%
-    );
-    border-radius: 8px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 4px;
-
-    svg {
-      width: 24px;
-      height: 24px;
-      stroke: var(--text-tertiary, #606266);
-    }
-  }
-
-  &__preview-docname {
-    font-size: 8px;
-    color: var(--text-tertiary, #606266);
-    text-align: center;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    max-width: 100%;
-  }
-
-  &__preview-remove {
-    position: absolute;
-    top: -6px;
-    right: -6px;
-    width: 20px;
-    height: 20px;
-    border: none;
-    background: var(--bg-overlay, rgba(0, 0, 0, 0.6));
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    svg {
-      width: 12px;
-      height: 12px;
-      stroke: var(--text-on-primary, #fff);
-    }
-  }
 
   &__row {
     display: flex;

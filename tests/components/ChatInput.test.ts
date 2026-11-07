@@ -881,55 +881,6 @@ describe('ChatInput', () => {
   })
 
   // =====================================================
-  // convertFileToBase64 - internal async method
-  // =====================================================
-
-  describe('convertFileToBase64', () => {
-    let mockFR: ReturnType<typeof createMockFileReaderClass>
-    let originalFileReader: typeof FileReader
-
-    beforeEach(() => {
-      originalFileReader = globalThis.FileReader
-      mockFR = createMockFileReaderClass()
-      vi.stubGlobal('FileReader', mockFR.Cls)
-    })
-
-    afterEach(() => {
-      vi.stubGlobal('FileReader', originalFileReader)
-      vi.unstubAllGlobals()
-    })
-
-    it('should resolve with base64 data when FileReader succeeds', async () => {
-      const wrapper = createWrapper()
-      const vm = wrapper.vm as any
-      const file = new File(['hello'], 'test.png', { type: 'image/png' })
-
-      const promise = vm.convertFileToBase64(file)
-
-      // Get the FileReader instance that was created and trigger onload
-      const instance = mockFR.instances[mockFR.instances.length - 1]
-      instance.result = 'data:image/png;base64,aGVsbG8='
-      instance.onload()
-
-      const result = await promise
-      expect(result).toBe('aGVsbG8=')
-    })
-
-    it('should reject when FileReader encounters an error', async () => {
-      const wrapper = createWrapper()
-      const vm = wrapper.vm as any
-      const file = new File(['hello'], 'test.png', { type: 'image/png' })
-
-      const promise = vm.convertFileToBase64(file)
-
-      const instance = mockFR.instances[mockFR.instances.length - 1]
-      instance.onerror()
-
-      await expect(promise).rejects.toThrow('Failed to read file')
-    })
-  })
-
-  // =====================================================
   // handleFileSelect - full file selection processing
   // This tests the uncovered lines 289-365
   // =====================================================
