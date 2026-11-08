@@ -23,7 +23,7 @@ export interface UseFileSelectionOptions {
   maxImageSize?: number
   allowedImageTypes?: string[]
   maxCount?: number
-  labels?: Partial<ChatbotLabels>
+  labels?: Partial<ChatbotLabels> | (() => Partial<ChatbotLabels> | undefined)
 }
 
 export interface UseFileSelectionReturn {
@@ -48,7 +48,8 @@ function convertFileToBase64(file: File): Promise<string> {
 }
 
 export function useFileSelection(options: UseFileSelectionOptions = {}): UseFileSelectionReturn {
-  const { labels } = options
+  /** Resolve labels at use time so host config patches stay live */
+  const resolveLabels = () => (typeof options.labels === "function" ? options.labels() : options.labels)
   const selectedFiles = ref<MediaFile[]>([])
 
   const hasValidFiles = computed(() => selectedFiles.value.some((f) => !f.error))
@@ -74,10 +75,10 @@ export function useFileSelection(options: UseFileSelectionOptions = {}): UseFile
       for (const { file, reason } of rejected) {
         const message =
           reason === 'size'
-            ? labels?.uploadSizeExceeded || 'File exceeds size limit'
+            ? resolveLabels()?.uploadSizeExceeded || 'File exceeds size limit'
             : reason === 'type'
-              ? labels?.uploadTypeNotAllowed || 'Unsupported file type'
-              : labels?.uploadCountExceeded || 'Too many files'
+              ? resolveLabels()?.uploadTypeNotAllowed || 'Unsupported file type'
+              : resolveLabels()?.uploadCountExceeded || 'Too many files'
         showToast(`${file.name}: ${message}`)
       }
 

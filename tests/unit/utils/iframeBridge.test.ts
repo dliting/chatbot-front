@@ -109,3 +109,81 @@ describe('createIframeBridge.handleHostMessage', () => {
     expect(chatbot.togglePanel).not.toHaveBeenCalled()
   })
 })
+
+describe('iframe bridge integration (real IframeMessenger wiring)', () => {
+  /**
+   * Pins the wiring contract that the unit tests above cannot see:
+   * IframeMessenger handlers receive the PAYLOAD (not the envelope), so the
+   * entry must re-wrap it into { type, data } before calling the bridge.
+   */
+  it('dispatches real window messages from host page to the chatbot', async () => {
+    const { IframeMessenger } = await import('@/utils/postMessage')
+    const { createIframeBridge } = await import('@/utils/iframeBridge')
+
+    const sent: Array<{ type: string; data?: unknown }> = []
+    const chatbot = createFakeChatbot()
+
+    const messenger = new IframeMessenger({
+      allowedOrigins: ['http://host.example'],
+      targetWindow: null,
+    })
+    const bridge = createIframeBridge({
+      send: (type, data) => sent.push({ type, data }),
+      getChatbot: () => chatbot as never,
+    })
+    messenger.on('host:toggle', (payload) =>
+      bridge.handleHostMessage({ type: 'host:toggle', data: payload })
+    )
+    messenger.on('host:sendMessage', (payload) =>
+      bridge.handleHostMessage({ type: 'host:sendMessage', data: payload })
+    )
+    messenger.on('host:getState', (payload) =>
+      bridge.handleHostMessage({ type: 'host:getState', data: payload })
+    )
+    messenger.on('chatbot:state', (payload) => sent.push({ type: 'chatbot:state-received', data: payload }))
+
+    const dispatch = (type: string, data?: unknown) => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          origin: 'http://host.example',
+          source: null,
+          data: { source: 'host-page', type, data },
+        })
+      )
+    }
+
+    dispatch('host:toggle', { isOpen: false })
+    expect(chatbot.togglePanel).toHaveBeenCalledWith(false)
+
+    dispatch('host:sendMessage', { content: 'hi' })
+    expect(chatbot.sendMessage).toHaveBeenCalledWith({ content: 'hi' })
+
+    dispatch('host:getState')
+    await new Promise((r) => setTimeout(r, 0))
+    const stateMsg = sent.find((m) => m.type === 'chatbot:state')
+    expect(stateMsg).toBeTruthy()
+    // response payload must survive structured cloning (real postMessage requirement)
+    expect(() => structuredClone(stateMsg!.data)).not.toThrow()
+
+    messenger.destroy?.()
+  })
+})
+
+describe('createIframeBridge payload sanitize', () => {
+  it('forwarded payloads survive structuredClone even with reactive proxies', () => {
+    const { reactive } = require('vue') as typeof import('vue')
+    const { bridge, sent } = setup()
+    const proxyMessage = reactive({ messageId: 'm1', content: 'hi', nested: { deep: true } })
+    bridge.forwardEvent('message:sent', { message: proxyMessage })
+    expect(() => structuredClone(sent[0].data)).not.toThrow()
+    expect((sent[0].data as { message: { content: string } }).message.content).toBe('hi')
+  })
+
+  it('host:sendMessage with invalid payload is ignored', () => {
+    const { bridge, chatbot } = setup()
+    bridge.handleHostMessage({ type: 'host:sendMessage', data: {} })
+    bridge.handleHostMessage({ type: 'host:sendMessage', data: { content: '   ' } })
+    bridge.handleHostMessage({ type: 'host:sendMessage', data: { content: 123 } })
+    expect(chatbot.sendMessage).not.toHaveBeenCalled()
+  })
+})

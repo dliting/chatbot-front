@@ -114,31 +114,7 @@ function goHome() {
         </div>
 
         <!-- 思考设置 -->
-        <div class="setting-section">
-          <h2>思考设置</h2>
-          <div class="toggle-group">
-            <label class="toggle-option">
-              <span>显示思考开关</span>
-              <input v-model="form.showThinkingToggle" type="checkbox" />
-            </label>
-            <label class="toggle-option" :class="{ disabled: !form.showThinkingToggle }">
-              <span>思考默认开启</span>
-              <input
-                v-model="form.thinkingDefaultEnabled"
-                type="checkbox"
-                :disabled="!form.showThinkingToggle"
-              />
-            </label>
-            <label class="toggle-option" :class="{ disabled: !form.showThinkingToggle }">
-              <span>自动折叠思考内容</span>
-              <input
-                v-model="form.thinkingAutoCollapse"
-                type="checkbox"
-                :disabled="!form.showThinkingToggle"
-              />
-            </label>
-          </div>
-        </div>
+        
 
         <!-- 语音输入 -->
         <div class="setting-section">

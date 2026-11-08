@@ -267,3 +267,18 @@ describe('AIChatbot expose sendMessage/getState', () => {
     expect(Array.isArray(snapshot.messages)).toBe(true)
   })
 })
+
+describe('AIChatbot getState structured-clone safety', () => {
+  it('returns a snapshot that survives structuredClone (no reactive proxies)', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api' } },
+      global: {
+        stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true },
+      },
+    })
+    await nextTick()
+
+    const snapshot = wrapper.vm.getState()
+    expect(() => structuredClone(snapshot)).not.toThrow()
+  })
+})

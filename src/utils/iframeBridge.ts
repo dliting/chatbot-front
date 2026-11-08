@@ -54,8 +54,16 @@ export interface IframeBridge {
   handleHostMessage: (raw: { type?: string; data?: unknown }) => void
 }
 
+/** Deep-clone via JSON so reactive proxies and functions never reach postMessage */
+export function sanitizeForPostMessage<T>(data: T): T {
+  if (data === undefined) return data
+  return JSON.parse(JSON.stringify(data)) as T
+}
+
 export function createIframeBridge(deps: IframeBridgeDeps): IframeBridge {
-  const { send, getChatbot } = deps
+  // Every outbound payload is sanitized centrally: reactive proxies and
+  // functions throw DataCloneError inside postMessage's structured clone
+  const send: IframeBridgeDeps['send'] = (type, data) => deps.send(type, sanitizeForPostMessage(data))
 
   const forwardEvent = (event: string, data?: unknown) => {
     const type = EVENT_MAP[event]
@@ -74,13 +82,22 @@ export function createIframeBridge(deps: IframeBridgeDeps): IframeBridge {
   }
 
   const handleHostMessage = (raw: { type?: string; data?: unknown }) => {
-    const chatbot = getChatbot()
+    let chatbot: BridgeChatbotExpose
+    try {
+      chatbot = deps.getChatbot()
+    } catch {
+      // Not mounted yet (e.g. waitForIframeReady ping racing the mount tick):
+      // the async postMessage path has no caller to throw to — ignore.
+      return
+    }
     switch (raw?.type) {
       case 'host:toggle':
         chatbot.togglePanel((raw.data as { isOpen?: boolean } | undefined)?.isOpen)
         break
       case 'host:sendMessage': {
-        const result = chatbot.sendMessage(raw.data as { content: string })
+        const payload = raw.data as { content?: unknown } | undefined
+        if (typeof payload?.content !== 'string' || !payload.content.trim()) break
+        const result = chatbot.sendMessage(payload as { content: string })
         // Errors surface to the host via chatbot:messageError/chatbot:error events
         result.catch(() => undefined)
         break

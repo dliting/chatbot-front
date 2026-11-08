@@ -129,7 +129,7 @@ const { selectedFiles, hasValidFiles, handleFileSelect, removeFile, clearFiles }
   maxImageSize: props.maxImageSize,
   allowedImageTypes: props.allowedImageTypes,
   maxCount: props.maxImageCount,
-  labels: props.labels,
+  labels: () => props.labels,
 })
 
 // Computed
