@@ -130,6 +130,7 @@ const aiChatConfig = computed(() => ({
   labels: config.value.labels,
   theme: resolvedTheme.value,
   enableImageUpload: config.value.enableImageUpload,
+  enableVoiceInput: config.value.enableVoiceInput,
   maxImageCount: config.value.maxImageCount,
   maxImageSize: config.value.maxImageSize,
   defaultExpanded: config.value.defaultExpanded,

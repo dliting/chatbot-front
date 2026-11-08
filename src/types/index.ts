@@ -156,6 +156,7 @@ export interface ChatState {
   autoScroll?: boolean
   /** Config-driven upload settings */
   enableImageUpload?: boolean
+  enableVoiceInput?: boolean
   maxImageSize?: number
   allowedImageTypes?: string[]
   maxImageCount?: number

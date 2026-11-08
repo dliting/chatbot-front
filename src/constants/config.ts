@@ -30,6 +30,7 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
 
   // Features
   enableImageUpload: true,
+  enableVoiceInput: false,
   enableCopyMessage: true,
   enableDeleteMessage: true,
   enableResend: true,

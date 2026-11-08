@@ -30,6 +30,7 @@
     <div class="chat-content__input-area">
       <ChatInput
         :disabled="effectiveIsStreaming"
+        :enable-voice-input="effectiveEnableVoiceInput"
         :voice-transcriber="voiceTranscriber"
         :enable-thinking="effectiveEnableThinking"
         :thinking-enabled="effectiveThinkingEnabled"
@@ -87,6 +88,7 @@ interface Props {
   maxImageSize?: number
   allowedImageTypes?: string[]
   maxImageCount?: number
+  enableVoiceInput?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -118,6 +120,9 @@ const effectiveStreamingMessageId = computed(
   () => chatState?.streamingMessageId?.value ?? props.streamingMessageId
 )
 const effectiveEnableThinking = computed(() => chatState?.enableThinking ?? props.enableThinking)
+const effectiveEnableVoiceInput = computed(
+  () => (chatState?.enableVoiceInput ?? props.enableVoiceInput) === true && !!voiceTranscriber
+)
 const effectiveThinkingEnabled = computed(
   () => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled
 )

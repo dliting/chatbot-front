@@ -19,6 +19,31 @@
         </svg>
       </button>
 
+      <button
+        v-if="enableVoiceInput && voiceTranscriber"
+        class="chat-input__voice-btn"
+        :class="{
+          'chat-input__voice-btn--recording': voiceState === 'recording',
+          'chat-input__voice-btn--transcribing': voiceTranscribing,
+        }"
+        :title="
+          voiceState === 'recording'
+            ? resolveLabels()?.recording || 'Recording'
+            : voiceTranscribing
+              ? resolveLabels()?.transcribing || 'Transcribing'
+              : 'Voice input'
+        "
+        @click="handleVoiceClick"
+      >
+        <svg v-if="voiceState !== 'transcribing'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 1a3 3 0 013 3v8a3 3 0 01-6 0V4a3 3 0 013-3z" stroke-linecap="round" stroke-linejoin="round" />
+          <path d="M19 10v2a7 7 0 01-14 0v-2" stroke-linecap="round" stroke-linejoin="round" />
+          <line x1="12" y1="19" x2="12" y2="23" stroke-linecap="round" stroke-linejoin="round" />
+          <line x1="8" y1="23" x2="16" y2="23" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span v-else class="chat-input__voice-spinner" />
+      </button>
+
       <ThinkingToggle
         v-if="enableThinking"
         :enabled="thinkingEnabled"
@@ -81,6 +106,8 @@ import type { ChatbotLabels } from '@/types/config'
 import ThinkingToggle from './ThinkingToggle.vue'
 import { buildAttachmentUrl } from '@/utils/attachments'
 import { useFileSelection } from '@/composables/useFileSelection'
+import { useVoiceRecorder } from '@/composables/useVoiceRecorder'
+import type { VoiceTranscriber } from '@/types'
 import FilePreviewStrip from './FilePreviewStrip.vue'
 
 interface Props {
@@ -89,6 +116,9 @@ interface Props {
   thinkingEnabled?: boolean
   placeholder?: string
   labels?: Partial<ChatbotLabels>
+  /** Voice input: enabled by config + a transcriber from the API client */
+  enableVoiceInput?: boolean
+  voiceTranscriber?: VoiceTranscriber
   /** Config-driven upload settings */
   enableUpload?: boolean
   maxImageSize?: number
@@ -123,6 +153,48 @@ const fileInputRef = ref<HTMLInputElement>()
 
 // State
 const inputText = ref('')
+
+// Simple toast notification (alert placeholder)
+const showToast = (message: string) => {
+  alert(message)
+}
+
+// Voice recording state machine (three-state button)
+const { state: voiceState, start: startVoiceRecording, stop: stopVoiceRecording } = useVoiceRecorder()
+const voiceTranscribing = ref(false)
+
+const resolveLabels = () => props.labels
+
+const handleVoiceClick = async () => {
+  if (props.disabled) return
+  if (voiceState.value === 'recording') {
+    const base64 = await stopVoiceRecording()
+    if (base64 && props.voiceTranscriber) {
+      voiceTranscribing.value = true
+      try {
+        const text = await props.voiceTranscriber(base64, 'wav')
+        if (text) inputText.value = text
+        autoResize()
+      } catch {
+        showToast(resolveLabels()?.voiceFailed || 'Voice transcription failed')
+      } finally {
+        voiceTranscribing.value = false
+      }
+    }
+    return
+  }
+  if (voiceState.value === 'transcribing') return
+  try {
+    await startVoiceRecording()
+  } catch (error) {
+    const code = (error as { code?: string }).code
+    showToast(
+      code === 'permission'
+        ? resolveLabels()?.voicePermissionDenied || 'Microphone access denied'
+        : resolveLabels()?.voiceFailed || 'Voice recording is not supported'
+    )
+  }
+}
 
 // File selection (validation, base64 conversion, selection state)
 const { selectedFiles, hasValidFiles, handleFileSelect, removeFile, clearFiles } = useFileSelection({
@@ -221,6 +293,65 @@ const handleUploadClick = () => {
 
     &:hover {
       transform: scale(1.05);
+    }
+  }
+
+  &__voice-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text-tertiary, #909399);
+    transition: all 0.2s;
+    flex-shrink: 0;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    &:hover {
+      background: var(--border-light, #e4e7ed);
+      color: var(--text-primary, #303133);
+    }
+
+    &--recording {
+      color: var(--color-danger, #f56c6c);
+      animation: voice-pulse 1.2s ease-in-out infinite;
+    }
+
+    &--transcribing {
+      color: var(--theme-primary, #409eff);
+    }
+
+    .chat-input__voice-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: voice-spin 0.8s linear infinite;
+    }
+  }
+
+  @keyframes voice-pulse {
+    0%,
+    100% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.15);
+    }
+  }
+
+  @keyframes voice-spin {
+    to {
+      transform: rotate(360deg);
     }
   }
 
