@@ -1,5 +1,5 @@
 import type { ChatMessage } from '../types'
-import { OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_THINKING_ENABLED, OPENAI_API_KEY } from '../config'
+import { OLLAMA_ASR_MODEL, OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_THINKING_ENABLED, OPENAI_API_KEY } from '../config'
 
 export interface OllamaMessage {
   role: 'user' | 'assistant' | 'system'
@@ -212,4 +212,38 @@ export async function chat(messages: OllamaMessage[]): Promise<string> {
 
   const data = await response.json() as { choices?: Array<{ message?: { content?: string } }> }
   return data.choices?.[0]?.message?.content || ''
+}
+
+/**
+ * Transcribe audio (base64) via an Ollama audio-capable model.
+ * Payload shape verified against lfm3-audio (Ollama ≥0.40.13, /v1/chat/completions
+ * with input_audio content parts).
+ */
+export async function transcribeAudio(audio: string, format: string): Promise<string> {
+  const url = buildChatUrl(OLLAMA_BASE_URL)
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify({
+      model: OLLAMA_ASR_MODEL,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: 'Transcribe the audio exactly.' },
+            { type: 'input_audio', input_audio: { data: audio, format } },
+          ],
+        },
+      ],
+      stream: false,
+    })
+  })
+
+  if (!response.ok) {
+    throw new Error(`Ollama transcription failed: ${response.status} ${response.statusText}`)
+  }
+
+  const result = await response.json()
+  return result.choices?.[0]?.message?.content ?? ''
 }

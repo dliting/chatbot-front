@@ -103,6 +103,12 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
   }
 })
 
+// POST /chat/transcribe - Voice-to-text (canned, offline)
+router.post('/chat/transcribe', async (_req: Request, res: Response) => {
+  await new Promise((resolve) => setTimeout(resolve, 500))
+  res.json({ code: 0, message: 'success', data: { text: 'mock voice transcription' } })
+})
+
 // POST /chat/message - Non-streaming chat (mock)
 router.post('/chat/message', async (req: Request, res: Response) => {
   try {
