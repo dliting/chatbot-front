@@ -7,8 +7,9 @@ import 'element-plus/dist/index.css'
 import AIChatbot from './components/AIChatbot.vue'
 import { IframeMessenger } from './utils/postMessage'
 import { createIframeConfigStore } from './utils/iframeConfigStore'
+import { createIframeBridge } from './utils/iframeBridge'
 import type { ChatbotConfig } from './types/config'
-import type { Message, PanelToggleData } from './types'
+import type { PostMessageType } from './types'
 import './styles/chatbot.scss'
 
 // Get config from URL params or use defaults
@@ -31,6 +32,13 @@ const configStore = createIframeConfigStore(initialConfig)
 // Captured once the mounted AIChatbot instance is available
 let chatbotInstance: InstanceType<typeof AIChatbot> | null = null
 
+const getChatbot = (): InstanceType<typeof AIChatbot> => {
+  if (!chatbotInstance) {
+    throw new Error('AIChatbot instance not ready')
+  }
+  return chatbotInstance
+}
+
 // Create app
 const app = createApp({
   components: {
@@ -44,35 +52,24 @@ const app = createApp({
       allowedOrigins: initialConfig.allowedOrigins || [],
     })
 
+    // Protocol bridge: event mapping + host command dispatch (unit-tested)
+    const bridge = createIframeBridge({
+      send: (type: PostMessageType, data?: unknown) => messenger.send(type, data),
+      getChatbot: () => getChatbot(),
+    })
+
+    const handleEvent = (event: string, data?: unknown) => bridge.forwardEvent(event, data)
+
     // Notify parent that chatbot is ready
     onMounted(() => {
       chatbotInstance = chatbotRef.value ?? null
       messenger.send('chatbot:ready', { config: configStore.mergedConfig.value })
     })
 
-    // Handle events from chatbot
-    const handleToggle = (data: { isOpen: boolean; mode: string }) => {
-      messenger.send('chatbot:toggle', data)
-    }
-
-    const handleSendMessage = (data: { message: Message }) => {
-      messenger.send('chatbot:sendMessage', data)
-    }
-
-    const handleMessageError = (data: { message: Message; error: Error }) => {
-      messenger.send('chatbot:messageError', data)
-    }
-
-    const handleTopicSwitched = (data: { topicId: string }) => {
-      messenger.send('chatbot:topicChange', data)
-    }
-
     // Listen for messages from parent
-    messenger.on('host:toggle', (raw: unknown) => {
-      const data = raw as PanelToggleData | undefined
-      chatbotRef.value?.togglePanel(data?.isOpen)
-    })
-
+    messenger.on('host:toggle', (raw: unknown) => bridge.handleHostMessage(raw as { type?: string }))
+    messenger.on('host:sendMessage', (raw: unknown) => bridge.handleHostMessage(raw as { type?: string }))
+    messenger.on('host:getState', (raw: unknown) => bridge.handleHostMessage(raw as { type?: string }))
     messenger.on('host:setConfig', (raw: unknown) => {
       const data = raw as ChatbotConfig | undefined
       if (data) {
@@ -83,20 +80,29 @@ const app = createApp({
     return {
       chatbotRef,
       mergedConfig: configStore.mergedConfig,
-      handleToggle,
-      handleSendMessage,
-      handleMessageError,
-      handleTopicSwitched,
+      handleEvent,
     }
   },
   template: `
     <AIChatbot
       ref="chatbotRef"
       :config="mergedConfig"
-      @ui:panel-toggle="handleToggle"
-      @message:sent="handleSendMessage"
-      @message:error="handleMessageError"
-      @topic:switched="handleTopicSwitched"
+      @ui:panel-toggle="handleEvent('ui:panel-toggle', $event)"
+      @message:sent="handleEvent('message:sent', $event)"
+      @message:error="handleEvent('message:error', $event)"
+      @message:deleted="handleEvent('message:deleted', $event)"
+      @message:edited="handleEvent('message:edited', $event)"
+      @message:regenerated="handleEvent('message:regenerated', $event)"
+      @message:stream-start="handleEvent('message:stream-start', $event)"
+      @message:stream-end="handleEvent('message:stream-end', $event)"
+      @messages:cleared="handleEvent('messages:cleared', $event)"
+      @topic:switched="handleEvent('topic:switched', $event)"
+      @topic:created="handleEvent('topic:created', $event)"
+      @topic:deleted="handleEvent('topic:deleted', $event)"
+      @topic:title-updated="handleEvent('topic:title-updated', $event)"
+      @ui:theme-changed="handleEvent('ui:theme-changed', $event)"
+      @ui:stop-generating="handleEvent('ui:stop-generating')"
+      @chatbot:error="handleEvent('chatbot:error', $event)"
     />
   `,
 })
@@ -107,18 +113,21 @@ app.mount('#app')
 // Make chatbot methods available globally for parent page.
 // Methods delegate to the mounted instance and throw when it is not ready —
 // a silent no-op here hides real integration errors from the host page.
-const getChatbot = (): InstanceType<typeof AIChatbot> => {
-  if (!chatbotInstance) {
-    throw new Error('AIChatbot instance not ready')
-  }
-  return chatbotInstance
-}
-
 window.AIChatbot = {
   toggle: (open?: boolean) => {
     getChatbot().togglePanel(open)
   },
   setTheme: (theme: 'light' | 'dark' | 'system') => {
     getChatbot().setTheme(theme)
+  },
+  sendMessage: (data: {
+    content: string
+    attachments?: import('./types').Attachment[]
+    extraInfo?: string
+  }) => {
+    return getChatbot().sendMessage(data)
+  },
+  getState: () => {
+    return getChatbot().getState()
   },
 }

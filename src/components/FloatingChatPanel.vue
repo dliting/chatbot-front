@@ -55,7 +55,6 @@
         :enable-thinking="effectiveEnableThinking"
         :thinking-enabled="effectiveThinkingEnabled"
         :is-thinking="effectiveIsThinking"
-        :enable-voice-input="effectiveEnableVoiceInput"
         @file-click="handleFileClick"
       />
       <TopicListView
@@ -117,7 +116,6 @@ interface Props {
   enableThinking?: boolean
   thinkingEnabled?: boolean
   isThinking?: boolean
-  enableVoiceInput?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -158,9 +156,6 @@ const effectiveThinkingEnabled = computed(
   () => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled
 )
 const effectiveIsThinking = computed(() => chatState?.isThinking?.value ?? props.isThinking)
-const effectiveEnableVoiceInput = computed(
-  () => chatState?.enableVoiceInput ?? props.enableVoiceInput
-)
 
 // Quick actions: prefer prop, then config
 const effectiveQuickActions = computed(() => {

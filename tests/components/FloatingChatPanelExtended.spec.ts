@@ -187,14 +187,6 @@ describe('FloatingChatPanel Extended Tests', () => {
       const chatContent = wrapper.findComponent({ name: 'ChatContent' })
       expect(chatContent.props('isThinking')).toBe(true)
     })
-
-    it('should pass enableVoiceInput prop to ChatContent', async () => {
-      const wrapper = mountOpenPanel({ enableVoiceInput: true })
-      await nextTick()
-
-      const chatContent = wrapper.findComponent({ name: 'ChatContent' })
-      expect(chatContent.props('enableVoiceInput')).toBe(true)
-    })
   })
 
   describe('File Preview', () => {

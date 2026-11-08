@@ -78,7 +78,6 @@ interface ChatbotConfig {
 
   // === Feature Toggles ===
   enableImageUpload?: boolean      // Default true
-  enableVoiceInput?: boolean       // Default false
   enableCopyMessage?: boolean      // Default true
   enableDeleteMessage?: boolean    // Default true
   enableResend?: boolean           // Default true
@@ -403,7 +402,6 @@ interface ChatState {
   enableThinking: boolean                  // Thinking feature enabled in config
   thinkingEnabled: { value: boolean }      // Current thinking toggle state
   isThinking: { value: boolean }           // Whether currently in thinking phase
-  enableVoiceInput: boolean                // Voice input enabled in config
 }
 ```
 
@@ -1091,15 +1089,21 @@ const config: ChatbotConfig = {
 
 The iframe entry (`iframe-entry.ts`, built via `build:iframe`) communicates with its host page through `postMessage` with an origin whitelist (`allowedOrigins`).
 
-**Child → Host**
+**Child → Host** (all component events are forwarded; payloads follow the event table in §5)
 
-| Message | Payload | Fired when |
-|---------|---------|-----------|
-| `chatbot:ready` | `{ config }` | Iframe chatbot mounted |
-| `chatbot:toggle` | `{ isOpen, mode }` | Panel opened/closed |
-| `chatbot:sendMessage` | `{ message: Message }` | User message sent |
-| `chatbot:messageError` | `{ message, error }` | Message failed |
-| `chatbot:topicChange` | `{ topicId }` | Topic switched |
+| Message | Source event |
+|---------|--------------|
+| `chatbot:ready` | — (mounted) |
+| `chatbot:toggle` | `ui:panel-toggle` |
+| `chatbot:sendMessage` | `message:sent` |
+| `chatbot:messageError` | `message:error` (Error serialized to `{ name, message }`) |
+| `chatbot:topicChange` | `topic:switched` |
+| `chatbot:messageDeleted` / `chatbot:messageEdited` / `chatbot:messageRegenerated` | `message:*` |
+| `chatbot:messageStreamStart` / `chatbot:messageStreamEnd` | `message:stream-*` |
+| `chatbot:messagesCleared` | `messages:cleared` |
+| `chatbot:topicCreated` / `chatbot:topicDeleted` / `chatbot:topicTitleUpdated` | `topic:*` |
+| `chatbot:themeChanged` / `chatbot:stopGenerating` | `ui:*` |
+| `chatbot:error` | `chatbot:error` (Error serialized to `{ name, message }`) |
 
 **Host → Child**
 
@@ -1107,8 +1111,10 @@ The iframe entry (`iframe-entry.ts`, built via `build:iframe`) communicates with
 |---------|---------|--------|
 | `host:toggle` | `{ isOpen? }` | Toggle panel |
 | `host:setConfig` | `Partial<ChatbotConfig>` | Reactive config patch (unknown keys ignored) |
+| `host:sendMessage` | `{ content, attachments?, extraInfo? }` | Send a message through the normal chat flow (full event stream returns) |
+| `host:getState` | — | Responds `chatbot:state` with `{ config, isOpen, currentTopicId, topics, messages }` |
 
-Configuration can also be passed at load time via `?config=<base64 JSON>` URL parameter. After mount, the host page can call `window.AIChatbot.toggle(open?)` / `window.AIChatbot.setTheme(theme)`; both throw if the iframe chatbot is not ready yet.
+Configuration can also be passed at load time via `?config=<base64 JSON>` URL parameter. After mount, the host page can call `window.AIChatbot.toggle(open?)`, `window.AIChatbot.setTheme(theme)`, `window.AIChatbot.sendMessage({ content })` and `window.AIChatbot.getState()`; all throw if the iframe chatbot is not ready yet.
 
 ---
 

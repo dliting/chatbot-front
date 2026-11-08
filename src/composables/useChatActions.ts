@@ -164,9 +164,9 @@ export function useChatActions(deps: ChatActionsDeps) {
 
       emit('message:stream-start', { messageId: assistantMessageId })
 
-      await processStream(stream, controller, assistantMessageId, thinkingRequested)
+      const { fullContent } = await processStream(stream, controller, assistantMessageId, thinkingRequested)
       finalizeStreamStatus(assistantMessageId, controller, userMessageId)
-      emit('message:stream-end', { messageId: assistantMessageId })
+      emit('message:stream-end', { messageId: assistantMessageId, fullContent })
     } catch (error) {
       handleStreamError(error as Error, assistantMessageId, userMessageId)
     } finally {

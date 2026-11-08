@@ -32,7 +32,6 @@
         :disabled="effectiveIsStreaming"
         :enable-thinking="effectiveEnableThinking"
         :thinking-enabled="effectiveThinkingEnabled"
-        :enable-voice-input="effectiveEnableVoiceInput"
         :placeholder="mergedLabels.placeholder"
         :labels="mergedLabels"
         :enable-upload="chatState?.enableImageUpload ?? true"
@@ -83,7 +82,6 @@ interface Props {
   enableThinking?: boolean
   thinkingEnabled?: boolean
   isThinking?: boolean
-  enableVoiceInput?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -116,9 +114,6 @@ const effectiveStreamingMessageId = computed(
 const effectiveEnableThinking = computed(() => chatState?.enableThinking ?? props.enableThinking)
 const effectiveThinkingEnabled = computed(
   () => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled
-)
-const effectiveEnableVoiceInput = computed(
-  () => chatState?.enableVoiceInput ?? props.enableVoiceInput
 )
 
 const mergedLabels = computed(() => ({

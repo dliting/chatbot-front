@@ -14,7 +14,6 @@ const form = ref({
   showThinkingToggle: settings.showThinkingToggle,
   thinkingDefaultEnabled: settings.thinkingDefaultEnabled,
   thinkingAutoCollapse: settings.thinkingAutoCollapse,
-  enableVoiceInput: settings.enableVoiceInput,
 })
 
 const saved = ref(false)
@@ -32,7 +31,6 @@ function handleSave() {
   settings.showThinkingToggle = form.value.showThinkingToggle
   settings.thinkingDefaultEnabled = form.value.thinkingDefaultEnabled
   settings.thinkingAutoCollapse = form.value.thinkingAutoCollapse
-  settings.enableVoiceInput = form.value.enableVoiceInput
   saveSettings()
   saved.value = true
   setTimeout(() => { saved.value = false }, 2000)
@@ -116,40 +114,12 @@ function goHome() {
         </div>
 
         <!-- 思考设置 -->
-        <div class="setting-section">
-          <h2>思考设置</h2>
-          <div class="toggle-group">
-            <label class="toggle-option">
-              <span>显示思考开关</span>
-              <input v-model="form.showThinkingToggle" type="checkbox" />
-            </label>
-            <label class="toggle-option" :class="{ disabled: !form.showThinkingToggle }">
-              <span>思考默认开启</span>
-              <input
-                v-model="form.thinkingDefaultEnabled"
-                type="checkbox"
-                :disabled="!form.showThinkingToggle"
-              />
-            </label>
-            <label class="toggle-option" :class="{ disabled: !form.showThinkingToggle }">
-              <span>自动折叠思考内容</span>
-              <input
-                v-model="form.thinkingAutoCollapse"
-                type="checkbox"
-                :disabled="!form.showThinkingToggle"
-              />
-            </label>
-          </div>
-        </div>
+        
 
         <!-- 语音输入 -->
         <div class="setting-section">
           <h2>语音输入</h2>
           <div class="toggle-group">
-            <label class="toggle-option">
-              <span>允许语音输入</span>
-              <input v-model="form.enableVoiceInput" type="checkbox" />
-            </label>
           </div>
         </div>
 

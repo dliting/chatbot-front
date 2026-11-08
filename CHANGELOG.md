@@ -23,6 +23,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `onLoadTopics` / `onLoadMessages` / backend requests), preventing stale
   responses from slow backends
 - Suspended-ball position memory (restored across reloads, PRD F-007-04)
+- Full iframe postMessage protocol: all component events forwarded as
+  `chatbot:*` messages; `host:sendMessage` drives the normal chat flow and
+  `host:getState` answers `chatbot:state` with a full UI snapshot
+- `AIChatbot` expose (and `window.AIChatbot`) now includes `sendMessage(data)`
+  and `getState()`; streaming replies auto-follow token growth while the
+  reader stays near the bottom
 
 ### Changed
 
@@ -38,6 +44,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   end-to-end from config through the provide chain
 - Iframe `host:setConfig` patches are reactive; `window.AIChatbot.toggle /
   setTheme` delegate to the real instance and throw when not ready
+
+### Removed
+
+- Voice-input stub (`enableVoiceInput`, microphone button, unmounted
+  `VoiceOverlay`): the button was a no-op and no offline ASR path exists
+  (Web Speech API relies on cloud services). Voice input will be re-scoped
+  once an offline ASR approach is settled
 
 ### Fixed
 

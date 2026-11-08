@@ -226,3 +226,59 @@ describe('AIChatbot clear-all callback error handling', () => {
     expect(errors).toContain('Failed to clear messages')
   })
 })
+
+describe('AIChatbot expose sendMessage/getState', () => {
+  it('sendMessage delegates to the chat flow (user message added)', async () => {
+    const onSendMessage = vi.fn(function* (params: { content: string }) {
+      yield { type: 'token', content: 'reply-' + params.content }
+      yield { type: 'end' }
+    })
+    const wrapper = mount(AIChatbot, {
+      props: {
+        config: { mode: 'extended', apiBaseUrl: '/api', callbacks: { onSendMessage } },
+      },
+      global: {
+        stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true },
+      },
+    })
+    await nextTick()
+
+    await wrapper.vm.sendMessage({ content: 'from host' })
+
+    const userMsgs = wrapper.emitted('message:sent')
+    expect(userMsgs).toBeTruthy()
+    expect((userMsgs![0][0] as { message: { content: string } }).message.content).toBe('from host')
+  })
+
+  it('getState returns a full snapshot shape', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api' } },
+      global: {
+        stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true },
+      },
+    })
+    await nextTick()
+
+    const snapshot = wrapper.vm.getState()
+    expect(snapshot.config).toBeDefined()
+    expect(typeof snapshot.isOpen).toBe('boolean')
+    expect(typeof snapshot.currentTopicId).toBe('string')
+    expect(Array.isArray(snapshot.topics)).toBe(true)
+    expect(Array.isArray(snapshot.messages)).toBe(true)
+  })
+})
+
+describe('AIChatbot getState structured-clone safety', () => {
+  it('returns a snapshot that survives structuredClone (no reactive proxies)', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api' } },
+      global: {
+        stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true },
+      },
+    })
+    await nextTick()
+
+    const snapshot = wrapper.vm.getState()
+    expect(() => structuredClone(snapshot)).not.toThrow()
+  })
+})

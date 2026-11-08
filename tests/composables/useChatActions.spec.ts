@@ -1247,3 +1247,23 @@ describe('streamEnabled=false non-streaming path', () => {
     expect(api.sendMessage).not.toHaveBeenCalled()
   })
 })
+
+describe('message:stream-end payload contract', () => {
+  it('SSE path includes fullContent in stream-end', async () => {
+    const { deps, emitted } = createMockDeps({
+      callbacks: {
+        onSendMessage: () => createMockStream([
+          { type: 'token', content: 'final text' },
+          { type: 'end' },
+        ]),
+      },
+    })
+    const actions = useChatActions(deps)
+
+    await actions.sendMessage({ content: 'q' })
+
+    const ends = emitted.filter((e) => e.event === 'message:stream-end')
+    expect(ends).toHaveLength(1)
+    expect(ends[0].args[0]).toEqual(expect.objectContaining({ fullContent: 'final text' }))
+  })
+})

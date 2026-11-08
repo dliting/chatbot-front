@@ -61,7 +61,6 @@ describe('SettingsPage', () => {
         showThinkingToggle: true,
         thinkingDefaultEnabled: true,
         thinkingAutoCollapse: true,
-        enableVoiceInput: true,
       }),
     )
   })

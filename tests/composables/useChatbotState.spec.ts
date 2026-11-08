@@ -42,7 +42,6 @@ describe('useChatbotState', () => {
         maxImageCount: 3,
         maxImageSize: 5 * 1024 * 1024,
         enableImageUpload: true,
-        enableVoiceInput: false,
       },
       messages: {
         maxHistory: 100,

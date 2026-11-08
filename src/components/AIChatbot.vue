@@ -55,7 +55,8 @@
 <script setup lang="ts">
 import { computed, watch, onMounted, onUnmounted, ref, provide } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
-import type { ChatActionHandlers, TopicActionHandlers, UIActionHandlers, ChatState } from '@/types'
+import type { ChatActionHandlers, TopicActionHandlers, UIActionHandlers, ChatState, Attachment, IframeStateSnapshot } from '@/types'
+import { sanitizeForPostMessage } from '@/utils/iframeBridge'
 import { defaultChatbotConfig, getDefaultLabels } from '@/types/config'
 import { getDefaultQuickActions } from '@/constants/quickActions'
 import { modeToLayoutMap } from '@/types'
@@ -260,7 +261,6 @@ provide(chatStateKey, {
   enableThinking: config.value.enableThinking,
   thinkingEnabled,
   isThinking: chatActions.isThinkingActive,
-  enableVoiceInput: config.value.enableVoiceInput,
   enableCopyMessage: config.value.enableCopyMessage,
   enableDeleteMessage: config.value.enableDeleteMessage,
   enableResend: config.value.enableResend,
@@ -354,6 +354,19 @@ onUnmounted(() => {
 defineExpose({
   togglePanel,
   setTheme,
+  /** Host/iframe entry point: send a message through the normal chat flow */
+  sendMessage: (data: { content: string; attachments?: Attachment[]; extraInfo?: string }) =>
+    chatActions.sendMessage(data),
+  /** Full UI snapshot for host pages (postMessage getState): sanitized so the
+   *  host can postMessage it onward without DataCloneError on reactive proxies */
+  getState: (): IframeStateSnapshot =>
+    sanitizeForPostMessage({
+      config: props.config ?? {},
+      isOpen: state.ui.isPanelOpen,
+      currentTopicId: state.topics.currentId,
+      topics: [...state.topics.list],
+      messages: [...(state.messages.byTopic[state.topics.currentId] ?? [])],
+    }),
 })
 </script>
 

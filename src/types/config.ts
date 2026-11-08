@@ -134,7 +134,6 @@ export interface ChatbotConfig {
 
   // Feature toggles
   enableImageUpload?: boolean
-  enableVoiceInput?: boolean
   enableCopyMessage?: boolean
   enableDeleteMessage?: boolean
   enableResend?: boolean
@@ -229,7 +228,6 @@ export interface ChatbotLabels {
   historyTooltip?: string
   switchToDarkMode?: string
   switchToLightMode?: string
-  recording?: string
   topicsTab?: string
   chatTab?: string
   unnamedTopic?: string

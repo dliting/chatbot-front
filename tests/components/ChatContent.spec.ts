@@ -16,7 +16,7 @@ vi.mock('@/components/ChatInput.vue', () => ({
   default: {
     name: 'ChatInput',
     template: '<div class="chat-input-mock"><slot /></div>',
-    props: ['disabled', 'enableThinking', 'thinkingEnabled', 'enableVoiceInput', 'placeholder', 'labels', 'enableUpload', 'maxImageSize', 'allowedImageTypes', 'maxImageCount'],
+    props: ['disabled', 'enableThinking', 'thinkingEnabled', 'placeholder', 'labels', 'enableUpload', 'maxImageSize', 'allowedImageTypes', 'maxImageCount'],
     emits: ['send', 'file-click'],
   },
 }))
@@ -258,7 +258,6 @@ describe('config-driven message switches', () => {
     enableThinking: false,
     thinkingEnabled: { value: false },
     isThinking: { value: false },
-    enableVoiceInput: false,
   }
 
   it('passes enableCopyMessage=false down to MessageList', () => {
@@ -288,7 +287,6 @@ describe('config-driven upload settings', () => {
     enableThinking: false,
     thinkingEnabled: { value: false },
     isThinking: { value: false },
-    enableVoiceInput: false,
   }
 
   it('passes enableImageUpload=false down to ChatInput', () => {
@@ -324,7 +322,6 @@ describe('thinkingAutoCollapse chain', () => {
     enableThinking: false,
     thinkingEnabled: { value: false },
     isThinking: { value: false },
-    enableVoiceInput: false,
   }
 
   it('passes thinkingAutoCollapse=false down to MessageList', () => {

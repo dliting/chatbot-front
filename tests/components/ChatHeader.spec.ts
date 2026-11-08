@@ -336,7 +336,6 @@ describe('ChatHeader clear-all action (inject-primary)', () => {
     enableThinking: false,
     thinkingEnabled: { value: false },
     isThinking: { value: false },
-    enableVoiceInput: false,
   }
 
   function mountWithClear(options: { enableClearAll?: boolean } = {}) {
