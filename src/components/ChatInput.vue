@@ -349,6 +349,12 @@ const handleUploadClick = () => {
     }
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .chat-input__voice-btn--recording {
+      animation: none;
+    }
+  }
+
   @keyframes voice-spin {
     to {
       transform: rotate(360deg);

@@ -125,3 +125,12 @@ describe('useVoiceRecorder', () => {
     expect(await recorder.stop()).toBeNull()
   })
 })
+
+describe('useVoiceRecorder unsupported environment', () => {
+  it('start throws VoiceRecorderError(unsupported) without mediaDevices', async () => {
+    ;(globalThis.navigator as unknown as Record<string, unknown>).mediaDevices = undefined
+    const recorder = useVoiceRecorder()
+    await expect(recorder.start()).rejects.toMatchObject({ code: 'unsupported' })
+    expect(recorder.state.value).toBe('idle')
+  })
+})

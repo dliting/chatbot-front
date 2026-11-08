@@ -275,6 +275,7 @@ provide(chatStateKey, {
   maxImageCount: props.config?.maxImageCount,
   enableClearAll: config.value.enableClearAll,
   thinkingAutoCollapse: config.value.thinkingAutoCollapse,
+  enableVoiceInput: config.value.enableVoiceInput,
 } satisfies ChatState)
 
 provide(chatActionsKey, {

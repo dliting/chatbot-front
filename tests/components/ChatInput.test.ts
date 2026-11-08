@@ -1459,3 +1459,17 @@ describe('Voice input button (subproject ⑤)', () => {
     vi.unstubAllGlobals()
   })
 })
+
+describe('Voice button disabled guard', () => {
+  it('does not start recording when input is disabled', async () => {
+    ;(__voice as unknown as { calls: { start: number; stop: number } }).calls.start = 0
+    const wrapper = mount(ChatInput, {
+      props: { disabled: true, enableVoiceInput: true, voiceTranscriber: vi.fn().mockResolvedValue('x') },
+    })
+    const btn = wrapper.find('.chat-input__voice-btn')
+    expect(btn.exists()).toBe(true)
+    await btn.trigger('click')
+    await flushPromises()
+    expect((__voice as unknown as { calls: { start: number } }).calls.start).toBe(0)
+  })
+})
