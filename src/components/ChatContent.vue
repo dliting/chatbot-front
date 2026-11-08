@@ -30,6 +30,7 @@
     <div class="chat-content__input-area">
       <ChatInput
         :disabled="effectiveIsStreaming"
+        :voice-transcriber="voiceTranscriber"
         :enable-thinking="effectiveEnableThinking"
         :thinking-enabled="effectiveThinkingEnabled"
         :placeholder="mergedLabels.placeholder"
@@ -65,7 +66,7 @@ import { ref, computed, inject } from 'vue'
 import type { Message } from '@/types'
 import type { ChatbotLabels, QuickAction } from '@/types/config'
 import { getDefaultLabels } from '@/types/config'
-import { chatStateKey, chatActionsKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
+import { chatStateKey, chatActionsKey, uiActionsKey, promptVarResolverKey, voiceTranscriberKey } from '@/symbols'
 import WelcomeScreen from './WelcomeScreen.vue'
 import MessageList from './MessageList.vue'
 import ChatInput from './ChatInput.vue'
@@ -82,6 +83,10 @@ interface Props {
   enableThinking?: boolean
   thinkingEnabled?: boolean
   isThinking?: boolean
+  enableUpload?: boolean
+  maxImageSize?: number
+  allowedImageTypes?: string[]
+  maxImageCount?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -104,6 +109,7 @@ const chatState = inject(chatStateKey, null)
 const chatActions = inject(chatActionsKey)
 const uiActions = inject(uiActionsKey)
 const promptVarResolver = inject(promptVarResolverKey, null)
+const voiceTranscriber = inject(voiceTranscriberKey, undefined)
 
 // Resolve state from inject (preferred) or props (fallback)
 const effectiveMessages = computed(() => chatState?.messages?.value ?? props.messages)

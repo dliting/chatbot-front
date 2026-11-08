@@ -790,3 +790,31 @@ describe('streamChat request body coverage', () => {
     expect(body.stream).toBe(true)
   })
 })
+
+describe('transcribe', () => {
+  it('POSTs audio and format, returns data.text', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ code: 0, data: { text: 'transcribed words' } }),
+    })
+    const text = await useApiClient({ baseUrl: 'http://localhost:3000' }).transcribe('QUJD', 'wav')
+    expect(text).toBe('transcribed words')
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:3000/chat/transcribe',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio: 'QUJD', format: 'wav' }),
+      })
+    )
+  })
+
+  it('throws on code!==0 and on network !ok', async () => {
+    const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ code: 1, message: 'asr down' }) })
+    await expect(client.transcribe('QUJD', 'wav')).rejects.toThrow('asr down')
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) })
+    await expect(client.transcribe('QUJD', 'wav')).rejects.toThrow('API error: 500')
+  })
+})

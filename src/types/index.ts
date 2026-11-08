@@ -190,3 +190,6 @@ export type {
 
 // Iframe postMessage protocol types
 export type { PostMessageData, PostMessageType, IframeStateSnapshot } from './events'
+
+/** Transcribes recorded audio into text (voice input) */
+export type VoiceTranscriber = (audio: string, format: string) => Promise<string>
