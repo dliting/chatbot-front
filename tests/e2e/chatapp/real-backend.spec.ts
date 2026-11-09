@@ -7,6 +7,8 @@
 import { test, expect, type Page } from '@playwright/test'
 import { execSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { cleanState } from './helpers'
 
 const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434'
@@ -108,8 +110,8 @@ test.describe('Real backend - voice transcription (Ollama ASR)', () => {
   }
 
   test('transcribes English and Chinese audio via the real ASR model', async ({ request }) => {
-    const wavEn = synthWav('Microsoft Zira Desktop', 'What is the weather today', 'F:/temp/e2e-asr-en.wav')
-    const wavZh = synthWav('Microsoft Huihui Desktop', '今天天气怎么样', 'F:/temp/e2e-asr-zh.wav')
+    const wavEn = synthWav('Microsoft Zira Desktop', 'What is the weather today', join(tmpdir(), 'e2e-asr-en.wav'))
+    const wavZh = synthWav('Microsoft Huihui Desktop', '今天天气怎么样', join(tmpdir(), 'e2e-asr-zh.wav'))
 
     for (const [label, wav, keyword] of [
       ['en', wavEn, 'weather'],

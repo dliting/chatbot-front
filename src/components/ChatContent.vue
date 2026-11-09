@@ -121,7 +121,7 @@ const effectiveStreamingMessageId = computed(
 )
 const effectiveEnableThinking = computed(() => chatState?.enableThinking ?? props.enableThinking)
 const effectiveEnableVoiceInput = computed(
-  () => (chatState?.enableVoiceInput ?? props.enableVoiceInput) === true && !!voiceTranscriber
+  () => (chatState?.enableVoiceInput ?? props.enableVoiceInput) === true && !!voiceTranscriber?.value
 )
 const effectiveThinkingEnabled = computed(
   () => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled
