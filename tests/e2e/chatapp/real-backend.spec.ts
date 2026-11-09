@@ -43,12 +43,25 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
   test.setTimeout(180_000)
 
   test.beforeAll(async ({ request }) => {
+    // Hook has its own 30s budget — the model warmup below needs minutes
+    test.setTimeout(300_000)
     if (!process.env.E2E_REAL) return
-    // Warm the chat model (evicted whenever the ASR model loads and vice versa)
-    await request.post('/api/real/chat/stream', {
-      data: { sessionId: 'warmup', content: 'ping' },
-      timeout: 180_000,
-    }).catch(() => undefined)
+    // Warm the chat model: Ollama answers 503 immediately while a model is
+    // loading, and loading swaps evict the other model (lfm3-audio ↔ qwen3.5).
+    // A single request "completes" instantly with an error, so retry until the
+    // endpoint actually streams a chunk. Cold load can take minutes.
+    for (let attempt = 0; attempt < 30; attempt++) {
+      try {
+        const res = await request.post('/api/real/chat/stream', {
+          data: { sessionId: 'warmup', content: 'ping' },
+          timeout: 120_000,
+        })
+        if (res.ok()) break
+      } catch {
+        // network-level failure — retry
+      }
+      await new Promise((r) => setTimeout(r, 10_000))
+    }
   })
 
   test.beforeEach(async ({ page }) => {
@@ -66,8 +79,8 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
     await input.press('Enter')
 
     const assistantText = page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
-    await expect(assistantText).toBeVisible({ timeout: REAL_REPLY_TIMEOUT })
-    await expect(assistantText).not.toHaveText('', { timeout: REAL_REPLY_TIMEOUT })
+    await expect(assistantText).toBeVisible({ timeout: 150_000 })
+    await expect(assistantText).not.toHaveText('', { timeout: 150_000 })
   })
 
   test('clears the conversation via the header action', async ({ page }) => {
@@ -76,7 +89,7 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
     await input.press('Enter')
     await expect(
       page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
-    ).toBeVisible({ timeout: REAL_REPLY_TIMEOUT })
+    ).toBeVisible({ timeout: 150_000 })
 
     await page.locator('.chat-header__clear').click()
     await page.locator('.confirm-dialog__btn--confirm').click()
@@ -90,7 +103,7 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
     await input.press('Enter')
     await expect(
       page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
-    ).toBeVisible({ timeout: REAL_REPLY_TIMEOUT })
+    ).toBeVisible({ timeout: 150_000 })
 
     // create a fresh topic; messages list resets
     await page.locator('.topic-list-view__new-btn').first().click()
