@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import ChatContent from '@/components/ChatContent.vue'
 import { computed } from 'vue'
-import { chatActionsKey, chatStateKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
+import { chatActionsKey, chatStateKey, uiActionsKey, promptVarResolverKey, voiceTranscriberKey } from '@/symbols'
 import MessageList from '@/components/MessageList.vue'
 import ChatInput from '@/components/ChatInput.vue'
 import { createMockChatActions, createMockUIActions } from '../utils/mockActions'
@@ -16,7 +16,7 @@ vi.mock('@/components/ChatInput.vue', () => ({
   default: {
     name: 'ChatInput',
     template: '<div class="chat-input-mock"><slot /></div>',
-    props: ['disabled', 'enableThinking', 'thinkingEnabled', 'placeholder', 'labels', 'enableUpload', 'maxImageSize', 'allowedImageTypes', 'maxImageCount'],
+    props: ['disabled', 'enableThinking', 'thinkingEnabled', 'placeholder', 'labels', 'enableVoiceInput', 'voiceTranscriber', 'enableUpload', 'maxImageSize', 'allowedImageTypes', 'maxImageCount'],
     emits: ['send', 'file-click'],
   },
 }))
@@ -334,5 +334,29 @@ describe('thinkingAutoCollapse chain', () => {
   it('defaults thinkingAutoCollapse to true', () => {
     const wrapper = createWrapper()
     expect(wrapper.findComponent(MessageList).props('thinkingAutoCollapse')).toBe(true)
+  })
+})
+
+describe('ChatContent voice prop passthrough', () => {
+  const chatStateBase = {
+    messages: computed(() => mockMessages),
+    topics: computed(() => []),
+    currentTopicId: computed(() => 'session-1'),
+    isStreaming: computed(() => false),
+    streamingMessageId: computed(() => null),
+    enableThinking: false,
+    thinkingEnabled: { value: false },
+    isThinking: { value: false },
+  }
+
+  it('passes injected voiceTranscriber and enableVoiceInput to ChatInput', () => {
+    const transcriber = async () => 'text'
+    const wrapper = createWrapper({}, {
+      [chatStateKey]: { ...chatStateBase, enableVoiceInput: true },
+      [voiceTranscriberKey]: computed(() => transcriber),
+    })
+    const input = wrapper.findComponent(ChatInput)
+    expect(input.props('voiceTranscriber')).toBe(transcriber)
+    expect(input.props('enableVoiceInput')).toBe(true)
   })
 })

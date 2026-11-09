@@ -818,3 +818,29 @@ describe('transcribe', () => {
     await expect(client.transcribe('QUJD', 'wav')).rejects.toThrow('API error: 500')
   })
 })
+
+describe('streamChat request-body variants (coverage fill)', () => {
+  const makeStream = (chunks: string[]) => {
+    const encoder = new TextEncoder()
+    return new ReadableStream({
+      start(controller) {
+        for (const c of chunks) controller.enqueue(encoder.encode(c))
+        controller.close()
+      },
+    })
+  }
+
+  it('passes user signal through AbortSignal.any and options without thinking', async () => {
+    const controller = new AbortController()
+    mockFetch.mockResolvedValueOnce({ ok: true, body: makeStream(['data: {"type":"done"}\n\n']) })
+
+    const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+    const gen = client.streamChat('t1', 'hi', [], { signal: controller.signal })
+    for await (const _ of gen) { void _ }
+
+    const init = mockFetch.mock.calls.at(-1)![1] as { body: string }
+    const body = JSON.parse(init.body)
+    expect(body.options).toBeUndefined() // thinking omitted → chatOptions empty
+    void controller
+  })
+})
