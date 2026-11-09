@@ -9,7 +9,8 @@ import {
   addMessage,
   deleteMessage
 } from '../services/database'
-import { streamChat, chat, transcribeAudio, type OllamaMessage } from '../services/ollama'
+import { streamChat, chat, type OllamaMessage } from '../services/ollama'
+import { createAsrProvider } from '../services/asr'
 import { HOST, PORT } from '../config'
 import type { ApiResponse } from '../types'
 import { v4 as uuidv4 } from 'uuid'
@@ -117,7 +118,7 @@ router.post('/chat/transcribe', async (req: Request, res: Response) => {
       res.status(400).json({ code: 400, message: 'Missing audio payload' })
       return
     }
-    const text = await transcribeAudio(audio, format ?? 'wav')
+    const text = await createAsrProvider(process.env.OLLAMA_ASR_PROVIDER || 'ollama').transcribe(audio, format ?? 'wav')
     res.json({ code: 0, message: 'success', data: { text } })
   } catch (error) {
     res.status(500).json({ code: 500, message: error instanceof Error ? error.message : 'Transcription failed' })

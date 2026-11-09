@@ -216,3 +216,72 @@ describe('useVoiceRecorder races, leaks and auto-stop delivery', () => {
     expect(new DataView(bytes.buffer).getUint32(24, true)).toBe(contexts[0].sampleRate)
   })
 })
+
+describe('useVoiceRecorder capture-backend strategy seam', () => {
+  /** Minimal fake backend — proves the state machine is backend-agnostic */
+  function createFakeBackend() {
+    const calls = { start: 0, stop: 0 }
+    let stopValue: string | null = 'QUJD'
+    let startError: Error | null = null
+    const backend = {
+      isSupported: true,
+      start: vi.fn(async () => {
+        calls.start++
+        if (startError) throw startError
+      }),
+      stop: vi.fn(async () => {
+        calls.stop++
+        return stopValue
+      }),
+    }
+    return { backend, calls, setStopValue: (v: string | null) => { stopValue = v }, setStartError: (e: Error | null) => { startError = e } }
+  }
+
+  it('delegates start/stop to the injected backend', async () => {
+    const fake = createFakeBackend()
+    const recorder = useVoiceRecorder({ backend: fake.backend })
+
+    await recorder.start()
+    expect(fake.calls.start).toBe(1)
+    expect(recorder.state.value).toBe('recording')
+
+    const result = await recorder.stop()
+    expect(fake.calls.stop).toBe(1)
+    expect(result).toBe('QUJD')
+    expect(recorder.state.value).toBe('idle')
+  })
+
+  it('propagates backend errors without wrapping', async () => {
+    const fake = createFakeBackend()
+    fake.setStartError(new Error('native bridge missing'))
+    const recorder = useVoiceRecorder({ backend: fake.backend })
+
+    await expect(recorder.start()).rejects.toThrow('native bridge missing')
+    expect(recorder.state.value).toBe('idle')
+  })
+
+  it('auto-stop delivers backend audio through onAutoStop', async () => {
+    vi.useFakeTimers()
+    const fake = createFakeBackend()
+    const onAutoStop = vi.fn()
+    const recorder = useVoiceRecorder({ maxDurationSec: 1, onAutoStop, backend: fake.backend })
+
+    await recorder.start()
+    vi.advanceTimersByTime(1000)
+    await vi.waitFor(() => expect(onAutoStop).toHaveBeenCalledTimes(1))
+    expect(onAutoStop).toHaveBeenCalledWith('QUJD')
+    expect(recorder.state.value).toBe('idle')
+    vi.useRealTimers()
+  })
+
+  it('never touches WebAudio globals when a backend is injected', async () => {
+    const fake = createFakeBackend()
+    ;(globalThis.navigator as unknown as { mediaDevices: undefined }).mediaDevices = undefined
+
+    const recorder = useVoiceRecorder({ backend: fake.backend })
+    expect(recorder.isSupported).toBe(true) // from the backend, not globals
+    await recorder.start()
+    await recorder.stop()
+    expect(fake.calls.start).toBe(1)
+  })
+})

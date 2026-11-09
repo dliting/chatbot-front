@@ -113,3 +113,26 @@ export function createIframeBridge(deps: IframeBridgeDeps): IframeBridge {
 
   return { forwardEvent, handleHostMessage }
 }
+
+/**
+ * Wire a real messenger's host commands into the bridge.
+ *
+ * IMPORTANT: IframeMessenger handlers receive the de-enveloped PAYLOAD
+ * (postMessage.ts calls handler(data.data)) — this helper re-wraps each
+ * payload into the { type, data } envelope the bridge expects. host:setConfig
+ * is intentionally NOT routed here; the entry handles it with the reactive
+ * config store.
+ */
+export function registerHostHandlers(
+  messenger: {
+    on: (type: PostMessageType, handler: (data: unknown) => void) => void
+  },
+  bridge: IframeBridge
+): void {
+  const handle = (type: 'host:toggle' | 'host:sendMessage' | 'host:getState') =>
+    (payload: unknown) => bridge.handleHostMessage({ type, data: payload })
+
+  messenger.on('host:toggle', handle('host:toggle'))
+  messenger.on('host:sendMessage', handle('host:sendMessage'))
+  messenger.on('host:getState', handle('host:getState'))
+}

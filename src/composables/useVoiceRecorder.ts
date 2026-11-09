@@ -1,26 +1,25 @@
 /**
- * Voice recorder state machine: PCM capture via WebAudio ScriptProcessor,
- * WAV encoding via utils/audio. MediaRecorder is intentionally not used —
- * its webm/opus output is not accepted by Ollama input_audio ASR models.
+ * Voice recorder state machine (Strategy pattern):
+ * - mechanics (mic access, PCM capture, WAV encoding) live in a pluggable
+ *   VoiceCaptureBackend (default: WebAudio, see voiceCapture.ts)
+ * - policy (duration limit, auto-stop delivery, state phases) lives here,
+ *   so alternative capture backends inherit identical behavior
  */
 import { ref } from 'vue'
 import type { Ref } from 'vue'
-import { encodeWav } from '@/utils/audio'
+import { createWebAudioCaptureBackend, VoiceRecorderError } from './voiceCapture'
+import type { VoiceCaptureBackend } from './voiceCapture'
 
-export class VoiceRecorderError extends Error {
-  readonly code: 'permission' | 'unsupported'
-  constructor(code: 'permission' | 'unsupported', message: string) {
-    super(message)
-    this.name = 'VoiceRecorderError'
-    this.code = code
-  }
-}
-
+export { VoiceRecorderError }
 export type VoiceRecorderState = 'idle' | 'recording' | 'transcribing'
 
 export interface UseVoiceRecorderOptions {
   /** Hard stop after this many seconds of recording (default 60) */
   maxDurationSec?: number
+  /** Fired when the duration limit auto-stops the recording (not on manual stop) */
+  onAutoStop?: (base64Wav: string) => void
+  /** Capture backend (Strategy). Defaults to WebAudio ScriptProcessor capture */
+  backend?: VoiceCaptureBackend
 }
 
 export interface UseVoiceRecorderReturn {
@@ -33,90 +32,58 @@ export interface UseVoiceRecorderReturn {
 
 const DEFAULT_MAX_DURATION_SEC = 60
 
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer)
-  let binary = ''
-  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
-  return btoa(binary)
-}
-
 export function useVoiceRecorder(options: UseVoiceRecorderOptions = {}): UseVoiceRecorderReturn {
   const maxDurationMs = (options.maxDurationSec ?? DEFAULT_MAX_DURATION_SEC) * 1000
+  const backend: VoiceCaptureBackend = options.backend ?? createWebAudioCaptureBackend()
   const state = ref<VoiceRecorderState>('idle')
-  const isSupported =
-    typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
+  const isSupported = backend.isSupported
 
-  let audioContext: AudioContext | null = null
-  let mediaStream: MediaStream | null = null
-  let processor: ScriptProcessorNode | null = null
-  let sourceNode: MediaStreamAudioSourceNode | null = null
-  let chunks: Float32Array[] = []
   let timer: ReturnType<typeof setTimeout> | null = null
+  let starting = false
+  let autoStopped = false
 
-  function cleanup() {
+  function clearTimer() {
     if (timer) {
       clearTimeout(timer)
       timer = null
     }
-    processor?.disconnect()
-    sourceNode?.disconnect()
-    mediaStream?.getTracks().forEach((t) => t.stop())
-    audioContext?.close().catch(() => undefined)
-    processor = null
-    sourceNode = null
-    mediaStream = null
-    audioContext = null
   }
 
   async function start(): Promise<void> {
-    if (state.value !== 'idle') return
-    if (!isSupported) {
+    // Pending-start guard: a second click while getUserMedia is in flight must
+    // not create an orphan capture graph
+    if (state.value !== 'idle' || starting) return
+    if (!backend.isSupported) {
       throw new VoiceRecorderError('unsupported', 'MediaDevices API is not available')
     }
 
+    starting = true
     try {
-      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    } catch {
-      throw new VoiceRecorderError('permission', 'Microphone access denied')
+      await backend.start()
+      state.value = 'recording'
+      timer = setTimeout(() => {
+        autoStopped = true
+        void stop()
+      }, maxDurationMs)
+    } finally {
+      starting = false
     }
-
-    chunks = []
-    audioContext = new AudioContext({ sampleRate: 16000 })
-    sourceNode = audioContext.createMediaStreamSource(mediaStream)
-    // ScriptProcessorNode is deprecated but the only option that keeps the
-    // library bundle single-file; AudioWorklet migration is tracked separately.
-    processor = audioContext.createScriptProcessor(4096, 1, 1)
-    processor.onaudioprocess = (e: AudioProcessingEvent) => {
-      chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)))
-    }
-    sourceNode.connect(processor)
-    processor.connect(audioContext.destination)
-
-    state.value = 'recording'
-    timer = setTimeout(() => {
-      void stop()
-    }, maxDurationMs)
   }
 
   async function stop(): Promise<string | null> {
     if (state.value !== 'recording') return null
 
-    // Observable 'transcribing' phase: yield once before the (synchronous) encode
+    // Observable 'transcribing' phase: yield once before encoding
     state.value = 'transcribing'
-    cleanup()
-    chunks = await Promise.resolve(chunks)
-
-    const totalLength = chunks.reduce((sum, c) => sum + c.length, 0)
-    const merged = new Float32Array(totalLength)
-    let offset = 0
-    for (const c of chunks) {
-      merged.set(c, offset)
-      offset += c.length
-    }
-    chunks = []
-
-    const base64 = arrayBufferToBase64(encodeWav(merged, 16000))
+    clearTimer()
+    const base64 = await Promise.resolve(backend.stop())
     state.value = 'idle'
+
+    // Duration-limit auto-stop: deliver the audio to the host callback
+    if (autoStopped) {
+      autoStopped = false
+      if (base64) options.onAutoStop?.(base64)
+    }
     return base64
   }
 

@@ -19,6 +19,7 @@ if (!HOST || isNaN(PORT)) {
 export const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || ''
 export const OLLAMA_MODEL = process.env.OLLAMA_MODEL || ''
 export const OLLAMA_ASR_MODEL = process.env.OLLAMA_ASR_MODEL || 'lfm3-audio:latest'
+export const OLLAMA_ASR_PROVIDER = process.env.OLLAMA_ASR_PROVIDER || 'ollama'
 export const OLLAMA_THINKING_ENABLED = process.env.OLLAMA_THINKING_ENABLED?.toLowerCase() !== 'false'
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY || ''
 
