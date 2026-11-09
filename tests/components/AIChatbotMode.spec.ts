@@ -304,3 +304,50 @@ describe('AIChatbot voiceTranscriber provide chain', () => {
     expect((content.vm as unknown as { voiceTranscriber: unknown }).voiceTranscriber).toBeUndefined()
   })
 })
+
+describe('AIChatbot floating customization config passthrough', () => {
+  it('passes ball badge/icon/margin and panel offset/fontScale to FloatingChatPanel', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: {
+        config: {
+          mode: 'floating',
+          apiBaseUrl: '/api',
+          ballBadge: 3,
+          ballIcon: 'chat',
+          ballMargin: 24,
+          panelOffset: { x: -30, y: -50 },
+          fontScale: 1.25,
+        },
+      },
+      global: {
+        stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true, DraggableWindow: true },
+      },
+    })
+    await nextTick()
+
+    const panel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+    expect(panel.props('config')).toMatchObject({
+      ballBadge: 3,
+      ballIcon: 'chat',
+      ballMargin: 24,
+      panelOffset: { x: -30, y: -50 },
+      fontScale: 1.25,
+    })
+  })
+
+  it('omits the new fields when not configured (undefined, defaults apply)', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'floating', apiBaseUrl: '/api' } },
+      global: {
+        stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true, DraggableWindow: true },
+      },
+    })
+    await nextTick()
+    const panel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+    expect(panel.props('config').ballBadge).toBeUndefined()
+    expect(panel.props('config').ballIcon).toBeUndefined()
+    expect(panel.props('config').ballMargin).toBeUndefined()
+    expect(panel.props('config').panelOffset).toBeUndefined()
+    expect(panel.props('config').fontScale).toBeUndefined()
+  })
+})
