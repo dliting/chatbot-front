@@ -27,6 +27,11 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   minWidth: 300,
   minHeight: 400,
   rememberPosition: true,
+  ballBadge: 0,
+  ballIcon: undefined as unknown as string,
+  ballMargin: 16,
+  panelOffset: undefined as unknown as { x?: number; y?: number },
+  fontScale: 1,
 
   // Features
   enableImageUpload: true,
