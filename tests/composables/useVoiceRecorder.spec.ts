@@ -28,7 +28,8 @@ function createFakeProcessor() {
 
 /** Install globals: getUserMedia + AudioContext whose script processor is the fake */
 function installFakeAudioApi(processor: ReturnType<typeof createFakeProcessor>) {
-  const fakeStream = { getTracks: () => [{ stop: vi.fn() }] } as unknown as MediaStream
+  const stopTrack = vi.fn()
+  const fakeStream = { getTracks: () => [{ stop: stopTrack }] } as unknown as MediaStream
   ;(globalThis.navigator as unknown as { mediaDevices: unknown }).mediaDevices = {
     getUserMedia: vi.fn().mockResolvedValue(fakeStream),
   } as unknown as MediaDevices
@@ -132,5 +133,86 @@ describe('useVoiceRecorder unsupported environment', () => {
     const recorder = useVoiceRecorder()
     await expect(recorder.start()).rejects.toMatchObject({ code: 'unsupported' })
     expect(recorder.state.value).toBe('idle')
+  })
+})
+
+describe('useVoiceRecorder races, leaks and auto-stop delivery', () => {
+  const stopTrack = vi.fn()
+  const fakeStream = { getTracks: () => [{ stop: stopTrack }] } as unknown as MediaStream
+
+  function installThrowingContext() {
+    ;(globalThis.navigator as unknown as { mediaDevices: { getUserMedia: unknown } }).mediaDevices = {
+      getUserMedia: vi.fn().mockResolvedValue(fakeStream),
+    }
+    ;(globalThis as unknown as { AudioContext: unknown }).AudioContext = class {
+      constructor() {
+        throw new Error('sampleRate unsupported')
+      }
+    }
+  }
+
+  function installCountingContext(contexts: unknown[]) {
+    ;(globalThis.navigator as unknown as { mediaDevices: { getUserMedia: unknown } }).mediaDevices = {
+      getUserMedia: vi.fn().mockResolvedValue(fakeStream),
+    }
+    ;(globalThis as unknown as { AudioContext: unknown }).AudioContext = class {
+      sampleRate = 48000
+      destination = {}
+      constructor() { contexts.push(this) }
+      createMediaStreamSource() { return { connect: vi.fn(), disconnect: vi.fn() } }
+      createScriptProcessor() { return { connect: vi.fn(), disconnect: vi.fn(), addEventListener: vi.fn(), onaudioprocess: null } }
+      close() { return Promise.resolve() }
+    }
+  }
+
+  it('creates exactly one AudioContext for concurrent start calls (no orphan graph)', async () => {
+    const contexts: unknown[] = []
+    installCountingContext(contexts)
+    const recorder = useVoiceRecorder()
+
+    await Promise.all([recorder.start(), recorder.start()])
+    expect(contexts).toHaveLength(1)
+    expect(recorder.state.value).toBe('recording')
+    await recorder.stop()
+  })
+
+  it('cleans up the mic stream when graph construction throws after getUserMedia', async () => {
+    installThrowingContext()
+    const recorder = useVoiceRecorder()
+
+    await expect(recorder.start()).rejects.toThrow('sampleRate unsupported')
+    expect(stopTrack).toHaveBeenCalled() // mic released — no half-open state
+    expect(recorder.state.value).toBe('idle')
+  })
+
+  it('delivers auto-stop audio via onAutoStop', async () => {
+    vi.useFakeTimers()
+    const processor = createFakeProcessor()
+    installFakeAudioApi(processor)
+    const onAutoStop = vi.fn()
+    const recorder = useVoiceRecorder({ maxDurationSec: 1, onAutoStop })
+
+    await recorder.start()
+    processor.pushFrame([0.1, 0.2])
+    vi.advanceTimersByTime(1000)
+    await vi.waitFor(() => expect(onAutoStop).toHaveBeenCalledTimes(1))
+    expect(onAutoStop.mock.calls[0][0]).toMatch(/^UklGRi/) // base64 RIFF
+    expect(recorder.state.value).toBe('idle')
+    vi.useRealTimers()
+  })
+
+  it('encodes WAV with the AudioContext actual sample rate', async () => {
+    const contexts: Array<{ sampleRate: number }> = []
+    installCountingContext(contexts)
+    const recorder = useVoiceRecorder()
+    await recorder.start()
+    expect(recorder.state.value).toBe('recording')
+    expect(contexts).toHaveLength(1)
+    const base64 = await recorder.stop()
+
+    const bin = atob(base64 as string)
+    const bytes = new Uint8Array(bin.length)
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+    expect(new DataView(bytes.buffer).getUint32(24, true)).toBe(contexts[0].sampleRate)
   })
 })

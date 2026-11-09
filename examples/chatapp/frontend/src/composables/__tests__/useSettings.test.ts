@@ -1,19 +1,31 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+
+/** happy-dom's localStorage rejects method assignment — stub the whole object */
+function stubLocalStorage() {
+  const store = new Map<string, string>()
+  const getItem = vi.fn((key: string) => store.get(key) ?? null)
+  const setItem = vi.fn((key: string, value: string) => { store.set(key, value) })
+  const removeItem = vi.fn((key: string) => { store.delete(key) })
+  vi.stubGlobal('localStorage', { getItem, setItem, removeItem })
+  return { getItem, setItem, removeItem, store }
+}
 
 describe('useSettings', () => {
-  let getItemSpy: ReturnType<typeof vi.fn>
-  let setItemSpy: ReturnType<typeof vi.fn>
-  let removeItemSpy: ReturnType<typeof vi.fn>
+  let getItem: ReturnType<typeof stubLocalStorage>['getItem']
+  let setItem: ReturnType<typeof stubLocalStorage>['setItem']
+  let removeItem: ReturnType<typeof stubLocalStorage>['removeItem']
 
   beforeEach(() => {
-    getItemSpy = vi.fn().mockReturnValue(null)
-    setItemSpy = vi.fn()
-    removeItemSpy = vi.fn()
-    localStorage.getItem = getItemSpy
-    localStorage.setItem = setItemSpy
-    localStorage.removeItem = removeItemSpy
+    const stub = stubLocalStorage()
+    getItem = stub.getItem
+    setItem = stub.setItem
+    removeItem = stub.removeItem
     // Reset module cache so singleton re-initializes with fresh localStorage
     vi.resetModules()
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
   })
 
   async function getUseSettings() {
@@ -28,10 +40,11 @@ describe('useSettings', () => {
     expect(settings.showThinkingToggle).toBe(true)
     expect(settings.thinkingDefaultEnabled).toBe(true)
     expect(settings.thinkingAutoCollapse).toBe(true)
+    expect(settings.enableVoiceInput).toBe(true)
   })
 
   it('should load saved settings from localStorage', async () => {
-    getItemSpy.mockReturnValue(JSON.stringify({
+    getItem.mockReturnValue(JSON.stringify({
       backendMode: 'real',
       theme: 'dark',
       apiTimeout: 60000,
@@ -43,6 +56,7 @@ describe('useSettings', () => {
     expect(settings.showThinkingToggle).toBe(true)
     expect(settings.thinkingDefaultEnabled).toBe(true)
     expect(settings.thinkingAutoCollapse).toBe(true)
+    expect(settings.enableVoiceInput).toBe(true)
   })
 
   it('should persist settings via saveSettings', async () => {
@@ -52,11 +66,12 @@ describe('useSettings', () => {
     settings.apiTimeout = 10000
     saveSettings()
 
-    expect(setItemSpy).toHaveBeenCalledWith('chatapp-settings', JSON.stringify({
+    expect(setItem).toHaveBeenCalledWith('chatapp-settings', JSON.stringify({
       backendMode: 'real',
       theme: 'dark',
       apiTimeout: 10000,
       showThinkingToggle: true,
+      enableVoiceInput: true,
       thinkingDefaultEnabled: true,
       thinkingAutoCollapse: true,
     }))
@@ -76,7 +91,8 @@ describe('useSettings', () => {
     expect(settings.showThinkingToggle).toBe(true)
     expect(settings.thinkingDefaultEnabled).toBe(true)
     expect(settings.thinkingAutoCollapse).toBe(true)
-    expect(removeItemSpy).toHaveBeenCalledWith('chatapp-settings')
+    expect(settings.enableVoiceInput).toBe(true)
+    expect(removeItem).toHaveBeenCalledWith('chatapp-settings')
   })
 
   it('getApiBaseUrl should return correct path based on backendMode', async () => {
@@ -90,7 +106,7 @@ describe('useSettings', () => {
   })
 
   it('should handle corrupt localStorage data gracefully', async () => {
-    getItemSpy.mockReturnValue('not-json')
+    getItem.mockReturnValue('not-json')
     const { settings } = await getUseSettings()
     expect(settings.backendMode).toBe('mock')
     expect(settings.theme).toBe('light')
@@ -98,10 +114,11 @@ describe('useSettings', () => {
     expect(settings.showThinkingToggle).toBe(true)
     expect(settings.thinkingDefaultEnabled).toBe(true)
     expect(settings.thinkingAutoCollapse).toBe(true)
+    expect(settings.enableVoiceInput).toBe(true)
   })
 
   it('should merge partial stored settings with defaults', async () => {
-    getItemSpy.mockReturnValue(JSON.stringify({
+    getItem.mockReturnValue(JSON.stringify({
       backendMode: 'real',
     }))
     const { settings } = await getUseSettings()
@@ -111,6 +128,7 @@ describe('useSettings', () => {
     expect(settings.showThinkingToggle).toBe(true)
     expect(settings.thinkingDefaultEnabled).toBe(true)
     expect(settings.thinkingAutoCollapse).toBe(true)
+    expect(settings.enableVoiceInput).toBe(true)
   })
 
   it('should return the same reactive object across calls (singleton)', async () => {
