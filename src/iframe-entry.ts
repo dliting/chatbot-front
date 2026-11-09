@@ -7,7 +7,7 @@ import 'element-plus/dist/index.css'
 import AIChatbot from './components/AIChatbot.vue'
 import { IframeMessenger } from './utils/postMessage'
 import { createIframeConfigStore } from './utils/iframeConfigStore'
-import { createIframeBridge } from './utils/iframeBridge'
+import { createIframeBridge, registerHostHandlers } from './utils/iframeBridge'
 import type { ChatbotConfig } from './types/config'
 import type { PostMessageType } from './types'
 import './styles/chatbot.scss'
@@ -67,9 +67,7 @@ const app = createApp({
     })
 
     // Listen for messages from parent
-    messenger.on('host:toggle', (raw: unknown) => bridge.handleHostMessage(raw as { type?: string }))
-    messenger.on('host:sendMessage', (raw: unknown) => bridge.handleHostMessage(raw as { type?: string }))
-    messenger.on('host:getState', (raw: unknown) => bridge.handleHostMessage(raw as { type?: string }))
+    registerHostHandlers(messenger, bridge)
     messenger.on('host:setConfig', (raw: unknown) => {
       const data = raw as ChatbotConfig | undefined
       if (data) {

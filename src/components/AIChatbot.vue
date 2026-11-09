@@ -66,6 +66,7 @@ import {
   topicActionsKey,
   uiActionsKey,
   promptVarResolverKey,
+  voiceTranscriberKey,
 } from '@/symbols'
 import { useChatbotState } from '@/composables/useChatbotState'
 import { useChatActions } from '@/composables/useChatActions'
@@ -129,6 +130,7 @@ const aiChatConfig = computed(() => ({
   labels: config.value.labels,
   theme: resolvedTheme.value,
   enableImageUpload: config.value.enableImageUpload,
+  enableVoiceInput: config.value.enableVoiceInput,
   maxImageCount: config.value.maxImageCount,
   maxImageSize: config.value.maxImageSize,
   defaultExpanded: config.value.defaultExpanded,
@@ -273,6 +275,7 @@ provide(chatStateKey, {
   maxImageCount: props.config?.maxImageCount,
   enableClearAll: config.value.enableClearAll,
   thinkingAutoCollapse: config.value.thinkingAutoCollapse,
+  enableVoiceInput: config.value.enableVoiceInput,
 } satisfies ChatState)
 
 provide(chatActionsKey, {
@@ -323,6 +326,17 @@ const promptVarResolver = usePromptVariables({
   customResolvers: config.value.promptVariables?.resolvers,
 })
 provide(promptVarResolverKey, promptVarResolver)
+
+// Voice transcription (voice input) — available only with an API client
+const voiceTranscriber = (audio: string, format: string) => {
+  const client = apiClient.value
+  if (!client) return Promise.reject(new Error('API client is not configured'))
+  return client.transcribe(audio, format)
+}
+provide(
+  voiceTranscriberKey,
+  computed(() => (apiClient.value ? voiceTranscriber : undefined))
+)
 
 // Watch panel open state
 watch(

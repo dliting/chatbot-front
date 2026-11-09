@@ -187,3 +187,49 @@ describe('createIframeBridge payload sanitize', () => {
     expect(chatbot.sendMessage).not.toHaveBeenCalled()
   })
 })
+
+describe('registerHostHandlers (real messenger wiring contract)', () => {
+  /**
+   * Pins the P0 fix: IframeMessenger handlers receive the de-enveloped
+   * payload — the wiring must re-wrap it into { type, data } before the
+   * bridge dispatches. Regression for the host-command blackout.
+   */
+  it('re-wraps messenger payloads into envelopes and drives the chatbot', async () => {
+    const { IframeMessenger } = await import('@/utils/postMessage')
+    const { registerHostHandlers } = await import('@/utils/iframeBridge')
+
+    const sent: Array<{ type: string; data?: unknown }> = []
+    const chatbot = createFakeChatbot()
+    const messenger = new IframeMessenger({ allowedOrigins: ['http://host.example'], targetWindow: null })
+    const bridge = createIframeBridge({
+      send: (type, data) => sent.push({ type, data }),
+      getChatbot: () => chatbot as never,
+    })
+    registerHostHandlers(messenger, bridge)
+
+    const dispatch = (type: string, data?: unknown) => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          origin: 'http://host.example',
+          source: null,
+          data: { source: 'host-page', type, data },
+        })
+      )
+    }
+
+    // host payloads are BARE (no envelope) — exactly what a real host page sends
+    dispatch('host:toggle', { isOpen: false })
+    expect(chatbot.togglePanel).toHaveBeenCalledWith(false)
+
+    dispatch('host:sendMessage', { content: 'hi' })
+    expect(chatbot.sendMessage).toHaveBeenCalledWith({ content: 'hi' })
+
+    dispatch('host:getState')
+    await new Promise((r) => setTimeout(r, 0))
+    const stateMsg = sent.find((m) => m.type === 'chatbot:state')
+    expect(stateMsg).toBeTruthy()
+    expect(() => structuredClone(stateMsg!.data)).not.toThrow()
+
+    messenger.destroy?.()
+  })
+})

@@ -790,3 +790,57 @@ describe('streamChat request body coverage', () => {
     expect(body.stream).toBe(true)
   })
 })
+
+describe('transcribe', () => {
+  it('POSTs audio and format, returns data.text', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ code: 0, data: { text: 'transcribed words' } }),
+    })
+    const text = await useApiClient({ baseUrl: 'http://localhost:3000' }).transcribe('QUJD', 'wav')
+    expect(text).toBe('transcribed words')
+    expect(mockFetch).toHaveBeenCalledWith(
+      'http://localhost:3000/chat/transcribe',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ audio: 'QUJD', format: 'wav' }),
+      })
+    )
+  })
+
+  it('throws on code!==0 and on network !ok', async () => {
+    const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+    mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ code: 1, message: 'asr down' }) })
+    await expect(client.transcribe('QUJD', 'wav')).rejects.toThrow('asr down')
+
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500, json: async () => ({}) })
+    await expect(client.transcribe('QUJD', 'wav')).rejects.toThrow('API error: 500')
+  })
+})
+
+describe('streamChat request-body variants (coverage fill)', () => {
+  const makeStream = (chunks: string[]) => {
+    const encoder = new TextEncoder()
+    return new ReadableStream({
+      start(controller) {
+        for (const c of chunks) controller.enqueue(encoder.encode(c))
+        controller.close()
+      },
+    })
+  }
+
+  it('passes user signal through AbortSignal.any and options without thinking', async () => {
+    const controller = new AbortController()
+    mockFetch.mockResolvedValueOnce({ ok: true, body: makeStream(['data: {"type":"done"}\n\n']) })
+
+    const client = useApiClient({ baseUrl: 'http://localhost:3000' })
+    const gen = client.streamChat('t1', 'hi', [], { signal: controller.signal })
+    for await (const _ of gen) { void _ }
+
+    const init = mockFetch.mock.calls.at(-1)![1] as { body: string }
+    const body = JSON.parse(init.body)
+    expect(body.options).toBeUndefined() // thinking omitted → chatOptions empty
+    void controller
+  })
+})

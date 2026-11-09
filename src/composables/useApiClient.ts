@@ -236,6 +236,24 @@ export function useApiClient(options: ApiClientOptions) {
     if (!response.ok) throw new Error(`API error: ${response.status}`)
   }
 
+  /**
+   * Transcribe audio (base64) via the backend ASR endpoint
+   */
+  async function transcribe(audio: string, format: string): Promise<string> {
+    const response = await fetch(`${baseUrl}/chat/transcribe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ audio, format }),
+    })
+
+    if (!response.ok) throw new Error(`API error: ${response.status}`)
+
+    const result = await response.json()
+    if (result.code !== 0) throw new Error(result.message || 'API error')
+
+    return result.data.text
+  }
+
   return {
     // Methods
     streamChat,
@@ -246,5 +264,6 @@ export function useApiClient(options: ApiClientOptions) {
     deleteTopic,
     updateTopicTitle,
     deleteMessage,
+    transcribe,
   }
 }

@@ -30,6 +30,8 @@
     <div class="chat-content__input-area">
       <ChatInput
         :disabled="effectiveIsStreaming"
+        :enable-voice-input="effectiveEnableVoiceInput"
+        :voice-transcriber="voiceTranscriber"
         :enable-thinking="effectiveEnableThinking"
         :thinking-enabled="effectiveThinkingEnabled"
         :placeholder="mergedLabels.placeholder"
@@ -65,7 +67,7 @@ import { ref, computed, inject } from 'vue'
 import type { Message } from '@/types'
 import type { ChatbotLabels, QuickAction } from '@/types/config'
 import { getDefaultLabels } from '@/types/config'
-import { chatStateKey, chatActionsKey, uiActionsKey, promptVarResolverKey } from '@/symbols'
+import { chatStateKey, chatActionsKey, uiActionsKey, promptVarResolverKey, voiceTranscriberKey } from '@/symbols'
 import WelcomeScreen from './WelcomeScreen.vue'
 import MessageList from './MessageList.vue'
 import ChatInput from './ChatInput.vue'
@@ -82,6 +84,11 @@ interface Props {
   enableThinking?: boolean
   thinkingEnabled?: boolean
   isThinking?: boolean
+  enableUpload?: boolean
+  maxImageSize?: number
+  allowedImageTypes?: string[]
+  maxImageCount?: number
+  enableVoiceInput?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -104,6 +111,7 @@ const chatState = inject(chatStateKey, null)
 const chatActions = inject(chatActionsKey)
 const uiActions = inject(uiActionsKey)
 const promptVarResolver = inject(promptVarResolverKey, null)
+const voiceTranscriber = inject(voiceTranscriberKey, undefined)
 
 // Resolve state from inject (preferred) or props (fallback)
 const effectiveMessages = computed(() => chatState?.messages?.value ?? props.messages)
@@ -112,6 +120,9 @@ const effectiveStreamingMessageId = computed(
   () => chatState?.streamingMessageId?.value ?? props.streamingMessageId
 )
 const effectiveEnableThinking = computed(() => chatState?.enableThinking ?? props.enableThinking)
+const effectiveEnableVoiceInput = computed(
+  () => (chatState?.enableVoiceInput ?? props.enableVoiceInput) === true && !!voiceTranscriber?.value
+)
 const effectiveThinkingEnabled = computed(
   () => chatState?.thinkingEnabled?.value ?? props.thinkingEnabled
 )

@@ -53,6 +53,15 @@ describe('MessageItem Extended Tests', () => {
     vi.clearAllMocks()
   })
 
+  const fbChatActions = {
+    sendMessage: vi.fn(),
+    refreshMessage: vi.fn(),
+    deleteMessage: vi.fn(),
+    editMessage: vi.fn(),
+    stopGenerating: vi.fn(),
+    isGenerating: { value: false },
+    isThinkingActive: { value: false },
+  }
   const createUserMessage = (overrides = {}): Message => ({
     id: 'msg-1',
     role: 'user',
@@ -705,5 +714,77 @@ describe('MessageItem Extended Tests', () => {
       expect(wrapper.find('.chatbot-message__audios').exists()).toBe(true)
       expect(wrapper.find('.chatbot-message__documents').exists()).toBe(true)
     })
+  })
+})
+describe('MessageItem status text fallback branches', () => {
+  const fbChatActions = {
+    sendMessage: vi.fn(),
+    refreshMessage: vi.fn(),
+    deleteMessage: vi.fn(),
+    editMessage: vi.fn(),
+    stopGenerating: vi.fn(),
+    isGenerating: { value: false },
+    isThinkingActive: { value: false },
+  }
+
+  const createUserMessage = (overrides = {}): Message => ({
+    messageId: 'msg_fb',
+    topicId: 'topic_1',
+    role: 'user',
+    type: 'text',
+    content: 'hello',
+    timestamp: Date.now(),
+    status: 'sent',
+    ...overrides,
+  })
+
+  const createWrapper = (message: Message, props = {}) => mount(MessageItem, {
+    props: { message, ...props },
+    global: {
+      provide: { [chatActionsKey as symbol]: fbChatActions },
+      stubs: { ThinkingBlock: true },
+    },
+  })
+
+  it('shows sendFailed fallback for user error message without errorMessage', () => {
+    const wrapper = createWrapper(createUserMessage({
+      status: 'error',
+      content: '',
+    }))
+    expect(wrapper.find('.chatbot-message__error').text()).toContain('Send failed')
+  })
+
+  it('shows responseFailed fallback for assistant error message without errorMessage', () => {
+    const wrapper = createWrapper(createUserMessage({
+      role: 'assistant',
+      status: 'error',
+      content: '',
+    }))
+    expect(wrapper.find('.chatbot-message__error').text()).toContain('Response failed')
+  })
+
+  it('prefers message.errorMessage over label fallback', () => {
+    const wrapper = createWrapper(createUserMessage({
+      role: 'assistant',
+      status: 'error',
+      content: '',
+      errorMessage: 'custom boom',
+    }))
+    expect(wrapper.find('.chatbot-message__error').text()).toContain('custom boom')
+  })
+
+  it('shows stopped fallback when stopped without errorMessage', () => {
+    const wrapper = createWrapper(createUserMessage({
+      role: 'assistant',
+      status: 'stopped',
+      content: 'partial',
+    }))
+    expect(wrapper.find('.chatbot-message__stopped').text()).toContain('Generation stopped')
+  })
+
+  it('renders the label slot when showLabel is true', () => {
+    const wrapper = createWrapper(createUserMessage(), { showLabel: true })
+    expect(wrapper.find('.chatbot-message__label').exists()).toBe(true)
+    expect(wrapper.find('.chatbot-message__label').text()).toBeTruthy()
   })
 })

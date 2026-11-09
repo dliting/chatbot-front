@@ -8,6 +8,7 @@ export interface ChatAppSettings {
   theme: ThemeMode
   apiTimeout: number
   showThinkingToggle: boolean
+  enableVoiceInput: boolean
   thinkingDefaultEnabled: boolean
   thinkingAutoCollapse: boolean
 }
@@ -19,6 +20,7 @@ const DEFAULTS: ChatAppSettings = {
   theme: 'light',
   apiTimeout: 30000,
   showThinkingToggle: true,
+  enableVoiceInput: true,
   thinkingDefaultEnabled: true,
   thinkingAutoCollapse: true,
 }

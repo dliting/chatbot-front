@@ -282,3 +282,25 @@ describe('AIChatbot getState structured-clone safety', () => {
     expect(() => structuredClone(snapshot)).not.toThrow()
   })
 })
+
+describe('AIChatbot voiceTranscriber provide chain', () => {
+  it('provides a transcriber function when apiClient exists', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api' } },
+      global: { stubs: { SuspendedBall: true, ChatHeader: true, TopicListView: true, FilePreviewModal: true } },
+    })
+    await nextTick()
+    const content = wrapper.findComponent({ name: 'ChatContent' })
+    expect(typeof (content.vm as unknown as { voiceTranscriber: unknown }).voiceTranscriber).toBe('function')
+  })
+
+  it('provides undefined transcriber without apiBaseUrl', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '' } },
+      global: { stubs: { SuspendedBall: true, ChatHeader: true, TopicListView: true, FilePreviewModal: true } },
+    })
+    await nextTick()
+    const content = wrapper.findComponent({ name: 'ChatContent' })
+    expect((content.vm as unknown as { voiceTranscriber: unknown }).voiceTranscriber).toBeUndefined()
+  })
+})

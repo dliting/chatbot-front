@@ -881,6 +881,7 @@ When using `apiBaseUrl` (without callbacks), the component expects the following
 | `DELETE` | `/sessions/:id` | Delete session/topic |
 | `PATCH` | `/sessions/:id/title` | Update session title |
 | `DELETE` | `/messages/:id` | Delete a specific message |
+| `POST` | `/chat/transcribe` | Voice-to-text: `{ audio: base64Wav, format: 'wav' }` → `{ text }`. Implemented by backend-real via an Ollama audio model (`OLLAMA_ASR_MODEL`, e.g. lfm3-audio); backend-mock returns a canned transcript |
 
 ### Stream Chat (SSE)
 

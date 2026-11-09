@@ -5,6 +5,10 @@
  * Skipped unless E2E_REAL=1 — CI has no Ollama. A timeout counts as a failure.
  */
 import { test, expect, type Page } from '@playwright/test'
+import { execSync } from 'node:child_process'
+import { readFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { cleanState } from './helpers'
 
 const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434'
@@ -34,6 +38,31 @@ async function useRealBackend(page: Page) {
 
 test.describe('Real backend - ChatApp (local Ollama)', () => {
   test.skip(() => !process.env.E2E_REAL, 'set E2E_REAL=1 to run real-backend suite')
+  // Cold model loads (qwen3.5 6.6GB / lfm3-audio 1.7GB swaps) can eat the
+  // default 30s test timeout — allow 3 minutes per test in this suite.
+  test.setTimeout(180_000)
+
+  test.beforeAll(async ({ request }) => {
+    // Hook has its own 30s budget — the model warmup below needs minutes
+    test.setTimeout(300_000)
+    if (!process.env.E2E_REAL) return
+    // Warm the chat model: Ollama answers 503 immediately while a model is
+    // loading, and loading swaps evict the other model (lfm3-audio ↔ qwen3.5).
+    // A single request "completes" instantly with an error, so retry until the
+    // endpoint actually streams a chunk. Cold load can take minutes.
+    for (let attempt = 0; attempt < 30; attempt++) {
+      try {
+        const res = await request.post('/api/real/chat/stream', {
+          data: { sessionId: 'warmup', content: 'ping' },
+          timeout: 120_000,
+        })
+        if (res.ok()) break
+      } catch {
+        // network-level failure — retry
+      }
+      await new Promise((r) => setTimeout(r, 10_000))
+    }
+  })
 
   test.beforeEach(async ({ page }) => {
     await useRealBackend(page)
@@ -50,8 +79,8 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
     await input.press('Enter')
 
     const assistantText = page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
-    await expect(assistantText).toBeVisible({ timeout: REAL_REPLY_TIMEOUT })
-    await expect(assistantText).not.toHaveText('', { timeout: REAL_REPLY_TIMEOUT })
+    await expect(assistantText).toBeVisible({ timeout: 150_000 })
+    await expect(assistantText).not.toHaveText('', { timeout: 150_000 })
   })
 
   test('clears the conversation via the header action', async ({ page }) => {
@@ -60,7 +89,7 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
     await input.press('Enter')
     await expect(
       page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
-    ).toBeVisible({ timeout: REAL_REPLY_TIMEOUT })
+    ).toBeVisible({ timeout: 150_000 })
 
     await page.locator('.chat-header__clear').click()
     await page.locator('.confirm-dialog__btn--confirm').click()
@@ -74,10 +103,48 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
     await input.press('Enter')
     await expect(
       page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
-    ).toBeVisible({ timeout: REAL_REPLY_TIMEOUT })
+    ).toBeVisible({ timeout: 150_000 })
 
     // create a fresh topic; messages list resets
     await page.locator('.topic-list-view__new-btn').first().click()
     await expect(page.locator('.chatbot-message__bubble')).toHaveCount(0)
+  })
+})
+
+test.describe('Real backend - voice transcription (Ollama ASR)', () => {
+
+
+  function synthWav(voice: string, text: string, outPath: string): Buffer {
+    execSync(
+      `powershell -NoProfile -Command "Add-Type -AssemblyName System.Speech; $s = New-Object System.Speech.Synthesis.SpeechSynthesizer; $s.SelectVoice('${voice}'); $s.SetOutputToWaveFile('${outPath}'); $s.Speak('${text}'); $s.Dispose()"`,
+      { timeout: 60000 }
+    )
+    return readFileSync(outPath)
+  }
+
+  test('transcribes English and Chinese audio via the real ASR model', async ({ request }) => {
+    const wavEn = synthWav('Microsoft Zira Desktop', 'What is the weather today', join(tmpdir(), 'e2e-asr-en.wav'))
+    const wavZh = synthWav('Microsoft Huihui Desktop', '今天天气怎么样', join(tmpdir(), 'e2e-asr-zh.wav'))
+
+    for (const [label, wav, keyword] of [
+      ['en', wavEn, 'weather'],
+      ['zh', wavZh, '天气'],
+    ] as const) {
+      // Ollama returns 503 while swapping models — retry with backoff
+      let res = null
+      for (let attempt = 0; attempt < 6; attempt++) {
+        res = await request.post('/api/real/chat/transcribe', {
+          data: { audio: wav.toString('base64'), format: 'wav' },
+          timeout: 180_000,
+        })
+        if (res.status() === 200) break
+        await new Promise((r) => setTimeout(r, 10_000))
+      }
+      expect(res!.status()).toBe(200)
+      const body = await res!.json()
+      expect(body.code).toBe(0)
+      expect(String(body.data.text).toLowerCase()).toContain(keyword.toLowerCase())
+      console.log(`[${label}] transcript:`, body.data.text)
+    }
   })
 })

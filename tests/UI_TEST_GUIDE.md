@@ -461,10 +461,18 @@ await expect(page.locator('h1')).toContainText('AI Chatbot')
 | 3 | 发送图片+文字 | 混合显示 |
 | 4 | 检查图片自适应 | 图片自适应容器宽度 |
 
-### 2.4 语音功能测试（已移除）
+### 2.4 语音输入测试（真离线 ASR，lfm3-audio）
 
-> 语音输入为误导性半成品（按钮无行为、覆盖层未挂载），已随 v1.1 清理移除。
-> 待离线 ASR 方案确定后重新立项，届时恢复本节用例。
+**前置**：Ollama ≥ 0.40.13，`ollama pull lfm3-audio`，real.env `OLLAMA_ASR_MODEL` 已配置；E2E `E2E_REAL=1` real-backend 套件含双语转录直测。
+
+| 用例 | 操作 | 预期 |
+|------|------|------|
+| 按钮三态 | 点麦克风 | idle→recording（红色脉冲）→再点→transcribing（旋转）→idle |
+| 转录填入 | 录音停止后等待 | 转录文本填入输入框（不自动发送） |
+| 权限拒绝 | 浏览器拒绝麦克风 | toast voicePermissionDenied，状态复位 |
+| 转写失败 | 后端 ASR 不可用 | toast voiceFailed |
+| 配置隐藏 | `enableVoiceInput: false` 或无后端 ASR | 按钮不渲染 |
+| 上限保护 | 录音超过 60s | 自动停止并转写 |
 
 ### 2.5 视频功能测试 (F-108 ~ F-110)
 

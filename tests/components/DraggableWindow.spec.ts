@@ -620,3 +620,64 @@ describe('DraggableWindow resize interactions', () => {
     wrapper.unmount()
   })
 })
+
+describe('DraggableWindow resize directions', () => {
+  const createWrapper = (props = {}) => {
+    return mount(DraggableWindow, {
+      props: { x: 100, y: 100, width: 400, height: 500, modelValue: true, ...props },
+      slots: {
+        header: '<div class="test-header">H</div>',
+        default: '<div class="test-content">C</div>',
+      },
+      attachTo: document.body,
+    })
+  }
+
+  function dragHandle(direction: string, clientX: number, clientY: number) {
+    const overlays = document.body.querySelectorAll('.draggable-window__resize-overlay')
+    const handle = (overlays[overlays.length - 1] as HTMLElement).querySelector(
+      `.draggable-window__resize-handle--${direction}`
+    ) as HTMLElement
+    handle.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, clientX: 500, clientY: 400 }))
+    document.dispatchEvent(new MouseEvent('mousemove', { clientX, clientY }))
+    document.dispatchEvent(new MouseEvent('mouseup', { clientX, clientY }))
+  }
+
+  beforeEach(() => {
+    const store: Record<string, string> = {}
+    global.localStorage = {
+      getItem: (k: string) => store[k] ?? null,
+      setItem: (k: string, v: string) => { store[k] = String(v) },
+      removeItem: (k: string) => { delete store[k] },
+      clear: () => { for (const key of Object.keys(store)) delete store[key] },
+    } as Storage
+  })
+
+  it('south handle grows height', async () => {
+    const wrapper = createWrapper({ resizable: true, height: 500, maxHeight: 900 })
+    dragHandle('s', 500, 550)
+    await nextTick()
+    expect(wrapper.find('.draggable-window').attributes('style')).toContain('height: 650px')
+    wrapper.unmount()
+  })
+
+  it('west handle shifts x and grows width', async () => {
+    const wrapper = createWrapper({ resizable: true, x: 100, width: 400, maxWidth: 800 })
+    dragHandle('w', 400, 400) // deltaX -100
+    await nextTick()
+    const style = wrapper.find('.draggable-window').attributes('style')
+    expect(style).toContain('left: 0px')
+    expect(style).toContain('width: 500px')
+    wrapper.unmount()
+  })
+
+  it('north handle shifts y and shrinks height', async () => {
+    const wrapper = createWrapper({ resizable: true, y: 100, height: 500, minHeight: 200 })
+    dragHandle('n', 500, 350) // deltaY -50
+    await nextTick()
+    const style = wrapper.find('.draggable-window').attributes('style')
+    expect(style).toContain('top: 50px')
+    expect(style).toContain('height: 550px')
+    wrapper.unmount()
+  })
+})

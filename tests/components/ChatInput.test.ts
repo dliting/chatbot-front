@@ -1326,3 +1326,150 @@ describe('default upload acceptance matrix (real validateFiles)', () => {
     vi.unstubAllGlobals()
   })
 })
+
+// =====================================================
+// Voice input button (subproject ⑤)
+// =====================================================
+vi.mock('@/composables/useVoiceRecorder', async () => {
+  const { ref } = await import('vue')
+  const state = ref('idle')
+  const calls = { start: 0, stop: 0 }
+  const store = { stopResult: 'c2FtcGxl' as string | null, startError: null as { code: string; message: string } | null }
+  return {
+    useVoiceRecorder: vi.fn(() => ({
+      state,
+      isSupported: true,
+      start: vi.fn(async () => {
+        calls.start++
+        if (store.startError) throw Object.assign(new Error(store.startError.message), { code: store.startError.code })
+        state.value = 'recording'
+      }),
+      stop: vi.fn(async () => {
+        calls.stop++
+        state.value = 'idle'
+        return store.stopResult
+      }),
+    })),
+    VoiceRecorderError: class extends Error {
+      code: string
+      constructor(code: string, message: string) { super(message); this.code = code }
+    },
+    __voice: { state, calls, store },
+  }
+})
+
+import { __voice } from '@/composables/useVoiceRecorder'
+
+
+describe('Voice input button (subproject ⑤)', () => {
+  const voiceTranscriber = vi.fn().mockResolvedValue('你好，来自语音')
+
+  const mountVoice = (props: Record<string, unknown> = {}) => {
+    ;(__voice as unknown as { store: { stopResult: string | null; startError: unknown }; calls: { start: number; stop: number } }).store.stopResult = 'c2FtcGxl'
+    ;(__voice as unknown as { store: { startError: unknown } }).store.startError = null
+    ;(__voice as unknown as { calls: { start: number; stop: number } }).calls.start = 0
+    ;(__voice as unknown as { calls: { start: number; stop: number } }).calls.stop = 0
+    voiceTranscriber.mockClear()
+    return mount(ChatInput, {
+      props: {
+        enableVoiceInput: true,
+        voiceTranscriber,
+        labels: { recording: 'Recording', transcribing: 'Transcribing', voicePermissionDenied: 'Permission denied', voiceFailed: 'Voice failed' },
+        ...props,
+      },
+    })
+  }
+
+  const alertMock = () => { const m = vi.fn(); vi.stubGlobal('alert', m); return m }
+
+  it('renders the voice button with idle class when enabled', () => {
+    const wrapper = mountVoice()
+    expect(wrapper.find('.chat-input__voice-btn').exists()).toBe(true)
+    expect(wrapper.find('.chat-input__voice-btn--recording').exists()).toBe(false)
+  })
+
+  it('hides the voice button when enableVoiceInput is false', () => {
+    const wrapper = mountVoice({ enableVoiceInput: false })
+    expect(wrapper.find('.chat-input__voice-btn').exists()).toBe(false)
+  })
+
+  it('hides the voice button when no voiceTranscriber is provided', () => {
+    const wrapper = mountVoice({ voiceTranscriber: undefined })
+    expect(wrapper.find('.chat-input__voice-btn').exists()).toBe(false)
+  })
+
+  it('click flow: start → recording class → stop → transcriber → textarea filled', async () => {
+    const wrapper = mountVoice()
+    const btn = wrapper.find('.chat-input__voice-btn')
+
+    await btn.trigger('click')
+    expect((__voice as unknown as { calls: { start: number } }).calls.start).toBe(1)
+    expect(wrapper.find('.chat-input__voice-btn--recording').exists()).toBe(true)
+
+    await btn.trigger('click')
+    await flushPromises()
+
+    expect((__voice as unknown as { calls: { stop: number } }).calls.stop).toBe(1)
+    expect(voiceTranscriber).toHaveBeenCalledWith('c2FtcGxl', 'wav')
+    const textarea = wrapper.find('textarea')
+    expect((textarea.element as HTMLTextAreaElement).value).toBe('你好，来自语音')
+    expect(wrapper.find('.chat-input__voice-btn--recording').exists()).toBe(false)
+  })
+
+  it('shows transcribing state while transcription runs', async () => {
+    let resolveTranscribe: (v: string) => void = () => {}
+    const slowTranscriber = vi.fn(() => new Promise<string>((r) => { resolveTranscribe = r }))
+    const wrapper = mountVoice({ voiceTranscriber: slowTranscriber })
+    const btn = wrapper.find('.chat-input__voice-btn')
+
+    await btn.trigger('click')
+    await btn.trigger('click')
+    // transcription pending → button in transcribing state
+    expect(wrapper.find('.chat-input__voice-btn--transcribing').exists()).toBe(true)
+
+    resolveTranscribe('done')
+    await flushPromises()
+    expect(wrapper.find('.chat-input__voice-btn--transcribing').exists()).toBe(false)
+  })
+
+  it('toasts voiceFailed and resets when transcription rejects', async () => {
+    const alert = alertMock()
+    const failing = vi.fn().mockRejectedValue(new Error('asr down'))
+    const wrapper = mountVoice({ voiceTranscriber: failing })
+    const btn = wrapper.find('.chat-input__voice-btn')
+
+    await btn.trigger('click')
+    await btn.trigger('click')
+    await flushPromises()
+
+    expect(alert).toHaveBeenCalledWith('Voice failed')
+    expect(wrapper.find('.chat-input__voice-btn--recording').exists()).toBe(false)
+    vi.unstubAllGlobals()
+  })
+
+  it('toasts permission message when start is denied', async () => {
+    const alert = alertMock()
+    const wrapper = mountVoice()
+    ;(__voice as unknown as { store: { startError: unknown } }).store.startError = { code: 'permission', message: 'denied' }
+    await wrapper.find('.chat-input__voice-btn').trigger('click')
+    await flushPromises()
+
+    expect(alert).toHaveBeenCalledWith('Permission denied')
+    expect(wrapper.find('.chat-input__voice-btn--recording').exists()).toBe(false)
+    vi.unstubAllGlobals()
+  })
+})
+
+describe('Voice button disabled guard', () => {
+  it('does not start recording when input is disabled', async () => {
+    ;(__voice as unknown as { calls: { start: number; stop: number } }).calls.start = 0
+    const wrapper = mount(ChatInput, {
+      props: { disabled: true, enableVoiceInput: true, voiceTranscriber: vi.fn().mockResolvedValue('x') },
+    })
+    const btn = wrapper.find('.chat-input__voice-btn')
+    expect(btn.exists()).toBe(true)
+    await btn.trigger('click')
+    await flushPromises()
+    expect((__voice as unknown as { calls: { start: number } }).calls.start).toBe(0)
+  })
+})

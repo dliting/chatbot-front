@@ -156,6 +156,7 @@ export interface ChatState {
   autoScroll?: boolean
   /** Config-driven upload settings */
   enableImageUpload?: boolean
+  enableVoiceInput?: boolean
   maxImageSize?: number
   allowedImageTypes?: string[]
   maxImageCount?: number
@@ -190,3 +191,6 @@ export type {
 
 // Iframe postMessage protocol types
 export type { PostMessageData, PostMessageType, IframeStateSnapshot } from './events'
+
+/** Transcribes recorded audio into text (voice input) */
+export type VoiceTranscriber = (audio: string, format: string) => Promise<string>

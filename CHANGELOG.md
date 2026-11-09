@@ -48,9 +48,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - Voice-input stub (`enableVoiceInput`, microphone button, unmounted
-  `VoiceOverlay`): the button was a no-op and no offline ASR path exists
-  (Web Speech API relies on cloud services). Voice input will be re-scoped
-  once an offline ASR approach is settled
+  `VoiceOverlay`): the button was a no-op with no transcription path
+
+### Re-added (replacing the removed stub)
+
+- Real offline voice input: microphone PCM capture → WAV → backend
+  `/chat/transcribe` → Ollama audio model (default `lfm3-audio`, requires
+  Ollama ≥ 0.40.13) → transcript fills the input box for review before
+  sending. New config `enableVoiceInput` (default false) and
+  `OLLAMA_ASR_MODEL` (real.env); three-state mic button (idle / recording /
+  transcribing) with permission and failure toasts
 
 ### Fixed
 

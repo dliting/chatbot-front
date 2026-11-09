@@ -8,18 +8,26 @@ vi.mock('vue-router', () => ({
   }),
 }))
 
+/** happy-dom's localStorage rejects method assignment — stub the whole object */
+function stubLocalStorage() {
+  const store = new Map<string, string>()
+  const getItem = vi.fn((key: string) => store.get(key) ?? null)
+  const setItem = vi.fn((key: string, value: string) => { store.set(key, value) })
+  const removeItem = vi.fn((key: string) => { store.delete(key) })
+  vi.stubGlobal('localStorage', { getItem, setItem, removeItem })
+  return { getItem, setItem, removeItem }
+}
+
 describe('SettingsPage', () => {
-  let getItemSpy: ReturnType<typeof vi.fn>
-  let setItemSpy: ReturnType<typeof vi.fn>
-  let removeItemSpy: ReturnType<typeof vi.fn>
+  let getItemSpy: ReturnType<typeof stubLocalStorage>['getItem']
+  let setItemSpy: ReturnType<typeof stubLocalStorage>['setItem']
+  let removeItemSpy: ReturnType<typeof stubLocalStorage>['removeItem']
 
   beforeEach(() => {
-    getItemSpy = vi.fn().mockReturnValue(null)
-    setItemSpy = vi.fn()
-    removeItemSpy = vi.fn()
-    localStorage.getItem = getItemSpy
-    localStorage.setItem = setItemSpy
-    localStorage.removeItem = removeItemSpy
+    const stub = stubLocalStorage()
+    getItemSpy = stub.getItem
+    setItemSpy = stub.setItem
+    removeItemSpy = stub.removeItem
   })
 
   it('should render the settings form with all sections', () => {
@@ -36,7 +44,7 @@ describe('SettingsPage', () => {
     expect(wrapper.text()).toContain('思考默认开启')
     expect(wrapper.text()).toContain('自动折叠思考内容')
     expect(wrapper.text()).toContain('语音输入')
-    expect(wrapper.text()).toContain('允许语音输入')
+    expect(wrapper.text()).toContain('启用语音输入')
   })
 
   it('should have mock and real backend radio options', () => {
@@ -59,6 +67,7 @@ describe('SettingsPage', () => {
         theme: 'light',
         apiTimeout: 30000,
         showThinkingToggle: true,
+        enableVoiceInput: true,
         thinkingDefaultEnabled: true,
         thinkingAutoCollapse: true,
       }),

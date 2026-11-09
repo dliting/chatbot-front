@@ -9,6 +9,7 @@ vi.mock('../config', () => ({
   OLLAMA_MODEL: 'test-model',
   OLLAMA_THINKING_ENABLED: true,
   OPENAI_API_KEY: '',
+  OLLAMA_ASR_MODEL: 'test-asr-model',
 }))
 
 // Mock fetch

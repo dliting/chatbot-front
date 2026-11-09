@@ -12,6 +12,7 @@ const form = ref({
   theme: settings.theme,
   apiTimeout: settings.apiTimeout,
   showThinkingToggle: settings.showThinkingToggle,
+  enableVoiceInput: settings.enableVoiceInput,
   thinkingDefaultEnabled: settings.thinkingDefaultEnabled,
   thinkingAutoCollapse: settings.thinkingAutoCollapse,
 })
@@ -29,6 +30,7 @@ function handleSave() {
   const timeout = Number(form.value.apiTimeout)
   settings.apiTimeout = Number.isNaN(timeout) ? 30000 : Math.max(5000, Math.min(300000, timeout))
   settings.showThinkingToggle = form.value.showThinkingToggle
+  settings.enableVoiceInput = form.value.enableVoiceInput
   settings.thinkingDefaultEnabled = form.value.thinkingDefaultEnabled
   settings.thinkingAutoCollapse = form.value.thinkingAutoCollapse
   saveSettings()
@@ -114,12 +116,41 @@ function goHome() {
         </div>
 
         <!-- 思考设置 -->
-        
+        <div class="setting-section">
+          <h2>思考设置</h2>
+          <div class="toggle-group">
+            <label class="toggle-option">
+              <span>显示思考开关</span>
+              <input v-model="form.showThinkingToggle" type="checkbox" />
+            </label>
+            <label class="toggle-option" :class="{ disabled: !form.showThinkingToggle }">
+              <span>思考默认开启</span>
+              <input
+                v-model="form.thinkingDefaultEnabled"
+                type="checkbox"
+                :disabled="!form.showThinkingToggle"
+              />
+            </label>
+            <label class="toggle-option" :class="{ disabled: !form.showThinkingToggle }">
+              <span>自动折叠思考内容</span>
+              <input
+                v-model="form.thinkingAutoCollapse"
+                type="checkbox"
+                :disabled="!form.showThinkingToggle"
+              />
+            </label>
+          </div>
+        </div>
 
         <!-- 语音输入 -->
         <div class="setting-section">
           <h2>语音输入</h2>
           <div class="toggle-group">
+            <label class="toggle-option">
+              <span>启用语音输入</span>
+              <input v-model="form.enableVoiceInput" type="checkbox" />
+            </label>
+            <p class="toggle-hint">需要后端 ASR 支持（real.env 配置 OLLAMA_ASR_MODEL，默认 lfm3-audio）</p>
           </div>
         </div>
 
@@ -315,6 +346,12 @@ function goHome() {
   background: #667eea;
   border-color: #667eea;
   color: white;
+}
+
+.toggle-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #909399;
 }
 
 .toggle-group {

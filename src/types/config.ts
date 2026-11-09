@@ -134,6 +134,7 @@ export interface ChatbotConfig {
 
   // Feature toggles
   enableImageUpload?: boolean
+  enableVoiceInput?: boolean
   enableCopyMessage?: boolean
   enableDeleteMessage?: boolean
   enableResend?: boolean
@@ -221,6 +222,11 @@ export interface ChatbotLabels {
   noContentToCopy?: string
   copiedToClipboard?: string
   copyFailed?: string
+  /** Voice input button states and errors */
+  recording?: string
+  transcribing?: string
+  voicePermissionDenied?: string
+  voiceFailed?: string
   /** Upload rejection toasts (prefixed with file name by the input) */
   uploadSizeExceeded?: string
   uploadTypeNotAllowed?: string

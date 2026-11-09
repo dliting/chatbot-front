@@ -92,6 +92,16 @@ npm run build:iframe   # outputs to dist-iframe/
 
 The iframe build communicates with the host page via a `postMessage` bridge — pass `allowedOrigins` in the `?config=` URL parameter (see the [iframe protocol in API.md](docs/API.md)).
 
+## Voice input (optional, fully offline)
+
+The example app supports voice-to-text via a local Ollama audio model:
+
+```bash
+ollama pull lfm3-audio        # 1.7B audio-transcription model
+```
+
+Set `OLLAMA_ASR_MODEL=lfm3-audio:latest` in `examples/chatapp/real.env` (already the default) and enable 语音输入 in the example app settings. Requires Ollama ≥ 0.40.13.
+
 ## Configuration
 
 ```typescript
