@@ -92,6 +92,22 @@ npm run build:iframe   # outputs to dist-iframe/
 
 The iframe build communicates with the host page via a `postMessage` bridge — pass `allowedOrigins` in the `?config=` URL parameter (see the [iframe protocol in API.md](docs/API.md)).
 
+## Floating ball & theme customization
+
+```ts
+AIChatbot, {
+  config: {
+    mode: 'floating',
+    primaryColor: '#7c3aed',          // derives hover/active/light/dark variants
+    fontScale: 1.15,                  // global text scale (0.75–1.5)
+    ballBadge: 3,                     // badge on the floating ball
+    ballIcon: 'chat',                 // built-in name / URL / relative path
+    ballMargin: 24,                   // distance from viewport edge
+    panelOffset: { x: -20, y: -40 },  // panel initial offset
+  },
+})
+```
+
 ## Voice input (optional, fully offline)
 
 The example app supports voice-to-text via a local Ollama audio model:

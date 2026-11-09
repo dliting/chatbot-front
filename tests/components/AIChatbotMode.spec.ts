@@ -351,3 +351,38 @@ describe('AIChatbot floating customization config passthrough', () => {
     expect(panel.props('config').fontScale).toBe(1)
   })
 })
+
+describe('AIChatbot theme derivation and font scale', () => {
+  it('derives primary variants onto the root when primaryColor is set', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api', primaryColor: '#409eff' } },
+      global: { stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true } },
+    })
+    await nextTick()
+    const root = wrapper.find('.ai-chatbot')
+    const style = root.attributes('style') ?? ''
+    expect(style).toContain('--theme-primary-hover: #70b6ff')
+    expect(style).toContain('--theme-primary-dark: #2d6fb3')
+  })
+
+  it('does not emit variant vars when primaryColor is unset', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api' } },
+      global: { stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true } },
+    })
+    await nextTick()
+    const style = wrapper.find('.ai-chatbot').attributes('style') ?? ''
+    expect(style).not.toContain('--theme-primary-hover')
+  })
+
+  it('applies fontScale as a CSS variable on the root', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api', fontScale: 1.25 } },
+      global: { stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true } },
+    })
+    await nextTick()
+    const style = wrapper.find('.ai-chatbot').attributes('style') ?? ''
+    expect(style).toContain('--chatbot-font-scale: 1.25')
+    expect(style).toContain('font-size: calc(15px * 1.25)')
+  })
+})

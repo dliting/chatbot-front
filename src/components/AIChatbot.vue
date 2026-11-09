@@ -1,5 +1,5 @@
 <template>
-  <div class="ai-chatbot" :data-theme="resolvedTheme">
+  <div class="ai-chatbot" :data-theme="resolvedTheme" :style="rootThemeStyle">
     <!-- Floating Mode (self-contained) -->
     <FloatingChatPanel
       v-if="config.mode === 'floating'"
@@ -57,6 +57,7 @@ import { computed, watch, onMounted, onUnmounted, ref, provide } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
 import type { ChatActionHandlers, TopicActionHandlers, UIActionHandlers, ChatState, Attachment, IframeStateSnapshot } from '@/types'
 import { sanitizeForPostMessage } from '@/utils/iframeBridge'
+import { derivePrimaryVariants, clampFontScale } from '@/utils/color'
 import { defaultChatbotConfig, getDefaultLabels } from '@/types/config'
 import { getDefaultQuickActions } from '@/constants/quickActions'
 import { modeToLayoutMap } from '@/types'
@@ -180,6 +181,40 @@ const {
 const thinkingEnabled = ref(
   config.value.thinkingDefaultEnabled ?? defaultChatbotConfig.thinkingDefaultEnabled
 )
+
+// Derived theme variants: when the host sets primaryColor, the five
+// --theme-primary-* variables follow the same light/dark relationships
+// as the SCSS defaults (via utils/color pure functions)
+const primaryVariants = computed(() => {
+  const base = props.config?.primaryColor
+  return base ? derivePrimaryVariants(base) : null
+})
+
+const fontScaleVar = computed(() => {
+  const raw = props.config?.fontScale
+  if (raw === undefined) return undefined
+  return clampFontScale(raw)
+})
+
+const rootThemeStyle = computed(() => {
+  const style: Record<string, string> = {}
+  if (config.value.primaryColor) {
+    style['--theme-primary'] = config.value.primaryColor
+    const variants = primaryVariants.value
+    if (variants) {
+      style['--theme-primary-hover'] = variants.hover
+      style['--theme-primary-active'] = variants.active
+      style['--theme-primary-light'] = variants.light
+      style['--theme-primary-light-border'] = variants.lightBorder
+      style['--theme-primary-dark'] = variants.dark
+    }
+  }
+  if (fontScaleVar.value !== undefined) {
+    style['--chatbot-font-scale'] = String(fontScaleVar.value)
+    style['font-size'] = `calc(15px * ${fontScaleVar.value})`
+  }
+  return style
+})
 
 // Emit helper (bridges composable string-based emits to Vue's typed defineEmits)
 function emitEvent(event: string, ...args: unknown[]): void {
@@ -386,7 +421,7 @@ defineExpose({
 
 <style scoped lang="scss">
 .ai-chatbot {
-  --theme-primary: v-bind('config.primaryColor');
+  font-size: calc(15px * var(--chatbot-font-scale, 1));
   font-family:
     'Noto Sans SC',
     -apple-system,
