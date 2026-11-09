@@ -344,7 +344,7 @@ describe('AIChatbot floating customization config passthrough', () => {
     })
     await nextTick()
     const panel = wrapper.findComponent({ name: 'FloatingChatPanel' })
-    expect(panel.props('config').ballBadge).toBe(0)
+    expect(panel.props('config').ballBadge).toBeUndefined()
     expect(panel.props('config').ballIcon).toBeUndefined()
     expect(panel.props('config').ballMargin).toBe(16)
     expect(panel.props('config').panelOffset).toBeUndefined()

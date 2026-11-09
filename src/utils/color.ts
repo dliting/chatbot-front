@@ -33,7 +33,7 @@ export function mixColor(hexA: string, hexB: string, ratio: number): string {
   const a = normalizeHex(hexA)
   const b = normalizeHex(hexB)
   if (!a || !b) return hexA
-  const r = Math.max(0, Math.min(1, ratio))
+  const r = Number.isFinite(ratio) ? Math.max(0, Math.min(1, ratio)) : 0
   const [ar, ag, ab] = hexToRgb(a)
   const [br, bg, bb] = hexToRgb(b)
   return rgbToHex(ar + (br - ar) * r, ag + (bg - ag) * r, ab + (bb - ab) * r)
@@ -43,7 +43,7 @@ export interface PrimaryVariants {
   hover: string
   active: string
   light: string
-  lightBorder: string
+  lighter: string
   dark: string
 }
 
@@ -55,7 +55,7 @@ export function derivePrimaryVariants(primary: string): PrimaryVariants | null {
     hover: mixColor(base, '#ffffff', 0.25),
     active: mixColor(base, '#000000', 0.15),
     light: mixColor(base, '#ffffff', 0.85),
-    lightBorder: mixColor(base, '#ffffff', 0.7),
+    lighter: mixColor(base, '#ffffff', 0.7),
     dark: mixColor(base, '#000000', 0.3),
   }
 }

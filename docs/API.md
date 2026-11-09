@@ -75,6 +75,11 @@ interface ChatbotConfig {
   minWidth?: number                // Default 300
   minHeight?: number               // Default 400
   rememberPosition?: boolean       // Default true
+  ballBadge?: string | number      // Floating ball badge; unset = hidden
+  ballIcon?: string                // Ball icon: built-in name / path / URL
+  ballMargin?: number              // Ball distance from viewport edge (default 16)
+  panelOffset?: { x?: number; y?: number } // Panel initial position offset (px)
+  fontScale?: number               // Global font scale (0.75–1.5, default 1)
 
   // === Feature Toggles ===
   enableImageUpload?: boolean      // Default true

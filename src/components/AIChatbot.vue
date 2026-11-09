@@ -193,19 +193,26 @@ const primaryVariants = computed(() => {
 const fontScaleVar = computed(() => {
   const raw = props.config?.fontScale
   if (raw === undefined) return undefined
-  return clampFontScale(raw)
+  const clamped = clampFontScale(raw)
+  if (clamped !== raw) {
+    console.warn(`[ai-chatbot] fontScale ${raw} out of range — clamped to ${clamped}`)
+  }
+  return clamped
 })
 
 const rootThemeStyle = computed(() => {
   const style: Record<string, string> = {}
-  if (config.value.primaryColor) {
-    style['--theme-primary'] = config.value.primaryColor
+  const primary = props.config?.primaryColor
+  if (primary !== undefined) {
     const variants = primaryVariants.value
-    if (variants) {
+    if (!variants) {
+      console.warn(`[ai-chatbot] Invalid primaryColor: "${primary}" — falling back to default theme`)
+    } else {
+      style['--theme-primary'] = primary
       style['--theme-primary-hover'] = variants.hover
       style['--theme-primary-active'] = variants.active
       style['--theme-primary-light'] = variants.light
-      style['--theme-primary-light-border'] = variants.lightBorder
+      style['--theme-primary-lighter'] = variants.lighter
       style['--theme-primary-dark'] = variants.dark
     }
   }
@@ -421,7 +428,6 @@ defineExpose({
 
 <style scoped lang="scss">
 .ai-chatbot {
-  font-size: calc(15px * var(--chatbot-font-scale, 1));
   font-family:
     'Noto Sans SC',
     -apple-system,

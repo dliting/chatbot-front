@@ -27,7 +27,7 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   minWidth: 300,
   minHeight: 400,
   rememberPosition: true,
-  ballBadge: 0,
+  ballBadge: undefined as unknown as string | number,
   ballIcon: undefined as unknown as string,
   ballMargin: 16,
   panelOffset: undefined as unknown as { x?: number; y?: number },

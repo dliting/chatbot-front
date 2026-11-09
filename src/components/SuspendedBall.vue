@@ -211,6 +211,16 @@ watch(
   }
 )
 
+// Watch margin changes → recompute default position
+watch(
+  () => props.ballMargin,
+  () => {
+    if (!isDragging.value) {
+      initPosition()
+    }
+  }
+)
+
 // Lifecycle
 onMounted(() => {
   initPosition()

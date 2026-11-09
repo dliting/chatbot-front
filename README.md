@@ -94,18 +94,16 @@ The iframe build communicates with the host page via a `postMessage` bridge — 
 
 ## Floating ball & theme customization
 
-```ts
-AIChatbot, {
-  config: {
-    mode: 'floating',
-    primaryColor: '#7c3aed',          // derives hover/active/light/dark variants
-    fontScale: 1.15,                  // global text scale (0.75–1.5)
-    ballBadge: 3,                     // badge on the floating ball
-    ballIcon: 'chat',                 // built-in name / URL / relative path
-    ballMargin: 24,                   // distance from viewport edge
-    panelOffset: { x: -20, y: -40 },  // panel initial offset
-  },
-})
+```html
+<AIChatbot :config="{
+  mode: 'floating',
+  primaryColor: '#7c3aed',          // derives hover/active/light/dark variants
+  fontScale: 1.15,                  // global text scale (0.75–1.5)
+  ballBadge: 3,                     // badge on the floating ball
+  ballIcon: 'chat',                 // built-in name / URL / relative path (vs quickActionIconBase)
+  ballMargin: 24,                   // distance from viewport edge
+  panelOffset: { x: -20, y: -40 },  // panel initial offset (px)
+}" />
 ```
 
 ## Voice input (optional, fully offline)

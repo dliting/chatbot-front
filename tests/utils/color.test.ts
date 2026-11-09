@@ -58,7 +58,7 @@ describe('derivePrimaryVariants', () => {
       hover: '#70b6ff',      // 25% white
       active: '#3686d9',     // 15% black
       light: '#e2f0ff',      // 85% white
-      lightBorder: '#c6e2ff', // 70% white
+      lighter: '#c6e2ff',    // 70% white
       dark: '#2d6fb3',       // 30% black
     })
   })

@@ -761,20 +761,20 @@ describe('FloatingChatPanel customization surface (subproject ⑥)', () => {
 
   it('renders a URL ballIcon as an image inside the icon slot', () => {
     const wrapper = mountWith({ ballIcon: 'http://example.com/ball.svg' })
-    const img = wrapper.find('.chatbot-ball__icon-img')
+    const img = wrapper.find('.chatbot-floating-ball-icon--img')
     expect(img.exists()).toBe(true)
     expect(img.attributes('src')).toBe('http://example.com/ball.svg')
   })
 
   it('renders a built-in ballIcon as svg via builtinIcons', () => {
     const wrapper = mountWith({ ballIcon: 'chat' })
-    expect(wrapper.find('.chatbot-ball__icon svg, svg').exists()).toBe(true)
+    expect(wrapper.find('svg.chatbot-floating-ball-icon--builtin').exists()).toBe(true)
   })
 
   it('falls back to the default SVG when ballIcon is unset', () => {
     const wrapper = mountWith({})
     expect(wrapper.find('.chatbot-ball__icon').exists()).toBe(true)
-    expect(wrapper.find('.chatbot-ball__icon-img').exists()).toBe(false)
+    expect(wrapper.find('.chatbot-floating-ball-icon--img').exists()).toBe(false)
   })
 
   it('applies panelOffset to the initial window position', async () => {
@@ -785,5 +785,66 @@ describe('FloatingChatPanel customization surface (subproject ⑥)', () => {
     // stored position wins over offset (rememberPosition); assert no crash and restore applied
     expect(win.attributes('style')).toContain('left: 111px')
     localStorage.removeItem('draggable-window-position')
+  })
+})
+
+describe('FloatingChatPanel panelOffset without stored position (subproject ⑥)', () => {
+  const mockConfig: ChatbotConfig = { mode: 'floating', theme: 'light', position: 'bottom-right', panelWidth: 400, panelHeight: 500 }
+
+  beforeEach(() => {
+    localStorage.removeItem('draggable-window-position')
+  })
+
+  function mountNoStore(offset: { x?: number; y?: number } | undefined) {
+    return mount(FloatingChatPanel, {
+      props: {
+        config: { ...mockConfig, defaultExpanded: true, panelOffset: offset },
+        messages: [],
+        topics: [],
+        currentTopicId: 'topic_1',
+      },
+      global: {
+        provide: {
+          [chatActionsKey as symbol]: mockChatActions,
+          [topicActionsKey as symbol]: mockTopicActions,
+          [uiActionsKey as symbol]: mockUIActions,
+        },
+        stubs: {
+          SuspendedBall: { name: 'SuspendedBall', props: ['position', 'size', 'backgroundColor', 'badge'], template: '<div />' },
+          FilePreviewModal: { name: 'FilePreviewModal', props: ['visible', 'file'], template: '<div />' },
+          ChatContent: { name: 'ChatContent', template: '<div />' },
+        },
+      },
+    })
+  }
+
+  it('applies numeric offsets on top of the computed default position', async () => {
+    const wrapper = mountNoStore({ x: -30, y: -50 })
+    await nextTick()
+    // default: left 1024-400-20 = 604, top max(20,(768-500)/2)=134 → offset applied
+    const style = wrapper.find('.draggable-window').attributes('style') ?? ''
+    expect(style).toContain('left: 574px')
+    expect(style).toContain('top: 84px')
+    wrapper.unmount()
+  })
+
+  it('keeps the default position when no offset is configured', async () => {
+    const wrapper = mountNoStore(undefined)
+    await nextTick()
+    const style = wrapper.find('.draggable-window').attributes('style') ?? ''
+    expect(style).toContain('left: 604px')
+    expect(style).toContain('top: 134px')
+    wrapper.unmount()
+  })
+
+  it('clamps offset position within the viewport', async () => {
+    const wrapper = mountNoStore({ x: -2000, y: -2000 })
+    await nextTick()
+    const style = wrapper.find('.draggable-window').attributes('style') ?? ''
+    const left = Number((style.match(/left: (-?d+)px/) ?? [])[1] ?? 0)
+    const top = Number((style.match(/top: (-?d+)px/) ?? [])[1] ?? 0)
+    expect(left).toBeGreaterThanOrEqual(-380) // panel width 400 − margin keeps it reachable
+    expect(top).toBeGreaterThanOrEqual(20)
+    wrapper.unmount()
   })
 })
