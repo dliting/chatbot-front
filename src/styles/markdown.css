@@ -478,3 +478,25 @@ pre:hover .markdown-copy-btn,
     padding: 0.5em;
   }
 }
+
+/* GFM task lists (read-only) */
+.task-list-item {
+  list-style-type: none;
+  margin-left: -18px;
+}
+
+.task-list-item input[type='checkbox'] {
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+/* KaTeX block display spacing */
+.katex-display {
+  margin: 12px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.katex-error {
+  color: #cc0000;
+}
