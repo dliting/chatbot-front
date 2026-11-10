@@ -62,6 +62,7 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
 
   // Callbacks
   callbacks: {} as ChatbotCallbacks,
+  transport: undefined as unknown as import('../index').ChatTransport,
 
   // Iframe
   allowedOrigins: [],

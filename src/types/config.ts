@@ -167,6 +167,8 @@ export interface ChatbotConfig {
   // API configuration
   apiBaseUrl?: string
   streamEnabled?: boolean
+  /** Transport Bridge: pluggable backend protocol implementation (overrides apiBaseUrl) */
+  transport?: import('./index').ChatTransport
   streamTimeout?: number
 
   /** Callback interface for host application to control operations */
