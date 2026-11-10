@@ -64,6 +64,7 @@ function createMockDeps(overrides: Record<string, unknown> = {}) {
     setCurrentTopicId: (topicId: string) => {
       state.messages.currentTopicId = topicId
     },
+    ...overrides,
   }
 
   return { deps, emitted, state, errors }
@@ -1265,5 +1266,96 @@ describe('message:stream-end payload contract', () => {
     const ends = emitted.filter((e) => e.event === 'message:stream-end')
     expect(ends).toHaveLength(1)
     expect(ends[0].args[0]).toEqual(expect.objectContaining({ fullContent: 'final text' }))
+  })
+})
+
+describe('ChatTransport Bridge tier', () => {
+  /** Minimal transport double recording calls */
+  function createFakeTransport(overrides: Partial<ChatTransport> = {}): ChatTransport {
+    return {
+      streamMessage: vi.fn(function* (params: { content: string }) {
+        yield { type: 'token', content: 'transport reply: ' + params.content }
+        yield { type: 'end' }
+      }),
+      sendMessage: vi.fn().mockResolvedValue({
+        messageId: 'srv-t', topicId: 'topic_1', role: 'assistant', type: 'text',
+        content: 'transport non-stream', timestamp: Date.now(), status: 'sent',
+      }),
+      ...overrides,
+    } as unknown as ChatTransport
+  }
+
+  function setupWithTransport(overrides: Record<string, unknown> = {}) {
+    const fake = createFakeTransport()
+    const transport = computed(() => fake)
+    const { deps, state, emitted, errors } = createMockDeps({
+      transport,
+      ...overrides,
+    })
+    state.messages.byTopic['topic_1'] = []
+    return { deps, state, emitted, errors, fake, transport }
+  }
+
+  it('streamEnabled=true routes streamMessage through the transport', async () => {
+    const { deps, state, emitted, errors, fake } = setupWithTransport()
+    const actions = useChatActions(deps)
+    await actions.sendMessage({ content: 'hi' })
+    expect(fake.streamMessage).toHaveBeenCalledTimes(1)
+    const msgs = state.messages.byTopic['topic_1']
+    expect(msgs.some((m) => m.role === 'assistant' && m.content === 'transport reply: hi')).toBe(true)
+    expect(emitted.filter((e) => e.event === 'message:stream-end')).toHaveLength(1)
+  })
+
+  it('streamEnabled=false routes sendMessage through the transport', async () => {
+    const { deps, state, fake } = setupWithTransport({ streamEnabled: false })
+    const actions = useChatActions(deps)
+
+    await actions.sendMessage({ content: 'hi' })
+
+    const api = deps.apiClient.value as unknown as { sendMessage?: ReturnType<typeof vi.fn> } | undefined
+    expect(api?.sendMessage ?? vi.fn()).not.toHaveBeenCalled()
+    const msgs = state.messages.byTopic['topic_1']
+    expect(msgs.some((m) => m.content === 'transport non-stream')).toBe(true)
+  })
+
+  it('prefers callbacks.onSendMessage over the transport', async () => {
+    const onSendMessage = vi.fn(() => createMockStream([{ type: 'token', content: 'cb' }, { type: 'end' }]))
+    const { deps, state, fake } = setupWithTransport({ callbacks: { onSendMessage } })
+    const actions = useChatActions(deps)
+
+    await actions.sendMessage({ content: 'hi' })
+
+    expect(fake.streamMessage).not.toHaveBeenCalled()
+    expect(onSendMessage).toHaveBeenCalledTimes(1)
+    expect(state.messages.byTopic['topic_1'].some((m) => m.content === 'cb')).toBe(true)
+  })
+
+  it('passes signal and thinking through the transport params', async () => {
+    const { deps, fake } = setupWithTransport({ thinkingDefaultEnabled: true })
+    const actions = useChatActions(deps)
+
+    await actions.sendMessage({ content: 'hi' })
+
+    const params = fake.streamMessage.mock.calls[0][0]
+    expect(params.thinking).toEqual({ enabled: true })
+    expect(params.signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it('transport is not consulted when callbacks.onSendMessage exists (deleteMessage tier)', async () => {
+    const onDeleteMessage = vi.fn().mockResolvedValue(undefined)
+    const { deps, state, emitted } = setupWithTransport({
+      callbacks: { onSendMessage: () => createMockStream([{ type: 'end' }]), onDeleteMessage },
+    })
+    const actions = useChatActions(deps)
+    const msg: Message = {
+      messageId: 'm1', topicId: 'topic_1', role: 'user', type: 'text',
+      content: 'x', timestamp: Date.now(), status: 'sent',
+    }
+    state.messages.byTopic['topic_1'] = [msg]
+
+    await actions.deleteMessage(msg)
+
+    expect(onDeleteMessage).toHaveBeenCalledWith('m1', 'topic_1')
+    expect(emitted.filter((e) => e.event === 'message:deleted')).toHaveLength(1)
   })
 })
