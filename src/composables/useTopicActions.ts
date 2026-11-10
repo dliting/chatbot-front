@@ -3,6 +3,7 @@
  */
 import type { Ref, ComputedRef } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
+import type { ChatTransport } from '@/types'
 import type { Message } from '@/types'
 import type { ChatbotError, ErrorCategory } from '@/utils/errors'
 
@@ -21,6 +22,8 @@ interface TopicActionsDeps {
   apiClient: Ref<
     ReturnType<(typeof import('@/composables/useApiClient'))['useApiClient']> | undefined
   >
+  /** Transport Bridge tier: sits between callbacks and apiClient */
+  transport?: ComputedRef<ChatTransport | undefined>
   emit: (event: string, ...args: unknown[]) => void
   handleError: (error: unknown, category: ErrorCategory, userMessage: string) => ChatbotError
   switchTopic: (topicId: string) => void
@@ -35,7 +38,7 @@ interface TopicActionsDeps {
 }
 
 export function useTopicActions(deps: TopicActionsDeps) {
-  const { config, state, apiClient, emit } = deps
+  const { config, state, apiClient, emit, transport } = deps
 
   // Cancels the previous topic-data load whenever a newer one starts
   let loadController: AbortController | null = null
@@ -54,6 +57,8 @@ export function useTopicActions(deps: TopicActionsDeps) {
       let topics: import('@/types').Topic[] = []
       if (config.value.callbacks?.onLoadTopics) {
         topics = await config.value.callbacks.onLoadTopics(signal)
+      } else if (transport?.value?.loadTopics) {
+        topics = await transport.value.loadTopics(signal)
       } else if (apiClient.value) {
         topics = await apiClient.value.getTopics(signal)
       }
@@ -73,6 +78,8 @@ export function useTopicActions(deps: TopicActionsDeps) {
     try {
       if (config.value.callbacks?.onLoadMessages) {
         return await config.value.callbacks.onLoadMessages(topicId, signal)
+      } else if (transport?.value?.loadMessages) {
+        return await transport.value.loadMessages(topicId, signal)
       } else if (apiClient.value) {
         return await apiClient.value.getTopicMessages(topicId, signal)
       }
@@ -100,6 +107,17 @@ export function useTopicActions(deps: TopicActionsDeps) {
           emit('topic:created', { topic })
         } catch (error) {
           deps.handleError(error, 'topic', 'Create topic callback failed')
+        }
+      } else if (transport?.value?.createTopic) {
+        try {
+          const topic = await transport.value.createTopic()
+          deps.addTopicToFront(topic)
+          deps.setCurrentTopicId(topic.topicId)
+          emit('topic:created', { topic })
+        } catch (error) {
+          if (!(error instanceof Error && error.name === 'AbortError')) {
+            deps.handleError(error, 'topic', 'Failed to create topic')
+          }
         }
       } else if (apiClient.value) {
         try {
@@ -153,6 +171,8 @@ export function useTopicActions(deps: TopicActionsDeps) {
     try {
       if (config.value.callbacks?.onDeleteTopic) {
         await config.value.callbacks.onDeleteTopic(topicId)
+      } else if (transport?.value?.deleteTopic) {
+        await transport.value.deleteTopic(topicId)
       } else if (apiClient.value) {
         await apiClient.value.deleteTopic(topicId)
       }
@@ -196,6 +216,8 @@ export function useTopicActions(deps: TopicActionsDeps) {
     try {
       if (config.value.callbacks?.onUpdateTopicTitle) {
         await config.value.callbacks.onUpdateTopicTitle(topicId, title)
+      } else if (transport?.value?.updateTopicTitle) {
+        await transport.value.updateTopicTitle(topicId, title)
       } else if (apiClient.value) {
         await apiClient.value.updateTopicTitle(topicId, title)
       }

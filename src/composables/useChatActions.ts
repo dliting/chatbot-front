@@ -3,7 +3,7 @@
  */
 import { ref, computed, type Ref, type ComputedRef } from 'vue'
 import type { ChatbotConfig } from '@/types/config'
-import type { Message, Attachment, StreamEvent } from '@/types'
+import type { Message, Attachment, StreamEvent, ChatTransport } from '@/types'
 import type { ChatbotError, ErrorCategory } from '@/utils/errors'
 import { generateId } from '@/utils/helpers'
 import { useStreamProcessor } from './useStreamProcessor'
@@ -22,6 +22,8 @@ interface ChatActionsDeps {
   apiClient: Ref<
     ReturnType<(typeof import('@/composables/useApiClient'))['useApiClient']> | undefined
   >
+  /** Transport Bridge tier: sits between callbacks and apiClient */
+  transport?: ComputedRef<ChatTransport | undefined>
   emit: (event: string, ...args: unknown[]) => void
   handleError: (error: unknown, category: ErrorCategory, userMessage: string) => ChatbotError
   // Mutation helpers from useChatbotState
@@ -33,7 +35,7 @@ interface ChatActionsDeps {
 }
 
 export function useChatActions(deps: ChatActionsDeps) {
-  const { config, state, apiClient, emit } = deps
+  const { config, state, apiClient, emit, transport } = deps
 
   const isGenerating = ref(false)
   const abortController = ref<AbortController | null>(null)
@@ -128,7 +130,7 @@ export function useChatActions(deps: ChatActionsDeps) {
 
       const thinkingRequested = config.value.thinkingDefaultEnabled
 
-      // Three-tier fallback: callback > apiClient > error
+      // Tiered fallback: callback > transport (Bridge) > apiClient > error
       let stream: AsyncGenerator<StreamEvent>
       if (config.value.callbacks?.onSendMessage) {
         stream = config.value.callbacks.onSendMessage({
@@ -139,8 +141,29 @@ export function useChatActions(deps: ChatActionsDeps) {
           signal: controller.signal,
           extraInfo: data.extraInfo,
         })
+      } else if (transport?.value && !config.value.streamEnabled) {
+        emit('message:stream-start', { messageId: assistantMessageId })
+        const reply = await transport.value.sendMessage({
+          topicId,
+          content: data.content,
+          attachments: data.attachments,
+          thinking: { enabled: thinkingRequested },
+          signal: controller.signal,
+        })
+        deps.updateMessage(assistantMessageId, { content: reply.content, status: 'sent' })
+        finalizeStreamStatus(assistantMessageId, controller, userMessageId)
+        emit('message:stream-end', { messageId: assistantMessageId, fullContent: reply.content })
+        return
+      } else if (transport?.value) {
+        stream = transport.value.streamMessage({
+          topicId,
+          content: data.content,
+          attachments: data.attachments,
+          thinking: { enabled: thinkingRequested },
+          signal: controller.signal,
+          extraInfo: data.extraInfo,
+        })
       } else if (apiClient.value && !config.value.streamEnabled) {
-        // Non-streaming request path (streamEnabled=false): one POST, full reply
         emit('message:stream-start', { messageId: assistantMessageId })
         const reply = await apiClient.value.sendMessage(topicId, data.content, data.attachments)
         deps.updateMessage(assistantMessageId, { content: reply.content, status: 'sent' })

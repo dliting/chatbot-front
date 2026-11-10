@@ -156,6 +156,7 @@ watch(
 )
 
 // State
+const transportBridge = computed(() => config.value.transport)
 const {
   state,
   togglePanel,
@@ -237,6 +238,7 @@ const chatActions = useChatActions({
   config,
   state,
   apiClient,
+  transport: transportBridge,
   emit: emitEvent,
   handleError,
   ensureMessages: ensureMessagesForTopic,
@@ -377,7 +379,12 @@ const voiceTranscriber = (audio: string, format: string) => {
 }
 provide(
   voiceTranscriberKey,
-  computed(() => (apiClient.value ? voiceTranscriber : undefined))
+  computed(() => {
+    if (transportBridge.value?.transcribe) {
+      return (audio: string, format: string) => transportBridge.value!.transcribe!(audio, format)
+    }
+    return apiClient.value ? voiceTranscriber : undefined
+  })
 )
 
 // Watch panel open state
