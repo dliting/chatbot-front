@@ -302,3 +302,26 @@ export class StreamAccumulator {
     return this.content.length > 0
   }
 }
+
+/**
+ * Transport Bridge helpers: adapt plain responses into the StreamEvent
+ * contract so custom ChatTransport implementations don't hand-roll streams.
+ */
+import type { Message } from '@/types'
+
+/** Wrap a complete text into a token+end stream */
+export async function* textToStream(text: string): AsyncGenerator<StreamEvent> {
+  yield { type: 'token', content: text }
+  yield { type: 'end' }
+}
+
+/** Replay a completed assistant message as a stream (thinking → token → end) */
+export async function* messageToStream(message: Message): AsyncGenerator<StreamEvent> {
+  if (message.thinkingContent) {
+    yield { type: 'reasoning', reasoningContent: message.thinkingContent }
+  }
+  if (message.content) {
+    yield { type: 'token', content: message.content }
+  }
+  yield { type: 'end' }
+}

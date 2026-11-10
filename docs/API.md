@@ -1124,6 +1124,48 @@ Configuration can also be passed at load time via `?config=<base64 JSON>` URL pa
 
 ---
 
+## 15d. Transport Bridge (ChatTransport)
+
+For backends with non-REST protocols, implement `ChatTransport` and inject it via config — the library routes all chat/topic/message operations through it instead of the built-in HTTP client.
+
+```typescript
+interface ChatTransport {
+  // Required — streaming send (StreamEvent contract)
+  streamMessage(params: {
+    topicId: string; content: string; attachments?: Attachment[]
+    thinking?: { enabled: boolean }; signal?: AbortSignal; extraInfo?: string
+  }): AsyncGenerator<StreamEvent>
+  // Required — non-streaming send (used when config.streamEnabled === false)
+  sendMessage(params: ChatTransportStreamParams): Promise<Message>
+  // Optional topic/message operations; omit for local-only topics
+  loadTopics?(signal?: AbortSignal): Promise<Topic[]>
+  loadMessages?(topicId: string, signal?: AbortSignal): Promise<Message[]>
+  createTopic?(title?: string): Promise<Topic>
+  deleteTopic?(topicId: string): Promise<void>
+  updateTopicTitle?(topicId: string, title: string): Promise<void>
+  deleteMessage?(messageId: string): Promise<void>
+  transcribe?(audio: string, format: string): Promise<string>
+}
+```
+
+Usage:
+
+```typescript
+const transport: ChatTransport = {
+  async *streamMessage(params) {
+    const reply = await myBackend.chat(params.content)
+    yield { type: 'token', content: reply }
+    yield { type: 'end' }
+  },
+  async sendMessage(params) { /* … */ },
+}
+mount(AIChatbot, { config: { mode: 'extended', transport } })
+```
+
+Helper utilities `textToStream(text)` and `messageToStream(message)` (from `@/utils/stream`) adapt plain responses into the StreamEvent contract.
+
+---
+
 ## 16. Full Export Reference
 
 ```typescript

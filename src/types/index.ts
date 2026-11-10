@@ -194,3 +194,6 @@ export type { PostMessageData, PostMessageType, IframeStateSnapshot } from './ev
 
 /** Transcribes recorded audio into text (voice input) */
 export type VoiceTranscriber = (audio: string, format: string) => Promise<string>
+
+// Transport Bridge (chat abstraction over pluggable protocol implementations)
+export type { ChatTransport, ChatTransportStreamParams } from './transport'

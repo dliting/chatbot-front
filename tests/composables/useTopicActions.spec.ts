@@ -6,6 +6,7 @@ import { ref, computed } from 'vue'
 import { useTopicActions } from '@/composables/useTopicActions'
 import type { Message, Topic } from '@/types'
 import type { ChatbotConfig } from '@/types/config'
+import type { ChatTransport } from '@/types'
 import { defaultChatbotConfig } from '@/types/config'
 import { ChatbotError } from '@/utils/errors'
 
@@ -69,6 +70,7 @@ function createMockDeps(overrides: Record<string, unknown> = {}) {
     }),
     updateTopicTitle: vi.fn(),
     ...topicListOps,
+    ...overrides,
   }
 
   return { deps, emitted, state, errors }
@@ -756,5 +758,102 @@ describe('AbortSignal handling (topic switch race)', () => {
 
     await actions.reloadTopics()
     expect(errors).toHaveLength(0)
+  })
+})
+
+describe('ChatTransport Bridge tier (topics)', () => {
+  const createMockMessage = (id: string): Message => ({
+    messageId: id,
+    topicId: 'topic_1',
+    role: 'assistant',
+    type: 'text',
+    content: 'hello',
+    timestamp: Date.now(),
+    status: 'sent',
+  })
+
+  function createFakeTransport(topicList: Topic[] = [], messages: Message[] = []) {
+    return {
+      loadTopics: vi.fn().mockResolvedValue(topicList),
+      loadMessages: vi.fn().mockResolvedValue(messages),
+      createTopic: vi.fn().mockResolvedValue(createMockTopic('tp_new', 'Transport New')),
+      deleteTopic: vi.fn().mockResolvedValue(undefined),
+      updateTopicTitle: vi.fn().mockResolvedValue(undefined),
+    } as unknown as ChatTransport
+  }
+
+  function setupWithTransport(topicList: Topic[] = [], messages: Message[] = []) {
+    const fake = createFakeTransport(topicList, messages)
+    const transport = computed(() => fake)
+    const { deps, emitted, state, errors } = createMockDeps({ transport })
+    return { deps, emitted, state, errors, fake }
+  }
+
+  it('reloadTopics routes through transport.loadTopics', async () => {
+    const topics = [createMockTopic('tp_1', 'Transport Topic')]
+    const { deps, state, fake } = setupWithTransport(topics)
+    const actions = useTopicActions(deps)
+
+    await actions.reloadTopics()
+
+    expect(fake.loadTopics).toHaveBeenCalledWith(expect.any(AbortSignal))
+    expect(state.topics.list.some((t) => t.title === 'Transport Topic')).toBe(true)
+    void deps
+  })
+
+  it('loadTopicMessages routes through transport.loadMessages', async () => {
+    const msgs = [createMockMessage('m1')]
+    const { deps, fake } = setupWithTransport([], msgs)
+    const actions = useTopicActions(deps)
+
+    const signal = new AbortController().signal
+    const result = await actions.loadTopicMessages('topic_1', signal)
+
+    expect(fake.loadMessages).toHaveBeenCalledWith('topic_1', signal)
+    expect(result).toEqual(msgs)
+  })
+
+  it('createTopic routes through transport.createTopic', async () => {
+    const { deps, state, emitted, fake } = setupWithTransport()
+    const actions = useTopicActions(deps)
+    state.messages.byTopic['topic_1'] = [createMockMessage('m1')]
+
+    await actions.createNewTopic()
+
+    expect(fake.createTopic).toHaveBeenCalled()
+    expect(emitted.some((e) => e.event === 'topic:created')).toBe(true)
+  })
+
+  it('deleteTopic routes through transport.deleteTopic', async () => {
+    const { deps, emitted, fake } = setupWithTransport()
+    const actions = useTopicActions(deps)
+
+    await actions.removeTopic('topic_1')
+
+    expect(fake.deleteTopic).toHaveBeenCalledWith('topic_1')
+    expect(emitted.some((e) => e.event === 'topic:deleted')).toBe(true)
+  })
+
+  it('renameTopic routes through transport.updateTopicTitle', async () => {
+    const { deps, emitted, errors, state, fake } = setupWithTransport()
+    const actions = useTopicActions(deps)
+    state.topics.list.push(createMockTopic('topic_1', 'Old'))
+
+    await actions.renameTopic('topic_1', 'Renamed')
+
+    expect(fake.updateTopicTitle).toHaveBeenCalledWith('topic_1', 'Renamed')
+    expect(emitted.some((e) => e.event === 'topic:title-updated')).toBe(true)
+    expect(errors).toHaveLength(0)
+  })
+
+  it('falls back to local topics when transport lacks loadTopics', async () => {
+    const fake = createFakeTransport()
+    delete (fake as Record<string, unknown>).loadTopics
+    const { deps, state } = setupWithTransport()
+    const actions = useTopicActions(deps)
+
+    await actions.reloadTopics()
+
+    expect(state.topics.list.some((t) => t.topicId === 'topic_1')).toBe(true)
   })
 })
