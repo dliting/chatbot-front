@@ -93,6 +93,10 @@ npm run build:iframe   # outputs to dist-iframe/
 
 The iframe build communicates with the host page via a `postMessage` bridge — pass `allowedOrigins` in the `?config=` URL parameter (see the [iframe protocol in API.md](docs/API.md)).
 
+## Transport Bridge (pluggable backends)
+
+Implement `ChatTransport` to connect any backend protocol (WebSocket, OpenAI-compatible gateway, in-process model) without touching library code — see [Transport Bridge](docs/API.md). The built-in HTTP REST+SSE client remains the default.
+
 ## Floating ball & theme customization
 
 ```html
