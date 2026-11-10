@@ -841,8 +841,8 @@ describe('FloatingChatPanel panelOffset without stored position (subproject ⑥)
     const wrapper = mountNoStore({ x: -2000, y: -2000 })
     await nextTick()
     const style = wrapper.find('.draggable-window').attributes('style') ?? ''
-    const left = Number((style.match(/left: (-?d+)px/) ?? [])[1] ?? 0)
-    const top = Number((style.match(/top: (-?d+)px/) ?? [])[1] ?? 0)
+    const left = Number((style.match(/left: (-?\d+)px/) ?? [])[1] ?? 0)
+    const top = Number((style.match(/top: (-?\d+)px/) ?? [])[1] ?? 0)
     expect(left).toBeGreaterThanOrEqual(-380) // panel width 400 − margin keeps it reachable
     expect(top).toBeGreaterThanOrEqual(20)
     wrapper.unmount()
