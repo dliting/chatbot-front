@@ -1584,3 +1584,17 @@ Playwright 自动生成HTML报告：
 | `tests/e2e/chatapp/sidebar.spec.ts` | 5 | 导航、边栏面板布局、ChatInput、消息发送、console错误 |
 | `tests/e2e/chatapp/chat-interaction.spec.ts` | 8 | 文本输入(TC-COMMON-001)、发送按钮状态(TC-COMMON-003)、消息收发(TC-COMMON-004)、Enter发送、Shift+Enter换行、快捷操作(TC-COMMON-022)、上传按钮(TC-COMMON-012)、悬浮面板交互 |
 | `tests/e2e/chatapp/media-upload.spec.ts` | 6 | 图片上传+缩略图(TC-COMMON-012/013)、文件移除(TC-COMMON-013)、预览弹窗(TC-COMMON-013B)、文件发送、多文件上传、悬浮面板上传 |
+
+
+## Markdown 渲染增强（子项目⑦）
+
+| 用例 | 操作 | 预期 |
+|------|------|------|
+| 任务列表 | 发送 "- [x] 完成" 与 "- [ ] 待办" | 只读 checkbox（完成勾选） |
+| 行内公式 | 发送 "$E=mc^2$" | KaTeX 行内渲染 |
+| 块级公式 | 发送 "$$
+E=mc^2
+$$" | KaTeX display 渲染 |
+| 括号定界 | 发送 "(x)" 与 "[y]" | 同 KaTeX 渲染 |
+| 金额保护 | 发送 "值 $5 and $10" | 不渲染为公式 |
+| E2E | npx playwright test --project=chatapp md-features | 2/2 通过 |

@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `onLoadTopics` / `onLoadMessages` / backend requests), preventing stale
   responses from slow backends
 - Suspended-ball position memory (restored across reloads, PRD F-007-04)
+- Markdown rendering: GFM task lists (read-only checkboxes) and LaTeX math
+  via KaTeX (inline $...$ and block $...$, offline-bundled fonts)
 - Full iframe postMessage protocol: all component events forwarded as
   `chatbot:*` messages; `host:sendMessage` drives the normal chat flow and
   `host:getState` answers `chatbot:state` with a full UI snapshot

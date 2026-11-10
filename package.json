@@ -43,7 +43,7 @@
     "dompurify": "3.3.2",
     "element-plus": "^2.5.0",
     "highlight.js": "11.11.1",
-    "katex": "0.16.11",
+    "katex": "0.16.21",
     "lucide-vue-next": "1.0.0",
     "markdown-it": "14.1.1",
     "markdown-it-task-lists": "2.1.1",
