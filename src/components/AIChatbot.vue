@@ -139,10 +139,14 @@ const aiChatConfig = computed(() => ({
 
 // API client
 const apiClient = ref()
+// HTTP client is constructed only when no Transport Bridge is provided —
+// config.transport takes over all backend communication (Bridge pattern)
 watch(
-  () => config.value.apiBaseUrl,
-  (newUrl) => {
-    if (newUrl) {
+  [() => config.value.apiBaseUrl, () => config.value.transport],
+  ([newUrl, transport]) => {
+    if (transport) {
+      apiClient.value = undefined
+    } else if (newUrl) {
       apiClient.value = useApiClient({
         baseUrl: newUrl,
         streamEnabled: config.value.streamEnabled ?? true,
@@ -253,6 +257,7 @@ const topicActions = useTopicActions({
   config,
   state,
   apiClient,
+  transport: transportBridge,
   emit: emitEvent,
   handleError,
   switchTopic,
@@ -381,7 +386,8 @@ provide(
   voiceTranscriberKey,
   computed(() => {
     if (transportBridge.value?.transcribe) {
-      return (audio: string, format: string) => transportBridge.value!.transcribe!(audio, format)
+      const t = transportBridge.value
+      return (audio: string, format: string) => t.transcribe!(audio, format)
     }
     return apiClient.value ? voiceTranscriber : undefined
   })

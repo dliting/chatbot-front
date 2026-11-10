@@ -149,6 +149,7 @@ export function useChatActions(deps: ChatActionsDeps) {
           attachments: data.attachments,
           thinking: { enabled: thinkingRequested },
           signal: controller.signal,
+          extraInfo: data.extraInfo,
         })
         deps.updateMessage(assistantMessageId, { content: reply.content, status: 'sent' })
         finalizeStreamStatus(assistantMessageId, controller, userMessageId)
@@ -311,6 +312,8 @@ export function useChatActions(deps: ChatActionsDeps) {
     try {
       if (config.value.callbacks?.onDeleteMessage) {
         await config.value.callbacks.onDeleteMessage(message.messageId, topicId)
+      } else if (transport?.value?.deleteMessage) {
+        await transport.value.deleteMessage(message.messageId)
       } else if (apiClient.value) {
         await apiClient.value.deleteMessage(message.messageId)
       }

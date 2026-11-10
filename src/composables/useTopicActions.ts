@@ -192,6 +192,8 @@ export function useTopicActions(deps: TopicActionsDeps) {
       try {
         if (config.value.callbacks?.onDeleteTopic) {
           await config.value.callbacks.onDeleteTopic(topicId)
+        } else if (transport?.value?.deleteTopic) {
+          await transport.value.deleteTopic(topicId)
         } else if (apiClient.value) {
           await apiClient.value.deleteTopic(topicId)
         }
@@ -249,6 +251,8 @@ export function useTopicActions(deps: TopicActionsDeps) {
       let topics: import('@/types').Topic[] = []
       if (config.value.callbacks?.onLoadTopics) {
         topics = await config.value.callbacks.onLoadTopics()
+      } else if (transport?.value?.loadTopics) {
+        topics = await transport.value.loadTopics()
       } else if (apiClient.value) {
         topics = await apiClient.value.getTopics()
       }
