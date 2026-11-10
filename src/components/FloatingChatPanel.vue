@@ -42,6 +42,7 @@
         </button>
       </div>
     </template>
+
     <div class="floating-chat-panel__body">
       <ChatContent
         v-if="viewState.currentView === 'chat'"
@@ -82,14 +83,30 @@
     :position="configRef.position || 'bottom-right'"
     :size="56"
     :background-color="configRef.primaryColor || '#667eea'"
-    :badge="0"
+    :badge="configRef.ballBadge ?? null"
+    :ball-margin="configRef.ballMargin ?? 16"
     @click="openPanel"
-  />
+  >
+    <template v-if="ballIconNode" #icon>
+      <img
+        v-if="ballIconNode.type === 'path'"
+        :src="ballIconNode.value"
+        class="chatbot-floating-ball-icon chatbot-floating-ball-icon--img"
+        alt=""
+      />
+      <component
+        :is="ballIconNode.component"
+        v-else
+        class="chatbot-floating-ball-icon chatbot-floating-ball-icon--builtin"
+      />
+    </template>
+  </SuspendedBall>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, inject, provide } from 'vue'
 import type { ChatbotConfig, UIActionHandlers } from '@/types'
+import { resolveQuickActionIcon, builtinIconComponents } from '@/utils/icons'
 import type { QuickAction } from '@/types/config'
 import { defaultChatbotConfig } from '@/types/config'
 import type { Message, Topic } from '@/types'
@@ -201,6 +218,16 @@ const closePanel = () => {
   emit('close')
 }
 
+const ballIconNode = computed(() => {
+  const resolved = resolveQuickActionIcon(configRef.value.ballIcon, configRef.value.quickActionIconBase)
+  if (resolved.type === 'builtin') {
+    const component = builtinIconComponents[resolved.value]
+    return component ? { type: 'builtin', component } : null
+  }
+  if (resolved.type === 'path') return { type: 'path', value: resolved.value }
+  return null
+})
+
 // Initialize floating window position on mount
 onMounted(() => {
   // Respect a stored position: DraggableWindow already restored it on its own mount
@@ -209,8 +236,8 @@ onMounted(() => {
   const windowWidth = window.innerWidth
   const windowHeight = window.innerHeight
   windowState.value = {
-    x: windowWidth - (configRef.value.panelWidth || 400) - 20,
-    y: Math.max(20, (windowHeight - (configRef.value.panelHeight || 500)) / 2),
+    x: Math.max(0, windowWidth - (configRef.value.panelWidth || 400) - 20 + (configRef.value.panelOffset?.x ?? 0)),
+    y: Math.max(20, (windowHeight - (configRef.value.panelHeight || 500)) / 2 + (configRef.value.panelOffset?.y ?? 0)),
     width: configRef.value.panelWidth || 400,
     height: configRef.value.panelHeight || 500,
   }
@@ -275,5 +302,21 @@ defineExpose({
 :deep(.draggable-window__body) {
   padding: 0;
   overflow: hidden;
+}
+</style>
+
+<style scoped lang="scss">
+.chatbot-floating-ball-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 26px;
+    height: 26px;
+  }
 }
 </style>

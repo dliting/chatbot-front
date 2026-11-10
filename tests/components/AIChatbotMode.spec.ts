@@ -304,3 +304,85 @@ describe('AIChatbot voiceTranscriber provide chain', () => {
     expect((content.vm as unknown as { voiceTranscriber: unknown }).voiceTranscriber).toBeUndefined()
   })
 })
+
+describe('AIChatbot floating customization config passthrough', () => {
+  it('passes ball badge/icon/margin and panel offset/fontScale to FloatingChatPanel', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: {
+        config: {
+          mode: 'floating',
+          apiBaseUrl: '/api',
+          ballBadge: 3,
+          ballIcon: 'chat',
+          ballMargin: 24,
+          panelOffset: { x: -30, y: -50 },
+          fontScale: 1.25,
+        },
+      },
+      global: {
+        stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true, DraggableWindow: true },
+      },
+    })
+    await nextTick()
+
+    const panel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+    expect(panel.props('config')).toMatchObject({
+      ballBadge: 3,
+      ballIcon: 'chat',
+      ballMargin: 24,
+      panelOffset: { x: -30, y: -50 },
+      fontScale: 1.25,
+    })
+  })
+
+  it('falls back to documented defaults when not configured', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'floating', apiBaseUrl: '/api' } },
+      global: {
+        stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true, DraggableWindow: true },
+      },
+    })
+    await nextTick()
+    const panel = wrapper.findComponent({ name: 'FloatingChatPanel' })
+    expect(panel.props('config').ballBadge).toBeUndefined()
+    expect(panel.props('config').ballIcon).toBeUndefined()
+    expect(panel.props('config').ballMargin).toBe(16)
+    expect(panel.props('config').panelOffset).toBeUndefined()
+    expect(panel.props('config').fontScale).toBe(1)
+  })
+})
+
+describe('AIChatbot theme derivation and font scale', () => {
+  it('derives primary variants onto the root when primaryColor is set', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api', primaryColor: '#409eff' } },
+      global: { stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true } },
+    })
+    await nextTick()
+    const root = wrapper.find('.ai-chatbot')
+    const style = root.attributes('style') ?? ''
+    expect(style).toContain('--theme-primary-hover: #70b6ff')
+    expect(style).toContain('--theme-primary-dark: #2d6fb3')
+  })
+
+  it('does not emit variant vars when primaryColor is unset', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api' } },
+      global: { stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true } },
+    })
+    await nextTick()
+    const style = wrapper.find('.ai-chatbot').attributes('style') ?? ''
+    expect(style).not.toContain('--theme-primary-hover')
+  })
+
+  it('applies fontScale as a CSS variable on the root', async () => {
+    const wrapper = mount(AIChatbot, {
+      props: { config: { mode: 'extended', apiBaseUrl: '/api', fontScale: 1.25 } },
+      global: { stubs: { SuspendedBall: true, ChatHeader: true, ChatContent: true, TopicListView: true, FilePreviewModal: true } },
+    })
+    await nextTick()
+    const style = wrapper.find('.ai-chatbot').attributes('style') ?? ''
+    expect(style).toContain('--chatbot-font-scale: 1.25')
+    expect(style).toContain('font-size: calc(15px * 1.25)')
+  })
+})

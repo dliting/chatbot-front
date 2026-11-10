@@ -127,6 +127,16 @@ export interface ChatbotConfig {
 
   // Floating panel options
   draggable?: boolean
+  /** Floating ball badge (number shows 99+ beyond 99) — needs the ball visible */
+  ballBadge?: string | number
+  /** Floating ball icon: built-in name, relative path (vs quickActionIconBase) or URL */
+  ballIcon?: string
+  /** Floating ball distance from the viewport edge (px, default 16) */
+  ballMargin?: number
+  /** Floating panel initial position offset added to the computed default */
+  panelOffset?: { x?: number; y?: number }
+  /** Global font scale for the widget UI (0.75–1.5, default 1) */
+  fontScale?: number
   resizable?: boolean
   minWidth?: number
   minHeight?: number

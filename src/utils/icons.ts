@@ -1,3 +1,5 @@
+import { builtinIconComponents } from './builtinIcons'
+
 export interface ResolvedIcon {
   type: 'builtin' | 'path' | 'letter'
   value: string
@@ -18,6 +20,10 @@ export type BuiltinIconName = (typeof BUILTIN_ICON_NAMES)[number]
 export function isBuiltinIconName(name: string): name is BuiltinIconName {
   return (BUILTIN_ICON_NAMES as readonly string[]).includes(name)
 }
+
+
+
+export { builtinIconComponents }
 
 export function resolveQuickActionIcon(icon: string | undefined, iconBase?: string): ResolvedIcon {
   if (!icon) return { type: 'letter', value: '' }

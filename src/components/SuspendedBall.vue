@@ -31,6 +31,8 @@ import { makeDraggable, getInitialPosition } from '@/utils/drag'
 interface Props {
   position?: Position
   size?: number
+  /** Distance from the viewport edge (px, default 16) */
+  ballMargin?: number
   iconColor?: string
   backgroundColor?: string
   badge?: string | number | null
@@ -41,6 +43,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  ballMargin: 16,
   position: 'bottom-right',
   size: 56,
   iconColor: '#ffffff',
@@ -208,6 +211,16 @@ watch(
   }
 )
 
+// Watch margin changes → recompute default position
+watch(
+  () => props.ballMargin,
+  () => {
+    if (!isDragging.value) {
+      initPosition()
+    }
+  }
+)
+
 // Lifecycle
 onMounted(() => {
   initPosition()
@@ -246,6 +259,13 @@ onUnmounted(() => {
   &--dragging {
     cursor: grabbing;
     transition: none;
+  }
+
+  &__icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 50%;
   }
 
   &__icon {

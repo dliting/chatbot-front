@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Floating-mode customization: `ballBadge` (99+ display), `ballIcon`
+  (built-in/path/URL), `ballMargin`, `panelOffset` and `fontScale`
+  (0.75–1.5); `primaryColor` now derives hover/active/light/dark variants
+  automatically (utils/color.ts)
 - CI workflow (GitHub Actions): lint / test / build jobs with coverage upload
 - Font subset maintenance tooling (`scripts/fonts/`) and browser verification
   script (`tests/verify-fonts.cjs`)
