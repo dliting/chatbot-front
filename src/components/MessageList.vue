@@ -16,6 +16,7 @@
           :enable-copy="enableCopy"
           :enable-delete="enableDelete"
           :enable-resend="enableResend"
+          :enable-feedback="enableFeedback"
           :auto-collapse="thinkingAutoCollapse"
           :is-streaming="isStreaming && message.messageId === streamingMessageId"
           :is-last-message="index === messages.length - 1"
@@ -69,6 +70,7 @@ interface Props {
   enableCopy?: boolean
   enableDelete?: boolean
   enableResend?: boolean
+  enableFeedback?: boolean
   isStreaming?: boolean
   streamingMessageId?: string | null
   autoScroll?: boolean
@@ -85,6 +87,7 @@ const props = withDefaults(defineProps<Props>(), {
   enableCopy: true,
   enableDelete: true,
   enableResend: true,
+  enableFeedback: false,
   isStreaming: false,
   streamingMessageId: null,
   autoScroll: true,

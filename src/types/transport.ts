@@ -38,6 +38,8 @@ export interface ChatTransport {
   deleteTopic?(topicId: string): Promise<void>
   updateTopicTitle?(topicId: string, title: string): Promise<void>
   deleteMessage?(messageId: string): Promise<void>
+  /** Capture user feedback on an assistant message; 'none' clears a previous feedback. */
+  submitFeedback?(messageId: string, feedback: 'up' | 'down' | 'none'): Promise<void>
   /** Voice-to-text for the transcriber inject chain */
   transcribe?(audio: string, format: string): Promise<string>
 }

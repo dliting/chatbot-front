@@ -107,6 +107,13 @@ export interface ChatbotCallbacks {
 
   /** Clear all messages in a topic. */
   onClearMessages?: (topicId: string) => Promise<void>
+
+  /** Capture user feedback (👍/👎) on an assistant message. 'none' clears a previous feedback. */
+  onMessageFeedback?: (params: {
+    messageId: string
+    topicId: string
+    feedback: 'up' | 'down' | 'none'
+  }) => Promise<void>
 }
 
 export interface ChatbotConfig {
@@ -149,6 +156,8 @@ export interface ChatbotConfig {
   enableDeleteMessage?: boolean
   enableResend?: boolean
   enableClearAll?: boolean
+  /** Show 👍/👎 feedback buttons on assistant messages (default false) */
+  enableMessageFeedback?: boolean
 
   // Thinking / Chain-of-Thought
   enableThinking?: boolean
@@ -211,6 +220,9 @@ export interface ChatbotLabels {
   copy: string
   refresh: string
   resend: string
+  /** Feedback button tooltips */
+  feedbackUp?: string
+  feedbackDown?: string
   uploading: string
   uploadFailed: string
   retry: string

@@ -40,6 +40,7 @@ export const defaultChatbotConfig: Required<ChatbotConfig> = {
   enableDeleteMessage: true,
   enableResend: true,
   enableClearAll: true,
+  enableMessageFeedback: false,
 
   // Thinking
   enableThinking: false,

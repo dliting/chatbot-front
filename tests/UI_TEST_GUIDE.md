@@ -16,10 +16,13 @@
 ## E2E测试（Playwright）
 - 项目使用Playwright进行端到端浏览器测试，配置文件为 `playwright.config.ts`。
 - E2E测试分为两级：
-  - **ChatApp完整应用测试**（`tests/e2e/chatapp/`）：通过 `npm run test:e2e:chatapp` 运行，需先启动mock后端（port 3001）和前端（port 5180）。
-  - **组件库独立入口测试**（`tests/e2e/lib/`）：通过 `npm run test:e2e:lib` 运行，需先启动dev server（`npx vite --host` on port 5173）。
+  - **ChatApp完整应用测试**（`tests/e2e/chatapp/`）：通过 `npm run test:e2e:chatapp` 运行。
+  - **组件库独立入口测试**（`tests/e2e/lib/`）：通过 `npm run test:e2e:lib` 运行。
 - 所有E2E测试通过 `npm run test:e2e` 统一运行。
-- **Windows注意事项**：Vite默认仅绑定IPv6，Playwright的Chromium使用IPv4连接。运行E2E测试前需手动启动dev server：`npx vite --host`（加上`--host`使其同时绑定IPv4）。
+- **Real 后端套件**：`npm run test:e2e:real`（等价 `E2E_REAL=1`），本地 Ollama 必须在线。
+- **服务拓扑声明化**：所有套件所需服务（mock 后端 / frontend / backend-real）均在 `playwright.config.ts` 的 `webServer` 中声明，由 Playwright 自动启动（健康检查）与回收；本地已手动启动的同端口服务会被复用（CI 中不复用）。无需再手动起服。
+- **端口契约（专用，勿他用）**：5173 组件库入口 / 5180 ChatApp 前端 / 3001 backend-mock / 3000 backend-real；端口单一来源为 `examples/chatapp/*.env`（`tests/e2e/helpers/readChatappEnv.ts` 读取派生）。
+- **全链路显式 IPv4（127.0.0.1）**：历史"Windows 下 connection refused"问题根因是 `localhost` 可能解析到 ::1 而服务只绑 IPv4——所有健康检查、代理目标、绑定地址已统一 127.0.0.1；新代码不要再引入 `localhost` 运行时连接。
 - **UI功能变更后必须运行E2E测试**：单元测试无法捕获跨组件集成问题，E2E测试是防止UI Bug漏网的最后防线。
 - **修复UI Bug后必须使用Playwright MCP进行浏览器验证**：通过Playwright MCP工具（browser_navigate, browser_snapshot, browser_click等）在真实浏览器中验证修复效果。
 - **跨组件集成变更必须补充E2E测试**：如修改AIChatbot/ChatPanel/FloatingChatPanel/EmbeddedChatPanel之间的组装关系时。
@@ -180,10 +183,12 @@ test('示例：悬浮球可见且可点击', async ({ page }) => {
 
 | 项 | 说明 |
 |----|------|
-| 运行 | `E2E_REAL=1 npx playwright test --project=chatapp real-backend --workers=1`（前置：Ollama 运行中，backend-real 已启动） |
+| 运行 | `npm run test:e2e:real`（前置：本地 Ollama 运行中；backend-real 由 Playwright 自动启动） |
 | 跳过条件 | 未设置 E2E_REAL 时自动跳过（CI 无 Ollama） |
-| 失败判定 | 响应超时即判失败（回复等待上限 60s） |
-| 覆盖链路 | 发送→真实流式回复；头部清空（确认流）；新建话题隔离 |
+| 预热 | beforeAll 两段式：<5s 探测 backend-real 可达（不可达立即报错含启动指引）→ 预热 chat 模型（消费 SSE 到 `end` 事件才算成功，4 次尝试预算 ≤300s，逐次打印进度） |
+| 失败判定 | 响应超时即判失败（回复等待上限 100s，用例超时 2min）；Ollama 掉线时预热段有界失败且错误含 Ollama 地址 |
+| 覆盖链路 | 发送→真实流式回复；头部清空（确认流）；新建话题隔离；消息反馈 👍 持久化回路 |
+| 模型驻留 | `OLLAMA_KEEP_ALIVE=30m`（real.env）透传 Ollama，阶段间模型不互相驱逐 |
 
 ---
 
@@ -382,6 +387,21 @@ await expect(page.locator('h1')).toContainText('AI Chatbot')
 | 确认清空 | 点击清空按钮 → 确认对话框 → 点确认 | 当前话题消息全部清空，话题保留 |
 | 取消保留 | 点击清空按钮 → 点取消 | 消息不变 |
 | 回调触发 | 配置 callbacks.onClearMessages | 确认后回调收到 topicId，宿主收到 messages:cleared 事件 |
+
+### 2.2a-2 消息反馈捕获测试 (F-305, enableMessageFeedback)
+
+> **新特性（子项目⑨）**：assistant 消息的 👍/👎 反馈捕获。默认关闭；`enableMessageFeedback: true` 开启（ExtendedDemo 已开启）。E2E：`tests/e2e/chatapp/message-feedback.spec.ts`。
+
+| 用例 | 操作 | 预期 |
+|------|------|------|
+| 按钮显隐 | 开启配置，AI 回复完成 | assistant 消息操作栏出现 👍/👎；user 消息不出现 |
+| 默认关闭 | 未开启配置（如 /sidebar demo） | 无 👍/👎 按钮 |
+| 点击 👍 | 点击 assistant 消息的 👍 | 按钮主色高亮 + `aria-pressed="true"`；宿主收到 `message:feedback` 事件（`{messageId, topicId, feedback:'up'}`）；REST `POST {apiBaseUrl}/messages/:id/feedback`（或 callbacks.onMessageFeedback / transport.submitFeedback 三级链）被调用 |
+| 互斥切换 | 👍 选中后点 👎 | 👍 取消高亮、👎 选中，事件 feedback='down' |
+| 再点取消 | 点击已选中的 👍 | 恢复未选中，事件 feedback='none'（宿主可据此删除评价记录） |
+| 刷新回灌 | 点击 👍 后刷新页面 | loadMessages 回传 `Message.feedback:'up'`，按钮初始选中（后端持久化回路） |
+| 状态门控 | loading/streaming/error 态消息、stopped 态 | 前者不显示反馈按钮；stopped（部分回答）可评价 |
+| 可访问性 | 键盘 Tab 聚焦反馈按钮 | title/aria-label 为 labels.feedbackUp/feedbackDown（zh '有帮助'/'无帮助'），aria-pressed 反映选中态 |
 
 ### 2.2b 代码块复制按钮测试
 

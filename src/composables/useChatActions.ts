@@ -6,7 +6,7 @@ import type { ChatbotConfig } from '@/types/config'
 import type { Message, Attachment, StreamEvent, ChatTransport } from '@/types'
 import type { ChatbotError, ErrorCategory } from '@/utils/errors'
 import { generateId } from '@/utils/helpers'
-import { useStreamProcessor } from './useStreamProcessor'
+import { useStreamProcessor, type StreamRunHandle } from './useStreamProcessor'
 
 interface ChatActionsDeps {
   config: ComputedRef<Required<ChatbotConfig>>
@@ -31,6 +31,7 @@ interface ChatActionsDeps {
   removeMessage: (topicId: string, messageId: string) => void
   insertMessage: (topicId: string, index: number, message: Message) => void
   updateMessage: (messageId: string, updates: Partial<Message>) => void
+  renameMessage: (oldId: string, newId: string) => void
   setCurrentTopicId: (topicId: string) => void
 }
 
@@ -43,6 +44,7 @@ export function useChatActions(deps: ChatActionsDeps) {
   // Stream-processing state machine (shared by send / regenerate / edit)
   const streamProcessor = useStreamProcessor({
     updateMessage: deps.updateMessage,
+    renameMessage: deps.renameMessage,
     labels: computed(() => config.value.labels),
     getMessages: () => state.messages.byTopic[state.topics.currentId],
   })
@@ -81,6 +83,15 @@ export function useChatActions(deps: ChatActionsDeps) {
     return err.message || 'Send failed, please retry'
   }
 
+  /** Adopt the server-assigned id when it differs from the local placeholder */
+  function adoptServerId(localId: string, serverId?: string): string {
+    if (serverId && serverId !== localId) {
+      deps.renameMessage(localId, serverId)
+      return serverId
+    }
+    return localId
+  }
+
   /**
    * Send a new message and stream the AI response
    */
@@ -103,6 +114,9 @@ export function useChatActions(deps: ChatActionsDeps) {
 
     let userMessageId = ''
     let assistantMessageId = ''
+    // Function scope so the catch below sees the id the server adopted
+    // mid-stream (a stale placeholder id would orphan the error state)
+    const assistantIdRef: StreamRunHandle = { current: '' }
 
     try {
       // Add user message
@@ -142,7 +156,6 @@ export function useChatActions(deps: ChatActionsDeps) {
           extraInfo: data.extraInfo,
         })
       } else if (transport?.value && !config.value.streamEnabled) {
-        emit('message:stream-start', { messageId: assistantMessageId })
         const reply = await transport.value.sendMessage({
           topicId,
           content: data.content,
@@ -151,9 +164,12 @@ export function useChatActions(deps: ChatActionsDeps) {
           signal: controller.signal,
           extraInfo: data.extraInfo,
         })
-        deps.updateMessage(assistantMessageId, { content: reply.content, status: 'sent' })
-        finalizeStreamStatus(assistantMessageId, controller, userMessageId)
-        emit('message:stream-end', { messageId: assistantMessageId, fullContent: reply.content })
+        const finalId = adoptServerId(assistantMessageId, reply.messageId)
+        // start/end pair on the same (server-adopted) id for host correlation
+        emit('message:stream-start', { messageId: finalId })
+        deps.updateMessage(finalId, { content: reply.content, status: 'sent' })
+        finalizeStreamStatus(finalId, controller, userMessageId)
+        emit('message:stream-end', { messageId: finalId, fullContent: reply.content })
         return
       } else if (transport?.value) {
         stream = transport.value.streamMessage({
@@ -165,11 +181,12 @@ export function useChatActions(deps: ChatActionsDeps) {
           extraInfo: data.extraInfo,
         })
       } else if (apiClient.value && !config.value.streamEnabled) {
-        emit('message:stream-start', { messageId: assistantMessageId })
         const reply = await apiClient.value.sendMessage(topicId, data.content, data.attachments)
-        deps.updateMessage(assistantMessageId, { content: reply.content, status: 'sent' })
-        finalizeStreamStatus(assistantMessageId, controller, userMessageId)
-        emit('message:stream-end', { messageId: assistantMessageId, fullContent: reply.content })
+        const finalId = adoptServerId(assistantMessageId, reply.messageId)
+        emit('message:stream-start', { messageId: finalId })
+        deps.updateMessage(finalId, { content: reply.content, status: 'sent' })
+        finalizeStreamStatus(finalId, controller, userMessageId)
+        emit('message:stream-end', { messageId: finalId, fullContent: reply.content })
         return
       } else if (apiClient.value) {
         stream = apiClient.value.streamChat(topicId, data.content, data.attachments, {
@@ -186,13 +203,23 @@ export function useChatActions(deps: ChatActionsDeps) {
         return
       }
 
-      emit('message:stream-start', { messageId: assistantMessageId })
-
-      const { fullContent } = await processStream(stream, controller, assistantMessageId, thinkingRequested)
-      finalizeStreamStatus(assistantMessageId, controller, userMessageId)
-      emit('message:stream-end', { messageId: assistantMessageId, fullContent })
+      // Holder lives in function scope so the catch below sees the id the
+      // server adopted mid-stream (a stale id would orphan the error state)
+      assistantIdRef.current = assistantMessageId
+      const { fullContent, streamStarted } = await processStream(
+        stream,
+        controller,
+        assistantIdRef,
+        thinkingRequested,
+        () => emit('message:stream-start', { messageId: assistantIdRef.current })
+      )
+      finalizeStreamStatus(assistantIdRef.current, controller, userMessageId)
+      // stream-end pairs with stream-start — degenerate streams stay unpaired
+      if (streamStarted) {
+        emit('message:stream-end', { messageId: assistantIdRef.current, fullContent })
+      }
     } catch (error) {
-      handleStreamError(error as Error, assistantMessageId, userMessageId)
+      handleStreamError(error as Error, assistantIdRef.current || assistantMessageId, userMessageId)
     } finally {
       isGenerating.value = false
       abortController.value = null
@@ -233,6 +260,7 @@ export function useChatActions(deps: ChatActionsDeps) {
       const controller = new AbortController()
       abortController.value = controller
       const assistantMessageId = generateId('msg')
+      const assistantIdRef: StreamRunHandle = { current: assistantMessageId }
 
       try {
         // Add placeholder for new AI response
@@ -248,12 +276,18 @@ export function useChatActions(deps: ChatActionsDeps) {
           messageId: userMsg.messageId,
         })
 
-        await processStream(stream, controller, assistantMessageId, thinkingRequested)
-        finalizeStreamStatus(assistantMessageId, controller)
+        await processStream(
+          stream,
+          controller,
+          assistantIdRef,
+          thinkingRequested,
+          () => emit('message:stream-start', { messageId: assistantIdRef.current })
+        )
+        finalizeStreamStatus(assistantIdRef.current, controller)
       } catch (error) {
         deps.handleError(error, 'stream', 'Failed to regenerate message')
         isThinkingActive.value = false
-        deps.updateMessage(assistantMessageId, {
+        deps.updateMessage(assistantIdRef.current, {
           status: 'error',
           errorMessage: (error as Error).message || 'Regeneration failed',
         })
@@ -353,6 +387,7 @@ export function useChatActions(deps: ChatActionsDeps) {
     const controller = new AbortController()
     abortController.value = controller
     const assistantMessageId = generateId('msg')
+    const assistantIdRef: StreamRunHandle = { current: assistantMessageId }
 
     try {
       deps.insertMessage(topicId, index + 1, createAssistantPlaceholder(topicId, assistantMessageId))
@@ -367,15 +402,58 @@ export function useChatActions(deps: ChatActionsDeps) {
         messageId: message.messageId,
       })
 
-      await processStream(stream, controller, assistantMessageId, thinkingRequested)
-      finalizeStreamStatus(assistantMessageId, controller)
+      await processStream(
+        stream,
+        controller,
+        assistantIdRef,
+        thinkingRequested,
+        () => emit('message:stream-start', { messageId: assistantIdRef.current })
+      )
+      finalizeStreamStatus(assistantIdRef.current, controller)
     } catch (error) {
       if (!(error instanceof Error && error.name === 'AbortError')) {
         deps.handleError(error, 'message', 'Failed to edit message')
+        // Mark the placeholder with the adopted id, not the stale local one
+        deps.updateMessage(assistantIdRef.current, {
+          status: 'error',
+          errorMessage: (error as Error).message || 'Edit failed',
+        })
       }
     } finally {
       isGenerating.value = false
       abortController.value = null
+    }
+  }
+
+  /**
+   * Submit message feedback (👍/👎). 'none' clears a previous feedback.
+   * Tiered fallback: callback > transport (Bridge) > apiClient > local-only.
+   * Local state applies first; a failed upload reports but never rolls back
+   * (feedback is best-effort and flipping UI state would only add noise).
+   */
+  async function submitMessageFeedback(
+    message: Message,
+    feedback: 'up' | 'down' | 'none'
+  ) {
+    deps.updateMessage(message.messageId, {
+      feedback: feedback === 'none' ? undefined : feedback,
+    })
+    emit('message:feedback', { messageId: message.messageId, topicId: message.topicId, feedback })
+
+    try {
+      if (config.value.callbacks?.onMessageFeedback) {
+        await config.value.callbacks.onMessageFeedback({
+          messageId: message.messageId,
+          topicId: message.topicId,
+          feedback,
+        })
+      } else if (transport?.value?.submitFeedback) {
+        await transport.value.submitFeedback(message.messageId, feedback)
+      } else if (apiClient.value) {
+        await apiClient.value.submitFeedback(message.messageId, feedback)
+      }
+    } catch (error) {
+      deps.handleError(error, 'message', 'Failed to submit feedback')
     }
   }
 
@@ -399,6 +477,7 @@ export function useChatActions(deps: ChatActionsDeps) {
     refreshMessage,
     deleteMessage,
     editMessage,
+    submitMessageFeedback,
     stopGenerating,
   }
 }

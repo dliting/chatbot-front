@@ -844,3 +844,39 @@ describe('streamChat request-body variants (coverage fill)', () => {
     void controller
   })
 })
+
+describe('submitFeedback', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('POSTs feedback to the message feedback endpoint', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true })
+    const client = useApiClient(defaultOptions)
+
+    await client.submitFeedback('msg-1', 'up')
+
+    expect(mockFetch).toHaveBeenCalledWith('http://localhost:3000/messages/msg-1/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ feedback: 'up' }),
+    })
+  })
+
+  it('sends "none" when feedback is deselected', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true })
+    const client = useApiClient(defaultOptions)
+
+    await client.submitFeedback('msg-2', 'none')
+
+    const init = mockFetch.mock.calls[0][1] as { body: string }
+    expect(JSON.parse(init.body)).toEqual({ feedback: 'none' })
+  })
+
+  it('throws on non-ok response', async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 })
+    const client = useApiClient(defaultOptions)
+
+    await expect(client.submitFeedback('msg-3', 'down')).rejects.toThrow('API error: 500')
+  })
+})

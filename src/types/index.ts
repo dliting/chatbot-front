@@ -33,6 +33,7 @@ export interface Message {
   thinkingContent?: string // Thinking/reasoning process text
   thinkingTime?: number // Thinking elapsed time in ms
   errorMessage?: string // User-facing error description when status is 'error' or 'stopped'
+  feedback?: 'up' | 'down' // User feedback captured on assistant messages
 }
 
 // Topic Types
@@ -108,6 +109,8 @@ export interface ChatActionHandlers {
   refreshMessage: (message: Message) => void
   deleteMessage: (message: Message) => void
   editMessage: (message: Message) => void
+  /** Submit 👍/👎 feedback; 'none' clears a previous feedback */
+  submitMessageFeedback: (message: Message, feedback: 'up' | 'down' | 'none') => Promise<void>
   stopGenerating: () => void
   isGenerating: { value: boolean }
   isThinkingActive: { value: boolean }
@@ -153,6 +156,8 @@ export interface ChatState {
   enableCopyMessage?: boolean
   enableDeleteMessage?: boolean
   enableResend?: boolean
+  /** Show 👍/👎 feedback buttons on assistant messages (optional: standalone usage defaults to false) */
+  enableMessageFeedback?: boolean
   autoScroll?: boolean
   /** Config-driven upload settings */
   enableImageUpload?: boolean

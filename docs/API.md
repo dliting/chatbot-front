@@ -87,6 +87,7 @@ interface ChatbotConfig {
   enableDeleteMessage?: boolean    // Default true
   enableResend?: boolean           // Default true
   enableClearAll?: boolean         // Default true
+  enableMessageFeedback?: boolean  // Default false — 👍/👎 buttons on assistant messages
   enableThinking?: boolean         // Default false
 
   // === Thinking / Chain-of-Thought ===
@@ -172,6 +173,13 @@ interface ChatbotCallbacks {
 
   /** Clear all messages in a topic. */
   onClearMessages?: (topicId: string) => Promise<void>
+
+  /** Capture user feedback (👍/👎) on an assistant message. 'none' clears a previous feedback. */
+  onMessageFeedback?: (params: {
+    messageId: string
+    topicId: string
+    feedback: 'up' | 'down' | 'none'
+  }) => Promise<void>
 
   // ===== File Operations =====
 
@@ -277,7 +285,8 @@ Events use a colon-separated naming convention (`domain:action`) and carry objec
 | `message:deleted` | `{ messageId: string, topicId: string }` | Message deleted (synced with backend) |
 | `message:edited` | `{ messageId: string, topicId: string }` | Message edited |
 | `message:regenerated` | `{ messageId: string, topicId: string }` | AI response regenerated |
-| `message:stream-start` | `{ messageId: string }` | Streaming response started |
+| `message:feedback` | `{ messageId: string, topicId: string, feedback: 'up' \| 'down' \| 'none' }` | User feedback on an assistant message; `'none'` clears a previous feedback |
+| `message:stream-start` | `{ messageId: string }` | Streaming response started. Emitted when the first content chunk arrives, carrying the **server-adopted** message id (backends that announce their own id on the SSE `start` event); `stream-end` always uses the same id |
 | `message:stream-end` | `{ messageId: string, fullContent: string }` | Streaming response completed |
 | `messages:cleared` | `{ topicId: string }` | All messages of the current topic cleared (enableClearAll, confirmed via dialog) |
 
@@ -376,6 +385,7 @@ interface Message {
   errorMessage?: string          // User-facing error when status is 'error' or 'stopped'
   thinkingContent?: string       // Thinking/reasoning process text
   thinkingTime?: number          // Thinking elapsed time in ms
+  feedback?: 'up' | 'down'       // User feedback captured on assistant messages (hydrated from backend on load)
   metadata?: Record<string, unknown>
 }
 ```
@@ -479,6 +489,9 @@ interface ChatbotLabels {
   copy: string
   refresh: string
   resend: string
+  /** Feedback button tooltips (optional) */
+  feedbackUp?: string            // zh '有帮助' / en 'Helpful'
+  feedbackDown?: string          // zh '无帮助' / en 'Not helpful'
   uploading: string
   uploadFailed: string
   retry: string
@@ -886,6 +899,7 @@ When using `apiBaseUrl` (without callbacks), the component expects the following
 | `DELETE` | `/sessions/:id` | Delete session/topic |
 | `PATCH` | `/sessions/:id/title` | Update session title |
 | `DELETE` | `/messages/:id` | Delete a specific message |
+| `POST` | `/messages/:id/feedback` | Submit message feedback: `{ feedback: 'up' \| 'down' \| 'none' }`; `'none'` clears a previous feedback |
 | `POST` | `/chat/transcribe` | Voice-to-text: `{ audio: base64Wav, format: 'wav' }` → `{ text }`. Implemented by backend-real via an Ollama audio model (`OLLAMA_ASR_MODEL`, e.g. lfm3-audio); backend-mock returns a canned transcript |
 
 ### Stream Chat (SSE)
@@ -1126,7 +1140,7 @@ Configuration can also be passed at load time via `?config=<base64 JSON>` URL pa
 
 ## 15d. Transport Bridge (ChatTransport)
 
-For backends with non-REST protocols, implement `ChatTransport` and inject it via config — the library routes all chat/topic/message operations through it instead of the built-in HTTP client.
+For backends with non-REST protocols, implement `ChatTransport` and inject it via config — the library routes chat streaming, non-streaming send, topic CRUD and message deletion through it (edit-resend stays callback-based) instead of the built-in HTTP client.
 
 ```typescript
 interface ChatTransport {
@@ -1144,6 +1158,8 @@ interface ChatTransport {
   deleteTopic?(topicId: string): Promise<void>
   updateTopicTitle?(topicId: string, title: string): Promise<void>
   deleteMessage?(messageId: string): Promise<void>
+  /** Capture user feedback on an assistant message; 'none' clears a previous feedback. */
+  submitFeedback?(messageId: string, feedback: 'up' | 'down' | 'none'): Promise<void>
   transcribe?(audio: string, format: string): Promise<string>
 }
 ```

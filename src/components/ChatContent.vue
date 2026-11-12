@@ -20,6 +20,7 @@
         :enable-copy="chatState?.enableCopyMessage ?? true"
         :enable-delete="chatState?.enableDeleteMessage ?? true"
         :enable-resend="chatState?.enableResend ?? true"
+        :enable-feedback="chatState?.enableMessageFeedback ?? false"
         :auto-scroll="chatState?.autoScroll ?? true"
         :thinking-auto-collapse="chatState?.thinkingAutoCollapse ?? true"
         @file-click="$emit('file-click', $event)"

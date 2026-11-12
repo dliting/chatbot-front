@@ -27,7 +27,10 @@ async function start() {
     await initDatabase()
     console.log('Database initialized (mock mode)')
 
-    app.listen(PORT, () => {
+    // Bind to the configured HOST (127.0.0.1 in mock.env) — a bare
+    // app.listen(PORT) binds 0.0.0.0/::6 semantics that mismatch IPv4-only
+    // health checks and needlessly expose the dev server
+    app.listen(PORT, HOST, () => {
       console.log(`Mock server running on http://${HOST}:${PORT}`)
     })
   } catch (error) {

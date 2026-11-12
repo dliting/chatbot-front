@@ -34,6 +34,7 @@ describe('createIframeBridge.forwardEvent', () => {
     ['message:deleted', { messageId: 'm1', topicId: 't1' }, 'chatbot:messageDeleted'],
     ['message:edited', { messageId: 'm1', topicId: 't1' }, 'chatbot:messageEdited'],
     ['message:regenerated', { messageId: 'm1', topicId: 't1' }, 'chatbot:messageRegenerated'],
+    ['message:feedback', { messageId: 'm1', topicId: 't1', feedback: 'up' }, 'chatbot:messageFeedback'],
     ['message:stream-start', { messageId: 'm1' }, 'chatbot:messageStreamStart'],
     ['message:stream-end', { messageId: 'm1', fullContent: 'done' }, 'chatbot:messageStreamEnd'],
     ['messages:cleared', { topicId: 't1' }, 'chatbot:messagesCleared'],

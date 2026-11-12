@@ -86,6 +86,30 @@
 
       <!-- Actions -->
       <div v-if="showActions" :class="actionsClasses">
+        <!-- Feedback buttons (assistant messages only) -->
+        <template v-if="showFeedback">
+          <button
+            class="chatbot-message__action-btn chatbot-message__action-btn--feedback-up"
+            :class="{ 'chatbot-message__action-btn--active': message.feedback === 'up' }"
+            :title="labels?.feedbackUp || 'Helpful'"
+            :aria-label="labels?.feedbackUp || 'Helpful'"
+            :aria-pressed="message.feedback === 'up'"
+            @click="handleFeedback('up')"
+          >
+            <ThumbsUp :size="14" />
+          </button>
+          <button
+            class="chatbot-message__action-btn chatbot-message__action-btn--feedback-down"
+            :class="{ 'chatbot-message__action-btn--active': message.feedback === 'down' }"
+            :title="labels?.feedbackDown || 'Not helpful'"
+            :aria-label="labels?.feedbackDown || 'Not helpful'"
+            :aria-pressed="message.feedback === 'down'"
+            @click="handleFeedback('down')"
+          >
+            <ThumbsDown :size="14" />
+          </button>
+        </template>
+
         <!-- Copy button -->
         <button
           v-if="enableCopy && canCopy"
@@ -131,7 +155,7 @@
 <script setup lang="ts">
 import { computed, ref, onUnmounted, inject } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Copy, Check, Trash2 } from 'lucide-vue-next'
+import { Copy, Check, Trash2, ThumbsUp, ThumbsDown } from 'lucide-vue-next'
 import type { Message } from '@/types'
 import type { ChatbotLabels } from '@/types/config'
 import { chatActionsKey } from '@/symbols'
@@ -151,6 +175,8 @@ interface Props {
   enableCopy?: boolean
   enableDelete?: boolean
   enableResend?: boolean
+  /** Show 👍/👎 feedback buttons (assistant messages only) */
+  enableFeedback?: boolean
   isStreaming?: boolean
   autoCollapse?: boolean
   copyTimeout?: number
@@ -167,6 +193,7 @@ const props = withDefaults(defineProps<Props>(), {
   enableCopy: true,
   enableDelete: true,
   enableResend: true,
+  enableFeedback: false,
   isStreaming: false,
   autoCollapse: true,
   copyTimeout: 2000,
@@ -196,6 +223,13 @@ const hasVideos = computed(() => getAttachmentsByType(props.message, 'video').le
 const hasAudios = computed(() => getAttachmentsByType(props.message, 'audio').length > 0)
 const hasDocuments = computed(() => getAttachmentsByType(props.message, 'document').length > 0)
 const canCopy = computed(() => hasText.value && !props.isStreaming)
+// Feedback is rateable only for complete-enough assistant answers
+const showFeedback = computed(
+  () =>
+    props.enableFeedback &&
+    isUser.value === false &&
+    (props.message.status === 'sent' || props.message.status === 'stopped')
+)
 const isThinkingActive = computed(() => chatActions?.isThinkingActive?.value ?? false)
 
 const label = computed(() =>
@@ -273,6 +307,12 @@ const handleCopy = async () => {
   } catch {
     ElMessage({ message: props.labels?.copyFailed || 'Copy failed', type: 'error', duration: 3000 })
   }
+}
+
+/** Mutually exclusive 👍/👎; clicking the active one deselects ('none') */
+const handleFeedback = (feedback: 'up' | 'down') => {
+  const next = props.message.feedback === feedback ? 'none' : feedback
+  chatActions?.submitMessageFeedback(props.message, next)
 }
 
 const handleDelete = () => {
@@ -566,6 +606,10 @@ const handleTextClick = (e: MouseEvent) => {
 
     &--copied {
       color: var(--color-success, #67c23a);
+    }
+
+    &--active {
+      color: var(--color-primary, #409eff);
     }
 
     &--danger:hover {

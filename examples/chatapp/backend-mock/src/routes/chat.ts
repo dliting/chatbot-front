@@ -7,7 +7,8 @@ import {
   updateSessionTitle,
   getMessages,
   addMessage,
-  deleteMessage
+  deleteMessage,
+  setMessageFeedback
 } from '../services/database'
 import { streamMockChat, mockChat } from '../services/mockChat'
 import { HOST, PORT } from '../config'
@@ -53,6 +54,7 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
       let fullContent = ''
       let fullThinkingContent = ''
       let thinkingStartTime = 0
+      let endSaved = false
       for await (const chunk of streamMockChat(chatMessages, options)) {
         if (clientClosed) break
 
@@ -65,17 +67,21 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
           res.write(`data: ${JSON.stringify({ type: 'token', content: chunk.content })}\n\n`)
         } else if (chunk.type === 'end') {
           const thinkingTime = thinkingStartTime ? Date.now() - thinkingStartTime : undefined
-          const assistantMessage = addMessage(sessionId, 'assistant', fullContent, undefined, undefined, undefined, fullThinkingContent || undefined, thinkingTime)
+          // Persist with the id announced on the start event so the client's
+          // adopted id correlates with the stored record (feedback, delete…)
+          const assistantMessage = addMessage(sessionId, 'assistant', fullContent, undefined, undefined, undefined, fullThinkingContent || undefined, thinkingTime, messageId)
+          endSaved = true
           res.write(
             `data: ${JSON.stringify({ type: 'end', fullContent, messageId: assistantMessage.messageId })}\n\n`
           )
         }
       }
 
-      // If client disconnected mid-stream, save partial content
-      if (clientClosed && fullContent) {
+      // If client disconnected mid-stream, save partial content (skip when
+      // the end branch already persisted — same id would double-insert)
+      if (clientClosed && fullContent && !endSaved) {
         const thinkingTime = thinkingStartTime ? Date.now() - thinkingStartTime : undefined
-        addMessage(sessionId, 'assistant', fullContent, undefined, undefined, undefined, fullThinkingContent || undefined, thinkingTime)
+        addMessage(sessionId, 'assistant', fullContent, undefined, undefined, undefined, fullThinkingContent || undefined, thinkingTime, messageId)
       }
 
       // End SSE response to signal stream completion
@@ -257,6 +263,29 @@ router.patch('/sessions/:id/title', (req: Request, res: Response) => {
     res.json(apiResponse)
   } catch (error) {
     console.error('Update session title error:', error)
+    res.status(500).json({ code: 500, message: 'Internal server error' })
+  }
+})
+
+// POST /messages/:id/feedback - Submit message feedback (👍/👎); 'none' clears it
+router.post('/messages/:id/feedback', (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const { feedback } = req.body as { feedback?: string }
+
+    if (!feedback || !['up', 'down', 'none'].includes(feedback)) {
+      res.status(400).json({ code: 400, message: 'feedback must be up | down | none' })
+      return
+    }
+
+    const success = setMessageFeedback(id, feedback as 'up' | 'down' | 'none')
+    if (!success) {
+      res.status(404).json({ code: 404, message: 'Message not found' })
+      return
+    }
+    res.json({ code: 0, message: 'success' })
+  } catch (error) {
+    console.error('Submit feedback error:', error)
     res.status(500).json({ code: 500, message: 'Internal server error' })
   }
 })

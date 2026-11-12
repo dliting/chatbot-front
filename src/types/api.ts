@@ -36,6 +36,9 @@ export interface BackendMessage {
   // Error field
   errorMessage?: string
 
+  // User feedback on assistant messages ('up' | 'down'); absent when none
+  feedback?: 'up' | 'down'
+
   // Optional metadata
   metadata?: Record<string, unknown>
 }

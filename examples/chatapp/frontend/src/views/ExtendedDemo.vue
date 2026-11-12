@@ -15,6 +15,7 @@ const config = computed(() => ({
   streamTimeout: settings.apiTimeout,
   enableImageUpload: true,
   maxImageCount: 3,
+  enableMessageFeedback: true,
   enableThinking: settings.showThinkingToggle,
   thinkingDefaultEnabled: settings.thinkingDefaultEnabled,
   thinkingAutoCollapse: settings.thinkingAutoCollapse,

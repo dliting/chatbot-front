@@ -18,6 +18,7 @@ export type PostMessageType =
   | 'chatbot:messageDeleted'
   | 'chatbot:messageEdited'
   | 'chatbot:messageRegenerated'
+  | 'chatbot:messageFeedback'
   | 'chatbot:messageStreamStart'
   | 'chatbot:messageStreamEnd'
   | 'chatbot:messagesCleared'

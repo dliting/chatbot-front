@@ -237,6 +237,19 @@ export function useApiClient(options: ApiClientOptions) {
   }
 
   /**
+   * Submit message feedback (👍/👎). 'none' clears a previous feedback.
+   */
+  async function submitFeedback(messageId: string, feedback: 'up' | 'down' | 'none'): Promise<void> {
+    const response = await fetch(`${baseUrl}/messages/${messageId}/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ feedback }),
+    })
+
+    if (!response.ok) throw new Error(`API error: ${response.status}`)
+  }
+
+  /**
    * Transcribe audio (base64) via the backend ASR endpoint
    */
   async function transcribe(audio: string, format: string): Promise<string> {
@@ -264,6 +277,7 @@ export function useApiClient(options: ApiClientOptions) {
     deleteTopic,
     updateTopicTitle,
     deleteMessage,
+    submitFeedback,
     transcribe,
   }
 }

@@ -23,6 +23,7 @@ const EVENT_MAP: Record<string, PostMessageType> = {
   'message:deleted': 'chatbot:messageDeleted',
   'message:edited': 'chatbot:messageEdited',
   'message:regenerated': 'chatbot:messageRegenerated',
+  'message:feedback': 'chatbot:messageFeedback',
   'message:stream-start': 'chatbot:messageStreamStart',
   'message:stream-end': 'chatbot:messageStreamEnd',
   'messages:cleared': 'chatbot:messagesCleared',

@@ -490,3 +490,81 @@ describe('streaming token-growth auto-follow (B-6)', () => {
     expect(scrollTo.mock.calls.length).toBe(0)
   })
 })
+
+describe('auto-scroll config branches (B-6 follow-up)', () => {
+  interface MountOpts {
+    autoScroll?: boolean
+    isStreaming?: boolean
+    streamingMessageId?: string | null
+  }
+
+  function mountList(opts: MountOpts = {}) {
+    const messages: Message[] = [
+      { messageId: 'u1', topicId: 't1', role: 'user', type: 'text', content: 'q', timestamp: Date.now(), status: 'sent' },
+      { messageId: 'a1', topicId: 't1', role: 'assistant', type: 'text', content: '', timestamp: Date.now(), status: 'loading' },
+    ]
+    const wrapper = mount(MessageList, {
+      props: {
+        messages,
+        autoScroll: opts.autoScroll ?? true,
+        isStreaming: opts.isStreaming ?? false,
+        streamingMessageId: opts.streamingMessageId ?? null,
+      },
+    })
+    const el = wrapper.find('.chatbot-messages').element as HTMLElement
+    Object.defineProperty(el, 'scrollTop', { value: 600, configurable: true })
+    Object.defineProperty(el, 'scrollHeight', { value: 1000, configurable: true })
+    Object.defineProperty(el, 'clientHeight', { value: 400, configurable: true })
+    const scrollTo = vi.fn()
+    ;(el as unknown as { scrollTo: unknown }).scrollTo = scrollTo
+    // Register the real scroll position so isNearBottom evaluates true
+    wrapper.find('.chatbot-messages').trigger('scroll')
+    return { wrapper, messages, scrollTo, el }
+  }
+
+  it('does not follow new messages when autoScroll is disabled', async () => {
+    const { wrapper, messages, scrollTo } = mountList({ autoScroll: false })
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+    const callsBefore = scrollTo.mock.calls.length
+
+    messages.push({ messageId: 'u2', topicId: 't1', role: 'user', type: 'text', content: 'x', timestamp: Date.now(), status: 'sent' })
+    await wrapper.setProps({ messages: [...messages] })
+    await nextTick()
+
+    expect(scrollTo.mock.calls.length).toBe(callsBefore)
+  })
+
+  it('does not follow streaming growth when autoScroll is disabled', async () => {
+    const { wrapper, messages, scrollTo } = mountList({ autoScroll: false, isStreaming: true, streamingMessageId: 'a1' })
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+    const callsBefore = scrollTo.mock.calls.length
+
+    messages[1] = { ...messages[1], content: 'partial' }
+    await wrapper.setProps({ messages: [...messages] })
+    await nextTick()
+
+    expect(scrollTo.mock.calls.length).toBe(callsBefore)
+  })
+
+  it('follows the streaming message id change when autoScroll is enabled', async () => {
+    const { wrapper, scrollTo } = mountList({ autoScroll: true, isStreaming: true, streamingMessageId: null })
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+    const callsBefore = scrollTo.mock.calls.length
+
+    await wrapper.setProps({ streamingMessageId: 'a1' })
+    await nextTick()
+
+    expect(scrollTo.mock.calls.length).toBeGreaterThan(callsBefore)
+  })
+
+  it('does not follow the streaming message id change when autoScroll is disabled', async () => {
+    const { wrapper, scrollTo } = mountList({ autoScroll: false, isStreaming: true, streamingMessageId: null })
+    await wrapper.find('.chatbot-messages').trigger('scroll')
+    const callsBefore = scrollTo.mock.calls.length
+
+    await wrapper.setProps({ streamingMessageId: 'a1' })
+    await nextTick()
+
+    expect(scrollTo.mock.calls.length).toBe(callsBefore)
+  })
+})

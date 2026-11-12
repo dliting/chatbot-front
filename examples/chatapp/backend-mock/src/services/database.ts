@@ -6,7 +6,9 @@ import * as path from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import type { Session, Message } from '../types'
 
-const DB_PATH = path.join(__dirname, '../../data/chatapp-mock.db')
+// Test seam: unit tests redirect the DB file via MOCK_DB_FILE to avoid
+// touching the dev server's data directory
+const DB_PATH = path.join(__dirname, '../../data', process.env.MOCK_DB_FILE || 'chatapp-mock.db')
 
 let db: Database | null = null
 
@@ -43,6 +45,7 @@ export async function initDatabase(): Promise<void> {
       images TEXT,
       videos TEXT,
       audios TEXT,
+      feedback TEXT,
       timestamp INTEGER NOT NULL,
       FOREIGN KEY (sessionId) REFERENCES sessions(sessionId) ON DELETE CASCADE
     )
@@ -58,6 +61,9 @@ export async function initDatabase(): Promise<void> {
       }
       if (!columnNames.includes('thinkingTime')) {
         db.run('ALTER TABLE messages ADD COLUMN thinkingTime INTEGER')
+      }
+      if (!columnNames.includes('feedback')) {
+        db.run('ALTER TABLE messages ADD COLUMN feedback TEXT')
       }
     }
   } catch {
@@ -155,17 +161,19 @@ export function addMessage(
   videos?: string[],
   audios?: string[],
   thinkingContent?: string,
-  thinkingTime?: number
+  thinkingTime?: number,
+  /** Reuse the id announced on the SSE start event so client and store correlate */
+  messageId?: string
 ): Message {
   if (!db) throw new Error('Database not initialized')
 
-  const messageId = uuidv4()
+  const id = messageId || uuidv4()
   const timestamp = Date.now()
 
   db.run(
     'INSERT INTO messages (messageId, sessionId, role, content, thinkingContent, thinkingTime, images, videos, audios, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     [
-      messageId, sessionId, role, content,
+      id, sessionId, role, content,
       thinkingContent || null,
       thinkingTime ?? null,
       images ? JSON.stringify(images) : null,
@@ -191,7 +199,7 @@ export function addMessage(
   saveDatabase()
 
   return {
-    messageId,
+    messageId: id,
     sessionId,
     role,
     content,
@@ -207,7 +215,7 @@ export function addMessage(
 export function getMessages(sessionId: string): Message[] {
   if (!db) throw new Error('Database not initialized')
 
-  const results = db.exec('SELECT messageId, sessionId, role, content, thinkingContent, thinkingTime, images, videos, audios, timestamp FROM messages WHERE sessionId = ? ORDER BY timestamp ASC', [
+  const results = db.exec('SELECT messageId, sessionId, role, content, thinkingContent, thinkingTime, images, videos, audios, feedback, timestamp FROM messages WHERE sessionId = ? ORDER BY timestamp ASC', [
     sessionId
   ])
   if (results.length === 0) return []
@@ -222,7 +230,8 @@ export function getMessages(sessionId: string): Message[] {
     images: row[6] ? JSON.parse(row[6] as string) : undefined,
     videos: row[7] ? JSON.parse(row[7] as string) : undefined,
     audios: row[8] ? JSON.parse(row[8] as string) : undefined,
-    timestamp: row[9] as number
+    feedback: (row[9] as string) || undefined,
+    timestamp: row[10] as number
   }))
 }
 
@@ -237,6 +246,21 @@ export function deleteMessage(messageId: string): boolean {
   db.run('DELETE FROM messages WHERE messageId = ?', [messageId])
   // Decrement messageCount
   db.run('UPDATE sessions SET messageCount = MAX(messageCount - 1, 0) WHERE sessionId = ?', [sessionId])
+  saveDatabase()
+  return true
+}
+
+export function setMessageFeedback(messageId: string, feedback: 'up' | 'down' | 'none'): boolean {
+  if (!db) throw new Error('Database not initialized')
+
+  const results = db.exec('SELECT messageId FROM messages WHERE messageId = ?', [messageId])
+  if (results.length === 0 || results[0].values.length === 0) return false
+
+  // 'none' clears a previous feedback (service owns the semantics)
+  db.run('UPDATE messages SET feedback = ? WHERE messageId = ?', [
+    feedback === 'none' ? null : feedback,
+    messageId
+  ])
   saveDatabase()
   return true
 }

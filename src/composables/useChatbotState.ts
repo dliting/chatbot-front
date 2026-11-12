@@ -73,6 +73,17 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     msgs.splice(index, 0, message)
   }
 
+  /** Re-key a message in place (backend announces its own id on stream start) */
+  const renameMessage = (oldId: string, newId: string) => {
+    for (const msgs of Object.values(messagesState.messages.byTopic)) {
+      const index = msgs.findIndex((m) => m.messageId === oldId)
+      if (index > -1) {
+        msgs.splice(index, 1, { ...msgs[index], messageId: newId })
+        return
+      }
+    }
+  }
+
   /** Replace all messages for a topic */
   const setMessages = (topicId: string, messages: Message[]) => {
     messagesState.messages.byTopic[topicId] = messages
@@ -143,6 +154,7 @@ export function useChatbotState(config: Required<ChatbotConfig>) {
     updateMessage,
     removeMessage,
     insertMessage,
+    renameMessage,
     setMessages,
     ensureMessages,
     clearCurrentMessages: coordinator.clearCurrentMessages,

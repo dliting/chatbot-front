@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { computed } from 'vue'
-import { useStreamProcessor } from '@/composables/useStreamProcessor'
+import { useStreamProcessor, type StreamRunHandle } from '@/composables/useStreamProcessor'
 import { defaultChatbotConfig } from '@/types/config'
 import type { Message, StreamEvent } from '@/types'
 
@@ -27,13 +27,24 @@ function setup() {
     const index = msgs.findIndex((m) => m.messageId === messageId)
     if (index > -1) msgs[index] = { ...msgs[index], ...updates }
   })
+  const renameMessage = vi.fn((oldId: string, newId: string) => {
+    const msgs = byTopic['topic_1']
+    const index = msgs.findIndex((m) => m.messageId === oldId)
+    if (index > -1) msgs[index] = { ...msgs[index], messageId: newId }
+  })
   const labels = computed(() => defaultChatbotConfig.labels)
   const processor = useStreamProcessor({
     updateMessage,
+    renameMessage,
     labels,
     getMessages: () => byTopic['topic_1'],
   })
-  return { processor, byTopic, updateMessage }
+  return { processor, byTopic, updateMessage, renameMessage }
+}
+
+/** Helper: run a stream against a ref handle initialised with localId */
+function refOf(localId: string): StreamRunHandle {
+  return { current: localId }
 }
 
 describe('useStreamProcessor.processStream', () => {
@@ -49,13 +60,30 @@ describe('useStreamProcessor.processStream', () => {
         { type: 'end' },
       ]),
       controller,
-      'a1',
+      refOf('a1'),
       false
     )
 
     expect(result.fullContent).toBe('Hello')
+    expect(result.streamStarted).toBe(true)
     expect(byTopic['topic_1'][0].content).toBe('Hello')
     expect(byTopic['topic_1'][0].status).toBe('sent')
+  })
+
+  it('reports streamStarted=false for a degenerate start-only stream (no unpaired end)', async () => {
+    const { processor, byTopic } = setup()
+    byTopic['topic_1'].push(createPlaceholder('a1'))
+
+    const result = await processor.processStream(
+      gen([{ type: 'start', messageId: 'srv-degenerate' }]),
+      new AbortController(),
+      refOf('a1'),
+      false
+    )
+
+    expect(result.streamStarted).toBe(false)
+    // Adoption still applied — later feedback/delete correlate with the server id
+    expect(byTopic['topic_1'][0].messageId).toBe('srv-degenerate')
   })
 
   it('routes reasoning into thinkingContent only when requested', async () => {
@@ -70,7 +98,7 @@ describe('useStreamProcessor.processStream', () => {
         { type: 'end' },
       ]),
       controller,
-      'a1',
+      refOf('a1'),
       true
     )
 
@@ -90,7 +118,7 @@ describe('useStreamProcessor.processStream', () => {
         { type: 'end' },
       ]),
       new AbortController(),
-      'a1',
+      refOf('a1'),
       false
     )
 
@@ -110,7 +138,7 @@ describe('useStreamProcessor.processStream', () => {
       states.push(processor.isThinkingActive.value)
     })()
 
-    await processor.processStream(stream, controller, 'x', true)
+    await processor.processStream(stream, controller, refOf('x'), true)
     expect(states[0]).toBe(true)
     expect(states[1]).toBe(false)
   })
@@ -126,13 +154,67 @@ describe('useStreamProcessor.processStream', () => {
       yield { type: 'end' } as StreamEvent
     })()
 
-    await processor.processStream(stream, controller, 'a1', false)
+    await processor.processStream(stream, controller, refOf('a1'), false)
     // end branch must be skipped when aborted — status stays loading for finalize
     expect(byTopic['topic_1'][0].status).toBe('loading')
 
     processor.finalizeStreamStatus('a1', controller)
     expect(byTopic['topic_1'][0].status).toBe('stopped')
     expect(byTopic['topic_1'][0].content).toBe('Partial')
+  })
+
+  it('fires onStreamStart exactly once across many chunks', async () => {
+    const { processor } = setup()
+    const onStreamStart = vi.fn()
+
+    await processor.processStream(
+      gen([
+        { type: 'start', messageId: 'srv-8' },
+        { type: 'token', content: 'a' },
+        { type: 'token', content: 'b' },
+        { type: 'reasoning', reasoningContent: 'r' },
+        { type: 'end' },
+      ]),
+      new AbortController(),
+      refOf('local-8'),
+      true,
+      onStreamStart
+    )
+
+    expect(onStreamStart).toHaveBeenCalledTimes(1)
+  })
+
+  it('throws on SSE error events so the caller surfaces the upstream failure', async () => {
+    const { processor, byTopic } = setup()
+    byTopic['topic_1'].push(createPlaceholder('a1'))
+
+    await expect(
+      processor.processStream(
+        gen([
+          { type: 'start', messageId: 'srv-err' },
+          { type: 'error', error: 'Ollama request failed: 503' },
+        ]),
+        new AbortController(),
+        refOf('a1'),
+        false
+      )
+    ).rejects.toThrow('Ollama request failed: 503')
+
+    // The message keeps the ADOPTED id so error marking lands on it
+    expect(byTopic['topic_1'][0].messageId).toBe('srv-err')
+  })
+
+  it('throws a generic message on SSE error events without an error field', async () => {
+    const { processor } = setup()
+
+    await expect(
+      processor.processStream(
+        gen([{ type: 'error' }]),
+        new AbortController(),
+        refOf('a1'),
+        false
+      )
+    ).rejects.toThrow('Stream error')
   })
 })
 
@@ -175,5 +257,109 @@ describe('useStreamProcessor.finalizeStreamStatus', () => {
     const { processor, updateMessage } = setup()
     expect(() => processor.finalizeStreamStatus('a1', new AbortController())).not.toThrow()
     expect(updateMessage).not.toHaveBeenCalled()
+  })
+})
+
+describe('useStreamProcessor server messageId adoption', () => {
+  it('adopts the server messageId from the start event and reports it via the ref', async () => {
+    const { processor, byTopic, renameMessage } = setup()
+    byTopic['topic_1'].push(createPlaceholder('local-1'))
+    const idRef = refOf('local-1')
+
+    await processor.processStream(
+      gen([
+        { type: 'start', messageId: 'srv-1' },
+        { type: 'token', content: 'hi' },
+        { type: 'end' },
+      ]),
+      new AbortController(),
+      idRef,
+      false
+    )
+
+    expect(renameMessage).toHaveBeenCalledWith('local-1', 'srv-1')
+    expect(byTopic['topic_1'][0].messageId).toBe('srv-1')
+    expect(byTopic['topic_1'][0].content).toBe('hi')
+    expect(byTopic['topic_1'][0].status).toBe('sent')
+    expect(idRef.current).toBe('srv-1')
+  })
+
+  it('keeps the local id when the start event carries no messageId', async () => {
+    const { processor, byTopic, renameMessage } = setup()
+    byTopic['topic_1'].push(createPlaceholder('local-2'))
+    const idRef = refOf('local-2')
+
+    await processor.processStream(
+      gen([
+        { type: 'start' },
+        { type: 'token', content: 'ok' },
+        { type: 'end' },
+      ]),
+      new AbortController(),
+      idRef,
+      false
+    )
+
+    expect(renameMessage).not.toHaveBeenCalled()
+    expect(byTopic['topic_1'][0].messageId).toBe('local-2')
+    expect(idRef.current).toBe('local-2')
+  })
+
+  it('ignores a server id identical to the local placeholder id', async () => {
+    const { processor, renameMessage } = setup()
+    const idRef = refOf('same-id')
+
+    await processor.processStream(
+      gen([
+        { type: 'start', messageId: 'same-id' },
+        { type: 'end' },
+      ]),
+      new AbortController(),
+      idRef,
+      false
+    )
+
+    expect(renameMessage).not.toHaveBeenCalled()
+    expect(idRef.current).toBe('same-id')
+  })
+
+  it('onStreamStart sees the adopted id (start/end event pairing for hosts)', async () => {
+    const { processor } = setup()
+    const idRef = refOf('local-3')
+    const startIds: string[] = []
+
+    await processor.processStream(
+      gen([
+        { type: 'start', messageId: 'srv-3' },
+        { type: 'token', content: 'x' },
+        { type: 'end' },
+      ]),
+      new AbortController(),
+      idRef,
+      false,
+      () => startIds.push(idRef.current)
+    )
+
+    expect(startIds).toEqual(['srv-3'])
+  })
+
+  it('does not fire onStreamStart when the stream fails before any content', async () => {
+    const { processor } = setup()
+    const onStreamStart = vi.fn()
+
+    await expect(
+      processor.processStream(
+        (async function* () {
+          yield { type: 'start' } as StreamEvent
+          throw new Error('upstream boom')
+        })(),
+        new AbortController(),
+        refOf('local-4'),
+        false,
+        onStreamStart
+      )
+    ).rejects.toThrow('upstream boom')
+
+    expect(onStreamStart).not.toHaveBeenCalled()
   })
 })

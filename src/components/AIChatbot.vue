@@ -96,6 +96,7 @@ interface Emits {
   (e: 'message:deleted', data: { messageId: string; topicId: string }): void
   (e: 'message:edited', data: { messageId: string; topicId: string }): void
   (e: 'message:regenerated', data: { messageId: string; topicId: string }): void
+  (e: 'message:feedback', data: { messageId: string; topicId: string; feedback: 'up' | 'down' | 'none' }): void
   (e: 'messages:cleared', data: { topicId: string }): void
   (e: 'message:stream-start', data: { messageId: string }): void
   (e: 'message:stream-end', data: { messageId: string; fullContent: string }): void
@@ -172,6 +173,7 @@ const {
   removeMessage,
   insertMessage,
   updateMessage,
+  renameMessage,
   ensureMessages: ensureMessagesForTopic,
   setTopicList,
   setCurrentTopicId,
@@ -249,6 +251,7 @@ const chatActions = useChatActions({
   removeMessage,
   insertMessage,
   updateMessage,
+  renameMessage,
   setCurrentTopicId,
 })
 
@@ -315,6 +318,7 @@ provide(chatStateKey, {
   enableCopyMessage: config.value.enableCopyMessage,
   enableDeleteMessage: config.value.enableDeleteMessage,
   enableResend: config.value.enableResend,
+  enableMessageFeedback: config.value.enableMessageFeedback,
   autoScroll: config.value.autoScroll,
   enableImageUpload: config.value.enableImageUpload,
   // Raw user values (not merged defaults): undefined must reach ChatInput so its
@@ -327,14 +331,10 @@ provide(chatStateKey, {
   enableVoiceInput: config.value.enableVoiceInput,
 } satisfies ChatState)
 
+// Spread the composable return so future actions are exposed automatically;
+// the explicit whitelist below previously dropped newly added actions silently.
 provide(chatActionsKey, {
-  sendMessage: chatActions.sendMessage,
-  refreshMessage: chatActions.refreshMessage,
-  deleteMessage: chatActions.deleteMessage,
-  editMessage: chatActions.editMessage,
-  stopGenerating: chatActions.stopGenerating,
-  isGenerating: chatActions.isGenerating,
-  isThinkingActive: chatActions.isThinkingActive,
+  ...chatActions,
   clearMessages: () => {
     const topicId = state.topics.currentId
     clearCurrentMessages()

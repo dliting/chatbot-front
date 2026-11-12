@@ -61,6 +61,15 @@ function createMockDeps(overrides: Record<string, unknown> = {}) {
         }
       }
     },
+    renameMessage: (oldId: string, newId: string) => {
+      for (const msgs of Object.values(state.messages.byTopic)) {
+        const index = msgs.findIndex(m => m.messageId === oldId)
+        if (index > -1) {
+          msgs.splice(index, 1, { ...msgs[index], messageId: newId })
+          return
+        }
+      }
+    },
     setCurrentTopicId: (topicId: string) => {
       state.messages.currentTopicId = topicId
     },
@@ -1357,5 +1366,248 @@ describe('ChatTransport Bridge tier', () => {
 
     expect(onDeleteMessage).toHaveBeenCalledWith('m1', 'topic_1')
     expect(emitted.filter((e) => e.event === 'message:deleted')).toHaveLength(1)
+  })
+})
+
+describe('submitMessageFeedback', () => {
+  const makeMessage = (overrides: Partial<Message> = {}): Message => ({
+    messageId: 'msg-f1',
+    topicId: 'topic_1',
+    role: 'assistant',
+    type: 'text',
+    content: 'answer',
+    timestamp: Date.now(),
+    status: 'sent',
+    ...overrides,
+  })
+
+  function setup(message: Message, overrides: Record<string, unknown> = {}) {
+    const { deps, state, emitted, errors } = createMockDeps(overrides)
+    state.messages.byTopic['topic_1'] = [message]
+    const actions = useChatActions(deps as never)
+    return { actions, state, emitted, errors }
+  }
+
+  const findMsg = (state: { messages: { byTopic: Record<string, Message[]> } }) =>
+    state.messages.byTopic['topic_1'][0]
+
+  it('updates local feedback and emits message:feedback (local-only tier)', async () => {
+    const { actions, state, emitted, errors } = setup(makeMessage())
+    await actions.submitMessageFeedback(findMsg(state), 'up')
+
+    expect(findMsg(state).feedback).toBe('up')
+    expect(emitted.filter((e) => e.event === 'message:feedback')).toEqual([
+      { event: 'message:feedback', args: [{ messageId: 'msg-f1', topicId: 'topic_1', feedback: 'up' }] },
+    ])
+    expect(errors).toHaveLength(0)
+  })
+
+  it('"none" clears the stored feedback', async () => {
+    const { actions, state } = setup(makeMessage({ feedback: 'up' }))
+    await actions.submitMessageFeedback(findMsg(state), 'none')
+
+    expect(findMsg(state).feedback).toBeUndefined()
+  })
+
+  it('routes through callbacks.onMessageFeedback when provided', async () => {
+    const onMessageFeedback = vi.fn().mockResolvedValue(undefined)
+    const { actions, state } = setup(makeMessage(), {
+      callbacks: { onMessageFeedback },
+    })
+    await actions.submitMessageFeedback(findMsg(state), 'down')
+
+    expect(onMessageFeedback).toHaveBeenCalledWith({
+      messageId: 'msg-f1', topicId: 'topic_1', feedback: 'down',
+    })
+  })
+
+  it('routes through transport.submitFeedback when no callback', async () => {
+    const submitFeedback = vi.fn().mockResolvedValue(undefined)
+    const fake = { submitFeedback } as unknown as ChatTransport
+    const { actions, state } = setup(makeMessage(), { transport: computed(() => fake) })
+    await actions.submitMessageFeedback(findMsg(state), 'up')
+
+    expect(submitFeedback).toHaveBeenCalledWith('msg-f1', 'up')
+  })
+
+  it('routes through apiClient.submitFeedback when no callback/transport', async () => {
+    const submitFeedback = vi.fn().mockResolvedValue(undefined)
+    const { actions, state } = setup(makeMessage(), {
+      apiClient: ref({ submitFeedback }),
+    })
+    await actions.submitMessageFeedback(findMsg(state), 'down')
+
+    expect(submitFeedback).toHaveBeenCalledWith('msg-f1', 'down')
+  })
+
+  it('does not roll back local feedback when the callback rejects', async () => {
+    const onMessageFeedback = vi.fn().mockRejectedValue(new Error('save failed'))
+    const { actions, state, errors } = setup(makeMessage(), {
+      callbacks: { onMessageFeedback },
+    })
+    await actions.submitMessageFeedback(findMsg(state), 'up')
+
+    expect(findMsg(state).feedback).toBe('up')
+    expect(errors).toHaveLength(1)
+    expect(errors[0].category).toBe('message')
+  })
+})
+
+describe('error message mapping and edge branches', () => {
+  const makeMsg = (overrides: Partial<Message> = {}): Message => ({
+    messageId: 'm-x',
+    topicId: 'topic_1',
+    role: 'assistant',
+    type: 'text',
+    content: '',
+    timestamp: Date.now(),
+    status: 'loading',
+    ...overrides,
+  })
+
+  function setupFailingStream(error: Error, overrides: Record<string, unknown> = {}) {
+    const { deps, state, emitted, errors } = createMockDeps({
+      callbacks: {
+        onSendMessage: () =>
+          (async function* () {
+            throw error
+          })(),
+      },
+      ...overrides,
+    })
+    state.messages.byTopic['topic_1'] = [
+      { messageId: 'u1', topicId: 'topic_1', role: 'user', type: 'text', content: 'q', timestamp: Date.now(), status: 'sent' },
+    ]
+    const actions = useChatActions(deps as never)
+    return { actions, state, emitted, errors }
+  }
+
+  it('maps timeout errors to the timeout label', async () => {
+    const { actions, state } = setupFailingStream(
+      Object.assign(new Error('t'), { code: 'TIMEOUT' }),
+      { labels: { timeout: 'T-TIMEOUT' } }
+    )
+    await actions.sendMessage({ content: 'q' })
+    const assistant = state.messages.byTopic['topic_1'].find((m) => m.role === 'assistant')
+    expect(assistant?.errorMessage).toBe('T-TIMEOUT')
+  })
+
+  it('maps network errors to the network label', async () => {
+    const { actions, state } = setupFailingStream(new Error('Failed to fetch'), {
+      labels: { networkError: 'T-NET' },
+    })
+    await actions.sendMessage({ content: 'q' })
+    const assistant = state.messages.byTopic['topic_1'].find((m) => m.role === 'assistant')
+    expect(assistant?.errorMessage).toBe('T-NET')
+  })
+
+  it('maps HTTP status errors with and without a server label', async () => {
+    const { actions, state } = setupFailingStream(
+      Object.assign(new Error('boom'), { status: 502 }),
+      { labels: { serverError: 'T-SRV' } }
+    )
+    await actions.sendMessage({ content: 'q' })
+    const assistant = state.messages.byTopic['topic_1'].find((m) => m.role === 'assistant')
+    expect(assistant?.errorMessage).toBe('T-SRV (HTTP 502)')
+
+    // Without a label: locale default (zh-CN) server error text
+    const second = setupFailingStream(Object.assign(new Error('boom'), { status: 500 }))
+    await second.actions.sendMessage({ content: 'q' })
+    const assistant2 = second.state.messages.byTopic['topic_1'].find((m) => m.role === 'assistant')
+    expect(assistant2?.errorMessage).toBe('服务器错误 (HTTP 500)')
+  })
+
+  it('refreshMessage returns silently when no preceding user message exists', async () => {
+    const { deps, state, emitted } = createMockDeps()
+    const assistantOnly = [makeMsg({ messageId: 'a-only', status: 'sent' })]
+    state.messages.byTopic['topic_1'] = assistantOnly
+    const actions = useChatActions(deps as never)
+    await actions.refreshMessage(assistantOnly[0])
+    // Removal happens before the user-message search; the early return leaves it removed
+    expect(emitted.filter((e) => e.event === 'message:regenerated')).toHaveLength(0)
+    expect(state.messages.byTopic['topic_1']).toHaveLength(0)
+  })
+
+  it('deleteMessage falls back to the apiClient tier', async () => {
+    const deleteMessageApi = vi.fn().mockResolvedValue(undefined)
+    const { deps, state, emitted } = createMockDeps({
+      apiClient: ref({ deleteMessage: deleteMessageApi }),
+    })
+    const msg = makeMsg({ messageId: 'm-del', status: 'sent' })
+    state.messages.byTopic['topic_1'] = [msg]
+    const actions = useChatActions(deps as never)
+    await actions.deleteMessage(msg)
+    expect(deleteMessageApi).toHaveBeenCalledWith('m-del')
+    expect(state.messages.byTopic['topic_1']).toHaveLength(0)
+    expect(emitted.filter((e) => e.event === 'message:deleted')).toHaveLength(1)
+  })
+
+  it('editMessage without a callback only emits and mutates nothing', async () => {
+    const { deps, state, emitted } = createMockDeps()
+    const msg: Message = {
+      messageId: 'm-e1', topicId: 'topic_1', role: 'user', type: 'text',
+      content: 'edited', timestamp: Date.now(), status: 'sent',
+    }
+    state.messages.byTopic['topic_1'] = [msg]
+    const actions = useChatActions(deps as never)
+    await actions.editMessage(msg)
+    expect(emitted.filter((e) => e.event === 'message:edited')).toHaveLength(1)
+    expect(state.messages.byTopic['topic_1']).toHaveLength(1)
+  })
+
+  it('editMessage falls back to the current topic when message.topicId is empty', async () => {
+    const onEditMessage = vi.fn().mockImplementation(() =>
+      (async function* () {
+        yield { type: 'token', content: 'new reply' }
+        yield { type: 'end' }
+      })()
+    )
+    const { deps, state } = createMockDeps({ callbacks: { onEditMessage } })
+    const msg: Message = {
+      messageId: 'm-e2', topicId: '', role: 'user', type: 'text',
+      content: 'edited', timestamp: Date.now(), status: 'sent',
+    }
+    state.messages.byTopic['topic_1'] = [msg]
+    const actions = useChatActions(deps as never)
+    await actions.editMessage(msg)
+    expect(onEditMessage).toHaveBeenCalled()
+    const contents = state.messages.byTopic['topic_1'].map((m) => m.content)
+    expect(contents).toContain('new reply')
+  })
+
+  it('editMessage swallows AbortError from the edit stream without reporting', async () => {
+    const abortErr = new Error('aborted')
+    abortErr.name = 'AbortError'
+    const onEditMessage = vi.fn().mockImplementation(() =>
+      (async function* () {
+        throw abortErr
+      })()
+    )
+    const { deps, state, errors } = createMockDeps({ callbacks: { onEditMessage } })
+    const msg: Message = {
+      messageId: 'm-e3', topicId: 'topic_1', role: 'user', type: 'text',
+      content: 'edited', timestamp: Date.now(), status: 'sent',
+    }
+    state.messages.byTopic['topic_1'] = [msg]
+    const actions = useChatActions(deps as never)
+    await actions.editMessage(msg)
+    expect(errors).toHaveLength(0)
+  })
+
+  it('non-stream replies keep the local id when the server reply has no id', async () => {
+    const renameMessage = vi.fn()
+    const reply = {
+      topicId: 'topic_1', role: 'assistant' as const, type: 'text' as const,
+      content: 'non-stream reply', timestamp: Date.now(), status: 'sent' as const,
+    }
+    const transport = computed(() => ({
+      sendMessage: vi.fn().mockResolvedValue(reply),
+    }) as unknown as ChatTransport)
+    const { deps, state } = createMockDeps({ transport, renameMessage, streamEnabled: false })
+    state.messages.byTopic['topic_1'] = []
+    const actions = useChatActions(deps as never)
+    await actions.sendMessage({ content: 'q' })
+    expect(renameMessage).not.toHaveBeenCalled()
+    expect(state.messages.byTopic['topic_1'].some((m) => m.content === 'non-stream reply')).toBe(true)
   })
 })

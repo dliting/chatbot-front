@@ -67,6 +67,7 @@ export function mapMessage(raw: BackendMessage, fallbackTopicId: string): Messag
     thinkingContent: raw.thinkingContent,
     thinkingTime: raw.thinkingTime,
     errorMessage: raw.errorMessage,
+    feedback: raw.feedback,
     metadata: raw.metadata,
   }
 }

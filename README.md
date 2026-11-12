@@ -31,6 +31,7 @@ The component has a dual-dimension interaction architecture — **interaction mo
 
 - **Multi-modal input**: text and image upload, file preview (docx / excel / pdf / images)
 - **Streaming responses**: SSE with real-time typewriter effect and timeout control
+- **Message feedback**: optional 👍/👎 capture on assistant replies (`enableMessageFeedback`), forwarded via the `message:feedback` event / `onMessageFeedback` callback
 - **Thinking / Chain-of-Thought**: collapsible reasoning display
 - **Quick actions**: configurable welcome-screen actions with built-in SVG icons and `{{variable}}` prompt substitution
 - **Topic management**: multi-conversation sessions with search, rename, delete
@@ -137,10 +138,11 @@ interface ChatbotConfig {
   rememberPosition?: boolean   // default true
 
   // Features
-  enableImageUpload?: boolean  // default true
-  enableThinking?: boolean     // default false
-  streamEnabled?: boolean      // default true
-  streamTimeout?: number       // default 120000
+  enableImageUpload?: boolean    // default true
+  enableMessageFeedback?: boolean // default false — 👍/👎 feedback capture on assistant messages
+  enableThinking?: boolean       // default false
+  streamEnabled?: boolean        // default true
+  streamTimeout?: number         // default 120000
 
   // Style & i18n
   theme?: 'light' | 'dark' | 'system'
