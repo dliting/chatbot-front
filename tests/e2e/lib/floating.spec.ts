@@ -50,7 +50,7 @@ test.describe('Floating Mode - Library Entry', () => {
     await expect(chatContent).toBeVisible()
 
     // Welcome section should be visible (no messages yet)
-    const welcome = page.locator('.chat-content__welcome')
+    const welcome = page.locator('.welcome-screen')
     await expect(welcome).toBeVisible()
 
     // ChatInput should be present (input area at the bottom)
@@ -113,8 +113,8 @@ test.describe('Floating Mode - Library Entry', () => {
     const window = page.locator('.draggable-window')
     await expect(window).toBeVisible({ timeout: 5000 })
 
-    // Click close button
-    const closeBtn = window.locator('.chat-header__close')
+    // Click close button (floating panel uses its own header close button)
+    const closeBtn = window.locator('.floating-chat-panel__close-btn')
     await closeBtn.click()
 
     // Window should close, SuspendedBall should reappear

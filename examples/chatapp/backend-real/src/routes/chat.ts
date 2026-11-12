@@ -7,11 +7,12 @@ import {
   updateSessionTitle,
   getMessages,
   addMessage,
-  deleteMessage
+  deleteMessage,
+  setMessageFeedback
 } from '../services/database'
 import { streamChat, chat, type OllamaMessage } from '../services/ollama'
 import { createAsrProvider } from '../services/asr'
-import { HOST, PORT } from '../config'
+import { HOST, OLLAMA_ASR_PROVIDER, PORT } from '../config'
 import type { ApiResponse } from '../types'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -58,6 +59,7 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
       let fullContent = ''
       let fullThinkingContent = ''
       let thinkingStartTime = 0
+      let endSaved = false
       for await (const chunk of streamChat(ollamaMessages, options)) {
         if (clientClosed) break
 
@@ -69,19 +71,23 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
           fullContent += chunk.content
           res.write(`data: ${JSON.stringify({ type: 'token', content: chunk.content })}\n\n`)
         } else if (chunk.type === 'end') {
-          // Save assistant message with thinking content
+          // Save assistant message with thinking content under the id
+          // announced on the start event, so the client's adopted id
+          // correlates with the stored record (feedback, delete…)
           const thinkingTime = thinkingStartTime ? Date.now() - thinkingStartTime : undefined
-          const assistantMessage = addMessage(sessionId, 'assistant', fullContent, undefined, fullThinkingContent || undefined, thinkingTime)
+          const assistantMessage = addMessage(sessionId, 'assistant', fullContent, undefined, fullThinkingContent || undefined, thinkingTime, undefined, undefined, messageId)
+          endSaved = true
           res.write(
             `data: ${JSON.stringify({ type: 'end', fullContent, messageId: assistantMessage.messageId })}\n\n`
           )
         }
       }
 
-      // If client disconnected mid-stream, save partial content
-      if (clientClosed && fullContent) {
+      // If client disconnected mid-stream, save partial content (skip when
+      // the end branch already persisted — same id would double-insert)
+      if (clientClosed && fullContent && !endSaved) {
         const thinkingTime = thinkingStartTime ? Date.now() - thinkingStartTime : undefined
-        addMessage(sessionId, 'assistant', fullContent, undefined, fullThinkingContent || undefined, thinkingTime)
+        addMessage(sessionId, 'assistant', fullContent, undefined, fullThinkingContent || undefined, thinkingTime, undefined, undefined, messageId)
       }
 
       // End SSE response to signal stream completion
@@ -106,6 +112,13 @@ router.post('/chat/stream', async (req: Request, res: Response) => {
     }
   } catch (error) {
     console.error('Chat error:', error)
+    // Once SSE headers are committed the status code is already 200 — surface
+    // the failure as an SSE error event instead of a misleading JSON append
+    if (res.headersSent) {
+      res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Chat failed' })}\n\n`)
+      res.end()
+      return
+    }
     res.status(500).json({ code: 500, message: 'Internal server error' })
   }
 })
@@ -118,7 +131,7 @@ router.post('/chat/transcribe', async (req: Request, res: Response) => {
       res.status(400).json({ code: 400, message: 'Missing audio payload' })
       return
     }
-    const text = await createAsrProvider(process.env.OLLAMA_ASR_PROVIDER || 'ollama').transcribe(audio, format ?? 'wav')
+    const text = await createAsrProvider(OLLAMA_ASR_PROVIDER).transcribe(audio, format ?? 'wav')
     res.json({ code: 0, message: 'success', data: { text } })
   } catch (error) {
     res.status(500).json({ code: 500, message: error instanceof Error ? error.message : 'Transcription failed' })
@@ -270,6 +283,29 @@ router.patch('/sessions/:id/title', (req: Request, res: Response) => {
     res.json(apiResponse)
   } catch (error) {
     console.error('Update session title error:', error)
+    res.status(500).json({ code: 500, message: 'Internal server error' })
+  }
+})
+
+// POST /messages/:id/feedback - Submit message feedback (👍/👎); 'none' clears it
+router.post('/messages/:id/feedback', (req: Request, res: Response) => {
+  try {
+    const id = req.params.id as string
+    const { feedback } = req.body as { feedback?: string }
+
+    if (!feedback || !['up', 'down', 'none'].includes(feedback)) {
+      res.status(400).json({ code: 400, message: 'feedback must be up | down | none' })
+      return
+    }
+
+    const success = setMessageFeedback(id, feedback as 'up' | 'down' | 'none')
+    if (!success) {
+      res.status(404).json({ code: 404, message: 'Message not found' })
+      return
+    }
+    res.json({ code: 0, message: 'success' })
+  } catch (error) {
+    console.error('Submit feedback error:', error)
     res.status(500).json({ code: 500, message: 'Internal server error' })
   }
 })

@@ -32,10 +32,14 @@ export default defineConfig({
         'docs/',
       ],
       all: true,
-      lines: 90,
-      functions: 90,
-      branches: 90,
-      statements: 90,
+      // NOTE: thresholds MUST live under coverage.thresholds — placed directly
+      // under coverage they are silently ignored (Vitest 4 schema).
+      thresholds: {
+        lines: 90,
+        functions: 90,
+        branches: 90,
+        statements: 90,
+      },
     },
   },
 })

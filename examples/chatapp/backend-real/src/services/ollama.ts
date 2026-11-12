@@ -1,5 +1,10 @@
 import type { ChatMessage } from '../types'
-import { OLLAMA_BASE_URL, OLLAMA_MODEL, OLLAMA_THINKING_ENABLED, OPENAI_API_KEY } from '../config'
+import { OLLAMA_BASE_URL, OLLAMA_KEEP_ALIVE, OLLAMA_MODEL, OLLAMA_THINKING_ENABLED, OPENAI_API_KEY } from '../config'
+
+/** Ollama extension on the OpenAI-compatible endpoint: keep models resident */
+function residencyFields(): Record<string, unknown> {
+  return OLLAMA_KEEP_ALIVE ? { keep_alive: OLLAMA_KEEP_ALIVE } : {}
+}
 
 export interface OllamaMessage {
   role: 'user' | 'assistant' | 'system'
@@ -122,6 +127,7 @@ export async function* streamChat(
     model: OLLAMA_MODEL,
     messages: openAIMessages,
     stream: true,
+    ...residencyFields(),
   }
   // Explicitly set enable_thinking: Ollama models may default to producing
   // reasoning content when the parameter is omitted
@@ -202,7 +208,8 @@ export async function chat(messages: OllamaMessage[]): Promise<string> {
     body: JSON.stringify({
       model: OLLAMA_MODEL,
       messages: openAIMessages,
-      stream: false
+      stream: false,
+      ...residencyFields(),
     })
   })
 

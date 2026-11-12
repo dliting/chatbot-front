@@ -6,7 +6,7 @@
  * OLLAMA_ASR_PROVIDER env (default 'ollama'). New vendors (OpenAI-compatible
  * cloud ASR, Whisper servers, …) implement the interface and register here.
  */
-import { OLLAMA_ASR_MODEL, OLLAMA_BASE_URL, OPENAI_API_KEY } from '../config'
+import { OLLAMA_ASR_MODEL, OLLAMA_BASE_URL, OLLAMA_KEEP_ALIVE, OPENAI_API_KEY } from '../config'
 
 export interface AsrProvider {
   /** Provider identifier (matches OLLAMA_ASR_PROVIDER values) */
@@ -32,6 +32,8 @@ export function createOllamaAsrProvider(options: {
   baseUrl: string
   model: string
   headers: Record<string, string>
+  /** Ollama model residency (e.g. '30m'); omitted → Ollama default */
+  keepAlive?: string
 }): AsrProvider {
   return {
     name: 'ollama',
@@ -52,6 +54,8 @@ export function createOllamaAsrProvider(options: {
             },
           ],
           stream: false,
+          // Ollama extension: keep the ASR model resident between utterances
+          ...(options.keepAlive ? { keep_alive: options.keepAlive } : {}),
         }),
       })
 
@@ -68,13 +72,14 @@ export function createOllamaAsrProvider(options: {
 }
 
 /** Select the ASR adapter from configuration (Strategy entry point) */
-export function createAsrProvider(provider: string = 'ollama'): AsrProvider {
+export function createAsrProvider(provider: string): AsrProvider {
   switch (provider) {
     case 'ollama':
       return createOllamaAsrProvider({
         baseUrl: OLLAMA_BASE_URL,
         model: OLLAMA_ASR_MODEL,
         headers: buildHeaders(),
+        keepAlive: OLLAMA_KEEP_ALIVE || undefined,
       })
     default:
       throw new Error(

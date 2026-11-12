@@ -10,21 +10,24 @@ import { readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { cleanState } from './helpers'
+import { OLLAMA_BASE_URL } from '../helpers/readChatappEnv'
 
-const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434'
-const REAL_REPLY_TIMEOUT = 60_000
+// Single source: examples/chatapp/real.env (not a parallel definition here).
+// Read lazily — importing this spec file must not require real.env
+// (mock-mode runs collect this file too; only E2E_REAL=1 needs it).
+const ollamaUrl = () => OLLAMA_BASE_URL()
 
 let ollamaUp = false
 
 test.beforeAll(async () => {
   if (!process.env.E2E_REAL) return
   try {
-    const res = await fetch(`${OLLAMA_URL}/api/tags`, { signal: AbortSignal.timeout(3000) })
+    const res = await fetch(`${ollamaUrl()}/api/tags`, { signal: AbortSignal.timeout(3000) })
     ollamaUp = res.ok
   } catch {
     ollamaUp = false
   }
-  if (!ollamaUp) throw new Error(`Real mode requires a running Ollama at ${OLLAMA_URL}`)
+  if (!ollamaUp) throw new Error(`Real mode requires a running Ollama at ${ollamaUrl()}`)
 })
 
 async function useRealBackend(page: Page) {
@@ -40,28 +43,60 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
   test.skip(() => !process.env.E2E_REAL, 'set E2E_REAL=1 to run real-backend suite')
   // Cold model loads (qwen3.5 6.6GB / lfm3-audio 1.7GB swaps) can eat the
   // default 30s test timeout — allow 3 minutes per test in this suite.
-  test.setTimeout(180_000)
+  test.setTimeout(120_000)  // AGENTS: per-test cap 2min
 
   test.beforeAll(async ({ request }) => {
-    // Hook has its own 30s budget — the model warmup below needs minutes
+    // Hook budget must cover the worst-case warmup below: 4×(60s+10s)=280s
     test.setTimeout(300_000)
     if (!process.env.E2E_REAL) return
-    // Warm the chat model: Ollama answers 503 immediately while a model is
-    // loading, and loading swaps evict the other model (lfm3-audio ↔ qwen3.5).
-    // A single request "completes" instantly with an error, so retry until the
-    // endpoint actually streams a chunk. Cold load can take minutes.
-    for (let attempt = 0; attempt < 30; attempt++) {
+
+    // 1. Fail fast (<5s) with an actionable message when backend-real is down.
+    //    Without this, the warmup loop below burns its whole budget against a
+    //    dead proxy and fails as an opaque 5-minute timeout.
+    let probeCause = ''
+    try {
+      const probe = await request.get('/api/real/health', { timeout: 5_000 })
+      if (!probe.ok()) probeCause = `health returned HTTP ${probe.status()}`
+    } catch (e) {
+      probeCause = e instanceof Error ? e.message : String(e)
+    }
+    if (probeCause) {
+      throw new Error(
+        `backend-real is not reachable via /api/real (${probeCause}). ` +
+        'Run `npm run test:e2e:real` (starts it automatically) or start it manually: ' +
+        'cd examples/chatapp/backend-real && npm run dev'
+      )
+    }
+
+    // 2. Warm the chat model: Ollama answers 503 while a model is loading, and
+    //    backend-real commits SSE 200 headers BEFORE dialing Ollama — so a
+    //    merely-2xx response proves nothing. Success = the SSE body reached a
+    //    `type:'end'` event. Worst case 4×(60s+10s)=280s ≤ hook budget 300s.
+    const WARMUP_ATTEMPTS = 4
+    for (let attempt = 1; attempt <= WARMUP_ATTEMPTS; attempt++) {
       try {
         const res = await request.post('/api/real/chat/stream', {
           data: { sessionId: 'warmup', content: 'ping' },
-          timeout: 120_000,
+          timeout: 60_000,
         })
-        if (res.ok()) break
-      } catch {
-        // network-level failure — retry
+        if (res.ok()) {
+          const body = await res.text()
+          if (body.includes('"type":"end"')) {
+            // Remove the warmup session so it never leaks into assertions
+            await request.delete('/api/real/sessions/warmup').catch(() => undefined)
+            return
+          }
+          console.log(`[real-warmup] attempt ${attempt}/${WARMUP_ATTEMPTS}: SSE ended without an end event (upstream failure?)`)
+        } else {
+          const body = await res.text().catch(() => '')
+          console.log(`[real-warmup] attempt ${attempt}/${WARMUP_ATTEMPTS}: HTTP ${res.status()} from ${new URL(res.url()).host} body=${body.slice(0, 160)}`)
+        }
+      } catch (e) {
+        console.log(`[real-warmup] attempt ${attempt}/${WARMUP_ATTEMPTS}: ${e instanceof Error ? e.message : 'stream error'} (model loading?)`)
       }
-      await new Promise((r) => setTimeout(r, 10_000))
+      if (attempt < WARMUP_ATTEMPTS) await new Promise((r) => setTimeout(r, 10_000))
     }
+    throw new Error(`Model warmup did not succeed within the budget — check Ollama at ${ollamaUrl()}`)
   })
 
   test.beforeEach(async ({ page }) => {
@@ -69,6 +104,18 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
     await page.goto('/extended')
     await expect(page.locator('.chat-input')).toBeVisible({ timeout: 10000 })
     await cleanState(page)
+    // cleanState only clears the mock backend — purge real-backend sessions too
+    await page.evaluate(async () => {
+      try {
+        const res = await fetch('/api/real/sessions')
+        const data = await res.json()
+        if (data.data?.sessions) {
+          for (const s of data.data.sessions) {
+            await fetch(`/api/real/sessions/${s.sessionId}`, { method: 'DELETE' })
+          }
+        }
+      } catch { /* real backend down is surfaced by the warmup hook */ }
+    })
     await page.reload()
     await expect(page.locator('.chat-input')).toBeVisible({ timeout: 10000 })
   })
@@ -79,8 +126,8 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
     await input.press('Enter')
 
     const assistantText = page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
-    await expect(assistantText).toBeVisible({ timeout: 150_000 })
-    await expect(assistantText).not.toHaveText('', { timeout: 150_000 })
+    await expect(assistantText).toBeVisible({ timeout: 100_000 })
+    await expect(assistantText).not.toHaveText('', { timeout: 100_000 })
   })
 
   test('clears the conversation via the header action', async ({ page }) => {
@@ -89,7 +136,7 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
     await input.press('Enter')
     await expect(
       page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
-    ).toBeVisible({ timeout: 150_000 })
+    ).toBeVisible({ timeout: 100_000 })
 
     await page.locator('.chat-header__clear').click()
     await page.locator('.confirm-dialog__btn--confirm').click()
@@ -103,16 +150,44 @@ test.describe('Real backend - ChatApp (local Ollama)', () => {
     await input.press('Enter')
     await expect(
       page.locator('.chatbot-message__bubble--assistant .chatbot-message__text').last()
-    ).toBeVisible({ timeout: 150_000 })
+    ).toBeVisible({ timeout: 100_000 })
 
     // create a fresh topic; messages list resets
     await page.locator('.topic-list-view__new-btn').first().click()
     await expect(page.locator('.chatbot-message__bubble')).toHaveCount(0)
   })
+
+  test('message feedback persists against the real backend', async ({ page }) => {
+    const input = page.locator('.chatbot-input textarea, .chat-input textarea, textarea').first()
+    await input.fill('一句话介绍长城')
+    await input.press('Enter')
+    await expect(
+      page.locator('.chatbot-message--assistant.chatbot-message--sent').last()
+    ).toBeVisible({ timeout: 100_000 })
+
+    // 👍 must reach the real backend's feedback endpoint and survive a reload
+    const feedbackPost = page.waitForResponse(
+      (res) => res.request().method() === 'POST' && res.request().url().includes('/feedback') && res.status() === 200,
+      { timeout: 15_000 }
+    )
+    await page.locator('.chatbot-message--assistant').last().locator('.chatbot-message__action-btn--feedback-up').click()
+    await feedbackPost
+
+    await page.reload()
+    await expect(page.locator('.chat-input')).toBeVisible({ timeout: 10000 })
+    const lastAssistant = page.locator('.chatbot-message--assistant').last()
+    await expect(lastAssistant).toBeVisible({ timeout: 15000 })
+    await expect(lastAssistant.locator('.chatbot-message__action-btn--feedback-up')).toHaveAttribute(
+      'aria-pressed',
+      'true',
+      { timeout: 15000 }
+    )
+  })
 })
 
 test.describe('Real backend - voice transcription (Ollama ASR)', () => {
-
+  test.skip(() => !process.env.E2E_REAL, 'set E2E_REAL=1 to run real-backend suite')
+  test.setTimeout(120_000)  // AGENTS: per-test cap 2min
 
   function synthWav(voice: string, text: string, outPath: string): Buffer {
     execSync(
@@ -135,7 +210,7 @@ test.describe('Real backend - voice transcription (Ollama ASR)', () => {
       for (let attempt = 0; attempt < 6; attempt++) {
         res = await request.post('/api/real/chat/transcribe', {
           data: { audio: wav.toString('base64'), format: 'wav' },
-          timeout: 180_000,
+          timeout: 100_000,
         })
         if (res.status() === 200) break
         await new Promise((r) => setTimeout(r, 10_000))

@@ -16,6 +16,13 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    // Explicit IPv4 + strict port: silence-drift to 5174 would desync the
+    // Playwright health check (which probes 5173) — see playwright.config.ts
+    host: '127.0.0.1',
+    port: 5173,
+    strictPort: true,
+  },
   build: {
     rollupOptions: {
       // Single dev/E2E entry; the library build uses vite.config.lib.ts,

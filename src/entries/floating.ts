@@ -19,6 +19,9 @@ const app = createApp(AIChatbot, {
     panelWidth: 400,
     panelHeight: 600,
     defaultExpanded: false,
+    // Library demo page: no backend behind this dev server — opt out of the
+    // REST tier explicitly (the public '/api' default targets real hosts)
+    apiBaseUrl: '',
     enableImageUpload: true,
     maxImageCount: 3,
     draggable: true,

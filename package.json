@@ -37,6 +37,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:chatapp": "playwright test --project=chatapp",
+    "test:e2e:real": "node tests/e2e/run-real.mjs",
     "test:e2e:lib": "playwright test --project=lib"
   },
   "dependencies": {

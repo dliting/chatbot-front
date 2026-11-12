@@ -8,6 +8,7 @@ vi.mock('../config', () => ({
   OLLAMA_BASE_URL: 'http://localhost:11434',
   OLLAMA_MODEL: 'test-model',
   OLLAMA_THINKING_ENABLED: true,
+  OLLAMA_KEEP_ALIVE: '',
   OPENAI_API_KEY: '',
   OLLAMA_ASR_MODEL: 'test-asr-model',
 }))
@@ -314,3 +315,65 @@ describe('ollama service', () => {
     })
   })
 })
+
+describe('model residency (keep_alive)', () => {
+    beforeEach(() => {
+      vi.mocked(fetch).mockClear()
+    })
+
+    afterEach(() => {
+      vi.doUnmock('../config')
+    })
+
+    it('includes keep_alive in the request body when OLLAMA_KEEP_ALIVE is configured', async () => {
+      vi.doMock('../config', () => ({
+        HOST: '127.0.0.1',
+        PORT: 3000,
+        OLLAMA_BASE_URL: 'http://127.0.0.1:11434',
+        OLLAMA_MODEL: 'test-model',
+        OLLAMA_THINKING_ENABLED: true,
+        OLLAMA_KEEP_ALIVE: '30m',
+        OPENAI_API_KEY: '',
+      }))
+      vi.resetModules()
+
+      const { streamChat: freshStreamChat } = await import('./ollama')
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        body: createMockSSEBody(['data: {"type":"end"}\n\n']),
+      } as never)
+
+      const gen = freshStreamChat([{ role: 'user', content: 'hi' }])
+      for await (const _ of gen) { void _ }
+
+      const callArgs = vi.mocked(fetch).mock.calls[0]
+      const body = JSON.parse(callArgs[1]?.body as string)
+      expect(body.keep_alive).toBe('30m')
+    })
+
+    it('omits keep_alive when OLLAMA_KEEP_ALIVE is not configured', async () => {
+      vi.doMock('../config', () => ({
+        HOST: '127.0.0.1',
+        PORT: 3000,
+        OLLAMA_BASE_URL: 'http://127.0.0.1:11434',
+        OLLAMA_MODEL: 'test-model',
+        OLLAMA_THINKING_ENABLED: true,
+        OLLAMA_KEEP_ALIVE: '',
+        OPENAI_API_KEY: '',
+      }))
+      vi.resetModules()
+
+      const { streamChat: freshStreamChat } = await import('./ollama')
+      vi.mocked(fetch).mockResolvedValueOnce({
+        ok: true,
+        body: createMockSSEBody(['data: {"type":"end"}\n\n']),
+      } as never)
+
+      const gen = freshStreamChat([{ role: 'user', content: 'hi' }])
+      for await (const _ of gen) { void _ }
+
+      const callArgs = vi.mocked(fetch).mock.calls[0]
+      const body = JSON.parse(callArgs[1]?.body as string)
+      expect(body).not.toHaveProperty('keep_alive')
+    })
+  })

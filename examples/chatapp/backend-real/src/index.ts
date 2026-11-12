@@ -27,7 +27,8 @@ async function start() {
     await initDatabase()
     console.log('Database initialized')
 
-    app.listen(PORT, () => {
+    // Bind to the configured HOST (127.0.0.1 in real.env) — see backend-mock
+    app.listen(PORT, HOST, () => {
       console.log(`Server running on http://${HOST}:${PORT}`)
     })
   } catch (error) {

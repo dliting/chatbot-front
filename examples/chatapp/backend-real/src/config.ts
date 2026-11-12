@@ -18,9 +18,11 @@ if (!HOST || isNaN(PORT)) {
 
 export const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || ''
 export const OLLAMA_MODEL = process.env.OLLAMA_MODEL || ''
-export const OLLAMA_ASR_MODEL = process.env.OLLAMA_ASR_MODEL || 'lfm3-audio:latest'
+export const OLLAMA_ASR_MODEL = process.env.OLLAMA_ASR_MODEL || ''
 export const OLLAMA_ASR_PROVIDER = process.env.OLLAMA_ASR_PROVIDER || 'ollama'
 export const OLLAMA_THINKING_ENABLED = process.env.OLLAMA_THINKING_ENABLED?.toLowerCase() !== 'false'
+/** Ollama model residency (e.g. 30m). Unset → Ollama's own default (5m). */
+export const OLLAMA_KEEP_ALIVE = process.env.OLLAMA_KEEP_ALIVE || ''
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY || ''
 
 if (!OLLAMA_BASE_URL && !OPENAI_API_KEY) {
@@ -30,5 +32,10 @@ if (!OLLAMA_BASE_URL && !OPENAI_API_KEY) {
 
 if (OLLAMA_BASE_URL && !OLLAMA_MODEL) {
   console.error('OLLAMA_MODEL must be configured when using Ollama (set in real.env)')
+  process.exit(1)
+}
+
+if (OLLAMA_BASE_URL && !OLLAMA_ASR_MODEL) {
+  console.error('OLLAMA_ASR_MODEL must be configured when using Ollama (set in real.env)')
   process.exit(1)
 }

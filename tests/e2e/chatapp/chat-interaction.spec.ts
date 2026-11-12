@@ -9,6 +9,10 @@ import { test, expect } from '@playwright/test'
 import { cleanState } from './helpers'
 
 test.describe('Chat Interaction - Extended Mode', () => {
+  // Mock backend simulates ~20s of streaming per reply; under parallel workers
+  // the default 30s budget is too tight (AGENTS cap: 2min per test).
+  test.setTimeout(120_000)
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await cleanState(page)
@@ -115,6 +119,8 @@ test.describe('Chat Interaction - Extended Mode', () => {
 })
 
 test.describe('Chat Interaction - Floating Mode', () => {
+  test.setTimeout(120_000)
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/')
     await cleanState(page)

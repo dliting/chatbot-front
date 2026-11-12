@@ -15,6 +15,9 @@ document.head.appendChild(fontLink)
 const app = createApp(AIChatbot, {
   config: {
     mode: 'sidebar',
+    // Library demo page: no backend behind this dev server — opt out of the
+    // REST tier explicitly (the public '/api' default targets real hosts)
+    apiBaseUrl: '',
     enableImageUpload: true,
     maxImageCount: 3,
     locale: 'zh-CN',

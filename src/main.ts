@@ -14,6 +14,9 @@ const app = createApp(AIChatbot, {
   config: {
     mode: 'floating',
     labels,
+    // Dev demo page: no backend behind the root dev server — opt out of the
+    // REST tier explicitly (the public '/api' default targets real hosts)
+    apiBaseUrl: '',
     enableImageUpload: true,
     maxImageCount: 3,
   },

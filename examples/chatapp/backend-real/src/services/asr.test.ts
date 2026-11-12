@@ -9,6 +9,7 @@ vi.mock('../config', () => ({
   OLLAMA_ASR_MODEL: 'test-asr-model',
   OLLAMA_ASR_PROVIDER: 'ollama',
   OLLAMA_THINKING_ENABLED: true,
+  OLLAMA_KEEP_ALIVE: '',
   OPENAI_API_KEY: '',
 }))
 
@@ -78,9 +79,9 @@ describe('ASR provider (Adapter pattern)', () => {
   })
 
   describe('createAsrProvider factory (Strategy selection)', () => {
-    it('returns the ollama adapter for the default provider', async () => {
+    it('returns the ollama adapter for the ollama provider', async () => {
       const { createAsrProvider } = await import('./asr')
-      const provider = createAsrProvider()
+      const provider = createAsrProvider('ollama')
       expect(provider.name).toBe('ollama')
     })
 
@@ -88,5 +89,48 @@ describe('ASR provider (Adapter pattern)', () => {
       const { createAsrProvider } = await import('./asr')
       expect(() => createAsrProvider('whisper-cloud')).toThrow('Unknown ASR provider')
     })
+  })
+})
+
+describe('ASR model residency (keep_alive passthrough)', () => {
+  beforeEach(() => {
+    ;(global.fetch as ReturnType<typeof vi.fn>).mockClear()
+  })
+
+  it('includes keep_alive in the transcription request when configured', async () => {
+    const { createOllamaAsrProvider } = await import('./asr')
+    const provider = createOllamaAsrProvider({
+      baseUrl: 'http://localhost:11434',
+      model: 'test-asr-model',
+      headers: {},
+      keepAlive: '30m',
+    })
+    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: 'text' } }] }),
+    })
+
+    await provider.transcribe('QUJD', 'wav')
+
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    expect(JSON.parse(init.body).keep_alive).toBe('30m')
+  })
+
+  it('omits keep_alive when not configured', async () => {
+    const { createOllamaAsrProvider } = await import('./asr')
+    const provider = createOllamaAsrProvider({
+      baseUrl: 'http://localhost:11434',
+      model: 'test-asr-model',
+      headers: {},
+    })
+    ;(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ choices: [{ message: { content: 'text' } }] }),
+    })
+
+    await provider.transcribe('QUJD', 'wav')
+
+    const [, init] = (global.fetch as ReturnType<typeof vi.fn>).mock.calls[0]
+    expect(JSON.parse(init.body)).not.toHaveProperty('keep_alive')
   })
 })
